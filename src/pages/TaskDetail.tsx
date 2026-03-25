@@ -95,7 +95,7 @@ const TaskDetailPage = () => {
               <div className="text-2xl font-bold text-primary">{formatPrice(mockTask.budget, currency)}</div>
               <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
 
-              <button className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-gradient-emerald text-primary-foreground shadow-trust hover:opacity-90 transition-opacity">
+              <button className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity">
                 {t('tasks.respond')}
                 <ArrowRight className="w-4 h-4" />
               </button>

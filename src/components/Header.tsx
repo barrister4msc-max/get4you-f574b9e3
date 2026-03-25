@@ -56,7 +56,7 @@ export const Header = () => {
           </Link>
           <Link
             to="/signup"
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-emerald text-primary-foreground hover:opacity-90 transition-opacity"
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
           >
             {t('nav.signup')}
           </Link>
@@ -89,7 +89,7 @@ export const Header = () => {
             <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-medium border border-border rounded-lg">
               {t('nav.login')}
             </Link>
-            <Link to="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-gradient-emerald text-primary-foreground">
+            <Link to="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
               {t('nav.signup')}
             </Link>
           </div>
