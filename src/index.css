@@ -98,7 +98,9 @@
 
 @layer utilities {
   .text-gradient-emerald {
-    @apply text-primary;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(95deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 48%, hsl(var(--accent)) 100%);
+    -webkit-text-fill-color: transparent;
   }
   .bg-gradient-emerald {
     background: hsl(var(--primary));
