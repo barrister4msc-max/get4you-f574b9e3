@@ -54,7 +54,7 @@ const ForTaskersPage = () => {
                 to="/signup"
                 className={`mt-6 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-opacity ${
                   i === 1
-                    ? 'bg-gradient-emerald text-primary-foreground hover:opacity-90'
+                    ? 'bg-accent text-accent-foreground hover:opacity-90'
                     : 'border border-border text-foreground hover:bg-secondary'
                 }`}
               >

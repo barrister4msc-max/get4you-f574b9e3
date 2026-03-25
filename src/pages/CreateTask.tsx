@@ -231,7 +231,7 @@ const CreateTaskPage = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-gradient-emerald text-primary-foreground shadow-trust hover:opacity-90 transition-opacity">
+            <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity">
               {t('task.submit')}
               <CheckCircle2 className="w-4 h-4" />
             </button>
