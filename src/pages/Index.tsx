@@ -5,6 +5,7 @@ import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
+import heroImage from '@/assets/hero-image.jpg';
 
 const categoryIcons = [
   { key: 'cleaning', icon: Sparkles },
