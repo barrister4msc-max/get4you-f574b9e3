@@ -225,7 +225,7 @@ const CreateTaskPage = () => {
           {step < 3 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-gradient-emerald text-primary-foreground hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
             >
               {t('task.next')}
               <ArrowRight className="w-4 h-4" />
