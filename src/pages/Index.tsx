@@ -33,13 +33,13 @@ const IndexPage = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-background to-warm-surface" />
         <div className="container relative py-20 md:py-28">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-[1.2fr_1fr] gap-8 md:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
                 {t('hero.title')}{' '}
                 <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
               </h1>
