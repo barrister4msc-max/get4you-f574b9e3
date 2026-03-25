@@ -101,6 +101,9 @@
     @apply text-primary;
   }
   .bg-gradient-emerald {
+    background: hsl(var(--primary));
+  }
+  .bg-accent-cta {
     background: hsl(var(--accent));
   }
   .shadow-trust {
