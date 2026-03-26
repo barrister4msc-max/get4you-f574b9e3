@@ -12,7 +12,7 @@ export const Footer = () => {
             <div className="w-6 h-6 rounded-md bg-gradient-emerald flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-xs">T</span>
             </div>
-            <span className="font-semibold text-foreground">TaskFlow</span>
+            <span className="font-semibold text-foreground">Hooppy</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>
