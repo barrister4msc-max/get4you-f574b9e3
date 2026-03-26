@@ -34,14 +34,14 @@ const HowItWorksPage = () => {
 
         <div className="mt-16 grid sm:grid-cols-3 gap-6">
           {[
-            { icon: Shield, title: 'Escrow Protection', desc: 'Funds held securely until work is approved' },
-            { icon: FileCheck, title: 'Verified Pros', desc: 'Identity and skills verification' },
-            { icon: Clock, title: 'Quick & Easy', desc: 'Post a task in under 2 minutes' },
+            { icon: Shield, titleKey: 'how.escrow.title', descKey: 'how.escrow.desc' },
+            { icon: FileCheck, titleKey: 'how.verified.title', descKey: 'how.verified.desc' },
+            { icon: Clock, titleKey: 'how.quick.title', descKey: 'how.quick.desc' },
           ].map((item) => (
-            <div key={item.title} className="text-center p-6 rounded-2xl bg-card border border-border shadow-card">
+            <div key={item.titleKey} className="text-center p-6 rounded-2xl bg-card border border-border shadow-card">
               <item.icon className="w-8 h-8 text-primary mx-auto" />
-              <h4 className="font-bold mt-3">{item.title}</h4>
-              <p className="text-sm text-muted-foreground mt-1">{item.desc}</p>
+              <h4 className="font-bold mt-3">{t(item.titleKey)}</h4>
+              <p className="text-sm text-muted-foreground mt-1">{t(item.descKey)}</p>
             </div>
           ))}
         </div>

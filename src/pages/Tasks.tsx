@@ -77,7 +77,7 @@ const TasksPage = () => {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
+                    <h3 className="font-semibold text-foreground truncate">{t(task.titleKey)}</h3>
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5" />

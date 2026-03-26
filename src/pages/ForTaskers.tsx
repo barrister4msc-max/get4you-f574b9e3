@@ -39,14 +39,14 @@ const ForTaskersPage = () => {
               </div>
               {plan.price > 0 && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  {currency === 'ILS' ? `₪${Math.round(plan.price * 3.7)}` : `$${plan.price}`}/mo
+                  {currency === 'ILS' ? `₪${Math.round(plan.price * 3.7)}` : `$${plan.price}`}{t('taskers.perMonth')}
                 </p>
               )}
               <ul className="mt-5 space-y-2">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm">
+                {plan.featureKeys.map((fKey) => (
+                  <li key={fKey} className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    {f}
+                    {t(fKey)}
                   </li>
                 ))}
               </ul>
