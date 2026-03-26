@@ -17,6 +17,7 @@ export const Footer = () => {
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy')}</Link>
+            <span className="hover:text-foreground transition-colors cursor-pointer">{t('footer.support')}</span>
           </div>
           <p className="text-xs text-muted-foreground">© 2026 Hooppy production. {t('footer.rights')}</p>
         </div>
