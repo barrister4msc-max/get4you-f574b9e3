@@ -27,7 +27,7 @@ const TasksPage = () => {
 
   const filtered = mockTasks.filter((task) => {
     if (filterCat && task.category !== filterCat) return false;
-    if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !t(task.titleKey).toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
