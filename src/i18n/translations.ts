@@ -122,6 +122,27 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.rights': 'All rights reserved.',
     'footer.terms': 'Terms',
     'footer.privacy': 'Privacy',
+    'footer.support': 'Support',
+
+    // Support
+    'support.title': 'Support',
+    'support.subtitle': 'How can we help you?',
+    'support.name': 'Your Name',
+    'support.email': 'Your Email',
+    'support.subject': 'Subject',
+    'support.message': 'Message',
+    'support.send': 'Send',
+    'support.sent': 'Message sent! We will respond shortly.',
+    'support.chat': 'Chat',
+    'support.form': 'Feedback Form',
+
+    // Terms & Privacy
+    'terms.title': 'Terms of Service',
+    'terms.upload': 'Upload Document',
+    'terms.noContent': 'Terms of service content will appear here.',
+    'privacy.title': 'Privacy Policy',
+    'privacy.upload': 'Upload Document',
+    'privacy.noContent': 'Privacy policy content will appear here.',
 
     // How it works extras
     'how.escrow.title': 'Escrow Protection',
