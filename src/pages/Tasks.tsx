@@ -6,12 +6,12 @@ import { motion } from 'framer-motion';
 import { MapPin, Clock, MessageCircle, Filter, Search } from 'lucide-react';
 
 const mockTasks = [
-  { id: '1', title: 'Deep clean apartment (3 rooms)', category: 'cleaning', budget: 120, location: 'Tel Aviv', urgency: 'soon', offers: 5, date: '2026-03-27' },
-  { id: '2', title: 'Help with apartment move', category: 'moving', budget: 300, location: 'Jerusalem', urgency: 'flexible', offers: 3, date: '2026-04-01' },
-  { id: '3', title: 'Fix kitchen faucet', category: 'repair', budget: 80, location: 'Haifa', urgency: 'urgent', offers: 7, date: '2026-03-25' },
-  { id: '4', title: 'Build a landing page', category: 'digital', budget: 500, location: 'Remote', urgency: 'flexible', offers: 12, date: '2026-04-05' },
-  { id: '5', title: 'Psychology consultation', category: 'consulting', budget: 150, location: 'Online', urgency: 'soon', offers: 2, date: '2026-03-28' },
-  { id: '6', title: 'Deliver 20 packages across city', category: 'delivery', budget: 200, location: 'Moscow', urgency: 'urgent', offers: 4, date: '2026-03-26' },
+  { id: '1', titleKey: 'mock.task.1', category: 'cleaning', budget: 120, location: 'Tel Aviv', urgency: 'soon', offers: 5, date: '2026-03-27' },
+  { id: '2', titleKey: 'mock.task.2', category: 'moving', budget: 300, location: 'Jerusalem', urgency: 'flexible', offers: 3, date: '2026-04-01' },
+  { id: '3', titleKey: 'mock.task.3', category: 'repair', budget: 80, location: 'Haifa', urgency: 'urgent', offers: 7, date: '2026-03-25' },
+  { id: '4', titleKey: 'mock.task.4', category: 'digital', budget: 500, location: 'Remote', urgency: 'flexible', offers: 12, date: '2026-04-05' },
+  { id: '5', titleKey: 'mock.task.5', category: 'consulting', budget: 150, location: 'Online', urgency: 'soon', offers: 2, date: '2026-03-28' },
+  { id: '6', titleKey: 'mock.task.6', category: 'delivery', budget: 200, location: 'Moscow', urgency: 'urgent', offers: 4, date: '2026-03-26' },
 ];
 
 const urgencyColors: Record<string, string> = {
@@ -27,7 +27,7 @@ const TasksPage = () => {
 
   const filtered = mockTasks.filter((task) => {
     if (filterCat && task.category !== filterCat) return false;
-    if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !t(task.titleKey).toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -77,7 +77,7 @@ const TasksPage = () => {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
+                    <h3 className="font-semibold text-foreground truncate">{t(task.titleKey)}</h3>
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5" />
