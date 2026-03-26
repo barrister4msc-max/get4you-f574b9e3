@@ -295,7 +295,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.rights': 'Все права защищены.',
     'footer.terms': 'Условия',
     'footer.privacy': 'Конфиденциальность',
-    'footer.support': 'Поддержка',
+    'footer.support': 'Служба поддержки',
 
     'support.title': 'Служба поддержки',
     'support.subtitle': 'Чем мы можем помочь?',
