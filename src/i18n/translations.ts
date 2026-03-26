@@ -254,6 +254,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.forgot': 'Забыли пароль?',
     'auth.noAccount': 'Нет аккаунта?',
     'auth.hasAccount': 'Уже есть аккаунт?',
+    'auth.checkEmail': 'Проверьте почту для подтверждения аккаунта.',
+    'auth.passwordMin': 'Пароль должен быть не менее 6 символов.',
 
     'profile.rating': 'Рейтинг',
     'profile.completed': 'Выполнено',
@@ -261,6 +263,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.about': 'О себе',
     'profile.skills': 'Навыки',
     'profile.portfolio': 'Портфолио',
+    'profile.phone': 'Телефон',
+    'profile.city': 'Город',
+    'profile.save': 'Сохранить',
+    'profile.saved': 'Профиль сохранён!',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
