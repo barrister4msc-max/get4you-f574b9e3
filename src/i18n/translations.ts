@@ -100,6 +100,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.forgot': 'Forgot Password?',
     'auth.noAccount': "Don't have an account?",
     'auth.hasAccount': 'Already have an account?',
+    'auth.checkEmail': 'Check your email to verify your account.',
+    'auth.passwordMin': 'Password must be at least 6 characters.',
 
     // Profile
     'profile.rating': 'Rating',
@@ -108,6 +110,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.about': 'About',
     'profile.skills': 'Skills',
     'profile.portfolio': 'Portfolio',
+    'profile.phone': 'Phone',
+    'profile.city': 'City',
+    'profile.save': 'Save',
+    'profile.saved': 'Profile saved!',
 
     // General
     'currency.usd': 'USD',
