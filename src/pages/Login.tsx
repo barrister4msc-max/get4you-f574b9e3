@@ -1,16 +1,28 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
   const { t } = useLanguage();
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Will connect to Supabase auth later
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    setLoading(false);
+    if (error) {
+      toast.error(error);
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -34,6 +46,7 @@ const LoginPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 placeholder="you@example.com"
+                required
               />
             </div>
           </div>
@@ -48,20 +61,18 @@ const LoginPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 placeholder="••••••••"
+                required
               />
             </div>
           </div>
 
-          <div className="text-end">
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">{t('auth.forgot')}</Link>
-          </div>
-
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {t('auth.login')}
-            <ArrowRight className="w-4 h-4" />
+            {loading ? '...' : t('auth.login')}
+            {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 

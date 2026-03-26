@@ -1,19 +1,37 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Role = 'client' | 'tasker' | 'both';
 
 const SignupPage = () => {
   const { t } = useLanguage();
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Role>('client');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 6) {
+      toast.error(t('auth.passwordMin'));
+      return;
+    }
+    setLoading(true);
+    const { error } = await signUp(email, password, name, role);
+    setLoading(false);
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success(t('auth.checkEmail'));
+      navigate('/login');
+    }
   };
 
   const roles: { value: Role; label: string }[] = [
@@ -42,6 +60,7 @@ const SignupPage = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                required
               />
             </div>
           </div>
@@ -56,6 +75,7 @@ const SignupPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 placeholder="you@example.com"
+                required
               />
             </div>
           </div>
@@ -70,6 +90,8 @@ const SignupPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 placeholder="••••••••"
+                required
+                minLength={6}
               />
             </div>
           </div>
@@ -97,10 +119,11 @@ const SignupPage = () => {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {t('auth.signup')}
-            <ArrowRight className="w-4 h-4" />
+            {loading ? '...' : t('auth.signup')}
+            {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 

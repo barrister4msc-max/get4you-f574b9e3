@@ -100,6 +100,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.forgot': 'Forgot Password?',
     'auth.noAccount': "Don't have an account?",
     'auth.hasAccount': 'Already have an account?',
+    'auth.checkEmail': 'Check your email to verify your account.',
+    'auth.passwordMin': 'Password must be at least 6 characters.',
 
     // Profile
     'profile.rating': 'Rating',
@@ -108,6 +110,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.about': 'About',
     'profile.skills': 'Skills',
     'profile.portfolio': 'Portfolio',
+    'profile.phone': 'Phone',
+    'profile.city': 'City',
+    'profile.save': 'Save',
+    'profile.saved': 'Profile saved!',
 
     // General
     'currency.usd': 'USD',
@@ -248,6 +254,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.forgot': 'Забыли пароль?',
     'auth.noAccount': 'Нет аккаунта?',
     'auth.hasAccount': 'Уже есть аккаунт?',
+    'auth.checkEmail': 'Проверьте почту для подтверждения аккаунта.',
+    'auth.passwordMin': 'Пароль должен быть не менее 6 символов.',
 
     'profile.rating': 'Рейтинг',
     'profile.completed': 'Выполнено',
@@ -255,6 +263,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.about': 'О себе',
     'profile.skills': 'Навыки',
     'profile.portfolio': 'Портфолио',
+    'profile.phone': 'Телефон',
+    'profile.city': 'Город',
+    'profile.save': 'Сохранить',
+    'profile.saved': 'Профиль сохранён!',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
@@ -391,6 +403,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.forgot': 'שכחת סיסמה?',
     'auth.noAccount': 'אין לך חשבון?',
     'auth.hasAccount': 'כבר יש לך חשבון?',
+    'auth.checkEmail': 'בדוק את המייל שלך לאימות החשבון.',
+    'auth.passwordMin': 'הסיסמה חייבת להכיל לפחות 6 תווים.',
 
     'profile.rating': 'דירוג',
     'profile.completed': 'הושלמו',
@@ -398,6 +412,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.about': 'אודות',
     'profile.skills': 'כישורים',
     'profile.portfolio': 'תיק עבודות',
+    'profile.phone': 'טלפון',
+    'profile.city': 'עיר',
+    'profile.save': 'שמור',
+    'profile.saved': 'הפרופיל נשמר!',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
