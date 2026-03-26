@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
 
 const plans = [
-  { key: 'starter', commission: '15%', price: 0, features: ['Basic profile', 'Up to 5 active offers', 'Standard support'] },
-  { key: 'pro', commission: '10%', price: 29, features: ['Verified badge', 'Up to 20 active offers', 'Priority in search', 'Analytics dashboard'] },
-  { key: 'expert', commission: '7%', price: 59, features: ['Expert badge', 'Unlimited offers', 'Top search placement', 'Dedicated support', 'Featured profile'] },
+  { key: 'starter', commission: '15%', price: 0, featureKeys: ['taskers.feature.basicProfile', 'taskers.feature.5offers', 'taskers.feature.standardSupport'] },
+  { key: 'pro', commission: '10%', price: 29, featureKeys: ['taskers.feature.verifiedBadge', 'taskers.feature.20offers', 'taskers.feature.prioritySearch', 'taskers.feature.analytics'] },
+  { key: 'expert', commission: '7%', price: 59, featureKeys: ['taskers.feature.expertBadge', 'taskers.feature.unlimitedOffers', 'taskers.feature.topSearch', 'taskers.feature.dedicatedSupport', 'taskers.feature.featuredProfile'] },
 ];
 
 const ForTaskersPage = () => {
