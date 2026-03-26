@@ -18,7 +18,7 @@ export const Footer = () => {
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy')}</Link>
           </div>
-          <p className="text-xs text-muted-foreground">© 2026 TaskFlow. {t('footer.rights')}</p>
+          <p className="text-xs text-muted-foreground">© 2026 Hooppy production. {t('footer.rights')}</p>
         </div>
       </div>
     </footer>
