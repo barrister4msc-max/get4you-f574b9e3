@@ -117,6 +117,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.terms': 'Terms',
     'footer.privacy': 'Privacy',
 
+    // How it works extras
+    'how.escrow.title': 'Escrow Protection',
+    'how.escrow.desc': 'Funds held securely until work is approved',
+    'how.verified.title': 'Verified Pros',
+    'how.verified.desc': 'Identity and skills verification',
+    'how.quick.title': 'Quick & Easy',
+    'how.quick.desc': 'Post a task in under 2 minutes',
+
     // For Taskers page
     'taskers.title': 'Earn Money on Your Terms',
     'taskers.subtitle': 'Join thousands of professionals earning with flexible schedules.',
