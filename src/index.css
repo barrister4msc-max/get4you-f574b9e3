@@ -89,13 +89,10 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  [dir="rtl"] {
-    direction: rtl;
-@layer base {
-  @layer base {
-    /* ...the rest of your base...*/
-    #lovable-badge {
-      display: none !important;
+  [dir="rtl"] 
+  {
+    <style> #lovable-badge { display: none !important; } </style>
+
  
 
 @layer utilities {
