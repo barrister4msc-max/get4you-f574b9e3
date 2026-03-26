@@ -1,12 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 
 export const Header = () => {
   const { t } = useLanguage();
+  const { user, profile } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -25,7 +27,7 @@ export const Header = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-emerald flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-sm">T</span>
           </div>
-          <span className="font-bold text-lg text-foreground">TaskFlow</span>
+          <span className="font-bold text-lg text-foreground">Hooppy</span>
         </Link>
 
         {/* Desktop nav */}
@@ -48,18 +50,30 @@ export const Header = () => {
         <div className="hidden md:flex items-center gap-2">
           <CurrencyToggle />
           <LanguageSwitcher />
-          <Link
-            to="/login"
-            className="px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
-          >
-            {t('nav.login')}
-          </Link>
-          <Link
-            to="/signup"
-            className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
-          >
-            {t('nav.signup')}
-          </Link>
+          {user ? (
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+            >
+              <User className="w-4 h-4" />
+              {profile?.display_name || t('nav.profile')}
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
+              >
+                {t('nav.login')}
+              </Link>
+              <Link
+                to="/signup"
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+              >
+                {t('nav.signup')}
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -86,12 +100,20 @@ export const Header = () => {
             <LanguageSwitcher />
           </div>
           <div className="flex gap-2 pt-3">
-            <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-medium border border-border rounded-lg">
-              {t('nav.login')}
-            </Link>
-            <Link to="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
-              {t('nav.signup')}
-            </Link>
+            {user ? (
+              <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                {t('nav.profile')}
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-medium border border-border rounded-lg">
+                  {t('nav.login')}
+                </Link>
+                <Link to="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                  {t('nav.signup')}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
