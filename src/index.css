@@ -83,7 +83,8 @@
     --ring: 152 55% 45%;
   }
 }
-
+  * {
+    @apply border-border;
 @layer base {
   @layer base {
     /* ...the rest of your base...*/
