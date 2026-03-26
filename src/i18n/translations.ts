@@ -276,7 +276,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.privacy': 'Конфиденциальность',
 
     'how.escrow.title': 'Защита эскроу',
-    'how.escrow.desc': 'Средства надёжно хранятся до подтверждения работы',
+    'how.escrow.desc': 'Средства надёжно хранятся до подтверждения выполнения поставленной задачи',
     'how.verified.title': 'Проверенные специалисты',
     'how.verified.desc': 'Верификация личности и навыков',
     'how.quick.title': 'Быстро и просто',
