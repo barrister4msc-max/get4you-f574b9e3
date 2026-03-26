@@ -403,6 +403,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.forgot': 'שכחת סיסמה?',
     'auth.noAccount': 'אין לך חשבון?',
     'auth.hasAccount': 'כבר יש לך חשבון?',
+    'auth.checkEmail': 'בדוק את המייל שלך לאימות החשבון.',
+    'auth.passwordMin': 'הסיסמה חייבת להכיל לפחות 6 תווים.',
 
     'profile.rating': 'דירוג',
     'profile.completed': 'הושלמו',
@@ -410,6 +412,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.about': 'אודות',
     'profile.skills': 'כישורים',
     'profile.portfolio': 'תיק עבודות',
+    'profile.phone': 'טלפון',
+    'profile.city': 'עיר',
+    'profile.save': 'שמור',
+    'profile.saved': 'הפרופיל נשמר!',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
