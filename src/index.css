@@ -89,19 +89,7 @@
     /* ...the rest of your base...*/
     #lovable-badge {
       display: none !important;
-    }
-  }
-
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-  }
-  [dir="rtl"] {
-    direction: rtl;
-  }
-}
+ 
 
 @layer utilities {
   .text-gradient-emerald {
