@@ -2,22 +2,24 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/components/CurrencyToggle';
 import { TaskAIAssistant } from '@/components/TaskAIAssistant';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Camera, Mic, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus,
+  Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus,
 } from 'lucide-react';
 
 const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'];
 
 const CreateTaskPage = () => {
-  const { t, currency } = useLanguage();
+  const { t, currency, locale } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const voice = useVoiceInput(locale);
   const [step, setStep] = useState(1);
   const [categorizing, setCategorizing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -214,13 +216,51 @@ const CreateTaskPage = () => {
                 </button>
                 <button
                   type="button"
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-orange-50 text-orange-600"
+                  onClick={() => {
+                    if (!voice.isSupported) {
+                      toast.error(t('task.voice.unsupported') || 'Voice input not supported in this browser');
+                      return;
+                    }
+                    if (voice.isListening) {
+                      voice.stop();
+                      if (voice.transcript) {
+                        update({ description: (form.description ? form.description + ' ' : '') + voice.transcript });
+                        toast.success(t('task.voice.applied') || 'Voice text added!');
+                        voice.reset();
+                      }
+                    } else {
+                      voice.start();
+                      toast.info(t('task.voice.listening') || 'Listening... Speak now');
+                    }
+                  }}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                    voice.isListening
+                      ? 'border-destructive bg-destructive/10 text-destructive animate-pulse'
+                      : 'border-border hover:shadow-card-hover bg-orange-50 text-orange-600'
+                  }`}
                 >
-                  <Mic className="w-6 h-6" />
-                  <span className="text-xs font-medium">{t('task.voice')}</span>
+                  {voice.isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                  <span className="text-xs font-medium">
+                    {voice.isListening ? (t('task.voice.stop') || 'Stop') : t('task.voice')}
+                  </span>
                 </button>
                 <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
               </div>
+
+              {/* Voice transcript preview */}
+              <AnimatePresence>
+                {voice.isListening && voice.transcript && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-muted rounded-xl p-3 text-sm text-foreground border border-border"
+                  >
+                    <p className="text-xs text-muted-foreground mb-1">{t('task.voice.preview') || 'Voice input:'}</p>
+                    <p>{voice.transcript}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div>
                 <label className="block text-sm font-medium mb-2">{t('task.category')}</label>
