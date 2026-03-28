@@ -2,13 +2,14 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/components/CurrencyToggle';
 import { TaskAIAssistant } from '@/components/TaskAIAssistant';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Camera, Mic, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus,
+  Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus,
 } from 'lucide-react';
 
 const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'];
