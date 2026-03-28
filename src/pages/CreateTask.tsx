@@ -247,7 +247,21 @@ const CreateTaskPage = () => {
                 <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
               </div>
 
-              <div>
+              {/* Voice transcript preview */}
+              <AnimatePresence>
+                {voice.isListening && voice.transcript && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-muted rounded-xl p-3 text-sm text-foreground border border-border"
+                  >
+                    <p className="text-xs text-muted-foreground mb-1">{t('task.voice.preview') || 'Voice input:'}</p>
+                    <p>{voice.transcript}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
                 <label className="block text-sm font-medium mb-2">{t('task.category')}</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {categories.map((c) => (
