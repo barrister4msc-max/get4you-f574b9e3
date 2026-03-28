@@ -1,19 +1,28 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/components/CurrencyToggle';
 import { TaskAIAssistant } from '@/components/TaskAIAssistant';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Camera, Mic, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2,
+  Camera, Mic, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus,
 } from 'lucide-react';
 
 const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'];
 
 const CreateTaskPage = () => {
   const { t, currency } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [categorizing, setCategorizing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState({
     category: '',
     taskType: 'onsite' as 'onsite' | 'remote',
@@ -32,12 +41,38 @@ const CreateTaskPage = () => {
 
   const handleAISuggestion = (text: string) => {
     update({ description: text });
-    toast.success(t('task.ai.applied') || 'AI suggestion applied!');
+    toast.success(t('task.ai.applied'));
+  };
+
+  const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (photos.length + files.length > 5) {
+      toast.error(t('task.photos.max') || 'Maximum 5 photos');
+      return;
+    }
+    const validFiles = files.filter(f => {
+      if (f.size > 5 * 1024 * 1024) {
+        toast.error(`${f.name}: max 5MB`);
+        return false;
+      }
+      return f.type.startsWith('image/');
+    });
+    setPhotos(prev => [...prev, ...validFiles]);
+    validFiles.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = (ev) => setPhotoPreviews(prev => [...prev, ev.target?.result as string]);
+      reader.readAsDataURL(f);
+    });
+  };
+
+  const removePhoto = (idx: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== idx));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleAutoCategorize = async () => {
     if (!form.description && !form.title) {
-      toast.error(t('task.ai.needDescription') || 'Please add a title or description first');
+      toast.error(t('task.ai.needDescription'));
       return;
     }
     setCategorizing(true);
@@ -64,11 +99,83 @@ const CreateTaskPage = () => {
         urgency: data.urgency || form.urgency,
         title: data.improved_title || form.title,
       });
-      toast.success(t('task.ai.categorized') || 'AI suggestions applied!');
+      toast.success(t('task.ai.categorized'));
     } catch {
-      toast.error(t('task.ai.error') || 'AI service unavailable');
+      toast.error(t('task.ai.error'));
     } finally {
       setCategorizing(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    if (!form.title.trim()) {
+      toast.error(t('task.title.required') || 'Title is required');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Upload photos
+      const photoUrls: string[] = [];
+      for (const file of photos) {
+        const ext = file.name.split('.').pop();
+        const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('task-photos')
+          .upload(path, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('task-photos').getPublicUrl(path);
+        photoUrls.push(urlData.publicUrl);
+      }
+
+      // Lookup category_id
+      let categoryId: string | null = null;
+      if (form.category) {
+        const { data: catData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('name_en', form.category.charAt(0).toUpperCase() + form.category.slice(1))
+          .maybeSingle();
+        
+        if (!catData) {
+          // Try matching by lowercase name_en
+          const { data: catData2 } = await supabase
+            .from('categories')
+            .select('id')
+            .ilike('name_en', `%${form.category}%`)
+            .maybeSingle();
+          categoryId = catData2?.id || null;
+        } else {
+          categoryId = catData.id;
+        }
+      }
+
+      const { error } = await supabase.from('tasks').insert({
+        user_id: user.id,
+        title: form.title.trim(),
+        description: form.description.trim() || null,
+        category_id: categoryId,
+        task_type: form.taskType as 'onsite' | 'remote',
+        budget_fixed: form.budget,
+        budget_min: form.budget,
+        budget_max: form.budgetMax,
+        is_urgent: form.urgency === 'urgent',
+        address: form.location.trim() || null,
+        photos: photoUrls.length > 0 ? photoUrls : null,
+        currency: currency,
+        status: 'open',
+      });
+
+      if (error) throw error;
+
+      toast.success(t('task.published') || 'Task published!');
+      navigate('/tasks');
+    } catch (err: unknown) {
+      console.error('Submit error:', err);
+      toast.error(t('task.publish.error') || 'Failed to publish task');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -96,15 +203,17 @@ const CreateTaskPage = () => {
         <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
           {step === 1 && (
             <div className="space-y-6">
-              {/* AI / Photo / Voice */}
               <div className="grid grid-cols-3 gap-3">
                 <button
+                  type="button"
+                  onClick={() => setStep(2)}
                   className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-blue-50 text-blue-600"
                 >
                   <Camera className="w-6 h-6" />
                   <span className="text-xs font-medium">{t('task.photos')}</span>
                 </button>
                 <button
+                  type="button"
                   className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-orange-50 text-orange-600"
                 >
                   <Mic className="w-6 h-6" />
@@ -178,7 +287,6 @@ const CreateTaskPage = () => {
                 />
               </div>
 
-              {/* AI Auto-categorize button */}
               <button
                 type="button"
                 onClick={handleAutoCategorize}
@@ -186,7 +294,7 @@ const CreateTaskPage = () => {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
               >
                 {categorizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {t('task.ai.autoCategorize') || 'AI: Auto-fill category & budget'}
+                {t('task.ai.autoCategorize')}
               </button>
 
               <div>
@@ -230,12 +338,46 @@ const CreateTaskPage = () => {
                 </div>
               </div>
 
+              {/* Photo upload */}
               <div>
                 <label className="block text-sm font-medium mb-1.5">{t('task.photos')}</label>
-                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/30 transition-colors cursor-pointer">
-                  <Camera className="w-8 h-8 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mt-2">{t('task.photos')}</p>
-                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handlePhotos}
+                />
+
+                {photoPreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mb-3">
+                    {photoPreviews.map((src, i) => (
+                      <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border">
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={photos.length >= 5}
+                  className="w-full border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary/30 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ImagePlus className="w-8 h-8 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {t('task.photos.upload') || 'Click to upload photos'} ({photos.length}/5)
+                  </p>
+                </button>
               </div>
             </div>
           )}
@@ -260,6 +402,13 @@ const CreateTaskPage = () => {
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="w-4 h-4" />
                     {form.location}
+                  </div>
+                )}
+                {photoPreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {photoPreviews.map((src, i) => (
+                      <img key={i} src={src} alt="" className="w-16 h-16 rounded-lg object-cover border border-border" />
+                    ))}
                   </div>
                 )}
               </div>
@@ -289,9 +438,13 @@ const CreateTaskPage = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity">
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               {t('task.submit')}
-              <CheckCircle2 className="w-4 h-4" />
             </button>
           )}
         </div>
