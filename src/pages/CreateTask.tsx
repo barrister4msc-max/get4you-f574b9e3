@@ -262,6 +262,7 @@ const CreateTaskPage = () => {
                 )}
               </AnimatePresence>
 
+              <div>
                 <label className="block text-sm font-medium mb-2">{t('task.category')}</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {categories.map((c) => (
