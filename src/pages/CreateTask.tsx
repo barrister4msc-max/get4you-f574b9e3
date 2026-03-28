@@ -15,11 +15,11 @@ import {
 const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'];
 
 const CreateTaskPage = () => {
-  const { t, currency, language } = useLanguage();
+  const { t, currency, locale } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const voice = useVoiceInput(language);
+  const voice = useVoiceInput(locale);
   const [step, setStep] = useState(1);
   const [categorizing, setCategorizing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
