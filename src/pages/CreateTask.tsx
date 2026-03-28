@@ -216,10 +216,33 @@ const CreateTaskPage = () => {
                 </button>
                 <button
                   type="button"
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-orange-50 text-orange-600"
+                  onClick={() => {
+                    if (!voice.isSupported) {
+                      toast.error(t('task.voice.unsupported') || 'Voice input not supported in this browser');
+                      return;
+                    }
+                    if (voice.isListening) {
+                      voice.stop();
+                      if (voice.transcript) {
+                        update({ description: (form.description ? form.description + ' ' : '') + voice.transcript });
+                        toast.success(t('task.voice.applied') || 'Voice text added!');
+                        voice.reset();
+                      }
+                    } else {
+                      voice.start();
+                      toast.info(t('task.voice.listening') || 'Listening... Speak now');
+                    }
+                  }}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+                    voice.isListening
+                      ? 'border-destructive bg-destructive/10 text-destructive animate-pulse'
+                      : 'border-border hover:shadow-card-hover bg-orange-50 text-orange-600'
+                  }`}
                 >
-                  <Mic className="w-6 h-6" />
-                  <span className="text-xs font-medium">{t('task.voice')}</span>
+                  {voice.isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                  <span className="text-xs font-medium">
+                    {voice.isListening ? (t('task.voice.stop') || 'Stop') : t('task.voice')}
+                  </span>
                 </button>
                 <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
               </div>
