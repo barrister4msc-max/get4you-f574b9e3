@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatPrice } from '@/components/CurrencyToggle';
+import { TaskAIAssistant } from '@/components/TaskAIAssistant';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import {
-  Camera, Mic, Sparkles, ArrowRight, ArrowLeft, MapPin, Calendar, DollarSign, CheckCircle2,
+  Camera, Mic, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2,
 } from 'lucide-react';
 
 const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'];
@@ -11,6 +13,7 @@ const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'de
 const CreateTaskPage = () => {
   const { t, currency } = useLanguage();
   const [step, setStep] = useState(1);
+  const [categorizing, setCategorizing] = useState(false);
   const [form, setForm] = useState({
     category: '',
     taskType: 'onsite' as 'onsite' | 'remote',
@@ -24,6 +27,50 @@ const CreateTaskPage = () => {
   });
 
   const update = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  const aiContext = `Title: ${form.title}, Description: ${form.description}, Category: ${form.category}, Type: ${form.taskType}`;
+
+  const handleAISuggestion = (text: string) => {
+    update({ description: text });
+    toast.success(t('task.ai.applied') || 'AI suggestion applied!');
+  };
+
+  const handleAutoCategorize = async () => {
+    if (!form.description && !form.title) {
+      toast.error(t('task.ai.needDescription') || 'Please add a title or description first');
+      return;
+    }
+    setCategorizing(true);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task-assistant`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          type: 'categorize',
+          messages: [{ role: 'user', content: `Task title: ${form.title}\nDescription: ${form.description}` }],
+        }),
+      });
+      if (!resp.ok) throw new Error('Failed');
+      const data = await resp.json();
+      update({
+        category: data.category || form.category,
+        taskType: data.task_type || form.taskType,
+        budget: data.budget_min || form.budget,
+        budgetMax: data.budget_max || form.budgetMax,
+        urgency: data.urgency || form.urgency,
+        title: data.improved_title || form.title,
+      });
+      toast.success(t('task.ai.categorized') || 'AI suggestions applied!');
+    } catch {
+      toast.error(t('task.ai.error') || 'AI service unavailable');
+    } finally {
+      setCategorizing(false);
+    }
+  };
 
   return (
     <div className="min-h-[80vh] py-12">
@@ -51,19 +98,19 @@ const CreateTaskPage = () => {
             <div className="space-y-6">
               {/* AI / Photo / Voice */}
               <div className="grid grid-cols-3 gap-3">
-                {[
-                  { icon: Camera, label: t('task.photos'), color: 'bg-blue-50 text-blue-600' },
-                  { icon: Mic, label: t('task.voice'), color: 'bg-orange-50 text-orange-600' },
-                  { icon: Sparkles, label: t('task.ai'), color: 'bg-purple-50 text-purple-600' },
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all ${item.color}`}
-                  >
-                    <item.icon className="w-6 h-6" />
-                    <span className="text-xs font-medium">{item.label}</span>
-                  </button>
-                ))}
+                <button
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-blue-50 text-blue-600"
+                >
+                  <Camera className="w-6 h-6" />
+                  <span className="text-xs font-medium">{t('task.photos')}</span>
+                </button>
+                <button
+                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-orange-50 text-orange-600"
+                >
+                  <Mic className="w-6 h-6" />
+                  <span className="text-xs font-medium">{t('task.voice')}</span>
+                </button>
+                <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
               </div>
 
               <div>
@@ -130,6 +177,17 @@ const CreateTaskPage = () => {
                   placeholder={t('task.description.placeholder')}
                 />
               </div>
+
+              {/* AI Auto-categorize button */}
+              <button
+                type="button"
+                onClick={handleAutoCategorize}
+                disabled={categorizing}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 text-sm font-medium text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+              >
+                {categorizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {t('task.ai.autoCategorize') || 'AI: Auto-fill category & budget'}
+              </button>
 
               <div>
                 <label className="block text-sm font-medium mb-1.5">{t('task.location')}</label>
