@@ -278,6 +278,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'Мои задачи',
     'nav.messages': 'Сообщения',
     'nav.logout': 'Выйти',
+    'nav.admin': 'Админ',
 
     'hero.title': 'Решите любую задачу',
     'hero.titleAccent': 'с местными профессионалами',
