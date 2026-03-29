@@ -364,6 +364,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'Город',
     'profile.save': 'Сохранить',
     'profile.saved': 'Профиль сохранён!',
+    'profile.roles': 'Мои роли',
+    'profile.roles.updated': 'Роли обновлены!',
+    'profile.roles.needOne': 'Нужна хотя бы одна роль',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
