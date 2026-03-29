@@ -29,7 +29,7 @@ export const Header = () => {
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(152, 55%, 42%), hsl(45, 95%, 55%))' }}>
-            <span className="font-bold text-sm" style={{ color: 'hsl(152, 55%, 42%)' }}>T</span>
+            <span className="text-primary-foreground font-bold text-sm">T</span>
           </div>
           <span className="font-bold text-lg text-gradient-emerald">TaskFlow</span>
         </Link>
