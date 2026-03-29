@@ -13,7 +13,8 @@ interface Props {
 }
 
 export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const voice = useVoiceInput(locale);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
