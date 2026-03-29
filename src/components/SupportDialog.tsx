@@ -17,8 +17,9 @@ import { toast } from 'sonner';
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 export const SupportDialog = () => {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user, profile } = useAuth();
+  const voice = useVoiceInput(locale);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('chat');
 
