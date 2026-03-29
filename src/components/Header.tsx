@@ -8,14 +8,16 @@ import { useState } from 'react';
 
 export const Header = () => {
   const { t } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, roles } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
 
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/tasks', label: t('nav.tasks') },
-    { to: '/create-task', label: t('nav.create') },
+    ...(!isTaskerOnly ? [{ to: '/create-task', label: t('nav.create') }] : []),
     { to: '/how-it-works', label: t('nav.howItWorks') },
     { to: '/for-taskers', label: t('nav.forTaskers') },
   ];
