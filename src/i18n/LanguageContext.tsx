@@ -18,7 +18,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
-    document.documentElement.dir = l === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.dir = (l === 'he' || l === 'ar') ? 'rtl' : 'ltr';
     document.documentElement.lang = l;
     if (l === 'he') setCurrency('ILS');
     else setCurrency('USD');
