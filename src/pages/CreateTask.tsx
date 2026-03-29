@@ -178,7 +178,7 @@ const CreateTaskPage = () => {
         is_urgent: form.urgency === 'urgent',
         address: form.location.trim() || null,
         photos: photoUrls.length > 0 ? photoUrls : null,
-        currency: currency,
+        voice_note_url: voiceNoteUrl,
         status: 'open',
       });
 
