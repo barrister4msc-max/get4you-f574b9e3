@@ -1,17 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { formatPrice } from '@/components/CurrencyToggle';
 import { supabase } from '@/integrations/supabase/client';
-import { MapPin, Clock, User, Star, Shield, ArrowRight, Play, ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
+  Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
+} from 'lucide-react';
+
+interface Proposal {
+  id: string;
+  user_id: string;
+  price: number;
+  comment: string | null;
+  status: 'pending' | 'accepted' | 'rejected';
+  currency: string | null;
+  created_at: string;
+  profile?: { display_name: string | null; avatar_url: string | null } | null;
+}
 
 const TaskDetailPage = () => {
   const { id } = useParams();
   const { t, currency, locale } = useLanguage();
+  const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
-  const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+  // Proposals state
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [price, setPrice] = useState('');
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  const isOwner = user?.id === task?.user_id;
+  const hasProposed = proposals.some(p => p.user_id === user?.id);
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -21,8 +50,7 @@ const TaskDetailPage = () => {
         .select('*, categories(name_en, name_ru, name_he)')
         .eq('id', id)
         .maybeSingle();
-      
-      // Fetch owner profile separately
+
       if (data?.user_id) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -31,12 +59,123 @@ const TaskDetailPage = () => {
           .maybeSingle();
         setOwnerProfile(profile);
       }
-      
+
       setTask(data);
       setLoading(false);
     };
     fetchTask();
   }, [id]);
+
+  // Fetch proposals
+  useEffect(() => {
+    const fetchProposals = async () => {
+      if (!id) return;
+      const { data } = await supabase
+        .from('proposals')
+        .select('*')
+        .eq('task_id', id)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        // Fetch profiles for each proposal
+        const userIds = [...new Set(data.map(p => p.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds);
+
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+        const enriched = data.map(p => ({
+          ...p,
+          status: p.status as 'pending' | 'accepted' | 'rejected',
+          profile: profileMap.get(p.user_id) || null,
+        }));
+        setProposals(enriched);
+      }
+    };
+    fetchProposals();
+  }, [id]);
+
+  const handleSubmitProposal = async () => {
+    if (!user || !id || !price) return;
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.from('proposals').insert({
+        task_id: id,
+        user_id: user.id,
+        price: Number(price),
+        comment: comment.trim() || null,
+        currency,
+      }).select().single();
+
+      if (error) throw error;
+
+      // Fetch profile for new proposal
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      setProposals(prev => [{
+        ...data,
+        status: data.status as 'pending' | 'accepted' | 'rejected',
+        profile,
+      }, ...prev]);
+      setShowForm(false);
+      setPrice('');
+      setComment('');
+      toast.success(t('proposal.sent'));
+    } catch {
+      toast.error(t('proposal.error'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateProposal = async (proposalId: string, status: 'accepted' | 'rejected') => {
+    setUpdating(proposalId);
+    try {
+      const { error } = await supabase
+        .from('proposals')
+        .update({ status })
+        .eq('id', proposalId);
+
+      if (error) throw error;
+
+      // If accepted, update task status and assigned_to
+      if (status === 'accepted') {
+        const proposal = proposals.find(p => p.id === proposalId);
+        if (proposal) {
+          await supabase
+            .from('tasks')
+            .update({ status: 'in_progress', assigned_to: proposal.user_id })
+            .eq('id', id!);
+          setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
+        }
+        // Reject all other pending proposals
+        const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
+        for (const p of otherPending) {
+          await supabase.from('proposals').update({ status: 'rejected' }).eq('id', p.id);
+        }
+        toast.success(t('proposal.accepted'));
+      } else {
+        toast.success(t('proposal.rejected'));
+      }
+
+      setProposals(prev =>
+        prev.map(p => {
+          if (p.id === proposalId) return { ...p, status };
+          if (status === 'accepted' && p.status === 'pending') return { ...p, status: 'rejected' as const };
+          return p;
+        })
+      );
+    } catch {
+      toast.error(t('proposal.error'));
+    } finally {
+      setUpdating(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -63,6 +202,12 @@ const TaskDetailPage = () => {
   const budget = task.budget_fixed || task.budget_min || 0;
   const photos: string[] = task.photos || [];
   const ownerName = ownerProfile?.display_name || 'User';
+
+  const statusColors: Record<string, string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    accepted: 'bg-emerald-50 text-primary',
+    rejected: 'bg-red-50 text-red-600',
+  };
 
   return (
     <div className="py-8">
@@ -100,10 +245,8 @@ const TaskDetailPage = () => {
                 <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{new Date(task.created_at).toLocaleDateString()}</span>
               </div>
 
-              {/* Photos gallery */}
               {photos.length > 0 ? (
                 <div className="mt-4 space-y-3">
-                  {/* Main selected photo */}
                   <div className="rounded-xl overflow-hidden border border-border bg-secondary">
                     <img
                       src={selectedPhoto || photos[0]}
@@ -112,7 +255,6 @@ const TaskDetailPage = () => {
                       onClick={() => window.open(selectedPhoto || photos[0], '_blank')}
                     />
                   </div>
-                  {/* Thumbnails */}
                   {photos.length > 1 && (
                     <div className="flex gap-2 overflow-x-auto">
                       {photos.map((url, i) => (
@@ -135,13 +277,85 @@ const TaskDetailPage = () => {
                 </div>
               )}
 
-              {/* Voice note */}
               {task.voice_note_url && (
                 <div className="mt-4 flex items-center gap-3 bg-muted rounded-xl p-3 border border-border">
                   <Play className="w-4 h-4 text-muted-foreground shrink-0" />
                   <audio src={task.voice_note_url} controls className="flex-1 h-8" />
                 </div>
               )}
+            </div>
+
+            {/* Proposals section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-lg flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5" />
+                  {proposals.length} {t('proposal.count')}
+                </h2>
+              </div>
+
+              {proposals.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8 bg-card border border-border rounded-2xl">
+                  {t('proposal.none')}
+                </p>
+              )}
+
+              <div className="space-y-3">
+                {proposals.map((proposal, i) => (
+                  <motion.div
+                    key={proposal.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-card border border-border rounded-xl p-4 hover:shadow-card-hover transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">{proposal.profile?.display_name || 'User'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(proposal.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <div className="font-bold text-primary">{formatPrice(proposal.price, currency)}</div>
+                        <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[proposal.status]}`}>
+                          {t(`proposal.status.${proposal.status}`)}
+                        </span>
+                      </div>
+                    </div>
+                    {proposal.comment && (
+                      <p className="text-sm text-muted-foreground mt-2">{proposal.comment}</p>
+                    )}
+
+                    {/* Accept/Reject buttons for task owner */}
+                    {isOwner && proposal.status === 'pending' && task.status === 'open' && (
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => handleUpdateProposal(proposal.id, 'accepted')}
+                          disabled={updating === proposal.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                          {updating === proposal.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                          {t('proposal.accept')}
+                        </button>
+                        <button
+                          onClick={() => handleUpdateProposal(proposal.id, 'rejected')}
+                          disabled={updating === proposal.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+                        >
+                          <XCircle className="w-3 h-3" />
+                          {t('proposal.reject')}
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -151,10 +365,73 @@ const TaskDetailPage = () => {
               <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency)}</div>
               <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
 
-              <button className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity">
-                {t('tasks.respond')}
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {/* Offer button / form */}
+              {!isOwner && task.status === 'open' && (
+                <>
+                  {!user ? (
+                    <p className="text-xs text-muted-foreground mt-4 text-center">{t('proposal.login')}</p>
+                  ) : hasProposed ? (
+                    <p className="text-xs text-primary mt-4 text-center font-medium">{t('proposal.already')}</p>
+                  ) : (
+                    <>
+                      <AnimatePresence>
+                        {showForm ? (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-4 space-y-3"
+                          >
+                            <div>
+                              <label className="block text-xs font-medium mb-1">{t('proposal.your.price')}</label>
+                              <div className="relative">
+                                <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <input
+                                  type="number"
+                                  value={price}
+                                  onChange={e => setPrice(e.target.value)}
+                                  placeholder={String(budget)}
+                                  className="w-full ps-10 pe-4 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium mb-1">{t('proposal.comment')}</label>
+                              <textarea
+                                value={comment}
+                                onChange={e => setComment(e.target.value)}
+                                rows={3}
+                                placeholder={t('proposal.comment.placeholder')}
+                                className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                              />
+                            </div>
+                            <button
+                              onClick={handleSubmitProposal}
+                              disabled={submitting || !price}
+                              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
+                            >
+                              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                              {t('proposal.submit')}
+                            </button>
+                          </motion.div>
+                        ) : (
+                          <button
+                            onClick={() => setShowForm(true)}
+                            className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                          >
+                            {t('tasks.respond')}
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  )}
+                </>
+              )}
+
+              {isOwner && (
+                <p className="text-xs text-muted-foreground mt-4 text-center">{t('proposal.own.task')}</p>
+              )}
 
               <div className="mt-5 pt-5 border-t border-border">
                 <div className="flex items-center gap-3">
