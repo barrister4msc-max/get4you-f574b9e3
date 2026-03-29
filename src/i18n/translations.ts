@@ -507,6 +507,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.success': 'Заявка успешно отправлена!',
     'esek.promo.title': '🎁 Первые 100 зарегистрировавшихся получают оформление Эсек Патур бесплатно!',
     'esek.promo.description': 'Зарегистрируйтесь сейчас и сэкономьте на оформлении бизнеса.',
+    'esek.promo.remaining': 'Осталось {remaining} из {total} бесплатных мест',
     'esek.error.requiredFields': 'Заполните все обязательные поля',
     'esek.error.submit': 'Ошибка отправки заявки',
     'esek.nav': 'Эсек Патур',
