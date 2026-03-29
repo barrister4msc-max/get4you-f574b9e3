@@ -19,6 +19,7 @@ const ForTaskersPage = () => {
   const { t, currency } = useLanguage();
   const { user, roles, refreshProfile } = useAuth();
   const [adding, setAdding] = useState(false);
+  const { remaining, total } = useEsekPaturCount();
 
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
   const isClient = roles.includes('client');
