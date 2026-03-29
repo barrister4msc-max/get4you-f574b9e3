@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
