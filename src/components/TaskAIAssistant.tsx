@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { streamChat } from '@/lib/streamChat';
-import { Bot, Send, X, Sparkles } from 'lucide-react';
+import { Bot, Send, X, Sparkles, Mic, MicOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -12,7 +13,8 @@ interface Props {
 }
 
 export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const voice = useVoiceInput(locale);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
@@ -123,6 +125,31 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
                 placeholder="..."
                 className="flex-1 text-sm px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
               />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!voice.isSupported) return;
+                  if (voice.isListening) {
+                    voice.stop();
+                    if (voice.transcript) {
+                      setInput(prev => (prev ? prev + ' ' : '') + voice.transcript);
+                      voice.reset();
+                    }
+                  } else {
+                    voice.start((text) => {
+                      setInput(text);
+                    });
+                  }
+                }}
+                disabled={!voice.isSupported}
+                className={`p-2 rounded-lg transition-colors disabled:opacity-30 ${
+                  voice.isListening
+                    ? 'bg-destructive text-destructive-foreground animate-pulse'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {voice.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
               <button
                 type="button"
                 onClick={send}
