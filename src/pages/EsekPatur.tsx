@@ -110,6 +110,19 @@ const EsekPaturPage = () => {
           <span className="text-2xl">🎉</span>
           <p className="font-semibold text-primary mt-1">{t('esek.promo.title')}</p>
           <p className="text-sm text-muted-foreground mt-1">{t('esek.promo.description')}</p>
+          {remaining !== null && (
+            <div className="mt-3">
+              <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-primary h-2.5 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, ((total - remaining) / total) * 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {t('esek.promo.remaining').replace('{remaining}', String(remaining)).replace('{total}', String(total))}
+              </p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
