@@ -763,6 +763,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.success': 'הבקשה נשלחה בהצלחה!',
     'esek.promo.title': '🎁 100 הנרשמים הראשונים מקבלים רישום עוסק פטור בחינם!',
     'esek.promo.description': 'הירשמו עכשיו וחסכו בעלויות רישום העסק.',
+    'esek.promo.remaining': 'נותרו {remaining} מתוך {total} מקומות חינמיים',
     'esek.error.requiredFields': 'יש למלא את כל השדות הנדרשים',
     'esek.error.submit': 'שגיאה בשליחת הבקשה',
     'esek.nav': 'עוסק פטור',
