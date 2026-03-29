@@ -219,31 +219,37 @@ const CreateTaskPage = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!voice.isSupported) {
-                      toast.error(t('task.voice.unsupported') || 'Voice input not supported in this browser');
-                      return;
-                    }
-                    if (voice.isListening) {
-                      voice.stop();
-                      if (voice.transcript) {
-                        update({ description: (form.description ? form.description + ' ' : '') + voice.transcript });
-                        toast.success(t('task.voice.applied') || 'Voice text added!');
-                        voice.reset();
+                    if (audioRecorder.isRecording) {
+                      audioRecorder.stop();
+                      // Also handle speech-to-text
+                      if (voice.isListening) {
+                        voice.stop();
+                        if (voice.transcript) {
+                          update({ description: (form.description ? form.description + ' ' : '') + voice.transcript });
+                          toast.success(t('task.voice.applied') || 'Voice text added!');
+                          voice.reset();
+                        }
                       }
+                      toast.success(t('task.voice.recorded') || 'Voice note recorded!');
                     } else {
-                      voice.start();
-                      toast.info(t('task.voice.listening') || 'Listening... Speak now');
+                      audioRecorder.start();
+                      // Start speech-to-text simultaneously if supported
+                      if (voice.isSupported) {
+                        voice.start();
+                      }
                     }
                   }}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
-                    voice.isListening
+                    audioRecorder.isRecording
                       ? 'border-destructive bg-destructive/10 text-destructive animate-pulse'
                       : 'border-border hover:shadow-card-hover bg-orange-50 text-orange-600'
                   }`}
                 >
-                  {voice.isListening ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                  {audioRecorder.isRecording ? <Square className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                   <span className="text-xs font-medium">
-                    {voice.isListening ? (t('task.voice.stop') || 'Stop') : t('task.voice')}
+                    {audioRecorder.isRecording
+                      ? `${Math.floor(audioRecorder.duration / 60)}:${String(audioRecorder.duration % 60).padStart(2, '0')}`
+                      : t('task.voice')}
                   </span>
                 </button>
                 <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
