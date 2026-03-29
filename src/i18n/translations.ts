@@ -1014,6 +1014,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.upload.placeholder': 'اضغط لرفع ملف',
     'esek.submit': 'إرسال الطلب',
     'esek.success': 'تم إرسال الطلب بنجاح!',
+    'esek.promo.title': '🎁 أول 100 مسجل يحصلون على تسجيل عوسك باتور مجاناً!',
+    'esek.promo.description': 'سجل الآن ووفر على رسوم تسجيل الأعمال.',
     'esek.error.requiredFields': 'يرجى ملء جميع الحقول المطلوبة',
     'esek.error.submit': 'فشل في إرسال الطلب',
     'esek.nav': 'عوسيك باطور',
