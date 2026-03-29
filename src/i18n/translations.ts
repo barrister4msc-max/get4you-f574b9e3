@@ -244,6 +244,26 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.error.requiredFields': 'Please fill in all required fields',
     'esek.error.submit': 'Failed to submit application',
     'esek.nav': 'Esek Patur',
+
+    // Become Client
+    'taskers.becomeClient.title': 'Want to post tasks too?',
+    'taskers.becomeClient.description': 'Add the Client role to create and manage your own tasks',
+    'taskers.becomeClient.cta': 'Become a Client',
+    'taskers.becomeClient.success': 'Client role added! You can now create tasks.',
+
+    // Admin Esek Patur
+    'admin.esek.title': 'Esek Patur Applications',
+    'admin.esek.subtitle': 'Review and manage submitted applications',
+    'admin.esek.empty': 'No applications yet',
+    'admin.esek.accessDenied': 'Access denied. Admin role required.',
+    'admin.esek.viewDocs': 'Documents',
+    'admin.esek.open': 'Open',
+    'admin.esek.noFile': 'Not uploaded',
+    'admin.esek.statusUpdated': 'Status updated',
+    'admin.esek.error.update': 'Failed to update status',
+    'admin.esek.status.pending': 'Pending',
+    'admin.esek.status.approved': 'Approved',
+    'admin.esek.status.rejected': 'Rejected',
   },
   ru: {
     'nav.home': 'Главная',
