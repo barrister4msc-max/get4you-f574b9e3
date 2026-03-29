@@ -21,6 +21,7 @@ const DOC_FIELDS = [
 const EsekPaturPage = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { remaining, total } = useEsekPaturCount();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
