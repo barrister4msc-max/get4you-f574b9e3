@@ -873,6 +873,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'الأكثر استعجالاً',
     'tasks.offers': 'عروض',
     'tasks.noResults': 'لم يتم العثور على مهام',
+    'tasks.allTasks': 'جميع المهام',
+    'tasks.noMyTasks': 'لا توجد مهام مسندة بعد',
+    'tasks.status.open': 'مفتوح',
+    'tasks.status.in_progress': 'قيد التنفيذ',
+    'tasks.status.completed': 'مكتمل',
     'tasks.respond': 'تقديم عرض',
 
     'proposal.submit': 'إرسال العرض',
