@@ -146,6 +146,29 @@ export const SupportDialog = () => {
                   placeholder={t('support.message') || 'Type a message...'}
                   className="flex-1"
                 />
+                <Button
+                  size="icon"
+                  variant={voice.isListening ? "destructive" : "outline"}
+                  onClick={() => {
+                    if (!voice.isSupported) {
+                      const text = window.prompt(t('task.voice.unsupported') || 'Voice not supported. Type your message:');
+                      if (text) setChatInput(prev => (prev ? prev + ' ' : '') + text);
+                      return;
+                    }
+                    if (voice.isListening) {
+                      voice.stop();
+                      if (voice.transcript) {
+                        setChatInput(prev => (prev ? prev + ' ' : '') + voice.transcript);
+                        voice.reset();
+                      }
+                    } else {
+                      voice.start((text) => setChatInput(text));
+                    }
+                  }}
+                  className={voice.isListening ? 'animate-pulse' : ''}
+                >
+                  {voice.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </Button>
                 <Button size="icon" onClick={sendChat} disabled={chatLoading || !chatInput.trim()}>
                   <Send className="w-4 h-4" />
                 </Button>
