@@ -1,33 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { formatPrice } from '@/components/CurrencyToggle';
+import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, MessageCircle, Filter, Search } from 'lucide-react';
+import { MapPin, Clock, MessageCircle, Search, ImageIcon } from 'lucide-react';
 
-const mockTasks = [
-  { id: '1', titleKey: 'mock.task.1', category: 'cleaning', budget: 120, location: 'Tel Aviv', urgency: 'soon', offers: 5, date: '2026-03-27' },
-  { id: '2', titleKey: 'mock.task.2', category: 'moving', budget: 300, location: 'Jerusalem', urgency: 'flexible', offers: 3, date: '2026-04-01' },
-  { id: '3', titleKey: 'mock.task.3', category: 'repair', budget: 80, location: 'Haifa', urgency: 'urgent', offers: 7, date: '2026-03-25' },
-  { id: '4', titleKey: 'mock.task.4', category: 'digital', budget: 500, location: 'Remote', urgency: 'flexible', offers: 12, date: '2026-04-05' },
-  { id: '5', titleKey: 'mock.task.5', category: 'consulting', budget: 150, location: 'Online', urgency: 'soon', offers: 2, date: '2026-03-28' },
-  { id: '6', titleKey: 'mock.task.6', category: 'delivery', budget: 200, location: 'Moscow', urgency: 'urgent', offers: 4, date: '2026-03-26' },
-];
+interface TaskRow {
+  id: string;
+  title: string;
+  description: string | null;
+  budget_fixed: number | null;
+  budget_min: number | null;
+  city: string | null;
+  address: string | null;
+  is_urgent: boolean | null;
+  due_date: string | null;
+  created_at: string;
+  photos: string[] | null;
+  status: string | null;
+  category_id: string | null;
+  currency: string | null;
+  task_type: string | null;
+  categories?: { name_en: string; name_ru: string | null; name_he: string | null } | null;
+}
 
 const urgencyColors: Record<string, string> = {
-  flexible: 'bg-secondary text-muted-foreground',
-  soon: 'bg-amber-50 text-amber-700',
+  normal: 'bg-secondary text-muted-foreground',
   urgent: 'bg-red-50 text-red-600',
 };
 
 const TasksPage = () => {
-  const { t, currency } = useLanguage();
+  const { t, currency, locale } = useLanguage();
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<{ id: string; name_en: string; name_ru: string | null; name_he: string | null }[]>([]);
 
-  const filtered = mockTasks.filter((task) => {
-    if (filterCat && task.category !== filterCat) return false;
-    if (search && !t(task.titleKey).toLowerCase().includes(search.toLowerCase())) return false;
+  useEffect(() => {
+    const fetchData = async () => {
+      const [{ data: tasksData }, { data: catsData }] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('*, categories(name_en, name_ru, name_he)')
+          .eq('status', 'open')
+          .order('created_at', { ascending: false }),
+        supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order'),
+      ]);
+      setTasks((tasksData as TaskRow[]) || []);
+      setCategories(catsData || []);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const getCategoryName = (task: TaskRow) => {
+    const cat = task.categories;
+    if (!cat) return '';
+    if (locale === 'ru') return cat.name_ru || cat.name_en;
+    if (locale === 'he') return cat.name_he || cat.name_en;
+    return cat.name_en;
+  };
+
+  const filtered = tasks.filter((task) => {
+    if (filterCat && task.category_id !== filterCat) return false;
+    if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
@@ -36,7 +74,6 @@ const TasksPage = () => {
       <div className="container">
         <h1 className="text-2xl font-bold mb-6">{t('tasks.title')}</h1>
 
-        {/* Search & filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <div className="relative flex-1">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -53,15 +90,17 @@ const TasksPage = () => {
             className="px-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           >
             <option value="">{t('tasks.filter')}</option>
-            {['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'].map((c) => (
-              <option key={c} value={c}>{t(`cat.${c}`)}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {locale === 'ru' ? c.name_ru || c.name_en : locale === 'he' ? c.name_he || c.name_en : c.name_en}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Task list */}
         <div className="grid gap-4">
-          {filtered.length === 0 && (
+          {loading && <p className="text-center text-muted-foreground py-12">Loading...</p>}
+          {!loading && filtered.length === 0 && (
             <p className="text-center text-muted-foreground py-12">{t('tasks.noResults')}</p>
           )}
           {filtered.map((task, i) => (
@@ -75,29 +114,54 @@ const TasksPage = () => {
                 to={`/tasks/${task.id}`}
                 className="block bg-card border border-border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{t(task.titleKey)}</h3>
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {task.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {task.date}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        {task.offers} {t('tasks.offers')}
-                      </span>
+                <div className="flex items-start gap-4">
+                  {/* Photo thumbnail */}
+                  {task.photos && task.photos.length > 0 ? (
+                    <div className="w-20 h-20 rounded-xl overflow-hidden border border-border shrink-0">
+                      <img src={task.photos[0]} alt="" className="w-full h-full object-cover" />
                     </div>
-                  </div>
-                  <div className="text-end shrink-0">
-                    <div className="text-lg font-bold text-primary">{formatPrice(task.budget, currency)}</div>
-                    <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${urgencyColors[task.urgency]}`}>
-                      {t(`task.urgency.${task.urgency}`)}
-                    </span>
+                  ) : (
+                    <div className="w-20 h-20 rounded-xl border border-border bg-secondary flex items-center justify-center shrink-0">
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{task.description}</p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                          {(task.city || task.address) && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5" />
+                              {task.city || task.address}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {new Date(task.created_at).toLocaleDateString()}
+                          </span>
+                          {getCategoryName(task) && (
+                            <span className="bg-emerald-50 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+                              {getCategoryName(task)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-end shrink-0">
+                        <div className="text-lg font-bold text-primary">
+                          {formatPrice(task.budget_fixed || task.budget_min || 0, currency)}
+                        </div>
+                        <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                          task.is_urgent ? urgencyColors.urgent : urgencyColors.normal
+                        }`}>
+                          {task.is_urgent ? t('task.urgency.urgent') : t('task.urgency.flexible')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Link>
