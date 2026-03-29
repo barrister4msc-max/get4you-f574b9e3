@@ -104,6 +104,26 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.noResults': 'No tasks found',
     'tasks.respond': 'Make an Offer',
 
+    // Proposals
+    'proposal.submit': 'Submit Proposal',
+    'proposal.your.price': 'Your Price',
+    'proposal.comment': 'Comment',
+    'proposal.comment.placeholder': 'Describe your experience and approach...',
+    'proposal.sent': 'Proposal sent!',
+    'proposal.error': 'Failed to send proposal',
+    'proposal.already': 'You already submitted a proposal',
+    'proposal.login': 'Log in to make an offer',
+    'proposal.own.task': 'This is your task',
+    'proposal.accept': 'Accept',
+    'proposal.reject': 'Reject',
+    'proposal.accepted': 'Proposal accepted!',
+    'proposal.rejected': 'Proposal rejected',
+    'proposal.status.pending': 'Pending',
+    'proposal.status.accepted': 'Accepted',
+    'proposal.status.rejected': 'Rejected',
+    'proposal.count': 'proposals',
+    'proposal.none': 'No proposals yet',
+
     // Auth
     'auth.login': 'Log In',
     'auth.signup': 'Sign Up',
