@@ -151,6 +151,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'City',
     'profile.save': 'Save',
     'profile.saved': 'Profile saved!',
+    'profile.roles': 'My Roles',
+    'profile.roles.updated': 'Roles updated!',
+    'profile.roles.needOne': 'You must have at least one role',
 
     // General
     'currency.usd': 'USD',
