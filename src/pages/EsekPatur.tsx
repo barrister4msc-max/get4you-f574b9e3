@@ -103,6 +103,13 @@ const EsekPaturPage = () => {
         <h1 className="text-2xl md:text-3xl font-bold text-center">{t('esek.title')}</h1>
         <p className="text-muted-foreground text-center mt-2">{t('esek.subtitle')}</p>
 
+        {/* Promo banner */}
+        <div className="mt-6 p-4 rounded-2xl bg-emerald-50 border border-primary/30 text-center">
+          <span className="text-2xl">🎉</span>
+          <p className="font-semibold text-primary mt-1">{t('esek.promo.title')}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t('esek.promo.description')}</p>
+        </div>
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           {/* Personal info */}
           <div className="space-y-4">
