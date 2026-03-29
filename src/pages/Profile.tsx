@@ -36,10 +36,8 @@ const ProfilePage = () => {
     setSelectedRoles(roles);
   }, [roles]);
 
-  const toggleRole = (role: string) => {
-    setSelectedRoles(prev =>
-      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-    );
+  const selectRole = (role: string) => {
+    setSelectedRoles([role]);
   };
 
   const handleSaveRoles = async () => {
