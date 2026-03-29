@@ -526,6 +526,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'המשימות שלי',
     'nav.messages': 'הודעות',
     'nav.logout': 'התנתקות',
+    'nav.admin': 'ניהול',
 
     'hero.title': 'בצעו כל משימה',
     'hero.titleAccent': 'עם מקצוענים מקומיים',
