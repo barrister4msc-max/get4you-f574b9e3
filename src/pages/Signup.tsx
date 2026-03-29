@@ -115,6 +115,11 @@ const SignupPage = () => {
                 </button>
               ))}
             </div>
+            {(role === 'tasker' || role === 'both') && (
+              <div className="mt-2 p-3 rounded-xl bg-emerald-50 border border-primary/30 text-center">
+                <p className="text-xs font-semibold text-primary">{t('esek.promo.title')}</p>
+              </div>
+            )}
           </div>
 
           <button
