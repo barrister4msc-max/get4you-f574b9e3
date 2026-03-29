@@ -14,6 +14,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'My Tasks',
     'nav.messages': 'Messages',
     'nav.logout': 'Log Out',
+    'nav.admin': 'Admin',
 
     // Hero
     'hero.title': 'Get Things Done',
