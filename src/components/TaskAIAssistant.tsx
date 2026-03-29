@@ -128,7 +128,12 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
               <button
                 type="button"
                 onClick={() => {
-                  if (!voice.isSupported) return;
+                  if (!voice.isSupported) {
+                    // Fallback: prompt user to type instead
+                    const text = window.prompt(t('task.voice.unsupported') || 'Voice input is not supported in this browser. Type your message:');
+                    if (text) setInput(prev => (prev ? prev + ' ' : '') + text);
+                    return;
+                  }
                   if (voice.isListening) {
                     voice.stop();
                     if (voice.transcript) {
@@ -141,12 +146,12 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
                     });
                   }
                 }}
-                disabled={!voice.isSupported}
-                className={`p-2 rounded-lg transition-colors disabled:opacity-30 ${
+                className={`p-2 rounded-lg transition-colors shrink-0 ${
                   voice.isListening
                     ? 'bg-destructive text-destructive-foreground animate-pulse'
                     : 'bg-muted text-muted-foreground hover:text-foreground'
                 }`}
+                title={t('task.voice') || 'Voice input'}
               >
                 {voice.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
