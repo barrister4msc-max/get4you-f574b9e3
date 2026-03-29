@@ -61,7 +61,7 @@ const TaskDetailPage = () => {
 
   const budget = task.budget_fixed || task.budget_min || 0;
   const photos: string[] = task.photos || [];
-  const ownerName = task.profiles?.display_name || 'User';
+  const ownerName = task.owner_profile?.display_name || 'User';
 
   return (
     <div className="py-8">
