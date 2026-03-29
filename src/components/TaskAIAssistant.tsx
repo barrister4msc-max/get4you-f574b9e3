@@ -75,7 +75,7 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="mt-3 border border-border rounded-2xl bg-card overflow-hidden"
+            className="col-span-3 mt-3 border border-border rounded-2xl bg-card overflow-hidden"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2">

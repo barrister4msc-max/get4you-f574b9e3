@@ -232,7 +232,6 @@ const CreateTaskPage = () => {
                   onClick={() => {
                     if (audioRecorder.isRecording) {
                       audioRecorder.stop();
-                      // Also handle speech-to-text
                       if (voice.isListening) {
                         voice.stop();
                         if (voice.transcript) {
@@ -244,7 +243,6 @@ const CreateTaskPage = () => {
                       toast.success(t('task.voice.recorded') || 'Voice note recorded!');
                     } else {
                       audioRecorder.start();
-                      // Start speech-to-text simultaneously if supported
                       if (voice.isSupported) {
                         voice.start();
                       }
