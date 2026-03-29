@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useEsekPaturCount } from '@/hooks/useEsekPaturCount';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
