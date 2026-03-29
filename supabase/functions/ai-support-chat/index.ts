@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a friendly support assistant for Hooppy — a task marketplace platform where clients post tasks and taskers complete them.
+const SYSTEM_PROMPT = `You are a friendly support assistant for TaskFlow — a task marketplace platform where clients post tasks and taskers complete them.
 
 Key platform info:
 - Users can post tasks in categories: cleaning, moving, repair, digital services, consulting, delivery, beauty & wellness, tutoring

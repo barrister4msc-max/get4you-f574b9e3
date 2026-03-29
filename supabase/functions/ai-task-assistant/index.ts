@@ -14,7 +14,7 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompts: Record<string, string> = {
-      assist: `You are a helpful task creation assistant for a task marketplace platform called Hooppy. 
+      assist: `You are a helpful task creation assistant for a task marketplace platform called TaskFlow. 
 Help users describe their tasks clearly and in detail. Ask clarifying questions if the description is vague.
 Suggest improvements to make the task more attractive to taskers.
 Keep responses concise (2-3 sentences max). Respond in the same language the user writes in (English, Russian, Hebrew, or Arabic).
