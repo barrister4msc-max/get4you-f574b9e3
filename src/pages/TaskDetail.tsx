@@ -29,7 +29,7 @@ const TaskDetailPage = () => {
           .select('display_name, avatar_url')
           .eq('user_id', data.user_id)
           .maybeSingle();
-        if (profile) data.owner_profile = profile;
+        setOwnerProfile(profile);
       }
       
       setTask(data);
