@@ -255,9 +255,9 @@ const CreateTaskPage = () => {
                 <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
               </div>
 
-              {/* Voice transcript preview */}
+              {/* Voice transcript & audio preview */}
               <AnimatePresence>
-                {voice.isListening && voice.transcript && (
+                {audioRecorder.isRecording && voice.transcript && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -269,6 +269,21 @@ const CreateTaskPage = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Audio playback preview */}
+              {audioRecorder.audioUrl && !audioRecorder.isRecording && (
+                <div className="flex items-center gap-3 bg-muted rounded-xl p-3 border border-border">
+                  <Play className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <audio src={audioRecorder.audioUrl} controls className="flex-1 h-8" />
+                  <button
+                    type="button"
+                    onClick={() => audioRecorder.reset()}
+                    className="text-destructive hover:text-destructive/80"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium mb-2">{t('task.category')}</label>
