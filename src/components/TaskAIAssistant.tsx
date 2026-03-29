@@ -127,6 +127,31 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
               />
               <button
                 type="button"
+                onClick={() => {
+                  if (!voice.isSupported) return;
+                  if (voice.isListening) {
+                    voice.stop();
+                    if (voice.transcript) {
+                      setInput(prev => (prev ? prev + ' ' : '') + voice.transcript);
+                      voice.reset();
+                    }
+                  } else {
+                    voice.start((text) => {
+                      setInput(text);
+                    });
+                  }
+                }}
+                disabled={!voice.isSupported}
+                className={`p-2 rounded-lg transition-colors disabled:opacity-30 ${
+                  voice.isListening
+                    ? 'bg-destructive text-destructive-foreground animate-pulse'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {voice.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
                 onClick={send}
                 disabled={loading || !input.trim()}
                 className="p-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
