@@ -1,7 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 const plans = [
   { key: 'starter', commission: '15%', price: 0, featureKeys: ['taskers.feature.basicProfile', 'taskers.feature.5offers', 'taskers.feature.standardSupport'] },
@@ -11,6 +16,26 @@ const plans = [
 
 const ForTaskersPage = () => {
   const { t, currency } = useLanguage();
+  const { user, roles, refreshProfile } = useAuth();
+  const [adding, setAdding] = useState(false);
+
+  const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
+  const isClient = roles.includes('client');
+
+  const becomeClient = async () => {
+    if (!user) return;
+    setAdding(true);
+    try {
+      const { error } = await supabase.from('user_roles').insert({ user_id: user.id, role: 'client' as any });
+      if (error) throw error;
+      await refreshProfile();
+      toast.success(t('taskers.becomeClient.success'));
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div className="py-16">
@@ -19,6 +44,35 @@ const ForTaskersPage = () => {
           <h1 className="text-3xl md:text-4xl font-bold">{t('taskers.title')}</h1>
           <p className="text-lg text-muted-foreground mt-3">{t('taskers.subtitle')}</p>
         </div>
+
+        {/* Become client CTA for tasker-only users */}
+        {isTaskerOnly && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 p-6 rounded-2xl border border-primary/30 bg-emerald-50 text-center"
+          >
+            <UserPlus className="w-8 h-8 text-primary mx-auto mb-2" />
+            <h2 className="font-semibold text-lg">{t('taskers.becomeClient.title')}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t('taskers.becomeClient.description')}</p>
+            <Button onClick={becomeClient} disabled={adding} className="mt-4">
+              {t('taskers.becomeClient.cta')}
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Show create task button if user is also a client */}
+        {user && isClient && (
+          <div className="mt-6 text-center">
+            <Link
+              to="/create-task"
+              className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              {t('nav.create')}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
 
         <div className="mt-12 grid md:grid-cols-3 gap-6">
           {plans.map((plan, i) => (
