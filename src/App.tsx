@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import EsekPatur from "./pages/EsekPatur";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/create-task" element={<ProtectedRoute><CreateTask /></ProtectedRoute>} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/for-taskers" element={<ForTaskers />} />
+                <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

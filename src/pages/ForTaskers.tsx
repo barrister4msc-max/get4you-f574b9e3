@@ -64,6 +64,19 @@ const ForTaskersPage = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Esek Patur CTA */}
+        <div className="mt-12 text-center p-8 rounded-2xl border border-border bg-card shadow-card">
+          <h2 className="text-xl font-bold">{t('esek.title')}</h2>
+          <p className="text-muted-foreground mt-2">{t('esek.subtitle')}</p>
+          <Link
+            to="/esek-patur"
+            className="mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+          >
+            {t('esek.nav')}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </div>
   );

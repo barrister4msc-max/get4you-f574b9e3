@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      esek_patur_applications: {
+        Row: {
+          activity_type: string
+          address: string
+          address_proof_url: string | null
+          bank_statement_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          id_number: string
+          passport_url: string | null
+          phone: string
+          status: string
+          teudat_ole_url: string | null
+          teudat_zeut_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          address: string
+          address_proof_url?: string | null
+          bank_statement_url?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          id_number: string
+          passport_url?: string | null
+          phone: string
+          status?: string
+          teudat_ole_url?: string | null
+          teudat_zeut_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          address?: string
+          address_proof_url?: string | null
+          bank_statement_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          passport_url?: string | null
+          phone?: string
+          status?: string
+          teudat_ole_url?: string | null
+          teudat_zeut_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
