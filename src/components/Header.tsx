@@ -13,6 +13,7 @@ export const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
+  const isAdmin = user && roles.includes('admin');
 
   const navLinks = [
     { to: '/', label: t('nav.home') },
@@ -20,6 +21,7 @@ export const Header = () => {
     ...(!isTaskerOnly ? [{ to: '/create-task', label: t('nav.create') }] : []),
     { to: '/how-it-works', label: t('nav.howItWorks') },
     { to: '/for-taskers', label: t('nav.forTaskers') },
+    ...(isAdmin ? [{ to: '/admin/esek-patur', label: t('nav.admin') }] : []),
   ];
 
   return (

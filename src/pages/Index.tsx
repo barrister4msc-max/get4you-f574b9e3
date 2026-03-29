@@ -50,13 +50,15 @@ const IndexPage = () => {
                 {t('hero.subtitle')}
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  to="/create-task"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
-                >
-                  {t('hero.cta')}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                {!isTaskerOnly && (
+                  <Link
+                    to="/create-task"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                  >
+                    {t('hero.cta')}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                )}
                 <Link
                   to="/tasks"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-colors"

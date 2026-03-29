@@ -117,7 +117,7 @@ const ProfilePage = () => {
                 <button
                   key={r.value}
                   type="button"
-                  onClick={() => toggleRole(r.value)}
+                  onClick={() => selectRole(r.value)}
                   className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
                     selectedRoles.includes(r.value)
                       ? 'border-primary bg-emerald-50 text-primary'
