@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Phone, MapPin, FileText, Save, LogOut } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, roles, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [savingRoles, setSavingRoles] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     display_name: '',
@@ -29,6 +31,39 @@ const ProfilePage = () => {
       });
     }
   }, [profile]);
+
+  useEffect(() => {
+    setSelectedRoles(roles);
+  }, [roles]);
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
+  const handleSaveRoles = async () => {
+    if (!user) return;
+    if (selectedRoles.length === 0) {
+      toast.error(t('profile.roles.needOne'));
+      return;
+    }
+    setSavingRoles(true);
+
+    const toAdd = selectedRoles.filter(r => !roles.includes(r));
+    const toRemove = roles.filter(r => !selectedRoles.includes(r));
+
+    for (const role of toRemove) {
+      await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role);
+    }
+    for (const role of toAdd) {
+      await supabase.from('user_roles').insert({ user_id: user.id, role: role as 'client' | 'tasker' });
+    }
+
+    toast.success(t('profile.roles.updated'));
+    await refreshProfile();
+    setSavingRoles(false);
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -57,6 +92,13 @@ const ProfilePage = () => {
     navigate('/');
   };
 
+  const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...roles].sort());
+
+  const roleOptions: { value: string; label: string }[] = [
+    { value: 'client', label: t('auth.role.client') },
+    { value: 'tasker', label: t('auth.role.tasker') },
+  ];
+
   return (
     <div className="min-h-[80vh] py-12">
       <div className="container max-w-lg mx-auto px-4">
@@ -69,6 +111,37 @@ const ProfilePage = () => {
         </div>
 
         <div className="space-y-4">
+          {/* Roles section */}
+          <div>
+            <label className="block text-sm font-medium mb-2">{t('profile.roles')}</label>
+            <div className="flex gap-2">
+              {roleOptions.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => toggleRole(r.value)}
+                  className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
+                    selectedRoles.includes(r.value)
+                      ? 'border-primary bg-emerald-50 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/30'
+                  }`}
+                >
+                  {selectedRoles.includes(r.value) && <CheckCircle2 className="w-3 h-3 inline me-1" />}
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            {rolesChanged && (
+              <button
+                onClick={handleSaveRoles}
+                disabled={savingRoles}
+                className="mt-2 w-full py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {savingRoles ? '...' : t('profile.save')}
+              </button>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1.5">{t('auth.name')}</label>
             <div className="relative">
