@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useEsekPaturCount } from '@/hooks/useEsekPaturCount';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,7 @@ const DOC_FIELDS = [
 const EsekPaturPage = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { remaining, total } = useEsekPaturCount();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -108,6 +110,19 @@ const EsekPaturPage = () => {
           <span className="text-2xl">🎉</span>
           <p className="font-semibold text-primary mt-1">{t('esek.promo.title')}</p>
           <p className="text-sm text-muted-foreground mt-1">{t('esek.promo.description')}</p>
+          {remaining !== null && (
+            <div className="mt-3">
+              <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-primary h-2.5 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, ((total - remaining) / total) * 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {t('esek.promo.remaining').replace('{remaining}', String(remaining)).replace('{total}', String(total))}
+              </p>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
