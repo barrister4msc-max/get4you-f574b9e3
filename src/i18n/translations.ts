@@ -103,6 +103,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'Most Urgent',
     'tasks.offers': 'offers',
     'tasks.noResults': 'No tasks found',
+    'tasks.allTasks': 'All Tasks',
+    'tasks.noMyTasks': 'No assigned tasks yet',
+    'tasks.status.open': 'Open',
+    'tasks.status.in_progress': 'In Progress',
+    'tasks.status.completed': 'Completed',
     'tasks.respond': 'Make an Offer',
 
     // Proposals
@@ -362,6 +367,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'Срочные',
     'tasks.offers': 'откликов',
     'tasks.noResults': 'Задачи не найдены',
+    'tasks.allTasks': 'Все задачи',
+    'tasks.noMyTasks': 'Пока нет назначенных задач',
+    'tasks.status.open': 'Открыта',
+    'tasks.status.in_progress': 'В работе',
+    'tasks.status.completed': 'Завершена',
     'tasks.respond': 'Откликнуться',
 
     'proposal.submit': 'Отправить предложение',
@@ -610,6 +620,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'דחוף ביותר',
     'tasks.offers': 'הצעות',
     'tasks.noResults': 'לא נמצאו משימות',
+    'tasks.allTasks': 'כל המשימות',
+    'tasks.noMyTasks': 'אין עדיין משימות שהוקצו',
+    'tasks.status.open': 'פתוח',
+    'tasks.status.in_progress': 'בתהליך',
+    'tasks.status.completed': 'הושלם',
     'tasks.respond': 'הגש הצעה',
 
     'proposal.submit': 'שלח הצעה',
@@ -858,6 +873,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'الأكثر استعجالاً',
     'tasks.offers': 'عروض',
     'tasks.noResults': 'لم يتم العثور على مهام',
+    'tasks.allTasks': 'جميع المهام',
+    'tasks.noMyTasks': 'لا توجد مهام مسندة بعد',
+    'tasks.status.open': 'مفتوح',
+    'tasks.status.in_progress': 'قيد التنفيذ',
+    'tasks.status.completed': 'مكتمل',
     'tasks.respond': 'تقديم عرض',
 
     'proposal.submit': 'إرسال العرض',
