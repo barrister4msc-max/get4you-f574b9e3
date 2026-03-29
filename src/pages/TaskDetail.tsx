@@ -9,6 +9,7 @@ const TaskDetailPage = () => {
   const { id } = useParams();
   const { t, currency, locale } = useLanguage();
   const [task, setTask] = useState<any>(null);
+  const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
