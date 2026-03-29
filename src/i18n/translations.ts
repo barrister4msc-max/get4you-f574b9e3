@@ -247,6 +247,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.upload.placeholder': 'Click to upload a file',
     'esek.submit': 'Submit Application',
     'esek.success': 'Application submitted successfully!',
+    'esek.promo.title': '🎁 First 100 registrants get free Esek Patur registration!',
+    'esek.promo.description': 'Sign up now and save on business registration fees.',
     'esek.error.requiredFields': 'Please fill in all required fields',
     'esek.error.submit': 'Failed to submit application',
     'esek.nav': 'Esek Patur',
