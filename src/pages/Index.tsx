@@ -27,6 +27,8 @@ const stats = [
 
 const IndexPage = () => {
   const { t } = useLanguage();
+  const { user, roles } = useAuth();
+  const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
 
   return (
     <div>
