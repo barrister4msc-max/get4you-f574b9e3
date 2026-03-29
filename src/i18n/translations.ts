@@ -14,6 +14,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'My Tasks',
     'nav.messages': 'Messages',
     'nav.logout': 'Log Out',
+    'nav.admin': 'Admin',
 
     // Hero
     'hero.title': 'Get Things Done',
@@ -277,6 +278,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'Мои задачи',
     'nav.messages': 'Сообщения',
     'nav.logout': 'Выйти',
+    'nav.admin': 'Админ',
 
     'hero.title': 'Решите любую задачу',
     'hero.titleAccent': 'с местными профессионалами',
@@ -524,6 +526,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'המשימות שלי',
     'nav.messages': 'הודעות',
     'nav.logout': 'התנתקות',
+    'nav.admin': 'ניהול',
 
     'hero.title': 'בצעו כל משימה',
     'hero.titleAccent': 'עם מקצוענים מקומיים',
@@ -771,6 +774,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.myTasks': 'مهامي',
     'nav.messages': 'الرسائل',
     'nav.logout': 'تسجيل الخروج',
+    'nav.admin': 'إدارة',
 
     'hero.title': 'أنجز أي مهمة',
     'hero.titleAccent': 'مع محترفين محليين',

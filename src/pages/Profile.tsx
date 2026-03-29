@@ -36,10 +36,8 @@ const ProfilePage = () => {
     setSelectedRoles(roles);
   }, [roles]);
 
-  const toggleRole = (role: string) => {
-    setSelectedRoles(prev =>
-      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-    );
+  const selectRole = (role: string) => {
+    setSelectedRoles([role]);
   };
 
   const handleSaveRoles = async () => {
@@ -119,7 +117,7 @@ const ProfilePage = () => {
                 <button
                   key={r.value}
                   type="button"
-                  onClick={() => toggleRole(r.value)}
+                  onClick={() => selectRole(r.value)}
                   className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
                     selectedRoles.includes(r.value)
                       ? 'border-primary bg-emerald-50 text-primary'
