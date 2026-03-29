@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { streamChat } from '@/lib/streamChat';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Headphones, Bot, Send } from 'lucide-react';
+import { Headphones, Bot, Send, Mic, MicOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
