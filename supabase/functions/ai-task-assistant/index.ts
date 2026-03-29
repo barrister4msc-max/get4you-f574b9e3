@@ -17,7 +17,7 @@ serve(async (req) => {
       assist: `You are a helpful task creation assistant for a task marketplace platform called Hooppy. 
 Help users describe their tasks clearly and in detail. Ask clarifying questions if the description is vague.
 Suggest improvements to make the task more attractive to taskers.
-Keep responses concise (2-3 sentences max). Respond in the same language the user writes in.
+Keep responses concise (2-3 sentences max). Respond in the same language the user writes in (English, Russian, Hebrew, or Arabic).
 Available categories: cleaning, moving, repair, digital, consulting, delivery, beauty, tutoring.`,
 
       categorize: `You are a task categorization AI for a marketplace platform. 

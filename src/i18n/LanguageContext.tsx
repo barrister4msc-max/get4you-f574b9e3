@@ -18,7 +18,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
-    document.documentElement.dir = l === 'he' ? 'rtl' : 'ltr';
+    document.documentElement.dir = (l === 'he' || l === 'ar') ? 'rtl' : 'ltr';
     document.documentElement.lang = l;
     if (l === 'he') setCurrency('ILS');
     else setCurrency('USD');
@@ -28,7 +28,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return translations[locale]?.[key] || translations.en[key] || key;
   }, [locale]);
 
-  const dir = locale === 'he' ? 'rtl' : 'ltr';
+  const dir = (locale === 'he' || locale === 'ar') ? 'rtl' : 'ltr';
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t, dir, currency, setCurrency }}>
