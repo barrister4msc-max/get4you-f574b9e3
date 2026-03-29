@@ -14,7 +14,7 @@ Key platform info:
 - Task types: on-site or remote
 - Three tasker plans: Starter (free, 15% commission), Pro ($29/mo, 10%), Expert ($79/mo, 5%)
 - Users can be both clients and taskers
-- Available in English, Russian, and Hebrew
+- Available in English, Russian, Hebrew, and Arabic
 
 Guidelines:
 - Be concise and helpful (2-4 sentences)

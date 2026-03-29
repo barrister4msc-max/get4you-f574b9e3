@@ -19,6 +19,7 @@ export const useVoiceInput = (lang: string = 'ru-RU') => {
       ru: 'ru-RU',
       en: 'en-US',
       he: 'he-IL',
+      ar: 'ar-SA',
     };
     return map[locale] || locale;
   };

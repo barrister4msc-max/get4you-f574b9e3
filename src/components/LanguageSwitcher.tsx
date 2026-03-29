@@ -3,8 +3,8 @@ import type { Locale } from '@/i18n/translations';
 import { Globe, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
-const flags: Record<Locale, string> = { en: '🇺🇸', ru: '🇷🇺', he: '🇮🇱' };
-const labels: Record<Locale, string> = { en: 'English', ru: 'Русский', he: 'עברית' };
+const flags: Record<Locale, string> = { en: '🇺🇸', ru: '🇷🇺', he: '🇮🇱', ar: '🇸🇦' };
+const labels: Record<Locale, string> = { en: 'English', ru: 'Русский', he: 'עברית', ar: 'العربية' };
 
 export const LanguageSwitcher = () => {
   const { locale, setLocale } = useLanguage();
