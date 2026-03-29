@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import EsekPatur from "./pages/EsekPatur";
 
 const queryClient = new QueryClient();
 
