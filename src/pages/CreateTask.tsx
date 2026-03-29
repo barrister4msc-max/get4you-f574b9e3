@@ -21,6 +21,7 @@ const CreateTaskPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const voice = useVoiceInput(locale);
+  const audioRecorder = useAudioRecorder();
   const [step, setStep] = useState(1);
   const [categorizing, setCategorizing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
