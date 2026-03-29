@@ -367,6 +367,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'Срочные',
     'tasks.offers': 'откликов',
     'tasks.noResults': 'Задачи не найдены',
+    'tasks.allTasks': 'Все задачи',
+    'tasks.noMyTasks': 'Пока нет назначенных задач',
+    'tasks.status.open': 'Открыта',
+    'tasks.status.in_progress': 'В работе',
+    'tasks.status.completed': 'Завершена',
     'tasks.respond': 'Откликнуться',
 
     'proposal.submit': 'Отправить предложение',
