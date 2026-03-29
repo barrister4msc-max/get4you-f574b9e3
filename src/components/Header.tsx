@@ -28,8 +28,8 @@ export const Header = () => {
     <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-card border border-border flex items-center justify-center">
-            <span className="font-bold text-sm text-gradient-emerald">T</span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(152, 55%, 42%), hsl(45, 95%, 55%))' }}>
+            <span className="text-primary-foreground font-bold text-sm">T</span>
           </div>
           <span className="font-bold text-lg text-gradient-emerald">TaskFlow</span>
         </Link>
