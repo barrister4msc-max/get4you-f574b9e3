@@ -620,6 +620,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'דחוף ביותר',
     'tasks.offers': 'הצעות',
     'tasks.noResults': 'לא נמצאו משימות',
+    'tasks.allTasks': 'כל המשימות',
+    'tasks.noMyTasks': 'אין עדיין משימות שהוקצו',
+    'tasks.status.open': 'פתוח',
+    'tasks.status.in_progress': 'בתהליך',
+    'tasks.status.completed': 'הושלם',
     'tasks.respond': 'הגש הצעה',
 
     'proposal.submit': 'שלח הצעה',
