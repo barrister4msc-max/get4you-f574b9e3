@@ -42,6 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq('user_id', userId)
       .single();
     setProfile(data);
+
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    setRoles(rolesData?.map(r => r.role) ?? []);
   }, []);
 
   const refreshProfile = useCallback(async () => {
