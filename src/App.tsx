@@ -41,6 +41,7 @@ const App = () => (
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/for-taskers" element={<ForTaskers />} />
                 <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
+                <Route path="/admin/esek-patur" element={<ProtectedRoute><AdminEsekPatur /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
