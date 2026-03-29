@@ -17,9 +17,20 @@ const TaskDetailPage = () => {
       if (!id) return;
       const { data } = await supabase
         .from('tasks')
-        .select('*, categories(name_en, name_ru, name_he), profiles!tasks_user_id_fkey1(display_name, avatar_url)')
+        .select('*, categories(name_en, name_ru, name_he)')
         .eq('id', id)
         .maybeSingle();
+      
+      // Fetch owner profile separately
+      if (data?.user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('user_id', data.user_id)
+          .maybeSingle();
+        if (profile) data.owner_profile = profile;
+      }
+      
       setTask(data);
       setLoading(false);
     };
