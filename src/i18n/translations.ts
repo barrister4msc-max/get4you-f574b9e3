@@ -103,6 +103,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.sort.urgent': 'Most Urgent',
     'tasks.offers': 'offers',
     'tasks.noResults': 'No tasks found',
+    'tasks.allTasks': 'All Tasks',
+    'tasks.noMyTasks': 'No assigned tasks yet',
+    'tasks.status.open': 'Open',
+    'tasks.status.in_progress': 'In Progress',
+    'tasks.status.completed': 'Completed',
     'tasks.respond': 'Make an Offer',
 
     // Proposals
