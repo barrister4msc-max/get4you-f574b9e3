@@ -133,7 +133,18 @@ const CreateTaskPage = () => {
         photoUrls.push(urlData.publicUrl);
       }
 
-      // Lookup category_id
+      // Upload voice note
+      let voiceNoteUrl: string | null = null;
+      if (audioRecorder.audioBlob) {
+        const voicePath = `${user.id}/${crypto.randomUUID()}.webm`;
+        const { error: voiceError } = await supabase.storage
+          .from('voice-notes')
+          .upload(voicePath, audioRecorder.audioBlob, { contentType: 'audio/webm' });
+        if (voiceError) throw voiceError;
+        const { data: voiceUrlData } = supabase.storage.from('voice-notes').getPublicUrl(voicePath);
+        voiceNoteUrl = voiceUrlData.publicUrl;
+      }
+
       let categoryId: string | null = null;
       if (form.category) {
         const { data: catData } = await supabase
