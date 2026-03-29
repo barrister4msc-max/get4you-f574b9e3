@@ -54,7 +54,7 @@ const ProfilePage = () => {
     const toRemove = roles.filter(r => !selectedRoles.includes(r));
 
     for (const role of toRemove) {
-      await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role);
+      await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role as 'client' | 'tasker' | 'admin');
     }
     for (const role of toAdd) {
       await supabase.from('user_roles').insert({ user_id: user.id, role: role as 'client' | 'tasker' });
