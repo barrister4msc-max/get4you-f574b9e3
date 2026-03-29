@@ -151,6 +151,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'City',
     'profile.save': 'Save',
     'profile.saved': 'Profile saved!',
+    'profile.roles': 'My Roles',
+    'profile.roles.updated': 'Roles updated!',
+    'profile.roles.needOne': 'You must have at least one role',
 
     // General
     'currency.usd': 'USD',
@@ -361,6 +364,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'Город',
     'profile.save': 'Сохранить',
     'profile.saved': 'Профиль сохранён!',
+    'profile.roles': 'Мои роли',
+    'profile.roles.updated': 'Роли обновлены!',
+    'profile.roles.needOne': 'Нужна хотя бы одна роль',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
@@ -565,6 +571,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'עיר',
     'profile.save': 'שמור',
     'profile.saved': 'הפרופיל נשמר!',
+    'profile.roles': 'התפקידים שלי',
+    'profile.roles.updated': 'התפקידים עודכנו!',
+    'profile.roles.needOne': 'חייב להיות לפחות תפקיד אחד',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
@@ -769,6 +778,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'المدينة',
     'profile.save': 'حفظ',
     'profile.saved': 'تم حفظ الملف الشخصي!',
+    'profile.roles': 'أدواري',
+    'profile.roles.updated': 'تم تحديث الأدوار!',
+    'profile.roles.needOne': 'يجب أن يكون لديك دور واحد على الأقل',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
