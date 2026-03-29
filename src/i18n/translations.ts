@@ -987,5 +987,23 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.error.requiredFields': 'يرجى ملء جميع الحقول المطلوبة',
     'esek.error.submit': 'فشل في إرسال الطلب',
     'esek.nav': 'عوسيك باطور',
+
+    'taskers.becomeClient.title': 'تريد أيضاً نشر المهام؟',
+    'taskers.becomeClient.description': 'أضف دور العميل لإنشاء وإدارة المهام',
+    'taskers.becomeClient.cta': 'أصبح عميلاً',
+    'taskers.becomeClient.success': 'تمت إضافة دور العميل! يمكنك الآن إنشاء المهام.',
+
+    'admin.esek.title': 'طلبات عوسيك باطور',
+    'admin.esek.subtitle': 'مراجعة وإدارة الطلبات المقدمة',
+    'admin.esek.empty': 'لا توجد طلبات بعد',
+    'admin.esek.accessDenied': 'الوصول مرفوض. يتطلب دور المدير.',
+    'admin.esek.viewDocs': 'المستندات',
+    'admin.esek.open': 'فتح',
+    'admin.esek.noFile': 'لم يتم الرفع',
+    'admin.esek.statusUpdated': 'تم تحديث الحالة',
+    'admin.esek.error.update': 'فشل في تحديث الحالة',
+    'admin.esek.status.pending': 'قيد الانتظار',
+    'admin.esek.status.approved': 'موافق عليه',
+    'admin.esek.status.rejected': 'مرفوض',
   },
 };
