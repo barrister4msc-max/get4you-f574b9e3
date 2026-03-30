@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { FileSignature, Loader2, CheckCircle2, Upload, FileText } from 'lucide-react';
+import FileOrPhotoInput from '@/components/FileOrPhotoInput';
 
 const AGREEMENT_VERSION = '1.0';
 
