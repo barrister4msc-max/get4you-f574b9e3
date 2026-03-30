@@ -68,14 +68,18 @@ const ProfilePage = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    const updateData: any = {
+      display_name: form.display_name,
+      phone: form.phone,
+      city: form.city,
+      bio: form.bio,
+    };
+    if (isTasker) {
+      updateData.payment_method = form.payment_method || null;
+    }
     const { error } = await supabase
       .from('profiles')
-      .update({
-        display_name: form.display_name,
-        phone: form.phone,
-        city: form.city,
-        bio: form.bio,
-      })
+      .update(updateData)
       .eq('user_id', user.id);
 
     if (error) {
