@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      contractor_agreements: {
+        Row: {
+          agreement_version: string
+          created_at: string
+          full_name: string
+          id: string
+          id_number: string
+          ip_address: string | null
+          signed_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          agreement_version?: string
+          created_at?: string
+          full_name: string
+          id?: string
+          id_number: string
+          ip_address?: string | null
+          signed_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          agreement_version?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          ip_address?: string | null
+          signed_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       esek_patur_applications: {
         Row: {
           activity_type: string
