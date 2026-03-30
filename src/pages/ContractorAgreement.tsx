@@ -257,7 +257,7 @@ const ContractorAgreementPage = () => {
     return (
       <div className="py-12">
         <div className="container max-w-2xl text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">{t('contract.signed.title')}</h1>
