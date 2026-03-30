@@ -249,6 +249,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.doc.bankStatement': 'Bank Statement',
     'esek.doc.teudatOle': 'Teudat Ole',
     'esek.upload.placeholder': 'Click to upload a file',
+    'upload.camera': 'Take a photo',
     'esek.submit': 'Submit Application',
     'esek.success': 'Application submitted successfully!',
     'esek.promo.title': '🎁 First 100 registrants get free Esek Patur registration!',
