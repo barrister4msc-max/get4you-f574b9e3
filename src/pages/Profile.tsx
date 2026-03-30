@@ -228,7 +228,7 @@ const ProfilePage = () => {
             </div>
           )}
 
-
+          <button
             onClick={handleSave}
             disabled={saving}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
