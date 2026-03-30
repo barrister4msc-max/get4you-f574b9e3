@@ -108,6 +108,7 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          payment_method: string | null
           phone: string | null
           preferred_currency: string | null
           preferred_language: string | null
@@ -123,6 +124,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          payment_method?: string | null
           phone?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          payment_method?: string | null
           phone?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
