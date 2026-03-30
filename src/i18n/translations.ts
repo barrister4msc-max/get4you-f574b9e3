@@ -277,6 +277,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'You have already signed the Independent Contractor Agreement.',
     'contract.signed.back': 'Back to Dashboard',
     'contract.nav': 'Contractor Agreement',
+    'contract.cta.title': 'I already have Osek Patur',
+    'contract.cta.description': 'If you already have Osek Patur registration, sign the contractor agreement to start working',
+    'contract.cta.button': 'Sign Contractor Agreement',
 
     // Become Client
     'taskers.becomeClient.title': 'Want to post tasks too?',
