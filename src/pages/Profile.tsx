@@ -19,6 +19,7 @@ const ProfilePage = () => {
     phone: '',
     city: '',
     bio: '',
+    payment_method: '',
   });
 
   useEffect(() => {
