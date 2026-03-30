@@ -258,6 +258,26 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.error.submit': 'Failed to submit application',
     'esek.nav': 'Esek Patur',
 
+    // Contractor Agreement
+    'contract.title': 'Independent Contractor Agreement',
+    'contract.subtitle': 'Please read the agreement carefully before signing',
+    'contract.field.fullName': 'Full Name',
+    'contract.field.fullNamePlaceholder': 'Enter your full legal name',
+    'contract.field.idNumber': 'ID Number (Teudat Zehut)',
+    'contract.field.idNumberPlaceholder': 'Enter your ID number',
+    'contract.checkbox.read': 'I have read and understood the entire Independent Contractor Agreement',
+    'contract.checkbox.agree': 'I agree to all terms and conditions and confirm that I am an independent contractor, not an employee',
+    'contract.sign': 'Sign Agreement',
+    'contract.success': 'Agreement signed successfully!',
+    'contract.error.fields': 'Please fill in your full name and ID number',
+    'contract.error.agree': 'Please confirm that you have read and agree to the terms',
+    'contract.error.submit': 'Failed to sign the agreement',
+    'contract.legal.note': 'This is a legally binding electronic signature in accordance with Israeli Electronic Signature Law (5761-2001)',
+    'contract.signed.title': 'Agreement Signed',
+    'contract.signed.description': 'You have already signed the Independent Contractor Agreement.',
+    'contract.signed.back': 'Back to Dashboard',
+    'contract.nav': 'Contractor Agreement',
+
     // Become Client
     'taskers.becomeClient.title': 'Want to post tasks too?',
     'taskers.becomeClient.description': 'Add the Client role to create and manage your own tasks',
