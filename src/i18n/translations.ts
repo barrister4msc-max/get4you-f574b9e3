@@ -845,6 +845,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'כבר חתמת על הסכם הקבלן העצמאי.',
     'contract.signed.back': 'חזרה ללוח הבקרה',
     'contract.nav': 'הסכם קבלן',
+    'contract.cta.title': 'יש לי כבר עוסק פטור',
+    'contract.cta.description': 'אם יש לך כבר רישום עוסק פטור, חתום על הסכם הקבלן כדי להתחיל לעבוד',
+    'contract.cta.button': 'חתום על הסכם קבלן',
 
     'taskers.becomeClient.title': 'רוצה גם לפרסם משימות?',
     'taskers.becomeClient.description': 'הוסף תפקיד לקוח כדי ליצור ולנהל משימות',
