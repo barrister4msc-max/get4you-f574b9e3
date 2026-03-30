@@ -160,6 +160,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'My Roles',
     'profile.roles.updated': 'Roles updated!',
     'profile.roles.needOne': 'You must have at least one role',
+    'profile.payment.title': 'Payment Method',
+    'profile.payment.cash': 'Cash',
+    'profile.payment.check': 'Check',
 
     // General
     'currency.usd': 'USD',
