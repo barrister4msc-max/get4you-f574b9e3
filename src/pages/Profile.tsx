@@ -5,6 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -13,6 +21,8 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [savingRoles, setSavingRoles] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [showEmploymentDialog, setShowEmploymentDialog] = useState(false);
+  const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
 
   const [form, setForm] = useState({
     display_name: '',
@@ -37,6 +47,27 @@ const ProfilePage = () => {
   useEffect(() => {
     setSelectedRoles(roles);
   }, [roles]);
+
+  // Check if user already has an employment agreement
+  useEffect(() => {
+    if (!user) return;
+    const checkAgreement = async () => {
+      const { data } = await supabase
+        .from('employment_agreements' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      setHasEmploymentAgreement(!!data && data.length > 0);
+    };
+    checkAgreement();
+  }, [user]);
+
+  const handlePaymentSelect = (value: string) => {
+    setForm({ ...form, payment_method: value });
+    if ((value === 'cash' || value === 'check') && hasEmploymentAgreement === false) {
+      setShowEmploymentDialog(true);
+    }
+  };
 
   const selectRole = (role: string) => {
     setSelectedRoles([role]);
@@ -214,7 +245,7 @@ const ProfilePage = () => {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setForm({ ...form, payment_method: opt.value })}
+                    onClick={() => handlePaymentSelect(opt.value)}
                     className={`flex-1 py-3 px-3 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
                       form.payment_method === opt.value
                         ? 'border-primary bg-emerald-50 text-primary'
@@ -246,6 +277,19 @@ const ProfilePage = () => {
             {t('nav.logout')}
           </button>
         </div>
+
+        {/* Employment Agreement Dialog */}
+        <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('employment.dialog.title')}</DialogTitle>
+              <DialogDescription>{t('employment.dialog.description')}</DialogDescription>
+            </DialogHeader>
+            <Button onClick={() => { setShowEmploymentDialog(false); navigate('/employment-agreement'); }} className="w-full">
+              {t('employment.dialog.cta')}
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
