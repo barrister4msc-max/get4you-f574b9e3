@@ -29,6 +29,7 @@ const ProfilePage = () => {
         phone: profile.phone || '',
         city: profile.city || '',
         bio: profile.bio || '',
+        payment_method: (profile as any).payment_method || '',
       });
     }
   }, [profile]);
