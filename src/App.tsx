@@ -23,6 +23,7 @@ import EsekPatur from "./pages/EsekPatur";
 import AdminEsekPatur from "./pages/AdminEsekPatur";
 import ContractorAgreement from "./pages/ContractorAgreement";
 import EmploymentAgreement from "./pages/EmploymentAgreement";
+import AdminEmployment from "./pages/AdminEmployment";
 
 const queryClient = new QueryClient();
 
