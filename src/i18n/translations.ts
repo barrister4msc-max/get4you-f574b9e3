@@ -428,7 +428,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'Мои роли',
     'profile.roles.updated': 'Роли обновлены!',
     'profile.roles.needOne': 'Нужна хотя бы одна роль',
-    'profile.payment.title': 'Способ оплаты',
+    'profile.payment.title': 'Альтернативный способ оплаты',
+    'profile.payment.subtitle': 'По умолчанию: Эскроу. Выберите дополнительный вариант при необходимости.',
     'profile.payment.cash': 'Наличные',
     'profile.payment.check': 'Чек',
 
