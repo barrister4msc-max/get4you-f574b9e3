@@ -97,6 +97,12 @@ const ProfilePage = () => {
   };
 
   const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...roles].sort());
+  const isTasker = roles.includes('tasker');
+
+  const paymentOptions = [
+    { value: 'cash', label: t('profile.payment.cash'), icon: Banknote },
+    { value: 'check', label: t('profile.payment.check'), icon: Receipt },
+  ];
 
   const roleOptions: { value: string; label: string }[] = [
     { value: 'client', label: t('auth.role.client') },
