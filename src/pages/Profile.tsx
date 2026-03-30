@@ -207,7 +207,8 @@ const ProfilePage = () => {
           {/* Payment method for taskers */}
           {isTasker && (
             <div>
-              <label className="block text-sm font-medium mb-2">{t('profile.payment.title')}</label>
+              <label className="block text-sm font-medium mb-1">{t('profile.payment.title')}</label>
+              <p className="text-xs text-muted-foreground mb-2">{t('profile.payment.subtitle')}</p>
               <div className="flex gap-2">
                 {paymentOptions.map((opt) => (
                   <button
