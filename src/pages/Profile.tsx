@@ -64,7 +64,7 @@ const ProfilePage = () => {
 
   const handlePaymentSelect = (value: string) => {
     setForm({ ...form, payment_method: value });
-    if ((value === 'cash' || value === 'check') && hasEmploymentAgreement === false) {
+    if (value === 'cash_or_check' && hasEmploymentAgreement === false) {
       setShowEmploymentDialog(true);
     }
   };
