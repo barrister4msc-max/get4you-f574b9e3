@@ -21,6 +21,9 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [savingRoles, setSavingRoles] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [showEmploymentDialog, setShowEmploymentDialog] = useState(false);
+  const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     display_name: '',
