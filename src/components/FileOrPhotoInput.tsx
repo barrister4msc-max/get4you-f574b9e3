@@ -10,51 +10,33 @@ interface FileOrPhotoInputProps {
 
 const FileOrPhotoInput = ({ file, onFileChange, accept = 'image/*,.pdf' }: FileOrPhotoInputProps) => {
   const { t } = useLanguage();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex gap-2">
-      {/* File / gallery picker */}
-      <label className="flex-1 flex items-center gap-3 p-3 border border-dashed rounded-xl cursor-pointer hover:bg-secondary/50 transition-colors">
-        {file ? (
-          <>
-            <FileText className="w-5 h-5 text-primary shrink-0" />
-            <span className="text-sm truncate">{file.name}</span>
-          </>
-        ) : (
-          <>
-            <Upload className="w-5 h-5 text-muted-foreground shrink-0" />
-            <span className="text-sm text-muted-foreground">{t('esek.upload.placeholder')}</span>
-          </>
-        )}
-        <input
-          ref={fileRef}
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
-        />
-      </label>
-
-      {/* Camera capture button */}
-      <button
-        type="button"
-        onClick={() => cameraRef.current?.click()}
-        className="flex items-center justify-center w-12 border border-dashed rounded-xl text-muted-foreground hover:bg-secondary/50 hover:text-primary transition-colors shrink-0"
-        title={t('upload.camera')}
-      >
-        <Camera className="w-5 h-5" />
-        <input
-          ref={cameraRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
-        />
-      </button>
-    </div>
+    <label className="flex items-center gap-3 p-3 border border-dashed rounded-xl cursor-pointer hover:bg-secondary/50 transition-colors">
+      {file ? (
+        <>
+          <FileText className="w-5 h-5 text-primary shrink-0" />
+          <span className="text-sm truncate flex-1">{file.name}</span>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Camera className="w-5 h-5 text-muted-foreground" />
+            <span className="text-muted-foreground">/</span>
+            <Upload className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <span className="text-sm text-muted-foreground">{t('upload.photoOrFile')}</span>
+        </>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+      />
+    </label>
   );
 };
 
