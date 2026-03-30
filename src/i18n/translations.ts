@@ -1197,6 +1197,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.doc.teudatOle': 'شهادة الهجرة',
     'esek.upload.placeholder': 'اضغط لرفع ملف',
     'upload.camera': 'التقط صورة',
+    'upload.photoOrFile': 'صورة أو ملف',
     'esek.submit': 'إرسال الطلب',
     'esek.success': 'تم إرسال الطلب بنجاح!',
     'esek.promo.title': '🎁 أول 100 مسجل يحصلون على تسجيل عوسك باتور مجاناً!',
