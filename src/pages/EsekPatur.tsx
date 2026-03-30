@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Upload, FileText, Loader2 } from 'lucide-react';
+import FileOrPhotoInput from '@/components/FileOrPhotoInput';
 
 const DOC_FIELDS = [
   { key: 'passport', labelKey: 'esek.doc.passport' },
@@ -163,25 +164,10 @@ const EsekPaturPage = () => {
             {DOC_FIELDS.map((doc) => (
               <div key={doc.key} className="space-y-2">
                 <Label>{t(doc.labelKey)}</Label>
-                <label className="flex items-center gap-3 p-3 border border-dashed rounded-xl cursor-pointer hover:bg-secondary/50 transition-colors">
-                  {files[doc.key] ? (
-                    <>
-                      <FileText className="w-5 h-5 text-primary shrink-0" />
-                      <span className="text-sm truncate">{files[doc.key]!.name}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 text-muted-foreground shrink-0" />
-                      <span className="text-sm text-muted-foreground">{t('esek.upload.placeholder')}</span>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={(e) => handleFile(doc.key, e.target.files?.[0] ?? null)}
-                  />
-                </label>
+                <FileOrPhotoInput
+                  file={files[doc.key]}
+                  onFileChange={(file) => handleFile(doc.key, file)}
+                />
               </div>
             ))}
           </div>
