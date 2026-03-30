@@ -48,6 +48,27 @@ const ProfilePage = () => {
     setSelectedRoles(roles);
   }, [roles]);
 
+  // Check if user already has an employment agreement
+  useEffect(() => {
+    if (!user) return;
+    const checkAgreement = async () => {
+      const { data } = await supabase
+        .from('employment_agreements' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      setHasEmploymentAgreement(!!data && data.length > 0);
+    };
+    checkAgreement();
+  }, [user]);
+
+  const handlePaymentSelect = (value: string) => {
+    setForm({ ...form, payment_method: value });
+    if ((value === 'cash' || value === 'check') && hasEmploymentAgreement === false) {
+      setShowEmploymentDialog(true);
+    }
+  };
+
   const selectRole = (role: string) => {
     setSelectedRoles([role]);
   };
