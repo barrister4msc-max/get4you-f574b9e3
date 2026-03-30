@@ -64,7 +64,7 @@ const ProfilePage = () => {
 
   const handlePaymentSelect = (value: string) => {
     setForm({ ...form, payment_method: value });
-    if ((value === 'cash' || value === 'check') && hasEmploymentAgreement === false) {
+    if (value === 'cash_or_check' && hasEmploymentAgreement === false) {
       setShowEmploymentDialog(true);
     }
   };
@@ -131,8 +131,7 @@ const ProfilePage = () => {
   const isTasker = roles.includes('tasker');
 
   const paymentOptions = [
-    { value: 'cash', label: t('profile.payment.cash'), icon: Banknote },
-    { value: 'check', label: t('profile.payment.check'), icon: Receipt },
+    { value: 'cash_or_check', label: `${t('profile.payment.cash')} / ${t('profile.payment.check')}`, icon: Banknote },
   ];
 
   const roleOptions: { value: string; label: string }[] = [
