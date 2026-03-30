@@ -277,6 +277,19 @@ const ProfilePage = () => {
             {t('nav.logout')}
           </button>
         </div>
+
+        {/* Employment Agreement Dialog */}
+        <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('employment.dialog.title')}</DialogTitle>
+              <DialogDescription>{t('employment.dialog.description')}</DialogDescription>
+            </DialogHeader>
+            <Button onClick={() => { setShowEmploymentDialog(false); navigate('/employment-agreement'); }} className="w-full">
+              {t('employment.dialog.cta')}
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
