@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Upload, FileText, Loader2 } from 'lucide-react';
+import FileOrPhotoInput from '@/components/FileOrPhotoInput';
 
 const DOC_FIELDS = [
   { key: 'passport', labelKey: 'esek.doc.passport' },
