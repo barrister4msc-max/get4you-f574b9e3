@@ -245,7 +245,7 @@ const ProfilePage = () => {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setForm({ ...form, payment_method: opt.value })}
+                    onClick={() => handlePaymentSelect(opt.value)}
                     className={`flex-1 py-3 px-3 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
                       form.payment_method === opt.value
                         ? 'border-primary bg-emerald-50 text-primary'
