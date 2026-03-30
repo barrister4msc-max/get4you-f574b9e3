@@ -1193,6 +1193,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.doc.bankStatement': 'كشف حساب بنكي',
     'esek.doc.teudatOle': 'شهادة الهجرة',
     'esek.upload.placeholder': 'اضغط لرفع ملف',
+    'upload.camera': 'التقط صورة',
     'esek.submit': 'إرسال الطلب',
     'esek.success': 'تم إرسال الطلب بنجاح!',
     'esek.promo.title': '🎁 أول 100 مسجل يحصلون على تسجيل عوسك باتور مجاناً!',
