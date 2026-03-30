@@ -565,6 +565,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.doc.bankStatement': 'Справка из банка',
     'esek.doc.teudatOle': 'Теудат Оле',
     'esek.upload.placeholder': 'Нажмите чтобы загрузить файл',
+    'upload.camera': 'Сделать фото',
     'esek.submit': 'Отправить заявку',
     'esek.success': 'Заявка успешно отправлена!',
     'esek.promo.title': '🎁 Первые 100 зарегистрировавшихся получают оформление Эсек Патур бесплатно!',
