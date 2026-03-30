@@ -948,6 +948,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'חתום על הסכם העסקה',
     'employment.dialog.description': 'לקבלת תשלום במזומן או בצ׳ק, יש לחתום על הסכם העסקה עם השותפים שלנו.',
     'employment.dialog.cta': 'המשך להסכם',
+
+    // Admin Employment
+    'admin.employment.title': 'הסכמי העסקה',
+    'admin.employment.subtitle': 'סקירת מסמכים וניהול הסכמי העסקה',
+    'admin.employment.empty': 'אין הסכמים עדיין',
+    'admin.employment.statusUpdated': 'הסטטוס עודכן',
+    'admin.employment.error.update': 'שגיאה בעדכון הסטטוס',
+    'admin.employment.signedAt': 'נחתם',
   },
   ar: {
     'nav.home': 'الرئيسية',
