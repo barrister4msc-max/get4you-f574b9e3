@@ -322,6 +322,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'Sign Employment Agreement',
     'employment.dialog.description': 'To receive payment by cash or check, you need to sign an employment agreement with our partners.',
     'employment.dialog.cta': 'Proceed to Agreement',
+
+    // Admin Employment
+    'admin.employment.title': 'Employment Agreements',
+    'admin.employment.subtitle': 'Review documents and manage employment agreements',
+    'admin.employment.empty': 'No agreements yet',
+    'admin.employment.statusUpdated': 'Status updated',
+    'admin.employment.error.update': 'Failed to update status',
+    'admin.employment.signedAt': 'Signed',
   },
   ru: {
     'nav.home': 'Главная',
@@ -627,6 +635,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'Оформить трудовое соглашение',
     'employment.dialog.description': 'Для получения оплаты наличными или чеком необходимо оформить трудовое соглашение с нашими партнёрами.',
     'employment.dialog.cta': 'Заключить соглашение',
+
+    // Admin Employment
+    'admin.employment.title': 'Трудовые соглашения',
+    'admin.employment.subtitle': 'Просмотр документов и управление трудовыми соглашениями',
+    'admin.employment.empty': 'Соглашений пока нет',
+    'admin.employment.statusUpdated': 'Статус обновлён',
+    'admin.employment.error.update': 'Ошибка обновления статуса',
+    'admin.employment.signedAt': 'Подписано',
   },
   he: {
     'nav.home': 'ראשי',
@@ -932,6 +948,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'חתום על הסכם העסקה',
     'employment.dialog.description': 'לקבלת תשלום במזומן או בצ׳ק, יש לחתום על הסכם העסקה עם השותפים שלנו.',
     'employment.dialog.cta': 'המשך להסכם',
+
+    // Admin Employment
+    'admin.employment.title': 'הסכמי העסקה',
+    'admin.employment.subtitle': 'סקירת מסמכים וניהול הסכמי העסקה',
+    'admin.employment.empty': 'אין הסכמים עדיין',
+    'admin.employment.statusUpdated': 'הסטטוס עודכן',
+    'admin.employment.error.update': 'שגיאה בעדכון הסטטוס',
+    'admin.employment.signedAt': 'נחתם',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -1237,5 +1261,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'وقّع اتفاقية التوظيف',
     'employment.dialog.description': 'لتلقي الدفع نقداً أو بشيك، يجب توقيع اتفاقية توظيف مع شركائنا.',
     'employment.dialog.cta': 'المتابعة إلى الاتفاقية',
+
+    // Admin Employment
+    'admin.employment.title': 'اتفاقيات التوظيف',
+    'admin.employment.subtitle': 'مراجعة المستندات وإدارة اتفاقيات التوظيف',
+    'admin.employment.empty': 'لا توجد اتفاقيات بعد',
+    'admin.employment.statusUpdated': 'تم تحديث الحالة',
+    'admin.employment.error.update': 'فشل في تحديث الحالة',
+    'admin.employment.signedAt': 'تم التوقيع',
   },
 };
