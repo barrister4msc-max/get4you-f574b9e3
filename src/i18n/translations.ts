@@ -1261,5 +1261,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'وقّع اتفاقية التوظيف',
     'employment.dialog.description': 'لتلقي الدفع نقداً أو بشيك، يجب توقيع اتفاقية توظيف مع شركائنا.',
     'employment.dialog.cta': 'المتابعة إلى الاتفاقية',
+
+    // Admin Employment
+    'admin.employment.title': 'اتفاقيات التوظيف',
+    'admin.employment.subtitle': 'مراجعة المستندات وإدارة اتفاقيات التوظيف',
+    'admin.employment.empty': 'لا توجد اتفاقيات بعد',
+    'admin.employment.statusUpdated': 'تم تحديث الحالة',
+    'admin.employment.error.update': 'فشل في تحديث الحالة',
+    'admin.employment.signedAt': 'تم التوقيع',
   },
 };
