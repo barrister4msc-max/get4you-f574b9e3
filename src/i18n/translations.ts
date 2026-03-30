@@ -562,6 +562,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'Вы уже подписали Соглашение Независимого Исполнителя.',
     'contract.signed.back': 'Вернуться в панель',
     'contract.nav': 'Договор исполнителя',
+    'contract.cta.title': 'У меня уже есть Эсек Патур',
+    'contract.cta.description': 'Если у вас уже есть регистрация Эсек Патур, подпишите договор исполнителя, чтобы начать работу',
+    'contract.cta.button': 'Подписать договор исполнителя',
 
     'taskers.becomeClient.title': 'Хотите также размещать задачи?',
     'taskers.becomeClient.description': 'Добавьте роль Заказчика, чтобы создавать и управлять задачами',
