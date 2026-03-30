@@ -948,7 +948,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'أدواري',
     'profile.roles.updated': 'تم تحديث الأدوار!',
     'profile.roles.needOne': 'يجب أن يكون لديك دور واحد على الأقل',
-    'profile.payment.title': 'طريقة الدفع',
+    'profile.payment.title': 'طريقة دفع بديلة',
+    'profile.payment.subtitle': 'الافتراضي: الضمان. اختر خياراً إضافياً عند الحاجة.',
     'profile.payment.cash': 'نقداً',
     'profile.payment.check': 'شيك',
 
