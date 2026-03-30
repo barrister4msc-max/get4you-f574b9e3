@@ -160,6 +160,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'My Roles',
     'profile.roles.updated': 'Roles updated!',
     'profile.roles.needOne': 'You must have at least one role',
+    'profile.payment.title': 'Payment Method',
+    'profile.payment.cash': 'Cash',
+    'profile.payment.check': 'Check',
 
     // General
     'currency.usd': 'USD',
@@ -424,6 +427,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'Мои роли',
     'profile.roles.updated': 'Роли обновлены!',
     'profile.roles.needOne': 'Нужна хотя бы одна роль',
+    'profile.payment.title': 'Способ оплаты',
+    'profile.payment.cash': 'Наличные',
+    'profile.payment.check': 'Чек',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
@@ -680,6 +686,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'התפקידים שלי',
     'profile.roles.updated': 'התפקידים עודכנו!',
     'profile.roles.needOne': 'חייב להיות לפחות תפקיד אחד',
+    'profile.payment.title': 'אמצעי תשלום',
+    'profile.payment.cash': 'מזומן',
+    'profile.payment.check': "צ'ק",
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
@@ -936,6 +945,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'أدواري',
     'profile.roles.updated': 'تم تحديث الأدوار!',
     'profile.roles.needOne': 'يجب أن يكون لديك دور واحد على الأقل',
+    'profile.payment.title': 'طريقة الدفع',
+    'profile.payment.cash': 'نقداً',
+    'profile.payment.check': 'شيك',
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2 } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -19,6 +19,7 @@ const ProfilePage = () => {
     phone: '',
     city: '',
     bio: '',
+    payment_method: '',
   });
 
   useEffect(() => {
@@ -28,6 +29,7 @@ const ProfilePage = () => {
         phone: profile.phone || '',
         city: profile.city || '',
         bio: profile.bio || '',
+        payment_method: (profile as any).payment_method || '',
       });
     }
   }, [profile]);
@@ -66,14 +68,18 @@ const ProfilePage = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    const updateData: any = {
+      display_name: form.display_name,
+      phone: form.phone,
+      city: form.city,
+      bio: form.bio,
+    };
+    if (isTasker) {
+      updateData.payment_method = form.payment_method || null;
+    }
     const { error } = await supabase
       .from('profiles')
-      .update({
-        display_name: form.display_name,
-        phone: form.phone,
-        city: form.city,
-        bio: form.bio,
-      })
+      .update(updateData)
       .eq('user_id', user.id);
 
     if (error) {
@@ -91,6 +97,12 @@ const ProfilePage = () => {
   };
 
   const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...roles].sort());
+  const isTasker = roles.includes('tasker');
+
+  const paymentOptions = [
+    { value: 'cash', label: t('profile.payment.cash'), icon: Banknote },
+    { value: 'check', label: t('profile.payment.check'), icon: Receipt },
+  ];
 
   const roleOptions: { value: string; label: string }[] = [
     { value: 'client', label: t('auth.role.client') },
@@ -191,6 +203,30 @@ const ProfilePage = () => {
               />
             </div>
           </div>
+
+          {/* Payment method for taskers */}
+          {isTasker && (
+            <div>
+              <label className="block text-sm font-medium mb-2">{t('profile.payment.title')}</label>
+              <div className="flex gap-2">
+                {paymentOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm({ ...form, payment_method: opt.value })}
+                    className={`flex-1 py-3 px-3 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
+                      form.payment_method === opt.value
+                        ? 'border-primary bg-emerald-50 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/30'
+                    }`}
+                  >
+                    <opt.icon className="w-5 h-5" />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={handleSave}
