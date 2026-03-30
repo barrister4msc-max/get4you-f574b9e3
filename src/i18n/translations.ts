@@ -322,6 +322,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'Sign Employment Agreement',
     'employment.dialog.description': 'To receive payment by cash or check, you need to sign an employment agreement with our partners.',
     'employment.dialog.cta': 'Proceed to Agreement',
+
+    // Admin Employment
+    'admin.employment.title': 'Employment Agreements',
+    'admin.employment.subtitle': 'Review documents and manage employment agreements',
+    'admin.employment.empty': 'No agreements yet',
+    'admin.employment.statusUpdated': 'Status updated',
+    'admin.employment.error.update': 'Failed to update status',
+    'admin.employment.signedAt': 'Signed',
   },
   ru: {
     'nav.home': 'Главная',
