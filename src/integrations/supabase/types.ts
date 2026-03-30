@@ -80,6 +80,69 @@ export type Database = {
         }
         Relationships: []
       }
+      employment_agreements: {
+        Row: {
+          address: string
+          address_proof_url: string | null
+          agreement_version: string
+          bank_statement_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          id_number: string
+          ip_address: string | null
+          passport_url: string | null
+          phone: string
+          signed_at: string | null
+          status: string
+          teudat_ole_url: string | null
+          teudat_zeut_url: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          address_proof_url?: string | null
+          agreement_version?: string
+          bank_statement_url?: string | null
+          created_at?: string
+          full_name: string
+          id?: string
+          id_number: string
+          ip_address?: string | null
+          passport_url?: string | null
+          phone: string
+          signed_at?: string | null
+          status?: string
+          teudat_ole_url?: string | null
+          teudat_zeut_url?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          address_proof_url?: string | null
+          agreement_version?: string
+          bank_statement_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          ip_address?: string | null
+          passport_url?: string | null
+          phone?: string
+          signed_at?: string | null
+          status?: string
+          teudat_ole_url?: string | null
+          teudat_zeut_url?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       esek_patur_applications: {
         Row: {
           activity_type: string
