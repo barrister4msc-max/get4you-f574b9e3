@@ -183,7 +183,7 @@ const agreementTextHe = `הסכם קבלן עצמאי
 11.2. אם תנאי כלשהו ייקבע כבלתי תקף, לא יהיה בכך כדי לפגוע ביתר ההוראות.`;
 
 const ContractorAgreementPage = () => {
-  const { t, language } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
