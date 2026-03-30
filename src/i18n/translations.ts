@@ -686,6 +686,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'התפקידים שלי',
     'profile.roles.updated': 'התפקידים עודכנו!',
     'profile.roles.needOne': 'חייב להיות לפחות תפקיד אחד',
+    'profile.payment.title': 'אמצעי תשלום',
+    'profile.payment.cash': 'מזומן',
+    'profile.payment.check': "צ'ק",
 
     'currency.usd': 'USD',
     'currency.ils': 'ILS',

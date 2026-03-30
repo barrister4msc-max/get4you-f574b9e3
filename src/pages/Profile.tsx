@@ -204,7 +204,31 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <button
+          {/* Payment method for taskers */}
+          {isTasker && (
+            <div>
+              <label className="block text-sm font-medium mb-2">{t('profile.payment.title')}</label>
+              <div className="flex gap-2">
+                {paymentOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm({ ...form, payment_method: opt.value })}
+                    className={`flex-1 py-3 px-3 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
+                      form.payment_method === opt.value
+                        ? 'border-primary bg-emerald-50 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/30'
+                    }`}
+                  >
+                    <opt.icon className="w-5 h-5" />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+
             onClick={handleSave}
             disabled={saving}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
