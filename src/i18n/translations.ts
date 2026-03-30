@@ -635,6 +635,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'employment.dialog.title': 'Оформить трудовое соглашение',
     'employment.dialog.description': 'Для получения оплаты наличными или чеком необходимо оформить трудовое соглашение с нашими партнёрами.',
     'employment.dialog.cta': 'Заключить соглашение',
+
+    // Admin Employment
+    'admin.employment.title': 'Трудовые соглашения',
+    'admin.employment.subtitle': 'Просмотр документов и управление трудовыми соглашениями',
+    'admin.employment.empty': 'Соглашений пока нет',
+    'admin.employment.statusUpdated': 'Статус обновлён',
+    'admin.employment.error.update': 'Ошибка обновления статуса',
+    'admin.employment.signedAt': 'Подписано',
   },
   he: {
     'nav.home': 'ראשי',
