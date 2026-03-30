@@ -21,6 +21,7 @@ import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import EsekPatur from "./pages/EsekPatur";
 import AdminEsekPatur from "./pages/AdminEsekPatur";
+import ContractorAgreement from "./pages/ContractorAgreement";
 
 const queryClient = new QueryClient();
 
