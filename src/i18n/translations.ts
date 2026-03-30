@@ -160,7 +160,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'My Roles',
     'profile.roles.updated': 'Roles updated!',
     'profile.roles.needOne': 'You must have at least one role',
-    'profile.payment.title': 'Payment Method',
+    'profile.payment.title': 'Alternative Payment Method',
+    'profile.payment.subtitle': 'Default: Escrow. Choose an additional option if needed.',
     'profile.payment.cash': 'Cash',
     'profile.payment.check': 'Check',
 
@@ -427,7 +428,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'Мои роли',
     'profile.roles.updated': 'Роли обновлены!',
     'profile.roles.needOne': 'Нужна хотя бы одна роль',
-    'profile.payment.title': 'Способ оплаты',
+    'profile.payment.title': 'Альтернативный способ оплаты',
+    'profile.payment.subtitle': 'По умолчанию: Эскроу. Выберите дополнительный вариант при необходимости.',
     'profile.payment.cash': 'Наличные',
     'profile.payment.check': 'Чек',
 
@@ -686,7 +688,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'התפקידים שלי',
     'profile.roles.updated': 'התפקידים עודכנו!',
     'profile.roles.needOne': 'חייב להיות לפחות תפקיד אחד',
-    'profile.payment.title': 'אמצעי תשלום',
+    'profile.payment.title': 'אמצעי תשלום חלופי',
+    'profile.payment.subtitle': 'ברירת מחדל: נאמנות. בחר אפשרות נוספת במידת הצורך.',
     'profile.payment.cash': 'מזומן',
     'profile.payment.check': "צ'ק",
 
@@ -945,7 +948,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.roles': 'أدواري',
     'profile.roles.updated': 'تم تحديث الأدوار!',
     'profile.roles.needOne': 'يجب أن يكون لديك دور واحد على الأقل',
-    'profile.payment.title': 'طريقة الدفع',
+    'profile.payment.title': 'طريقة دفع بديلة',
+    'profile.payment.subtitle': 'الافتراضي: الضمان. اختر خياراً إضافياً عند الحاجة.',
     'profile.payment.cash': 'نقداً',
     'profile.payment.check': 'شيك',
 
