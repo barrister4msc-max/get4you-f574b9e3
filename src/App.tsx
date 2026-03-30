@@ -45,6 +45,7 @@ const App = () => (
                 <Route path="/for-taskers" element={<ForTaskers />} />
                 <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
                 <Route path="/admin/esek-patur" element={<ProtectedRoute><AdminEsekPatur /></ProtectedRoute>} />
+                <Route path="/admin/employment" element={<ProtectedRoute><AdminEmployment /></ProtectedRoute>} />
                 <Route path="/contractor-agreement" element={<ProtectedRoute><ContractorAgreement /></ProtectedRoute>} />
                 <Route path="/employment-agreement" element={<ProtectedRoute><EmploymentAgreement /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
