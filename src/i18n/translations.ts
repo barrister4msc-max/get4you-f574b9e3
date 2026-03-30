@@ -277,6 +277,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'You have already signed the Independent Contractor Agreement.',
     'contract.signed.back': 'Back to Dashboard',
     'contract.nav': 'Contractor Agreement',
+    'contract.cta.title': 'I already have Osek Patur',
+    'contract.cta.description': 'If you already have Osek Patur registration, sign the contractor agreement to start working',
+    'contract.cta.button': 'Sign Contractor Agreement',
 
     // Become Client
     'taskers.becomeClient.title': 'Want to post tasks too?',
@@ -559,6 +562,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'Вы уже подписали Соглашение Независимого Исполнителя.',
     'contract.signed.back': 'Вернуться в панель',
     'contract.nav': 'Договор исполнителя',
+    'contract.cta.title': 'У меня уже есть Эсек Патур',
+    'contract.cta.description': 'Если у вас уже есть регистрация Эсек Патур, подпишите договор исполнителя, чтобы начать работу',
+    'contract.cta.button': 'Подписать договор исполнителя',
 
     'taskers.becomeClient.title': 'Хотите также размещать задачи?',
     'taskers.becomeClient.description': 'Добавьте роль Заказчика, чтобы создавать и управлять задачами',
@@ -839,6 +845,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'כבר חתמת על הסכם הקבלן העצמאי.',
     'contract.signed.back': 'חזרה ללוח הבקרה',
     'contract.nav': 'הסכם קבלן',
+    'contract.cta.title': 'יש לי כבר עוסק פטור',
+    'contract.cta.description': 'אם יש לך כבר רישום עוסק פטור, חתום על הסכם הקבלן כדי להתחיל לעבוד',
+    'contract.cta.button': 'חתום על הסכם קבלן',
 
     'taskers.becomeClient.title': 'רוצה גם לפרסם משימות?',
     'taskers.becomeClient.description': 'הוסף תפקיד לקוח כדי ליצור ולנהל משימות',
@@ -1119,6 +1128,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'لقد وقعت بالفعل على اتفاقية المقاول المستقل.',
     'contract.signed.back': 'العودة إلى لوحة التحكم',
     'contract.nav': 'اتفاقية المقاول',
+    'contract.cta.title': 'لدي بالفعل عوسيك باطور',
+    'contract.cta.description': 'إذا كان لديك بالفعل تسجيل عوسيك باطور، وقّع اتفاقية المقاول لبدء العمل',
+    'contract.cta.button': 'توقيع اتفاقية المقاول',
 
     'taskers.becomeClient.title': 'تريد أيضاً نشر المهام؟',
     'taskers.becomeClient.description': 'أضف دور العميل لإنشاء وإدارة المهام',

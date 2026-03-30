@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useEsekPaturCount } from '@/hooks/useEsekPaturCount';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight, UserPlus } from 'lucide-react';
+import { CheckCircle2, ArrowRight, UserPlus, FileSignature } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -121,11 +121,27 @@ const ForTaskersPage = () => {
           ))}
         </div>
 
+        {/* Contractor Agreement CTA */}
+        <div className="mt-12 p-8 rounded-2xl border border-primary/30 bg-primary/5 text-center">
+          <FileSignature className="w-10 h-10 text-primary mx-auto mb-3" />
+          <h2 className="text-xl font-bold">{t('contract.cta.title')}</h2>
+          <p className="text-muted-foreground mt-2">{t('contract.cta.description')}</p>
+          <div className="mt-4">
+            <Link
+              to="/contractor-agreement"
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              {t('contract.cta.button')}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+
         {/* Esek Patur CTA */}
-        <div className="mt-12 text-center p-8 rounded-2xl border border-border bg-card shadow-card">
+        <div className="mt-8 text-center p-8 rounded-2xl border border-border bg-card shadow-card">
           <h2 className="text-xl font-bold">{t('esek.title')}</h2>
           <p className="text-muted-foreground mt-2">{t('esek.subtitle')}</p>
-          <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-primary/30">
+          <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/30">
             <p className="text-sm font-semibold text-primary">🎉 {t('esek.promo.title')}</p>
             {remaining !== null && (
               <p className="text-xs text-muted-foreground mt-1">
