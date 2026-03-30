@@ -1128,6 +1128,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'contract.signed.description': 'لقد وقعت بالفعل على اتفاقية المقاول المستقل.',
     'contract.signed.back': 'العودة إلى لوحة التحكم',
     'contract.nav': 'اتفاقية المقاول',
+    'contract.cta.title': 'لدي بالفعل عوسيك باطور',
+    'contract.cta.description': 'إذا كان لديك بالفعل تسجيل عوسيك باطور، وقّع اتفاقية المقاول لبدء العمل',
+    'contract.cta.button': 'توقيع اتفاقية المقاول',
 
     'taskers.becomeClient.title': 'تريد أيضاً نشر المهام؟',
     'taskers.becomeClient.description': 'أضف دور العميل لإنشاء وإدارة المهام',
