@@ -193,8 +193,8 @@ const ContractorAgreementPage = () => {
   const [agreed, setAgreed] = useState(false);
   const [confirmedRead, setConfirmedRead] = useState(false);
 
-  const isRtl = language === 'he' || language === 'ar';
-  const agreementText = language === 'he' ? agreementTextHe : agreementTextRu;
+  const isRtl = locale === 'he' || locale === 'ar';
+  const agreementText = locale === 'he' ? agreementTextHe : agreementTextRu;
 
   useEffect(() => {
     if (profile?.display_name) setFullName(profile.display_name);
