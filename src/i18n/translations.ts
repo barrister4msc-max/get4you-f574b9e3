@@ -879,6 +879,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'esek.doc.bankStatement': 'אישור מהבנק',
     'esek.doc.teudatOle': 'תעודת עולה',
     'esek.upload.placeholder': 'לחץ להעלאת קובץ',
+    'upload.camera': 'צלם תמונה',
     'esek.submit': 'שלח בקשה',
     'esek.success': 'הבקשה נשלחה בהצלחה!',
     'esek.promo.title': '🎁 100 הנרשמים הראשונים מקבלים רישום עוסק פטור בחינם!',
