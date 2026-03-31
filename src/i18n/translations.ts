@@ -43,10 +43,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.step1.desc': 'Describe what you need done, set your budget and timeline.',
     'how.step2.title': 'Get Offers',
     'how.step2.desc': 'Verified taskers will send you proposals with their price and timeline.',
-    'how.step3.title': 'Choose & Pay',
-    'how.step3.desc': 'Pick the best offer. Payment is held in escrow until the task is done.',
-    'how.step4.title': 'Done & Review',
-    'how.step4.desc': 'Approve the work, funds are released, and leave a review.',
+    'how.step3.title': 'Choose a Tasker',
+    'how.step3.desc': 'Compare proposals, check reviews, and pick the best tasker for the job.',
+    'how.step4.title': 'Pay Securely',
+    'how.step4.desc': 'Payment is held in escrow until the task is completed and approved.',
+    'how.step5.title': 'Done & Review',
+    'how.step5.desc': 'Approve the work, funds are released, and leave a review.',
 
     // Task form
     'task.create.title': 'Create a New Task',
