@@ -1,11 +1,23 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Mail, Lock, User, ArrowRight, CheckCircle2, Eye, EyeOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Role = 'client' | 'tasker' | 'both';
+
+const getPasswordStrength = (pw: string): { level: 'weak' | 'medium' | 'strong'; score: number } => {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 12) score++;
+  if (/[a-zA-Z]/.test(pw) && /[0-9]/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  if (score <= 1) return { level: 'weak', score: 1 };
+  if (score <= 2) return { level: 'medium', score: 2 };
+  return { level: 'strong', score: 3 };
+};
 
 const LoginPage = () => {
   const { t } = useLanguage();
@@ -23,6 +35,18 @@ const LoginPage = () => {
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('client');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Post-signup state
+  const [signupComplete, setSignupComplete] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
+  const [resending, setResending] = useState(false);
+
+  const strength = useMemo(() => getPasswordStrength(password), [password]);
+  const hasMinLength = password.length >= 8;
+  const hasLettersAndDigits = /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +63,12 @@ const LoginPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast.error(t('auth.passwordMin'));
+      return;
+    }
+    if (!hasLettersAndDigits) {
+      toast.error(t('auth.passwordRequireLettersDigits'));
       return;
     }
     if (password !== confirmPassword) {
@@ -53,9 +81,22 @@ const LoginPage = () => {
     if (error) {
       toast.error(error);
     } else {
-      toast.success(t('auth.checkEmail'));
-      const returnTo = searchParams.get('returnTo');
-      navigate(returnTo || '/');
+      setSignupEmail(email);
+      setSignupComplete(true);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: signupEmail,
+    });
+    setResending(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(t('auth.emailResent'));
     }
   };
 
@@ -64,6 +105,100 @@ const LoginPage = () => {
     { value: 'tasker', label: t('auth.role.tasker') },
     { value: 'both', label: t('auth.role.both') },
   ];
+
+  const strengthColors = {
+    weak: 'bg-destructive',
+    medium: 'bg-accent',
+    strong: 'bg-primary',
+  };
+
+  const strengthLabels = {
+    weak: t('auth.strength.weak'),
+    medium: t('auth.strength.medium'),
+    strong: t('auth.strength.strong'),
+  };
+
+  // Post-signup confirmation screen
+  if (signupComplete) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center py-12">
+        <div className="w-full max-w-md mx-auto px-4 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold mb-3">{t('auth.checkEmailTitle')}</h1>
+          <p className="text-muted-foreground mb-2">
+            {t('auth.checkEmailDesc')} <span className="font-semibold text-foreground">{signupEmail}</span>
+          </p>
+          
+          <div className="mt-6 p-4 rounded-xl bg-accent/10 border border-accent/30 flex items-start gap-3 text-start">
+            <AlertTriangle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+            <p className="text-sm text-foreground">
+              {t('auth.checkSpam')}
+            </p>
+          </div>
+
+          <button
+            onClick={handleResendEmail}
+            disabled={resending}
+            className="mt-6 flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${resending ? 'animate-spin' : ''}`} />
+            {t('auth.resendEmail')}
+          </button>
+
+          <button
+            onClick={() => {
+              setSignupComplete(false);
+              setTab('login');
+              setPassword('');
+              setConfirmPassword('');
+            }}
+            className="mt-4 text-sm text-primary font-medium hover:underline"
+          >
+            {t('auth.backToLogin')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const PasswordInput = ({
+    value,
+    onChange,
+    show,
+    onToggle,
+    placeholder = '••••••••',
+    minLength,
+  }: {
+    value: string;
+    onChange: (v: string) => void;
+    show: boolean;
+    onToggle: () => void;
+    placeholder?: string;
+    minLength?: number;
+  }) => (
+    <div className="relative">
+      <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full ps-10 pe-10 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+        placeholder={placeholder}
+        required
+        minLength={minLength}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        tabIndex={-1}
+      >
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12">
@@ -116,17 +251,12 @@ const LoginPage = () => {
 
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('auth.password')}</label>
-              <div className="relative">
-                <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
+                show={showLoginPassword}
+                onToggle={() => setShowLoginPassword(!showLoginPassword)}
+              />
             </div>
 
             <button
@@ -171,34 +301,58 @@ const LoginPage = () => {
 
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('auth.password')}</label>
-              <div className="relative">
-                <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
-              </div>
+              <PasswordInput
+                value={password}
+                onChange={setPassword}
+                show={showPassword}
+                onToggle={() => setShowPassword(!showPassword)}
+                minLength={8}
+              />
+
+              {/* Password requirements */}
+              {password.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${hasMinLength ? 'text-primary' : 'text-muted-foreground/40'}`} />
+                    <span className={hasMinLength ? 'text-foreground' : 'text-muted-foreground'}>{t('auth.req.minLength')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${hasLettersAndDigits ? 'text-primary' : 'text-muted-foreground/40'}`} />
+                    <span className={hasLettersAndDigits ? 'text-foreground' : 'text-muted-foreground'}>{t('auth.req.lettersDigits')}</span>
+                  </div>
+
+                  {/* Strength indicator */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex gap-1 flex-1">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-full transition-colors ${
+                            i <= strength.score ? strengthColors[strength.level] : 'bg-border'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      strength.level === 'weak' ? 'text-destructive' :
+                      strength.level === 'medium' ? 'text-accent-foreground' : 'text-primary'
+                    }`}>
+                      {strengthLabels[strength.level]}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1.5">{t('auth.confirmPassword')}</label>
-              <div className="relative">
-                <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
-              </div>
+              <PasswordInput
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                show={showConfirmPassword}
+                onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
+                minLength={8}
+              />
             </div>
 
             <div>
@@ -229,7 +383,7 @@ const LoginPage = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !hasMinLength || !hasLettersAndDigits}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading ? '...' : t('auth.signup')}
