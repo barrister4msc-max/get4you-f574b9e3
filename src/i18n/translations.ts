@@ -1131,6 +1131,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'لديك حساب بالفعل؟',
     'auth.checkEmail': 'تحقق من بريدك لتأكيد الحساب.',
     'auth.passwordMin': 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+    'auth.confirmPassword': 'تأكيد كلمة المرور',
+    'auth.passwordMismatch': 'كلمتا المرور غير متطابقتين.',
+
+    'escrow.title': 'حماية الضمان',
+    'escrow.desc': 'يتم الاحتفاظ بالدفع بأمان حتى إتمام المهمة. يتم حجز الأموال وتحويلها إلى مقدم الخدمة بعد التأكيد. بدون مخاطر، شفافية كاملة.',
+    'escrow.verified': 'مقدمو خدمات موثقون',
+    'escrow.secure': 'مدفوعات آمنة',
+    'escrow.rated': 'تقييمات ومراجعات',
+
+    'task.loginToPublish': 'سجّل أو سجّل الدخول لنشر مهمتك',
 
     'profile.rating': 'التقييم',
     'profile.completed': 'مكتملة',
