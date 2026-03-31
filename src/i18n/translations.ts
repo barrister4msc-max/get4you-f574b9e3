@@ -258,7 +258,19 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'Earnings',
     'dashboard.comingSoon': 'Coming soon',
 
-    // How it works extras
+    // Notifications
+    'notifications.title': 'Notifications',
+    'notifications.markAllRead': 'Mark all read',
+    'notifications.empty': 'No notifications yet',
+
+    // Motivation screen
+    'motivation.readyTitle': 'Your task is almost live!',
+    'motivation.taskers': '7 taskers are ready to respond',
+    'motivation.speed': 'We\'ll publish your task in 10 seconds',
+    'motivation.saved': 'Your task details are saved',
+    'motivation.cta': 'Sign up & publish →',
+    'motivation.note': 'Free registration, no obligations',
+
     'how.escrow.title': 'Escrow Protection',
     'how.escrow.desc': 'Funds held securely until work is approved',
     'how.verified.title': 'Verified Pros',
@@ -638,7 +650,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'Заработок',
     'dashboard.comingSoon': 'Скоро',
 
-    'how.escrow.title': 'Защита эскроу',
+    'notifications.title': 'Уведомления',
+    'notifications.markAllRead': 'Прочитать все',
+    'notifications.empty': 'Уведомлений пока нет',
+
+    'motivation.readyTitle': 'Ваша задача почти опубликована!',
+    'motivation.taskers': '7 исполнителей готовы откликнуться',
+    'motivation.speed': 'Опубликуем задачу за 10 секунд',
+    'motivation.saved': 'Данные задачи сохранены',
+    'motivation.cta': 'Зарегистрироваться и опубликовать →',
+    'motivation.note': 'Бесплатная регистрация, без обязательств',
+
     'how.escrow.desc': 'Средства надёжно хранятся до подтверждения выполнения поставленной задачи',
     'how.verified.title': 'Проверенные специалисты',
     'how.verified.desc': 'Верификация личности и навыков',
@@ -1013,7 +1035,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'רווחים',
     'dashboard.comingSoon': 'בקרוב',
 
-    'how.escrow.title': 'הגנת נאמנות',
+    'notifications.title': 'התראות',
+    'notifications.markAllRead': 'סמן הכל כנקרא',
+    'notifications.empty': 'אין התראות עדיין',
+
+    'motivation.readyTitle': '!המשימה שלך כמעט מוכנה',
+    'motivation.taskers': '7 מבצעים מוכנים להגיב',
+    'motivation.speed': 'נפרסם את המשימה תוך 10 שניות',
+    'motivation.saved': 'פרטי המשימה נשמרו',
+    'motivation.cta': '← הירשם ופרסם',
+    'motivation.note': 'הרשמה חינם, ללא התחייבות',
+
     'how.escrow.desc': 'הכספים מוחזקים בבטחה עד לאישור העבודה',
     'how.verified.title': 'מקצוענים מאומתים',
     'how.verified.desc': 'אימות זהות וכישורים',
@@ -1388,7 +1420,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'الأرباح',
     'dashboard.comingSoon': 'قريباً',
 
-    'how.escrow.title': 'حماية الضمان',
+    'notifications.title': 'الإشعارات',
+    'notifications.markAllRead': 'تحديد الكل كمقروء',
+    'notifications.empty': 'لا توجد إشعارات بعد',
+
+    'motivation.readyTitle': 'مهمتك على وشك النشر!',
+    'motivation.taskers': '7 منفذين جاهزون للاستجابة',
+    'motivation.speed': 'سننشر مهمتك في 10 ثوانٍ',
+    'motivation.saved': 'تم حفظ تفاصيل المهمة',
+    'motivation.cta': '← سجّل وانشر',
+    'motivation.note': 'تسجيل مجاني، بدون التزامات',
+
     'how.escrow.desc': 'الأموال محفوظة بأمان حتى الموافقة على العمل',
     'how.verified.title': 'محترفون موثقون',
     'how.verified.desc': 'التحقق من الهوية والمهارات',

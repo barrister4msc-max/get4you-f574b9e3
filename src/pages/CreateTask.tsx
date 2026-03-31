@@ -10,7 +10,7 @@ import { TaskAIAssistant } from '@/components/TaskAIAssistant';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus, Play, Square, Trash2,
+  Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus, Play, Square, Trash2, Users, Zap, Rocket,
 } from 'lucide-react';
 
 const DRAFT_KEY = 'task_draft';
@@ -136,10 +136,11 @@ const CreateTaskPage = () => {
     }
   };
 
+  const [showMotivation, setShowMotivation] = useState(false);
+
   const handleSubmit = async () => {
     if (!user) {
-      toast.info(t('task.loginToPublish') || 'Please sign up or log in to publish your task');
-      navigate('/login?tab=signup&returnTo=/create-task');
+      setShowMotivation(true);
       return;
     }
     if (!form.title.trim()) {
@@ -543,6 +544,58 @@ const CreateTaskPage = () => {
             </button>
           )}
         </div>
+
+        {/* Motivational pre-login modal */}
+        <AnimatePresence>
+          {showMotivation && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+              onClick={() => setShowMotivation(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-card rounded-2xl p-8 max-w-sm w-full text-center space-y-5 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
+                  <Users className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">
+                  {t('motivation.readyTitle')}
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-start bg-secondary rounded-xl p-3">
+                    <Zap className="w-5 h-5 text-amber-500 shrink-0" />
+                    <p className="text-sm font-medium">{t('motivation.taskers')}</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-start bg-secondary rounded-xl p-3">
+                    <Rocket className="w-5 h-5 text-primary shrink-0" />
+                    <p className="text-sm font-medium">{t('motivation.speed')}</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-start bg-secondary rounded-xl p-3">
+                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                    <p className="text-sm font-medium">{t('motivation.saved')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowMotivation(false);
+                    navigate('/login?tab=signup&returnTo=/create-task');
+                  }}
+                  className="w-full py-3 rounded-xl font-bold text-base bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                >
+                  {t('motivation.cta')}
+                </button>
+                <p className="text-xs text-muted-foreground">{t('motivation.note')}</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

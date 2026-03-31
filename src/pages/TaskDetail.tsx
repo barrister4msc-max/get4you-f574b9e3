@@ -322,7 +322,7 @@ const TaskDetailPage = () => {
                         </div>
                       </div>
                       <div className="text-end">
-                        <div className="font-bold text-primary">{formatPrice(proposal.price, currency)}</div>
+                        <div className="font-bold text-primary">{formatPrice(proposal.price, currency, proposal.currency)}</div>
                         <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[proposal.status]}`}>
                           {t(`proposal.status.${proposal.status}`)}
                         </span>
@@ -362,7 +362,7 @@ const TaskDetailPage = () => {
           {/* Sidebar */}
           <div className="space-y-4">
             <div className="bg-card border border-border rounded-2xl p-5 sticky top-20">
-              <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency)}</div>
+              <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency, task.currency)}</div>
               <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
 
               {/* Offer button / form */}

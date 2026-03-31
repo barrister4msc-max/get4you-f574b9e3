@@ -3,6 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
+import { NotificationBell } from './NotificationBell';
 import { Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 
@@ -54,6 +55,7 @@ export const Header = () => {
         <div className="hidden md:flex items-center gap-2">
           <CurrencyToggle />
           <LanguageSwitcher />
+          <NotificationBell />
           {user ? (
             <Link
               to="/profile"
@@ -95,6 +97,7 @@ export const Header = () => {
           <div className="flex items-center gap-2 pt-3">
             <CurrencyToggle />
             <LanguageSwitcher />
+            <NotificationBell />
           </div>
           <div className="pt-3">
             {user ? (
