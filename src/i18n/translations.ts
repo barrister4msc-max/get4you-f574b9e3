@@ -877,6 +877,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'בתהליך',
     'tasks.status.completed': 'הושלם',
     'tasks.respond': 'הגש הצעה',
+    'tasks.filter.budgetFrom': 'תקציב מ-',
+    'tasks.filter.budgetTo': 'תקציב עד',
+    'tasks.filter.clear': 'נקה סינון',
+    'tasks.status.draft': 'טיוטה',
+    'tasks.status.cancelled': 'בוטל',
 
     'proposal.submit': 'שלח הצעה',
     'proposal.your.price': 'המחיר שלך',
