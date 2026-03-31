@@ -160,9 +160,9 @@ const IndexPage = () => {
             </p>
             <div className="mt-8 flex justify-center gap-8">
               {[
-                { icon: CheckCircle2, text: 'Verified Taskers' },
-                { icon: Shield, text: 'Secure Payments' },
-                { icon: Star, text: 'Rated & Reviewed' },
+                 { icon: CheckCircle2, text: t('escrow.verified') },
+                 { icon: Shield, text: t('escrow.secure') },
+                 { icon: Star, text: t('escrow.rated') },
               ].map((item) => (
                 <div key={item.text} className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <item.icon className="w-5 h-5 text-primary" />
