@@ -164,42 +164,92 @@ const LoginPage = () => {
     );
   }
 
-  const PasswordInput = ({
-    value,
-    onChange,
-    show,
-    onToggle,
-    placeholder = '••••••••',
-    minLength,
-  }: {
-    value: string;
-    onChange: (v: string) => void;
-    show: boolean;
-    onToggle: () => void;
-    placeholder?: string;
-    minLength?: number;
-  }) => (
-    <div className="relative">
-      <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-      <input
-        type={show ? 'text' : 'password'}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full ps-10 pe-10 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-        placeholder={placeholder}
-        required
-        minLength={minLength}
-      />
-      <button
-        type="button"
-        onClick={onToggle}
-        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-        tabIndex={-1}
-      >
-        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-      </button>
-    </div>
-  );
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setForgotLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setForgotSent(true);
+    }
+  };
+
+  if (forgotMode) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center py-12">
+        <div className="w-full max-w-md mx-auto px-4">
+          <div className="text-center mb-8">
+            <div className="w-12 h-12 rounded-xl bg-gradient-emerald flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold">{t('auth.forgotTitle')}</h1>
+            <p className="text-muted-foreground text-sm mt-2">{t('auth.forgotDesc')}</p>
+          </div>
+
+          {forgotSent ? (
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Mail className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-muted-foreground mb-2">{t('auth.forgotSent')}</p>
+              <p className="font-semibold text-foreground">{forgotEmail}</p>
+              <div className="mt-6 p-4 rounded-xl bg-accent/10 border border-accent/30 flex items-start gap-3 text-start">
+                <AlertTriangle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                <p className="text-sm text-foreground">{t('auth.checkSpam')}</p>
+              </div>
+              <button
+                onClick={() => { setForgotMode(false); setForgotSent(false); }}
+                className="mt-6 text-sm text-primary font-medium hover:underline"
+              >
+                {t('auth.backToLogin')}
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5">{t('auth.email')}</label>
+                <div className="relative">
+                  <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={forgotLoading}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {forgotLoading ? '...' : t('auth.forgotSubmit')}
+                {!forgotLoading && <ArrowRight className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setForgotMode(false)}
+                className="w-full text-sm text-primary font-medium hover:underline"
+              >
+                {t('auth.backToLogin')}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12">
