@@ -145,6 +145,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'Already have an account?',
     'auth.checkEmail': 'Check your email to verify your account.',
     'auth.passwordMin': 'Password must be at least 6 characters.',
+    'auth.confirmPassword': 'Confirm Password',
+    'auth.passwordMismatch': 'Passwords do not match.',
+
+    // Escrow section
+    'escrow.title': 'Escrow Protection',
+    'escrow.desc': 'Your payment is held securely until the task is completed to your satisfaction. The funds are reserved and released to the tasker after confirmation. No risk, full transparency.',
+    'escrow.verified': 'Verified Taskers',
+    'escrow.secure': 'Secure Payments',
+    'escrow.rated': 'Rated & Reviewed',
+
+    // Task create unauth
+    'task.loginToPublish': 'Please sign up or log in to publish your task',
 
     // Profile
     'profile.rating': 'Rating',
