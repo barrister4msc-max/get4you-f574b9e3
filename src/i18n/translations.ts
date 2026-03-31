@@ -1420,7 +1420,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'الأرباح',
     'dashboard.comingSoon': 'قريباً',
 
-    'how.escrow.title': 'حماية الضمان',
+    'notifications.title': 'الإشعارات',
+    'notifications.markAllRead': 'تحديد الكل كمقروء',
+    'notifications.empty': 'لا توجد إشعارات بعد',
+
+    'motivation.readyTitle': 'مهمتك على وشك النشر!',
+    'motivation.taskers': '7 منفذين جاهزون للاستجابة',
+    'motivation.speed': 'سننشر مهمتك في 10 ثوانٍ',
+    'motivation.saved': 'تم حفظ تفاصيل المهمة',
+    'motivation.cta': '← سجّل وانشر',
+    'motivation.note': 'تسجيل مجاني، بدون التزامات',
+
     'how.escrow.desc': 'الأموال محفوظة بأمان حتى الموافقة على العمل',
     'how.verified.title': 'محترفون موثقون',
     'how.verified.desc': 'التحقق من الهوية والمهارات',
