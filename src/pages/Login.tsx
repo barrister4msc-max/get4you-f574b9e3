@@ -130,15 +130,31 @@ const LoginPage = () => {
     return (
       <div className="min-h-[80vh] flex items-center justify-center py-12">
         <div className="w-full max-w-md mx-auto px-4 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <Mail className="w-8 h-8 text-primary" />
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold mb-3">{t('auth.checkEmailTitle')}</h1>
-          <p className="text-muted-foreground mb-2">
+          <h1 className="text-2xl font-bold mb-2">🎉 {t('auth.welcome.title')}</h1>
+          <p className="text-muted-foreground mb-1">
             {t('auth.checkEmailDesc')} <span className="font-semibold text-foreground">{signupEmail}</span>
           </p>
-          
-          <div className="mt-6 p-4 rounded-xl bg-accent/10 border border-accent/30 flex items-start gap-3 text-start">
+
+          <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/20 text-start space-y-2">
+            <p className="text-sm font-semibold text-foreground">{t('auth.welcome.nextSteps')}</p>
+            <div className="flex items-start gap-2">
+              <span className="text-primary font-bold text-sm">1.</span>
+              <p className="text-sm text-muted-foreground">{t('auth.welcome.step1')}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-primary font-bold text-sm">2.</span>
+              <p className="text-sm text-muted-foreground">{t('auth.welcome.step2')}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-primary font-bold text-sm">3.</span>
+              <p className="text-sm text-muted-foreground">{t('auth.welcome.step3')}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 p-3 rounded-xl bg-accent/10 border border-accent/30 flex items-start gap-3 text-start">
             <AlertTriangle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
             <p className="text-sm text-foreground">
               {t('auth.checkSpam')}
@@ -148,7 +164,7 @@ const LoginPage = () => {
           <button
             onClick={handleResendEmail}
             disabled={resending}
-            className="mt-6 flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-50"
+            className="mt-5 flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${resending ? 'animate-spin' : ''}`} />
             {t('auth.resendEmail')}
