@@ -209,6 +209,7 @@ const CreateTaskPage = () => {
         photos: photoUrls.length > 0 ? photoUrls : null,
         voice_note_url: voiceNoteUrl,
         status: 'open',
+        currency,
       });
 
       if (error) throw error;
