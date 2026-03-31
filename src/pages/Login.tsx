@@ -318,6 +318,14 @@ const LoginPage = () => {
               {loading ? '...' : t('auth.login')}
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
+
+            <button
+              type="button"
+              onClick={() => setForgotMode(true)}
+              className="w-full text-sm text-primary font-medium hover:underline"
+            >
+              {t('auth.forgot')}
+            </button>
           </form>
         ) : (
           <form onSubmit={handleSignup} className="space-y-4">
