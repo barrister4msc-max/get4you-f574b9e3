@@ -285,6 +285,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'Payment has been released',
     'escrow.protected': 'Escrow protected',
 
+    'how.escrow.title': 'Escrow Protection',
     'how.escrow.desc': 'Funds held securely until work is approved',
     'how.verified.title': 'Verified Pros',
     'how.verified.desc': 'Identity and skills verification',
