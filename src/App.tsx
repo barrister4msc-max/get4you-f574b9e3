@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import EsekPatur from "./pages/EsekPatur";
 import AdminEsekPatur from "./pages/AdminEsekPatur";
 import ContractorAgreement from "./pages/ContractorAgreement";
+import ResetPassword from "./pages/ResetPassword";
 import EmploymentAgreement from "./pages/EmploymentAgreement";
 import AdminEmployment from "./pages/AdminEmployment";
 
