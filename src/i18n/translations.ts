@@ -271,7 +271,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     'motivation.cta': 'Sign up & publish →',
     'motivation.note': 'Free registration, no obligations',
 
-    'how.escrow.title': 'Escrow Protection',
+    // Escrow
+    'escrow.status.held': 'Funds held in escrow',
+    'escrow.status.released': 'Payment released',
+    'escrow.status.refunded': 'Payment refunded',
+    'escrow.status.disputed': 'Under dispute',
+    'escrow.amount': 'Total amount',
+    'escrow.commission': 'Service fee',
+    'escrow.net': 'Tasker receives',
+    'escrow.complete': 'Complete & Release Payment',
+    'escrow.released': 'Payment released to tasker!',
+    'escrow.error': 'Failed to process payment',
+    'escrow.paymentReleased': 'Payment has been released',
+    'escrow.protected': 'Escrow protected',
+
     'how.escrow.desc': 'Funds held securely until work is approved',
     'how.verified.title': 'Verified Pros',
     'how.verified.desc': 'Identity and skills verification',
