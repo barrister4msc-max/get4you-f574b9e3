@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -10,6 +10,7 @@ type Role = 'client' | 'tasker' | 'both';
 const SignupPage = () => {
   const { t } = useLanguage();
   const { signUp } = useAuth();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,7 +36,8 @@ const SignupPage = () => {
       toast.error(error);
     } else {
       toast.success(t('auth.checkEmail'));
-      navigate('/login');
+      const returnTo = searchParams.get('returnTo');
+      navigate(returnTo || '/login');
     }
   };
 
