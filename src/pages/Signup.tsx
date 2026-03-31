@@ -10,6 +10,7 @@ type Role = 'client' | 'tasker' | 'both';
 const SignupPage = () => {
   const { t } = useLanguage();
   const { signUp } = useAuth();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
