@@ -322,7 +322,7 @@ const TaskDetailPage = () => {
                         </div>
                       </div>
                       <div className="text-end">
-                        <div className="font-bold text-primary">{formatPrice(proposal.price, currency)}</div>
+                        <div className="font-bold text-primary">{formatPrice(proposal.price, currency, proposal.currency)}</div>
                         <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[proposal.status]}`}>
                           {t(`proposal.status.${proposal.status}`)}
                         </span>
