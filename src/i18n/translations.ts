@@ -202,6 +202,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'Quick & Easy',
     'how.quick.desc': 'Post a task in under 2 minutes',
 
+    // Trust section (Index page)
+    'trust.title': 'Escrow Protection',
+    'trust.desc': 'Funds are reserved and transferred to the tasker after confirmation.',
+    'trust.verified': 'Verified Taskers',
+    'trust.secure': 'Secure Payments',
+    'trust.rated': 'Rated & Reviewed',
+
     // For Taskers page
     'taskers.title': 'Earn Money on Your Terms',
     'taskers.subtitle': 'Join thousands of professionals earning with flexible schedules.',
