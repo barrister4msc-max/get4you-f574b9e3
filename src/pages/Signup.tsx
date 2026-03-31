@@ -24,6 +24,10 @@ const SignupPage = () => {
       toast.error(t('auth.passwordMin'));
       return;
     }
+    if (password !== confirmPassword) {
+      toast.error(t('auth.passwordMismatch'));
+      return;
+    }
     setLoading(true);
     const { error } = await signUp(email, password, name, role);
     setLoading(false);
