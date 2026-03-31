@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Receipt } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Plus, Search, ClipboardList, DollarSign, Briefcase, BarChart3 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -48,7 +48,6 @@ const ProfilePage = () => {
     setSelectedRoles(roles);
   }, [roles]);
 
-  // Check if user already has an employment agreement
   useEffect(() => {
     if (!user) return;
     const checkAgreement = async () => {
@@ -80,17 +79,14 @@ const ProfilePage = () => {
       return;
     }
     setSavingRoles(true);
-
     const toAdd = selectedRoles.filter(r => !roles.includes(r));
     const toRemove = roles.filter(r => !selectedRoles.includes(r));
-
     for (const role of toRemove) {
       await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role as 'client' | 'tasker' | 'admin');
     }
     for (const role of toAdd) {
       await supabase.from('user_roles').insert({ user_id: user.id, role: role as 'client' | 'tasker' });
     }
-
     toast.success(t('profile.roles.updated'));
     await refreshProfile();
     setSavingRoles(false);
@@ -112,7 +108,6 @@ const ProfilePage = () => {
       .from('profiles')
       .update(updateData)
       .eq('user_id', user.id);
-
     if (error) {
       toast.error(error.message);
     } else {
@@ -128,6 +123,7 @@ const ProfilePage = () => {
   };
 
   const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...roles].sort());
+  const isClient = roles.includes('client');
   const isTasker = roles.includes('tasker');
 
   const paymentOptions = [
@@ -149,6 +145,70 @@ const ProfilePage = () => {
           <h1 className="text-2xl font-bold">{t('nav.profile')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
         </div>
+
+        {/* Dashboard Section */}
+        {isClient && (
+          <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
+            <h2 className="text-sm font-semibold mb-3 text-foreground">{t('dashboard.client.title')}</h2>
+            <div className="grid grid-cols-2 gap-2">
+              <Link to="/tasks" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <ClipboardList className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium">{t('dashboard.client.myTasks')}</span>
+              </Link>
+              <Link to="/create-task" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <Plus className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium">{t('dashboard.client.createTask')}</span>
+              </Link>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
+                <Briefcase className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.client.proposals')}</span>
+                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
+                <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.client.statuses')}</span>
+                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isTasker && (
+          <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
+            <h2 className="text-sm font-semibold mb-3 text-foreground">{t('dashboard.tasker.title')}</h2>
+            <div className="grid grid-cols-2 gap-2">
+              <Link to="/tasks" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                <Search className="w-4 h-4 text-primary" />
+                <span className="text-xs font-medium">{t('dashboard.tasker.findTasks')}</span>
+              </Link>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
+                <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.tasker.myProposals')}</span>
+                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
+                <Briefcase className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.tasker.myOrders')}</span>
+                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.tasker.earnings')}</span>
+                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           {/* Roles section */}
@@ -234,7 +294,6 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Payment method for taskers */}
           {isTasker && (
             <div>
               <label className="block text-sm font-medium mb-1">{t('profile.payment.title')}</label>
@@ -277,7 +336,6 @@ const ProfilePage = () => {
           </button>
         </div>
 
-        {/* Employment Agreement Dialog */}
         <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>
           <DialogContent>
             <DialogHeader>
