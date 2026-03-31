@@ -148,7 +148,7 @@ const TaskDetailPage = () => {
 
       if (error) throw error;
 
-      // If accepted, update task status and assigned_to
+      // If accepted, update task status, assigned_to, and create escrow
       if (status === 'accepted') {
         const proposal = proposals.find(p => p.id === proposalId);
         if (proposal) {
@@ -157,6 +157,24 @@ const TaskDetailPage = () => {
             .update({ status: 'in_progress', assigned_to: proposal.user_id })
             .eq('id', id!);
           setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
+
+          // Create escrow transaction
+          const commissionRate = 0.15;
+          const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
+          const netAmount = proposal.price - commissionAmount;
+          const { data: escrowData } = await supabase.from('escrow_transactions').insert({
+            task_id: id!,
+            proposal_id: proposalId,
+            client_id: user!.id,
+            tasker_id: proposal.user_id,
+            amount: proposal.price,
+            currency: proposal.currency || currency,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            net_amount: netAmount,
+            status: 'held',
+          }).select().single();
+          if (escrowData) setEscrow(escrowData);
         }
         // Reject all other pending proposals
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
