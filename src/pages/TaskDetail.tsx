@@ -101,6 +101,46 @@ const TaskDetailPage = () => {
     fetchProposals();
   }, [id]);
 
+  // Fetch escrow
+  useEffect(() => {
+    if (!id) return;
+    const fetchEscrow = async () => {
+      const { data } = await supabase
+        .from('escrow_transactions')
+        .select('*')
+        .eq('task_id', id)
+        .maybeSingle();
+      if (data) setEscrow(data);
+    };
+    fetchEscrow();
+  }, [id]);
+
+  const handleCompleteTask = async () => {
+    if (!id || !escrow) return;
+    setCompleting(true);
+    try {
+      // Release escrow
+      await supabase
+        .from('escrow_transactions')
+        .update({ status: 'released', released_at: new Date().toISOString() })
+        .eq('id', escrow.id);
+
+      // Mark task as completed
+      await supabase
+        .from('tasks')
+        .update({ status: 'completed' })
+        .eq('id', id);
+
+      setEscrow((prev: any) => ({ ...prev, status: 'released' }));
+      setTask((prev: any) => ({ ...prev, status: 'completed' }));
+      toast.success(t('escrow.released'));
+    } catch {
+      toast.error(t('escrow.error'));
+    } finally {
+      setCompleting(false);
+    }
+  };
+
   const handleSubmitProposal = async () => {
     if (!user || !id || !price) return;
     setSubmitting(true);
