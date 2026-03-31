@@ -139,7 +139,7 @@ const CreateTaskPage = () => {
   const handleSubmit = async () => {
     if (!user) {
       toast.info(t('task.loginToPublish') || 'Please sign up or log in to publish your task');
-      navigate('/signup?returnTo=/create-task');
+      navigate('/login?tab=signup&returnTo=/create-task');
       return;
     }
     if (!form.title.trim()) {
