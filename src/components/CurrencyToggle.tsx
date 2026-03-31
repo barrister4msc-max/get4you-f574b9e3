@@ -15,10 +15,16 @@ export const CurrencyToggle = () => {
   );
 };
 
-export const formatPrice = (usd: number, currency: 'USD' | 'ILS') => {
-  if (currency === 'ILS') {
-    const ils = Math.round(usd * 3.7);
+const RATE = 3.7;
+
+export const formatPrice = (amount: number, displayCurrency: 'USD' | 'ILS', sourceCurrency?: string | null) => {
+  const src = (sourceCurrency || 'USD').toUpperCase();
+  let valueInUSD = amount;
+  if (src === 'ILS') valueInUSD = amount / RATE;
+
+  if (displayCurrency === 'ILS') {
+    const ils = Math.round(valueInUSD * RATE);
     return `₪${ils.toLocaleString()}`;
   }
-  return `$${usd.toLocaleString()}`;
+  return `$${Math.round(valueInUSD).toLocaleString()}`;
 };
