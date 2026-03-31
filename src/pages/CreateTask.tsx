@@ -28,19 +28,43 @@ const CreateTaskPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-  const [form, setForm] = useState({
-    category: '',
-    taskType: 'onsite' as 'onsite' | 'remote',
-    title: '',
-    description: '',
-    budgetType: 'fixed' as 'fixed' | 'range',
-    budget: 100,
-    budgetMax: 200,
-    urgency: 'flexible',
-    location: '',
+  const [form, setForm] = useState(() => {
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...{
+          category: '',
+          taskType: 'onsite' as 'onsite' | 'remote',
+          title: '',
+          description: '',
+          budgetType: 'fixed' as 'fixed' | 'range',
+          budget: 100,
+          budgetMax: 200,
+          urgency: 'flexible',
+          location: '',
+        }, ...parsed };
+      } catch { /* ignore */ }
+    }
+    return {
+      category: '',
+      taskType: 'onsite' as 'onsite' | 'remote',
+      title: '',
+      description: '',
+      budgetType: 'fixed' as 'fixed' | 'range',
+      budget: 100,
+      budgetMax: 200,
+      urgency: 'flexible',
+      location: '',
+    };
   });
 
   const update = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  // Save draft to localStorage on form changes
+  useEffect(() => {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+  }, [form]);
 
   const aiContext = `Title: ${form.title}, Description: ${form.description}, Category: ${form.category}, Type: ${form.taskType}`;
 
