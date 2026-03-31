@@ -213,6 +213,7 @@ const CreateTaskPage = () => {
 
       if (error) throw error;
 
+      localStorage.removeItem(DRAFT_KEY);
       toast.success(t('task.published') || 'Task published!');
       navigate('/tasks');
     } catch (err: unknown) {
