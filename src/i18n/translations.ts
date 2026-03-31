@@ -850,6 +850,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'מהיר וקל',
     'how.quick.desc': 'פרסם משימה בפחות מ-2 דקות',
 
+    // Trust section (Index page)
+    'trust.title': 'הגנת נאמנות',
+    'trust.desc': 'הכספים נשמרים ומועברים למבצע לאחר אישור.',
+    'trust.verified': 'מבצעים מאומתים',
+    'trust.secure': 'תשלומים מאובטחים',
+    'trust.rated': 'דירוגים וביקורות',
+
     'taskers.title': 'הרוויחו בתנאים שלכם',
     'taskers.subtitle': 'הצטרפו לאלפי מקצוענים עם לוח זמנים גמיש.',
     'taskers.plan.starter': 'סטארט',
