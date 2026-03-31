@@ -154,10 +154,9 @@ const IndexPage = () => {
         <div className="container">
           <div className="max-w-2xl mx-auto text-center">
             <Shield className="w-12 h-12 text-primary mx-auto" />
-            <h2 className="mt-4 text-2xl md:text-3xl font-bold">Escrow Protection</h2>
+            <h2 className="mt-4 text-2xl md:text-3xl font-bold">{t('escrow.title')}</h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              Your payment is held securely until the task is completed to your satisfaction. 
-              No risk, full transparency.
+              {t('escrow.desc')}
             </p>
             <div className="mt-8 flex justify-center gap-8">
               {[
