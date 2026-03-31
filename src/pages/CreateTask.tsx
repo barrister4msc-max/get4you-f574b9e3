@@ -10,7 +10,7 @@ import { TaskAIAssistant } from '@/components/TaskAIAssistant';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus, Play, Square, Trash2,
+  Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus, Play, Square, Trash2, Users, Zap, Rocket,
 } from 'lucide-react';
 
 const DRAFT_KEY = 'task_draft';
