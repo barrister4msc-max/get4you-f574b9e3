@@ -285,6 +285,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'Payment has been released',
     'escrow.protected': 'Escrow protected',
 
+    'how.escrow.title': 'Escrow Protection',
     'how.escrow.desc': 'Funds held securely until work is approved',
     'how.verified.title': 'Verified Pros',
     'how.verified.desc': 'Identity and skills verification',
@@ -687,6 +688,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'Оплата выплачена',
     'escrow.protected': 'Защита эскроу',
 
+    'how.escrow.title': 'Защита эскроу',
+    'how.escrow.desc': 'Средства надёжно хранятся до подтверждения выполнения',
     'how.verified.title': 'Проверенные специалисты',
     'how.verified.desc': 'Верификация личности и навыков',
     'how.quick.title': 'Быстро и просто',
@@ -1084,6 +1087,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'התשלום שוחרר',
     'escrow.protected': 'מוגן בנאמנות',
 
+    'how.escrow.title': 'הגנת נאמנות',
+    'how.escrow.desc': 'הכספים מוחזקים בבטחה עד לאישור העבודה',
     'how.verified.title': 'מקצוענים מאומתים',
     'how.verified.desc': 'אימות זהות וכישורים',
     'how.quick.title': 'מהיר וקל',
@@ -1481,6 +1486,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'تم تحرير الدفعة',
     'escrow.protected': 'محمي بالضمان',
 
+    'how.escrow.title': 'حماية الضمان',
+    'how.escrow.desc': 'الأموال محفوظة بأمان حتى الموافقة على العمل',
     'how.verified.title': 'محترفون موثقون',
     'how.verified.desc': 'التحقق من الهوية والمهارات',
     'how.quick.title': 'سريع وسهل',

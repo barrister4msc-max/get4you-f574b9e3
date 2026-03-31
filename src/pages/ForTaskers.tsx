@@ -143,7 +143,7 @@ const ForTaskersPage = () => {
           <p className="text-muted-foreground mt-2">{t('esek.subtitle')}</p>
           <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/30">
             <p className="text-sm font-semibold text-primary">🎉 {t('esek.promo.title')}</p>
-            {remaining !== null && (
+            {remaining !== null && remaining < total && (
               <p className="text-xs text-muted-foreground mt-1">
                 {t('esek.promo.remaining').replace('{remaining}', String(remaining)).replace('{total}', String(total))}
               </p>
