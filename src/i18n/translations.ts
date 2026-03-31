@@ -481,6 +481,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'Уже есть аккаунт?',
     'auth.checkEmail': 'Проверьте почту для подтверждения аккаунта.',
     'auth.passwordMin': 'Пароль должен быть не менее 6 символов.',
+    'auth.confirmPassword': 'Подтвердите пароль',
+    'auth.passwordMismatch': 'Пароли не совпадают.',
+
+    'escrow.title': 'Защита Escrow',
+    'escrow.desc': 'Ваш платёж надёжно хранится до завершения задачи. Деньги резервируются и перечисляются исполнителю после подтверждения. Без рисков, полная прозрачность.',
+    'escrow.verified': 'Проверенные исполнители',
+    'escrow.secure': 'Безопасные платежи',
+    'escrow.rated': 'Рейтинги и отзывы',
+
+    'task.loginToPublish': 'Зарегистрируйтесь или войдите, чтобы опубликовать заявку',
 
     'profile.rating': 'Рейтинг',
     'profile.completed': 'Выполнено',
