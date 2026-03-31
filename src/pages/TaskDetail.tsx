@@ -40,6 +40,10 @@ const TaskDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
 
+  // Escrow state
+  const [escrow, setEscrow] = useState<any>(null);
+  const [completing, setCompleting] = useState(false);
+
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id);
 
