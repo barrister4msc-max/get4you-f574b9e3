@@ -230,6 +230,28 @@ export const translations: Record<Locale, Record<string, string>> = {
     'privacy.title': 'Privacy Policy',
     'privacy.upload': 'Upload Document',
     'privacy.noContent': 'Privacy policy content will appear here.',
+    'legal.inDevelopment': 'Under Development',
+    'legal.inDevelopmentDesc': 'This section is currently being prepared. The document will be available soon.',
+
+    // Auth welcome
+    'auth.welcome.title': 'You\'re almost there!',
+    'auth.welcome.nextSteps': 'What happens next:',
+    'auth.welcome.step1': 'Open the email we just sent and click the confirmation link',
+    'auth.welcome.step2': 'Come back and log in to your account',
+    'auth.welcome.step3': 'Start posting or completing tasks — and earn!',
+
+    // Dashboard
+    'dashboard.client.title': 'Client Dashboard',
+    'dashboard.client.myTasks': 'My Tasks',
+    'dashboard.client.createTask': 'Create Task',
+    'dashboard.client.proposals': 'Proposals',
+    'dashboard.client.statuses': 'Statuses',
+    'dashboard.tasker.title': 'Tasker Dashboard',
+    'dashboard.tasker.findTasks': 'Find Tasks',
+    'dashboard.tasker.myProposals': 'My Proposals',
+    'dashboard.tasker.myOrders': 'My Orders',
+    'dashboard.tasker.earnings': 'Earnings',
+    'dashboard.comingSoon': 'Coming soon',
 
     // How it works extras
     'how.escrow.title': 'Escrow Protection',
