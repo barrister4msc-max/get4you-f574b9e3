@@ -3,15 +3,17 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText } from 'lucide-react';
+import { Upload, FileText, Construction } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PrivacyPage = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const [content, setContent] = useState<string | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const isAdmin = roles.includes('admin');
 
   useEffect(() => {
     loadContent();
@@ -53,7 +55,7 @@ const PrivacyPage = () => {
       <div className="container max-w-3xl">
         <h1 className="text-3xl font-bold text-center">{t('privacy.title')}</h1>
 
-        {user && (
+        {isAdmin && (
           <div className="mt-6 flex justify-center">
             <label>
               <Button variant="outline" className="cursor-pointer" disabled={loading} asChild>
@@ -78,7 +80,11 @@ const PrivacyPage = () => {
               </a>
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-12">{t('privacy.noContent')}</p>
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <Construction className="w-16 h-16 text-muted-foreground/50" />
+              <h2 className="text-xl font-semibold text-foreground">{t('legal.inDevelopment')}</h2>
+              <p className="text-muted-foreground max-w-md">{t('legal.inDevelopmentDesc')}</p>
+            </div>
           )}
         </div>
       </div>
