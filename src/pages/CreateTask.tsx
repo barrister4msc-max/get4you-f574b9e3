@@ -13,6 +13,7 @@ import {
   Camera, Mic, MicOff, ArrowRight, ArrowLeft, MapPin, DollarSign, CheckCircle2, Sparkles, Loader2, X, ImagePlus, Play, Square, Trash2,
 } from 'lucide-react';
 
+const DRAFT_KEY = 'task_draft';
 const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'delivery', 'beauty', 'tutoring'];
 
 const CreateTaskPage = () => {
