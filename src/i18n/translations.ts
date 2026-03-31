@@ -528,6 +528,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'Быстро и просто',
     'how.quick.desc': 'Создайте задачу менее чем за 2 минуты',
 
+    // Trust section (Index page)
+    'trust.title': 'Защита эскроу',
+    'trust.desc': 'Деньги резервируются и переводятся исполнителю после подтверждения.',
+    'trust.verified': 'Проверенные исполнители',
+    'trust.secure': 'Безопасные платежи',
+    'trust.rated': 'Рейтинги и отзывы',
+
     'taskers.title': 'Зарабатывайте на своих условиях',
     'taskers.subtitle': 'Присоединяйтесь к тысячам профессионалов с гибким графиком.',
     'taskers.plan.starter': 'Старт',
