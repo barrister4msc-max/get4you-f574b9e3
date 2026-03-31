@@ -806,6 +806,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'כבר יש לך חשבון?',
     'auth.checkEmail': 'בדוק את המייל שלך לאימות החשבון.',
     'auth.passwordMin': 'הסיסמה חייבת להכיל לפחות 6 תווים.',
+    'auth.confirmPassword': 'אימות סיסמה',
+    'auth.passwordMismatch': 'הסיסמאות אינן תואמות.',
+
+    'escrow.title': 'הגנת נאמנות',
+    'escrow.desc': 'התשלום שלך מוחזק בביטחון עד להשלמת המשימה. הכספים נשמרים ומועברים לנותן השירות לאחר אישור. ללא סיכון, שקיפות מלאה.',
+    'escrow.verified': 'נותני שירות מאומתים',
+    'escrow.secure': 'תשלומים מאובטחים',
+    'escrow.rated': 'דירוגים וביקורות',
+
+    'task.loginToPublish': 'הירשם או התחבר כדי לפרסם את המשימה שלך',
 
     'profile.rating': 'דירוג',
     'profile.completed': 'הושלמו',
