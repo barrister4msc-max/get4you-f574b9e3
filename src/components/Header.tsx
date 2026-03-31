@@ -55,6 +55,7 @@ export const Header = () => {
         <div className="hidden md:flex items-center gap-2">
           <CurrencyToggle />
           <LanguageSwitcher />
+          <NotificationBell />
           {user ? (
             <Link
               to="/profile"
