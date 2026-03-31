@@ -502,6 +502,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'В работе',
     'tasks.status.completed': 'Завершена',
     'tasks.respond': 'Откликнуться',
+    'tasks.filter.budgetFrom': 'Бюджет от',
+    'tasks.filter.budgetTo': 'Бюджет до',
+    'tasks.filter.clear': 'Сбросить фильтры',
+    'tasks.status.draft': 'Черновик',
+    'tasks.status.cancelled': 'Отменена',
 
     'proposal.submit': 'Отправить предложение',
     'proposal.your.price': 'Ваша цена',
