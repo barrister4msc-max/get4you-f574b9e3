@@ -1252,6 +1252,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'قيد التنفيذ',
     'tasks.status.completed': 'مكتمل',
     'tasks.respond': 'تقديم عرض',
+    'tasks.filter.budgetFrom': 'الميزانية من',
+    'tasks.filter.budgetTo': 'الميزانية إلى',
+    'tasks.filter.clear': 'مسح الفلاتر',
+    'tasks.status.draft': 'مسودة',
+    'tasks.status.cancelled': 'ملغى',
 
     'proposal.submit': 'إرسال العرض',
     'proposal.your.price': 'سعرك',
