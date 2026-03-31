@@ -63,20 +63,13 @@ export const Header = () => {
               {profile?.display_name || t('nav.profile')}
             </Link>
           ) : (
-            <>
-              <Link
-                to="/login"
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
-              >
-                {t('nav.login')}
-              </Link>
-              <Link
-                to="/signup"
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
-              >
-                {t('nav.signup')}
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+            >
+              <User className="w-4 h-4" />
+              {t('nav.account')}
+            </Link>
           )}
         </div>
 
@@ -103,20 +96,17 @@ export const Header = () => {
             <CurrencyToggle />
             <LanguageSwitcher />
           </div>
-          <div className="flex gap-2 pt-3">
+          <div className="pt-3">
             {user ? (
-              <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
-                {t('nav.profile')}
+              <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                <User className="w-4 h-4" />
+                {profile?.display_name || t('nav.profile')}
               </Link>
             ) : (
-              <>
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-medium border border-border rounded-lg">
-                  {t('nav.login')}
-                </Link>
-                <Link to="/signup" onClick={() => setMobileOpen(false)} className="flex-1 text-center py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
-                  {t('nav.signup')}
-                </Link>
-              </>
+              <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                <User className="w-4 h-4" />
+                {t('nav.account')}
+              </Link>
             )}
           </div>
         </div>
