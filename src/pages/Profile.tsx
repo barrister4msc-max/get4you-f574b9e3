@@ -308,7 +308,7 @@ const ProfilePage = () => {
                       </div>
                     </div>
                     <div className="text-primary font-bold text-sm">
-                      {formatPrice(task.budget_fixed || task.budget_min || 0, currency)}
+                      {formatPrice(task.budget_fixed || task.budget_min || 0, currency, task.currency)}
                     </div>
                   </div>
                 </Link>
