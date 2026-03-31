@@ -112,6 +112,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'In Progress',
     'tasks.status.completed': 'Completed',
     'tasks.respond': 'Make an Offer',
+    'tasks.filter.budgetFrom': 'Budget from',
+    'tasks.filter.budgetTo': 'Budget to',
+    'tasks.filter.clear': 'Clear all filters',
+    'tasks.status.draft': 'Draft',
+    'tasks.status.cancelled': 'Cancelled',
 
     // Proposals
     'proposal.submit': 'Submit Proposal',
