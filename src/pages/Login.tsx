@@ -45,6 +45,12 @@ const LoginPage = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [resending, setResending] = useState(false);
 
+  // Forgot password state
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const hasMinLength = password.length >= 8;
   const hasLettersAndDigits = /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
