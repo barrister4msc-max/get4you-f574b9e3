@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import EsekPatur from "./pages/EsekPatur";
 import AdminEsekPatur from "./pages/AdminEsekPatur";
 import ContractorAgreement from "./pages/ContractorAgreement";
+import ResetPassword from "./pages/ResetPassword";
 import EmploymentAgreement from "./pages/EmploymentAgreement";
 import AdminEmployment from "./pages/AdminEmployment";
 
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="/contractor-agreement" element={<ProtectedRoute><ContractorAgreement /></ProtectedRoute>} />
                 <Route path="/employment-agreement" element={<ProtectedRoute><EmploymentAgreement /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/signup" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/terms" element={<Terms />} />
