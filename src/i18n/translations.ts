@@ -202,6 +202,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'Quick & Easy',
     'how.quick.desc': 'Post a task in under 2 minutes',
 
+    // Trust section (Index page)
+    'trust.title': 'Escrow Protection',
+    'trust.desc': 'Funds are reserved and transferred to the tasker after confirmation.',
+    'trust.verified': 'Verified Taskers',
+    'trust.secure': 'Secure Payments',
+    'trust.rated': 'Rated & Reviewed',
+
     // For Taskers page
     'taskers.title': 'Earn Money on Your Terms',
     'taskers.subtitle': 'Join thousands of professionals earning with flexible schedules.',
@@ -521,6 +528,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'Быстро и просто',
     'how.quick.desc': 'Создайте задачу менее чем за 2 минуты',
 
+    // Trust section (Index page)
+    'trust.title': 'Защита эскроу',
+    'trust.desc': 'Деньги резервируются и переводятся исполнителю после подтверждения.',
+    'trust.verified': 'Проверенные исполнители',
+    'trust.secure': 'Безопасные платежи',
+    'trust.rated': 'Рейтинги и отзывы',
+
     'taskers.title': 'Зарабатывайте на своих условиях',
     'taskers.subtitle': 'Присоединяйтесь к тысячам профессионалов с гибким графиком.',
     'taskers.plan.starter': 'Старт',
@@ -836,6 +850,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'מהיר וקל',
     'how.quick.desc': 'פרסם משימה בפחות מ-2 דקות',
 
+    // Trust section (Index page)
+    'trust.title': 'הגנת נאמנות',
+    'trust.desc': 'הכספים נשמרים ומועברים למבצע לאחר אישור.',
+    'trust.verified': 'מבצעים מאומתים',
+    'trust.secure': 'תשלומים מאובטחים',
+    'trust.rated': 'דירוגים וביקורות',
+
     'taskers.title': 'הרוויחו בתנאים שלכם',
     'taskers.subtitle': 'הצטרפו לאלפי מקצוענים עם לוח זמנים גמיש.',
     'taskers.plan.starter': 'סטארט',
@@ -1150,6 +1171,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.verified.desc': 'التحقق من الهوية والمهارات',
     'how.quick.title': 'سريع وسهل',
     'how.quick.desc': 'انشر مهمة في أقل من دقيقتين',
+
+    // Trust section (Index page)
+    'trust.title': 'حماية الضمان',
+    'trust.desc': 'يتم حجز الأموال وتحويلها إلى المنفذ بعد التأكيد.',
+    'trust.verified': 'منفذون موثقون',
+    'trust.secure': 'مدفوعات آمنة',
+    'trust.rated': 'تقييمات ومراجعات',
 
     'taskers.title': 'اكسب بشروطك',
     'taskers.subtitle': 'انضم لآلاف المحترفين بجدول مرن.',
