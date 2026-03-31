@@ -112,6 +112,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'In Progress',
     'tasks.status.completed': 'Completed',
     'tasks.respond': 'Make an Offer',
+    'tasks.filter.budgetFrom': 'Budget from',
+    'tasks.filter.budgetTo': 'Budget to',
+    'tasks.filter.clear': 'Clear all filters',
+    'tasks.status.draft': 'Draft',
+    'tasks.status.cancelled': 'Cancelled',
 
     // Proposals
     'proposal.submit': 'Submit Proposal',
@@ -497,6 +502,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'В работе',
     'tasks.status.completed': 'Завершена',
     'tasks.respond': 'Откликнуться',
+    'tasks.filter.budgetFrom': 'Бюджет от',
+    'tasks.filter.budgetTo': 'Бюджет до',
+    'tasks.filter.clear': 'Сбросить фильтры',
+    'tasks.status.draft': 'Черновик',
+    'tasks.status.cancelled': 'Отменена',
 
     'proposal.submit': 'Отправить предложение',
     'proposal.your.price': 'Ваша цена',
@@ -867,6 +877,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'בתהליך',
     'tasks.status.completed': 'הושלם',
     'tasks.respond': 'הגש הצעה',
+    'tasks.filter.budgetFrom': 'תקציב מ-',
+    'tasks.filter.budgetTo': 'תקציב עד',
+    'tasks.filter.clear': 'נקה סינון',
+    'tasks.status.draft': 'טיוטה',
+    'tasks.status.cancelled': 'בוטל',
 
     'proposal.submit': 'שלח הצעה',
     'proposal.your.price': 'המחיר שלך',
@@ -1237,6 +1252,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.status.in_progress': 'قيد التنفيذ',
     'tasks.status.completed': 'مكتمل',
     'tasks.respond': 'تقديم عرض',
+    'tasks.filter.budgetFrom': 'الميزانية من',
+    'tasks.filter.budgetTo': 'الميزانية إلى',
+    'tasks.filter.clear': 'مسح الفلاتر',
+    'tasks.status.draft': 'مسودة',
+    'tasks.status.cancelled': 'ملغى',
 
     'proposal.submit': 'إرسال العرض',
     'proposal.your.price': 'سعرك',

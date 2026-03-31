@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { formatPrice } from '@/components/CurrencyToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Plus, Search, ClipboardList, DollarSign, Briefcase, BarChart3 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -14,8 +15,29 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+interface ProposalRow {
+  id: string;
+  task_id: string;
+  price: number;
+  currency: string | null;
+  status: string;
+  created_at: string;
+  task?: { title: string; status: string | null } | null;
+}
+
+interface MyTaskRow {
+  id: string;
+  title: string;
+  status: string | null;
+  budget_fixed: number | null;
+  budget_min: number | null;
+  currency: string | null;
+  created_at: string;
+  proposals_count?: number;
+}
+
 const ProfilePage = () => {
-  const { t } = useLanguage();
+  const { t, currency } = useLanguage();
   const { user, profile, roles, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
@@ -23,6 +45,12 @@ const ProfilePage = () => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [showEmploymentDialog, setShowEmploymentDialog] = useState(false);
   const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
+  const [activeSection, setActiveSection] = useState<'profile' | 'myTasks' | 'myProposals'>('profile');
+
+  // Dashboard data
+  const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
+  const [myProposals, setMyProposals] = useState<ProposalRow[]>([]);
+  const [loadingDashboard, setLoadingDashboard] = useState(false);
 
   const [form, setForm] = useState({
     display_name: '',
@@ -59,6 +87,33 @@ const ProfilePage = () => {
       setHasEmploymentAgreement(!!data && data.length > 0);
     };
     checkAgreement();
+  }, [user]);
+
+  // Fetch dashboard data
+  useEffect(() => {
+    if (!user) return;
+    const fetchDashboard = async () => {
+      setLoadingDashboard(true);
+      const [tasksRes, proposalsRes] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('id, title, status, budget_fixed, budget_min, currency, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('proposals')
+          .select('id, task_id, price, currency, status, created_at, tasks:task_id(title, status)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
+      setMyTasks((tasksRes.data as MyTaskRow[]) || []);
+      setMyProposals((proposalsRes.data as any[])?.map(p => ({
+        ...p,
+        task: Array.isArray(p.tasks) ? p.tasks[0] : p.tasks,
+      })) || []);
+      setLoadingDashboard(false);
+    };
+    fetchDashboard();
   }, [user]);
 
   const handlePaymentSelect = (value: string) => {
@@ -135,206 +190,308 @@ const ProfilePage = () => {
     { value: 'tasker', label: t('auth.role.tasker') },
   ];
 
+  const statusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      open: 'bg-emerald-50 text-primary',
+      in_progress: 'bg-amber-50 text-amber-600',
+      completed: 'bg-secondary text-muted-foreground',
+      cancelled: 'bg-red-50 text-red-600',
+      draft: 'bg-secondary text-muted-foreground',
+      pending: 'bg-amber-50 text-amber-600',
+      accepted: 'bg-emerald-50 text-primary',
+      rejected: 'bg-red-50 text-red-600',
+    };
+    return colors[status] || 'bg-secondary text-muted-foreground';
+  };
+
+  const sectionTabs = [
+    { key: 'profile' as const, label: t('nav.profile') },
+    ...(isClient ? [{ key: 'myTasks' as const, label: t('dashboard.client.myTasks') }] : []),
+    ...(isTasker ? [{ key: 'myProposals' as const, label: t('dashboard.tasker.myProposals') }] : []),
+  ];
+
   return (
     <div className="min-h-[80vh] py-12">
       <div className="container max-w-lg mx-auto px-4">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="w-16 h-16 rounded-full bg-gradient-emerald flex items-center justify-center mx-auto mb-4">
             <User className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold">{t('nav.profile')}</h1>
+          <h1 className="text-2xl font-bold">{profile?.display_name || t('nav.profile')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
         </div>
 
-        {/* Dashboard Section */}
-        {isClient && (
-          <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
-            <h2 className="text-sm font-semibold mb-3 text-foreground">{t('dashboard.client.title')}</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <Link to="/tasks" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                <ClipboardList className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium">{t('dashboard.client.myTasks')}</span>
-              </Link>
-              <Link to="/create-task" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                <Plus className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium">{t('dashboard.client.createTask')}</span>
-              </Link>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
-                <Briefcase className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.client.proposals')}</span>
-                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
-                <BarChart3 className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.client.statuses')}</span>
-                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isTasker && (
-          <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
-            <h2 className="text-sm font-semibold mb-3 text-foreground">{t('dashboard.tasker.title')}</h2>
-            <div className="grid grid-cols-2 gap-2">
-              <Link to="/tasks" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
-                <Search className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium">{t('dashboard.tasker.findTasks')}</span>
-              </Link>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
-                <ClipboardList className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.tasker.myProposals')}</span>
-                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
-                <Briefcase className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.tasker.myOrders')}</span>
-                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 cursor-default">
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">{t('dashboard.tasker.earnings')}</span>
-                  <p className="text-[10px] text-muted-foreground/70">{t('dashboard.comingSoon')}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {/* Roles section */}
-          <div>
-            <label className="block text-sm font-medium mb-2">{t('profile.roles')}</label>
-            <div className="flex gap-2">
-              {roleOptions.map((r) => (
-                <button
-                  key={r.value}
-                  type="button"
-                  onClick={() => selectRole(r.value)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
-                    selectedRoles.includes(r.value)
-                      ? 'border-primary bg-emerald-50 text-primary'
-                      : 'border-border text-muted-foreground hover:border-primary/30'
-                  }`}
-                >
-                  {selectedRoles.includes(r.value) && <CheckCircle2 className="w-3 h-3 inline me-1" />}
-                  {r.label}
-                </button>
-              ))}
-            </div>
-            {rolesChanged && (
+        {/* Section tabs */}
+        {sectionTabs.length > 1 && (
+          <div className="flex rounded-xl bg-muted p-1 mb-6">
+            {sectionTabs.map((tab) => (
               <button
-                onClick={handleSaveRoles}
-                disabled={savingRoles}
-                className="mt-2 w-full py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                key={tab.key}
+                onClick={() => setActiveSection(tab.key)}
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeSection === tab.key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
+                }`}
               >
-                {savingRoles ? '...' : t('profile.save')}
+                {tab.label}
               </button>
+            ))}
+          </div>
+        )}
+
+        {/* Quick actions */}
+        {activeSection === 'profile' && (
+          <>
+            {isClient && (
+              <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
+                <h2 className="text-sm font-semibold mb-3 text-foreground">{t('dashboard.client.title')}</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link to="/create-task" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                    <Plus className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium">{t('dashboard.client.createTask')}</span>
+                  </Link>
+                  <button onClick={() => setActiveSection('myTasks')} className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors text-start">
+                    <ClipboardList className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium">{t('dashboard.client.myTasks')} ({myTasks.length})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isTasker && (
+              <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
+                <h2 className="text-sm font-semibold mb-3 text-foreground">{t('dashboard.tasker.title')}</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link to="/tasks" className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors">
+                    <Search className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium">{t('dashboard.tasker.findTasks')}</span>
+                  </Link>
+                  <button onClick={() => setActiveSection('myProposals')} className="flex items-center gap-2 p-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors text-start">
+                    <Briefcase className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium">{t('dashboard.tasker.myProposals')} ({myProposals.length})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* MY TASKS section */}
+        {activeSection === 'myTasks' && (
+          <div className="space-y-3 mb-6">
+            {loadingDashboard ? (
+              <p className="text-center text-muted-foreground py-8">Loading...</p>
+            ) : myTasks.length === 0 ? (
+              <div className="text-center py-12">
+                <ClipboardList className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{t('tasks.noResults')}</p>
+                <Link to="/create-task" className="inline-flex items-center gap-1 mt-3 text-sm text-primary font-medium hover:underline">
+                  <Plus className="w-4 h-4" /> {t('dashboard.client.createTask')}
+                </Link>
+              </div>
+            ) : (
+              myTasks.map((task) => (
+                <Link
+                  key={task.id}
+                  to={`/tasks/${task.id}`}
+                  className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm truncate">{task.title}</h3>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(task.status || 'draft')}`}>
+                          {t(`tasks.status.${task.status || 'draft'}`)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(task.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-primary font-bold text-sm">
+                      {formatPrice(task.budget_fixed || task.budget_min || 0, currency)}
+                    </div>
+                  </div>
+                </Link>
+              ))
             )}
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('auth.name')}</label>
-            <div className="relative">
-              <User className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={form.display_name}
-                onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-                className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              />
-            </div>
+        {/* MY PROPOSALS section */}
+        {activeSection === 'myProposals' && (
+          <div className="space-y-3 mb-6">
+            {loadingDashboard ? (
+              <p className="text-center text-muted-foreground py-8">Loading...</p>
+            ) : myProposals.length === 0 ? (
+              <div className="text-center py-12">
+                <Briefcase className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{t('proposal.none')}</p>
+                <Link to="/tasks" className="inline-flex items-center gap-1 mt-3 text-sm text-primary font-medium hover:underline">
+                  <Search className="w-4 h-4" /> {t('dashboard.tasker.findTasks')}
+                </Link>
+              </div>
+            ) : (
+              myProposals.map((proposal) => (
+                <Link
+                  key={proposal.id}
+                  to={`/tasks/${proposal.task_id}`}
+                  className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm truncate">{proposal.task?.title || '—'}</h3>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(proposal.status)}`}>
+                          {t(`proposal.status.${proposal.status}`)}
+                        </span>
+                        {proposal.task?.status && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${statusBadge(proposal.task.status)}`}>
+                            {t(`tasks.status.${proposal.task.status}`)}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(proposal.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-primary font-bold text-sm">
+                      {formatPrice(proposal.price, currency)}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('profile.phone')}</label>
-            <div className="relative">
-              <Phone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('profile.city')}</label>
-            <div className="relative">
-              <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5">{t('profile.about')}</label>
-            <div className="relative">
-              <FileText className="absolute start-3 top-3 w-4 h-4 text-muted-foreground" />
-              <textarea
-                value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                rows={4}
-                className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
-              />
-            </div>
-          </div>
-
-          {isTasker && (
+        {/* Profile form */}
+        {activeSection === 'profile' && (
+          <div className="space-y-4">
+            {/* Roles section */}
             <div>
-              <label className="block text-sm font-medium mb-1">{t('profile.payment.title')}</label>
-              <p className="text-xs text-muted-foreground mb-2">{t('profile.payment.subtitle')}</p>
+              <label className="block text-sm font-medium mb-2">{t('profile.roles')}</label>
               <div className="flex gap-2">
-                {paymentOptions.map((opt) => (
+                {roleOptions.map((r) => (
                   <button
-                    key={opt.value}
+                    key={r.value}
                     type="button"
-                    onClick={() => handlePaymentSelect(opt.value)}
-                    className={`flex-1 py-3 px-3 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
-                      form.payment_method === opt.value
+                    onClick={() => selectRole(r.value)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
+                      selectedRoles.includes(r.value)
                         ? 'border-primary bg-emerald-50 text-primary'
                         : 'border-border text-muted-foreground hover:border-primary/30'
                     }`}
                   >
-                    <opt.icon className="w-5 h-5" />
-                    {opt.label}
+                    {selectedRoles.includes(r.value) && <CheckCircle2 className="w-3 h-3 inline me-1" />}
+                    {r.label}
                   </button>
                 ))}
               </div>
+              {rolesChanged && (
+                <button
+                  onClick={handleSaveRoles}
+                  disabled={savingRoles}
+                  className="mt-2 w-full py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {savingRoles ? '...' : t('profile.save')}
+                </button>
+              )}
             </div>
-          )}
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            {saving ? '...' : t('profile.save')}
-          </button>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t('auth.name')}</label>
+              <div className="relative">
+                <User className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={form.display_name}
+                  onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
 
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium border border-destructive text-destructive hover:bg-destructive/10 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            {t('nav.logout')}
-          </button>
-        </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t('profile.phone')}</label>
+              <div className="relative">
+                <Phone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t('profile.city')}</label>
+              <div className="relative">
+                <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5">{t('profile.about')}</label>
+              <div className="relative">
+                <FileText className="absolute start-3 top-3 w-4 h-4 text-muted-foreground" />
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                  rows={4}
+                  className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            {isTasker && (
+              <div>
+                <label className="block text-sm font-medium mb-1">{t('profile.payment.title')}</label>
+                <p className="text-xs text-muted-foreground mb-2">{t('profile.payment.subtitle')}</p>
+                <div className="flex gap-2">
+                  {paymentOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handlePaymentSelect(opt.value)}
+                      className={`flex-1 py-3 px-3 rounded-xl border text-xs font-medium transition-all flex flex-col items-center gap-1.5 ${
+                        form.payment_method === opt.value
+                          ? 'border-primary bg-emerald-50 text-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/30'
+                      }`}
+                    >
+                      <opt.icon className="w-5 h-5" />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? '...' : t('profile.save')}
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium border border-destructive text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              {t('nav.logout')}
+            </button>
+          </div>
+        )}
 
         <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>
           <DialogContent>
