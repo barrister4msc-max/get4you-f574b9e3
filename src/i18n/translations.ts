@@ -162,6 +162,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.strength.strong': 'Strong',
     'auth.confirmPassword': 'Confirm Password',
     'auth.passwordMismatch': 'Passwords do not match.',
+    'auth.forgotTitle': 'Reset Password',
+    'auth.forgotDesc': 'Enter your email and we\'ll send you a reset link.',
+    'auth.forgotSubmit': 'Send Reset Link',
+    'auth.forgotSent': 'We sent a password reset link to',
+    'auth.resetTitle': 'Set New Password',
+    'auth.resetDesc': 'Enter your new password below.',
+    'auth.newPassword': 'New Password',
+    'auth.resetSubmit': 'Update Password',
+    'auth.resetSuccess': 'Password updated successfully!',
+    'auth.resetInvalidLink': 'This reset link is invalid or has expired.',
 
     // Escrow section
     'escrow.title': 'Escrow Protection',
