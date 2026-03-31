@@ -12,7 +12,9 @@ const LoginPage = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'signup' ? 'signup' : 'login';
+  const location = useLocation();
+  const isSignupRoute = location.pathname === '/signup';
+  const initialTab = isSignupRoute || searchParams.get('tab') === 'signup' ? 'signup' : 'login';
 
   const [tab, setTab] = useState<'login' | 'signup'>(initialTab);
   const [email, setEmail] = useState('');
