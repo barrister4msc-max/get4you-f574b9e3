@@ -128,8 +128,8 @@ const IndexPage = () => {
       <section className="py-16 md:py-20 bg-warm-surface">
         <div className="container">
           <h2 className="text-2xl md:text-3xl font-bold text-center">{t('how.title')}</h2>
-          <div className="mt-12 grid md:grid-cols-4 gap-8">
-            {[1, 2, 3, 4].map((step, i) => (
+          <div className="mt-12 grid md:grid-cols-5 gap-6">
+            {[1, 2, 3, 4, 5].map((step, i) => (
               <motion.div
                 key={step}
                 initial={{ opacity: 0, y: 20 }}
