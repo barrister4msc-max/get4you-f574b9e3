@@ -1486,6 +1486,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'تم تحرير الدفعة',
     'escrow.protected': 'محمي بالضمان',
 
+    'how.escrow.title': 'حماية الضمان',
+    'how.escrow.desc': 'الأموال محفوظة بأمان حتى الموافقة على العمل',
     'how.verified.title': 'محترفون موثقون',
     'how.verified.desc': 'التحقق من الهوية والمهارات',
     'how.quick.title': 'سريع وسهل',

@@ -2,7 +2,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { motion } from 'framer-motion';
 import { Shield, Clock, FileCheck } from 'lucide-react';
 
-const steps = [1, 2, 3, 4] as const;
+const steps = [1, 2, 3, 4, 5] as const;
 
 const HowItWorksPage = () => {
   const { t } = useLanguage();
