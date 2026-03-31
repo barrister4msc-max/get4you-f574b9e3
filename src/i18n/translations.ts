@@ -145,6 +145,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'Already have an account?',
     'auth.checkEmail': 'Check your email to verify your account.',
     'auth.passwordMin': 'Password must be at least 6 characters.',
+    'auth.confirmPassword': 'Confirm Password',
+    'auth.passwordMismatch': 'Passwords do not match.',
+
+    // Escrow section
+    'escrow.title': 'Escrow Protection',
+    'escrow.desc': 'Your payment is held securely until the task is completed to your satisfaction. The funds are reserved and released to the tasker after confirmation. No risk, full transparency.',
+    'escrow.verified': 'Verified Taskers',
+    'escrow.secure': 'Secure Payments',
+    'escrow.rated': 'Rated & Reviewed',
+
+    // Task create unauth
+    'task.loginToPublish': 'Please sign up or log in to publish your task',
 
     // Profile
     'profile.rating': 'Rating',
@@ -469,6 +481,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'Уже есть аккаунт?',
     'auth.checkEmail': 'Проверьте почту для подтверждения аккаунта.',
     'auth.passwordMin': 'Пароль должен быть не менее 6 символов.',
+    'auth.confirmPassword': 'Подтвердите пароль',
+    'auth.passwordMismatch': 'Пароли не совпадают.',
+
+    'escrow.title': 'Защита Escrow',
+    'escrow.desc': 'Ваш платёж надёжно хранится до завершения задачи. Деньги резервируются и перечисляются исполнителю после подтверждения. Без рисков, полная прозрачность.',
+    'escrow.verified': 'Проверенные исполнители',
+    'escrow.secure': 'Безопасные платежи',
+    'escrow.rated': 'Рейтинги и отзывы',
+
+    'task.loginToPublish': 'Зарегистрируйтесь или войдите, чтобы опубликовать заявку',
 
     'profile.rating': 'Рейтинг',
     'profile.completed': 'Выполнено',
@@ -784,6 +806,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'כבר יש לך חשבון?',
     'auth.checkEmail': 'בדוק את המייל שלך לאימות החשבון.',
     'auth.passwordMin': 'הסיסמה חייבת להכיל לפחות 6 תווים.',
+    'auth.confirmPassword': 'אימות סיסמה',
+    'auth.passwordMismatch': 'הסיסמאות אינן תואמות.',
+
+    'escrow.title': 'הגנת נאמנות',
+    'escrow.desc': 'התשלום שלך מוחזק בביטחון עד להשלמת המשימה. הכספים נשמרים ומועברים לנותן השירות לאחר אישור. ללא סיכון, שקיפות מלאה.',
+    'escrow.verified': 'נותני שירות מאומתים',
+    'escrow.secure': 'תשלומים מאובטחים',
+    'escrow.rated': 'דירוגים וביקורות',
+
+    'task.loginToPublish': 'הירשם או התחבר כדי לפרסם את המשימה שלך',
 
     'profile.rating': 'דירוג',
     'profile.completed': 'הושלמו',
@@ -1099,6 +1131,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.hasAccount': 'لديك حساب بالفعل؟',
     'auth.checkEmail': 'تحقق من بريدك لتأكيد الحساب.',
     'auth.passwordMin': 'يجب أن تكون كلمة المرور 6 أحرف على الأقل.',
+    'auth.confirmPassword': 'تأكيد كلمة المرور',
+    'auth.passwordMismatch': 'كلمتا المرور غير متطابقتين.',
+
+    'escrow.title': 'حماية الضمان',
+    'escrow.desc': 'يتم الاحتفاظ بالدفع بأمان حتى إتمام المهمة. يتم حجز الأموال وتحويلها إلى مقدم الخدمة بعد التأكيد. بدون مخاطر، شفافية كاملة.',
+    'escrow.verified': 'مقدمو خدمات موثقون',
+    'escrow.secure': 'مدفوعات آمنة',
+    'escrow.rated': 'تقييمات ومراجعات',
+
+    'task.loginToPublish': 'سجّل أو سجّل الدخول لنشر مهمتك',
 
     'profile.rating': 'التقييم',
     'profile.completed': 'مكتملة',

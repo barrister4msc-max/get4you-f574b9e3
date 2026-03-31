@@ -40,7 +40,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/tasks/:id" element={<TaskDetail />} />
-                <Route path="/create-task" element={<ProtectedRoute><CreateTask /></ProtectedRoute>} />
+                <Route path="/create-task" element={<CreateTask />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/for-taskers" element={<ForTaskers />} />
                 <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
