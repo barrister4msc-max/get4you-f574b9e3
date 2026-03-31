@@ -650,7 +650,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'Заработок',
     'dashboard.comingSoon': 'Скоро',
 
-    'how.escrow.title': 'Защита эскроу',
+    'notifications.title': 'Уведомления',
+    'notifications.markAllRead': 'Прочитать все',
+    'notifications.empty': 'Уведомлений пока нет',
+
+    'motivation.readyTitle': 'Ваша задача почти опубликована!',
+    'motivation.taskers': '7 исполнителей готовы откликнуться',
+    'motivation.speed': 'Опубликуем задачу за 10 секунд',
+    'motivation.saved': 'Данные задачи сохранены',
+    'motivation.cta': 'Зарегистрироваться и опубликовать →',
+    'motivation.note': 'Бесплатная регистрация, без обязательств',
+
     'how.escrow.desc': 'Средства надёжно хранятся до подтверждения выполнения поставленной задачи',
     'how.verified.title': 'Проверенные специалисты',
     'how.verified.desc': 'Верификация личности и навыков',
