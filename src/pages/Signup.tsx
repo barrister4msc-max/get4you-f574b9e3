@@ -36,7 +36,8 @@ const SignupPage = () => {
       toast.error(error);
     } else {
       toast.success(t('auth.checkEmail'));
-      navigate('/login');
+      const returnTo = searchParams.get('returnTo');
+      navigate(returnTo || '/login');
     }
   };
 
