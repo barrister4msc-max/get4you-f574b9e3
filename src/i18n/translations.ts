@@ -357,6 +357,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'Войти',
     'nav.signup': 'Регистрация',
     'nav.profile': 'Профиль',
+    'nav.account': 'Личный кабинет',
     'nav.myTasks': 'Мои задачи',
     'nav.messages': 'Сообщения',
     'nav.logout': 'Выйти',
