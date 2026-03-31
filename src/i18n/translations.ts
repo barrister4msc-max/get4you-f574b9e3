@@ -258,7 +258,19 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.earnings': 'Earnings',
     'dashboard.comingSoon': 'Coming soon',
 
-    // How it works extras
+    // Notifications
+    'notifications.title': 'Notifications',
+    'notifications.markAllRead': 'Mark all read',
+    'notifications.empty': 'No notifications yet',
+
+    // Motivation screen
+    'motivation.readyTitle': 'Your task is almost live!',
+    'motivation.taskers': '7 taskers are ready to respond',
+    'motivation.speed': 'We\'ll publish your task in 10 seconds',
+    'motivation.saved': 'Your task details are saved',
+    'motivation.cta': 'Sign up & publish →',
+    'motivation.note': 'Free registration, no obligations',
+
     'how.escrow.title': 'Escrow Protection',
     'how.escrow.desc': 'Funds held securely until work is approved',
     'how.verified.title': 'Verified Pros',
