@@ -1172,6 +1172,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.quick.title': 'سريع وسهل',
     'how.quick.desc': 'انشر مهمة في أقل من دقيقتين',
 
+    // Trust section (Index page)
+    'trust.title': 'حماية الضمان',
+    'trust.desc': 'يتم حجز الأموال وتحويلها إلى المنفذ بعد التأكيد.',
+    'trust.verified': 'منفذون موثقون',
+    'trust.secure': 'مدفوعات آمنة',
+    'trust.rated': 'تقييمات ومراجعات',
+
     'taskers.title': 'اكسب بشروطك',
     'taskers.subtitle': 'انضم لآلاف المحترفين بجدول مرن.',
     'taskers.plan.starter': 'مبتدئ',
