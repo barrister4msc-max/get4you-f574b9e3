@@ -16,12 +16,25 @@ import { toast } from 'sonner';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
-export const SupportDialog = () => {
+interface SupportDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showFab?: boolean;
+}
+
+export const SupportDialog = ({ open: externalOpen, onOpenChange: externalOnChange, showFab = true }: SupportDialogProps) => {
   const { t, locale } = useLanguage();
   const { user, profile } = useAuth();
   const voice = useVoiceInput(locale);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [tab, setTab] = useState('chat');
+
+  const isControlled = externalOpen !== undefined;
+  const open = isControlled ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled && externalOnChange) externalOnChange(v);
+    else setInternalOpen(v);
+  };
 
   // Form state
   const [name, setName] = useState(profile?.display_name || '');
@@ -85,13 +98,15 @@ export const SupportDialog = () => {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-accent text-accent-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
-        aria-label={t('support.title')}
-      >
-        <Headphones className="w-6 h-6" />
-      </button>
+      {showFab && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-accent text-accent-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
+          aria-label={t('support.title')}
+        >
+          <Headphones className="w-6 h-6" />
+        </button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">

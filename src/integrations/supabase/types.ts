@@ -143,6 +143,78 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_transactions: {
+        Row: {
+          amount: number
+          client_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          currency: string
+          held_at: string
+          id: string
+          net_amount: number
+          proposal_id: string
+          refunded_at: string | null
+          released_at: string | null
+          status: string
+          task_id: string
+          tasker_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          held_at?: string
+          id?: string
+          net_amount?: number
+          proposal_id: string
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string
+          task_id: string
+          tasker_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          held_at?: string
+          id?: string
+          net_amount?: number
+          proposal_id?: string
+          refunded_at?: string | null
+          released_at?: string | null
+          status?: string
+          task_id?: string
+          tasker_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       esek_patur_applications: {
         Row: {
           activity_type: string

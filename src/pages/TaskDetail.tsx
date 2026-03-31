@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
+  Lock, Unlock, AlertTriangle,
 } from 'lucide-react';
 
 interface Proposal {
@@ -38,6 +39,10 @@ const TaskDetailPage = () => {
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Escrow state
+  const [escrow, setEscrow] = useState<any>(null);
+  const [completing, setCompleting] = useState(false);
 
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id);
@@ -96,6 +101,46 @@ const TaskDetailPage = () => {
     fetchProposals();
   }, [id]);
 
+  // Fetch escrow
+  useEffect(() => {
+    if (!id) return;
+    const fetchEscrow = async () => {
+      const { data } = await supabase
+        .from('escrow_transactions')
+        .select('*')
+        .eq('task_id', id)
+        .maybeSingle();
+      if (data) setEscrow(data);
+    };
+    fetchEscrow();
+  }, [id]);
+
+  const handleCompleteTask = async () => {
+    if (!id || !escrow) return;
+    setCompleting(true);
+    try {
+      // Release escrow
+      await supabase
+        .from('escrow_transactions')
+        .update({ status: 'released', released_at: new Date().toISOString() })
+        .eq('id', escrow.id);
+
+      // Mark task as completed
+      await supabase
+        .from('tasks')
+        .update({ status: 'completed' })
+        .eq('id', id);
+
+      setEscrow((prev: any) => ({ ...prev, status: 'released' }));
+      setTask((prev: any) => ({ ...prev, status: 'completed' }));
+      toast.success(t('escrow.released'));
+    } catch {
+      toast.error(t('escrow.error'));
+    } finally {
+      setCompleting(false);
+    }
+  };
+
   const handleSubmitProposal = async () => {
     if (!user || !id || !price) return;
     setSubmitting(true);
@@ -143,7 +188,7 @@ const TaskDetailPage = () => {
 
       if (error) throw error;
 
-      // If accepted, update task status and assigned_to
+      // If accepted, update task status, assigned_to, and create escrow
       if (status === 'accepted') {
         const proposal = proposals.find(p => p.id === proposalId);
         if (proposal) {
@@ -152,6 +197,24 @@ const TaskDetailPage = () => {
             .update({ status: 'in_progress', assigned_to: proposal.user_id })
             .eq('id', id!);
           setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
+
+          // Create escrow transaction
+          const commissionRate = 0.15;
+          const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
+          const netAmount = proposal.price - commissionAmount;
+          const { data: escrowData } = await supabase.from('escrow_transactions').insert({
+            task_id: id!,
+            proposal_id: proposalId,
+            client_id: user!.id,
+            tasker_id: proposal.user_id,
+            amount: proposal.price,
+            currency: proposal.currency || currency,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            net_amount: netAmount,
+            status: 'held',
+          }).select().single();
+          if (escrowData) setEscrow(escrowData);
         }
         // Reject all other pending proposals
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
@@ -429,8 +492,59 @@ const TaskDetailPage = () => {
                 </>
               )}
 
-              {isOwner && (
+              {isOwner && !escrow && (
                 <p className="text-xs text-muted-foreground mt-4 text-center">{t('proposal.own.task')}</p>
+              )}
+
+              {/* Escrow status card */}
+              {escrow && (
+                <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-3">
+                  <div className="flex items-center gap-2">
+                    {escrow.status === 'held' ? (
+                      <Lock className="w-4 h-4 text-amber-600" />
+                    ) : escrow.status === 'released' ? (
+                      <Unlock className="w-4 h-4 text-primary" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                    )}
+                    <span className="text-sm font-semibold">
+                      {t(`escrow.status.${escrow.status}`)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex justify-between">
+                      <span>{t('escrow.amount')}</span>
+                      <span className="font-medium text-foreground">{formatPrice(escrow.amount, currency, escrow.currency)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('escrow.commission')} ({Math.round(escrow.commission_rate * 100)}%)</span>
+                      <span className="font-medium text-foreground">{formatPrice(escrow.commission_amount, currency, escrow.currency)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1">
+                      <span className="font-medium">{t('escrow.net')}</span>
+                      <span className="font-bold text-primary">{formatPrice(escrow.net_amount, currency, escrow.currency)}</span>
+                    </div>
+                  </div>
+
+                  {/* Complete task button - only for task owner when escrow is held */}
+                  {isOwner && escrow.status === 'held' && task.status === 'in_progress' && (
+                    <button
+                      onClick={handleCompleteTask}
+                      disabled={completing}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {completing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      {t('escrow.complete')}
+                    </button>
+                  )}
+
+                  {escrow.status === 'released' && (
+                    <div className="flex items-center gap-2 text-xs text-primary font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {t('escrow.paymentReleased')}
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="mt-5 pt-5 border-t border-border">
@@ -446,7 +560,7 @@ const TaskDetailPage = () => {
 
               <div className="mt-4 flex items-center gap-2 text-xs text-primary font-medium">
                 <Shield className="w-4 h-4" />
-                Escrow protected
+                {t('escrow.protected')}
               </div>
             </div>
           </div>
