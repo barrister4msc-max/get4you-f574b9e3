@@ -63,20 +63,13 @@ export const Header = () => {
               {profile?.display_name || t('nav.profile')}
             </Link>
           ) : (
-            <>
-              <Link
-                to="/login"
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-lg transition-colors"
-              >
-                {t('nav.login')}
-              </Link>
-              <Link
-                to="/signup"
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
-              >
-                {t('nav.signup')}
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+            >
+              <User className="w-4 h-4" />
+              {t('nav.account')}
+            </Link>
           )}
         </div>
 
