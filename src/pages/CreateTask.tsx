@@ -248,15 +248,7 @@ const CreateTaskPage = () => {
         <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
           {step === 1 && (
             <div className="space-y-6">
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border hover:shadow-card-hover transition-all bg-blue-50 text-blue-600"
-                >
-                  <Camera className="w-6 h-6" />
-                  <span className="text-xs font-medium">{t('task.photos')}</span>
-                </button>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => {
