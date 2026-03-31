@@ -688,6 +688,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'Оплата выплачена',
     'escrow.protected': 'Защита эскроу',
 
+    'how.escrow.title': 'Защита эскроу',
+    'how.escrow.desc': 'Средства надёжно хранятся до подтверждения выполнения',
     'how.verified.title': 'Проверенные специалисты',
     'how.verified.desc': 'Верификация личности и навыков',
     'how.quick.title': 'Быстро и просто',
