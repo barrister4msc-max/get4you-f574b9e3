@@ -97,6 +97,7 @@ export const Header = () => {
           <div className="flex items-center gap-2 pt-3">
             <CurrencyToggle />
             <LanguageSwitcher />
+            <NotificationBell />
           </div>
           <div className="pt-3">
             {user ? (

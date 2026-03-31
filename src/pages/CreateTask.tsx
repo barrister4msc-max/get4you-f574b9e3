@@ -136,10 +136,11 @@ const CreateTaskPage = () => {
     }
   };
 
+  const [showMotivation, setShowMotivation] = useState(false);
+
   const handleSubmit = async () => {
     if (!user) {
-      toast.info(t('task.loginToPublish') || 'Please sign up or log in to publish your task');
-      navigate('/login?tab=signup&returnTo=/create-task');
+      setShowMotivation(true);
       return;
     }
     if (!form.title.trim()) {
