@@ -8,6 +8,8 @@ import { CheckCircle2, ArrowRight, UserPlus, FileSignature, Clock, UserCheck, Gl
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 
 const benefits = [
   { icon: Clock, key: 'taskers.benefit.quickStart' },
