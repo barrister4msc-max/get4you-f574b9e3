@@ -82,6 +82,36 @@ const ForTaskersPage = () => {
           </div>
         </div>
 
+        {/* How much can you earn */}
+        <div className="mt-14">
+          <h2 className="text-2xl font-bold text-center">{t('taskers.earnings.title')}</h2>
+          <p className="text-muted-foreground text-center mt-2">{t('taskers.earnings.subtitle')}</p>
+          <div className="mt-8 grid sm:grid-cols-2 gap-4">
+            {[
+              { emoji: '🧹', key: 'cleaning', range: '3 000 – 8 000', note: 'taskers.earnings.cleaning.note' },
+              { emoji: '🔧', key: 'repair', range: '5 000 – 15 000', note: 'taskers.earnings.repair.note' },
+              { emoji: '🎨', key: 'design', range: '8 000 – 30 000', note: 'taskers.earnings.design.note' },
+              { emoji: '📦', key: 'moving', range: '10 000 – 25 000', note: 'taskers.earnings.moving.note' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.key}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card shadow-card"
+              >
+                <span className="text-3xl">{item.emoji}</span>
+                <div>
+                  <p className="font-semibold">{t(`taskers.earnings.${item.key}`)}</p>
+                  <p className="text-primary font-bold">{currency === 'ILS' ? `₪${item.range}` : `₽${item.range}`}</p>
+                  <p className="text-xs text-muted-foreground">{t(item.note)}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
         {/* Rating → Earnings bridge — toggles plans */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
