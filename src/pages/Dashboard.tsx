@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { formatPrice } from '@/components/CurrencyToggle';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight
@@ -41,6 +41,7 @@ const statusBadge = (status: string) => {
 
 const DashboardPage = () => {
   const { t, currency } = useLanguage();
+  const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
 

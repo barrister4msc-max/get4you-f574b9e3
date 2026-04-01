@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { formatPrice } from '@/components/CurrencyToggle';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from 'lucide-react';
@@ -47,7 +47,9 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, distanceKm }: any) => (
+const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, distanceKm }: any) => {
+  const formatPrice = useFormatPrice();
+  return (
   <motion.div
     key={task.id}
     initial={{ opacity: 0, y: 10 }}
@@ -120,6 +122,7 @@ const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, d
     </Link>
   </motion.div>
 );
+}
 
 const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 

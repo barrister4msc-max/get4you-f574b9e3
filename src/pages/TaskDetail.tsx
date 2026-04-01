@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { formatPrice } from '@/components/CurrencyToggle';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +26,7 @@ interface Proposal {
 const TaskDetailPage = () => {
   const { id } = useParams();
   const { t, currency, locale } = useLanguage();
+  const formatPrice = useFormatPrice();
   const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
   const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null } | null>(null);
