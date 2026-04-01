@@ -167,10 +167,11 @@ const TasksPage = () => {
 
   useEffect(() => {
     // Use profile coords if available
-    if (profile?.latitude && profile?.longitude) {
-      setUserCoords({ lat: profile.latitude, lng: profile.longitude });
+    const p = profile as any;
+    if (p?.latitude && p?.longitude) {
+      setUserCoords({ lat: p.latitude, lng: p.longitude });
     }
-  }, [profile?.latitude, profile?.longitude]);
+  }, [(profile as any)?.latitude, (profile as any)?.longitude]);
 
   useEffect(() => {
     const fetchData = async () => {
