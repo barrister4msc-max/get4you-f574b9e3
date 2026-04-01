@@ -202,6 +202,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.saved': 'Profile saved!',
     'profile.avatar.uploaded': 'Avatar updated!',
     'profile.avatar.deleted': 'Avatar removed!',
+    'profile.avatar.upload': 'Upload photo',
+    'profile.avatar.delete': 'Remove photo',
     'profile.roles': 'My Roles',
     'profile.roles.updated': 'Roles updated!',
     'profile.roles.needOne': 'You must have at least one role',
