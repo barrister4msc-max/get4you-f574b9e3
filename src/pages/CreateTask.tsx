@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { supabase } from '@/integrations/supabase/client';
-import { formatPrice } from '@/components/CurrencyToggle';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { TaskAIAssistant } from '@/components/TaskAIAssistant';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
