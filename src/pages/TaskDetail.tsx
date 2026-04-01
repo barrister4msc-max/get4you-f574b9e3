@@ -9,9 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
-  Lock, Unlock, AlertTriangle, MessageSquare, MessageSquare,
+  Lock, Unlock, AlertTriangle, MessageSquare,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface Proposal {
   id: string;
