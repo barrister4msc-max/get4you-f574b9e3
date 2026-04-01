@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -20,6 +20,7 @@ const ProfilePage = () => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [showEmploymentDialog, setShowEmploymentDialog] = useState(false);
   const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [form, setForm] = useState({
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
@@ -46,6 +47,28 @@ const ProfilePage = () => {
     supabase.from('employment_agreements' as any).select('id').eq('user_id', user.id).limit(1)
       .then(({ data }) => setHasEmploymentAgreement(!!data && data.length > 0));
   }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('user_id', user.id);
+      if (updateError) throw updateError;
+      await refreshProfile();
+      toast.success(t('profile.avatar.uploaded'));
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handlePaymentSelect = (value: string) => {
     setForm({ ...form, payment_method: value });
@@ -92,13 +115,32 @@ const ProfilePage = () => {
   return (
     <div className="min-h-[80vh] py-12">
       <div className="container max-w-lg mx-auto px-4">
+        {/* Avatar + Name */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-emerald flex items-center justify-center mx-auto mb-4">
-            <User className="w-7 h-7 text-primary-foreground" />
+          <div className="relative w-20 h-20 mx-auto mb-4">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover border-2 border-border" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gradient-emerald flex items-center justify-center">
+                <User className="w-8 h-8 text-primary-foreground" />
+              </div>
+            )}
+            <label className="absolute bottom-0 end-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer shadow-md hover:opacity-90 transition-opacity">
+              <Camera className="w-3.5 h-3.5" />
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+            </label>
           </div>
+          {uploadingAvatar && <p className="text-xs text-muted-foreground">{t('dashboard.loading')}</p>}
           <h1 className="text-2xl font-bold">{profile?.display_name || t('nav.profile')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
         </div>
+
+        {/* Dashboard link */}
+        <Link to="/dashboard"
+          className="flex items-center justify-center gap-2 w-full mb-6 py-3 rounded-xl font-semibold text-sm bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
+          <LayoutDashboard className="w-4 h-4 text-primary" />
+          {t('nav.dashboard')}
+        </Link>
 
         <div className="space-y-4">
           {/* Roles */}
