@@ -107,7 +107,7 @@ const ForTaskersPage = () => {
                 <span className="text-3xl">{item.emoji}</span>
                 <div>
                   <p className="font-semibold">{t(`taskers.earnings.${item.key}`)}</p>
-                  <p className="text-primary font-bold">{currency === 'ILS' ? `₪${item.range}` : `₽${item.range}`}</p>
+                  <p className="text-primary font-bold">₪{item.range}</p>
                   <p className="text-xs text-muted-foreground">{t(item.note)}</p>
                 </div>
               </motion.div>
