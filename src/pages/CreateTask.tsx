@@ -18,6 +18,7 @@ const categories = ['cleaning', 'moving', 'repair', 'digital', 'consulting', 'de
 
 const CreateTaskPage = () => {
   const { t, currency, locale } = useLanguage();
+  const formatPrice = useFormatPrice();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);

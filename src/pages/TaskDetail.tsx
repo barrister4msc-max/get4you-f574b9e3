@@ -26,6 +26,7 @@ interface Proposal {
 const TaskDetailPage = () => {
   const { id } = useParams();
   const { t, currency, locale } = useLanguage();
+  const formatPrice = useFormatPrice();
   const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
   const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null } | null>(null);

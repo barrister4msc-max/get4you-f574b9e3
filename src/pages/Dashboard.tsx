@@ -41,6 +41,7 @@ const statusBadge = (status: string) => {
 
 const DashboardPage = () => {
   const { t, currency } = useLanguage();
+  const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
 
