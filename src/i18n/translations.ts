@@ -878,6 +878,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'Статус обновлён',
     'admin.employment.error.update': 'Ошибка обновления статуса',
     'admin.employment.signedAt': 'Подписано',
+
+    // Chat
+    'chat.openChat': 'Открыть чат',
+    'chat.placeholder': 'Напишите сообщение...',
+    'chat.sendError': 'Не удалось отправить сообщение',
+    'chat.unavailable': 'Чат недоступен для этой задачи',
+    'chat.backToTask': 'Вернуться к задаче',
+    'chat.empty': 'Сообщений пока нет. Начните диалог!',
+
+    // AI Limits
+    'ai.dailyLimit': 'Вы достигли дневного лимита AI ({limit} запросов). Попробуйте завтра.',
   },
   he: {
     'nav.home': 'ראשי',
