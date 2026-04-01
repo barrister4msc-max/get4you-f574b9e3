@@ -1518,6 +1518,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.myOrders': 'طلباتي',
     'dashboard.tasker.earnings': 'الأرباح',
     'dashboard.comingSoon': 'قريباً',
+    'dashboard.rating': 'تقييمي',
+    'dashboard.rating.reviews': 'مراجعات',
+    'dashboard.rating.noReviews': 'لا توجد مراجعات بعد',
+    'dashboard.earnings.total': 'إجمالي الأرباح',
+    'dashboard.earnings.noData': 'لا توجد أرباح بعد',
+    'dashboard.loading': 'جار التحميل...',
 
     'notifications.title': 'الإشعارات',
     'notifications.markAllRead': 'تحديد الكل كمقروء',
