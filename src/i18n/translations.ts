@@ -1744,5 +1744,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'تم تحديث الحالة',
     'admin.employment.error.update': 'فشل في تحديث الحالة',
     'admin.employment.signedAt': 'تم التوقيع',
+
+    // Chat
+    'chat.openChat': 'فتح المحادثة',
+    'chat.placeholder': 'اكتب رسالة...',
+    'chat.sendError': 'فشل في إرسال الرسالة',
+    'chat.unavailable': 'المحادثة غير متاحة لهذه المهمة',
+    'chat.backToTask': 'العودة للمهمة',
+    'chat.empty': 'لا توجد رسائل بعد. ابدأ المحادثة!',
+
+    // AI Limits
+    'ai.dailyLimit': 'لقد وصلت إلى الحد اليومي للذكاء الاصطناعي ({limit} طلبات). حاول مرة أخرى غداً.',
   },
 };
