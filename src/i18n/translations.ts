@@ -1133,6 +1133,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'taskers.benefit.noSearch': 'לא צריך לחפש לקוחות — הם מגיעים אליכם',
     'taskers.benefit.ratingEarnings': 'דירוג גבוה יותר = יותר הזמנות ויותר רווח',
     'taskers.ratingBridge': '⭐ ככל שהדירוג שלכם גבוה יותר, כך תרוויחו יותר — בדקו את תוכניות המנוי!',
+    'taskers.ratingBridge.clickHint': '👆 לחצו לצפייה בתוכניות',
     'taskers.plans.title': 'בחרו את התוכנית שלכם',
     'taskers.plan.starter': 'סטארט',
     'taskers.plan.pro': 'פרו',
