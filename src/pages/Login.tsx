@@ -37,7 +37,7 @@ const LoginPage = () => {
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('client');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
