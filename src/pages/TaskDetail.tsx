@@ -548,6 +548,17 @@ const TaskDetailPage = () => {
                 </div>
               )}
 
+              {/* Chat button */}
+              {task.status === 'in_progress' && user && (task.user_id === user.id || task.assigned_to === user.id) && (
+                <Link
+                  to={`/chat/${id}`}
+                  className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  {t('chat.openChat')}
+                </Link>
+              )}
+
               <div className="mt-5 pt-5 border-t border-border">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
