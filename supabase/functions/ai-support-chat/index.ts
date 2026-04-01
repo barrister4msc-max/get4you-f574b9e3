@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,8 @@ Guidelines:
 - Don't make up policies or pricing not listed above
 - Be warm and professional`;
 
+const DAILY_LIMIT = 20;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -30,6 +33,38 @@ serve(async (req) => {
     const { messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Rate limiting: extract user from auth header
+    const authHeader = req.headers.get("authorization");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: { user } } = await supabase.auth.getUser(token);
+
+      if (user) {
+        // Check rate limit
+        const { data: allowed } = await supabase.rpc("check_ai_rate_limit", {
+          _user_id: user.id,
+          _function_name: "support-chat",
+          _max_requests: DAILY_LIMIT,
+        });
+
+        if (!allowed) {
+          return new Response(JSON.stringify({ error: "daily_limit", limit: DAILY_LIMIT }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Log usage
+        await supabase.from("ai_usage").insert({
+          user_id: user.id,
+          function_name: "support-chat",
+        });
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
