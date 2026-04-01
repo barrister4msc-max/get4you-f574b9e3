@@ -11,6 +11,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'Log In',
     'nav.signup': 'Sign Up',
     'nav.profile': 'Profile',
+    'nav.dashboard': 'Dashboard',
     'nav.account': 'My Account',
     'nav.myTasks': 'My Tasks',
     'nav.messages': 'Messages',
@@ -246,6 +247,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step3': 'Start posting or completing tasks — and earn!',
 
     // Dashboard
+    'dashboard.overview': 'Overview',
     'dashboard.client.title': 'Client Dashboard',
     'dashboard.client.myTasks': 'My Tasks',
     'dashboard.client.createTask': 'Create Task',
@@ -451,6 +453,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'Войти',
     'nav.signup': 'Регистрация',
     'nav.profile': 'Профиль',
+    'nav.dashboard': 'Личный кабинет',
     'nav.account': 'Личный кабинет',
     'nav.myTasks': 'Мои задачи',
     'nav.messages': 'Сообщения',
@@ -671,6 +674,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step2': 'Вернитесь и войдите в свой аккаунт',
     'auth.welcome.step3': 'Начните размещать или выполнять задачи — и зарабатывайте!',
 
+    'dashboard.overview': 'Обзор',
     'dashboard.client.title': 'Панель заказчика',
     'dashboard.client.myTasks': 'Мои задачи',
     'dashboard.client.createTask': 'Создать задачу',
@@ -869,6 +873,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'התחברות',
     'nav.signup': 'הרשמה',
     'nav.profile': 'פרופיל',
+    'nav.dashboard': 'לוח בקרה',
     'nav.account': 'החשבון שלי',
     'nav.myTasks': 'המשימות שלי',
     'nav.messages': 'הודעות',
@@ -1089,6 +1094,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step2': 'חזור והתחבר לחשבון שלך',
     'auth.welcome.step3': 'התחל לפרסם או לבצע משימות — ולהרוויח!',
 
+    'dashboard.overview': 'סקירה',
     'dashboard.client.title': 'לוח לקוח',
     'dashboard.client.myTasks': 'המשימות שלי',
     'dashboard.client.createTask': 'צור משימה',
@@ -1287,6 +1293,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'تسجيل الدخول',
     'nav.signup': 'إنشاء حساب',
     'nav.profile': 'الملف الشخصي',
+    'nav.dashboard': 'لوحة التحكم',
     'nav.account': 'حسابي',
     'nav.myTasks': 'مهامي',
     'nav.messages': 'الرسائل',
@@ -1507,6 +1514,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step2': 'عُد وسجل الدخول إلى حسابك',
     'auth.welcome.step3': 'ابدأ بنشر أو إنجاز المهام — واكسب!',
 
+    'dashboard.overview': 'نظرة عامة',
     'dashboard.client.title': 'لوحة العميل',
     'dashboard.client.myTasks': 'مهامي',
     'dashboard.client.createTask': 'إنشاء مهمة',
