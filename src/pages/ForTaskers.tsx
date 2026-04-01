@@ -175,6 +175,35 @@ const ForTaskersPage = () => {
             </Link>
           </div>
         </div>
+        {/* Become client CTA for tasker-only users — at bottom */}
+        {isTaskerOnly && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-8 p-6 rounded-2xl border border-primary/30 bg-emerald-50 text-center"
+          >
+            <UserPlus className="w-8 h-8 text-primary mx-auto mb-2" />
+            <h2 className="font-semibold text-lg">{t('taskers.becomeClient.title')}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t('taskers.becomeClient.description')}</p>
+            <Button onClick={becomeClient} disabled={adding} className="mt-4">
+              {t('taskers.becomeClient.cta')}
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Show create task button if user is also a client */}
+        {user && isClient && (
+          <div className="mt-6 text-center">
+            <Link
+              to="/create-task"
+              className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              {t('nav.create')}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
