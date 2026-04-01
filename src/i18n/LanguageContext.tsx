@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { translations, Locale } from './translations';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
 
 interface LanguageContextType {
   locale: Locale;
@@ -8,6 +9,7 @@ interface LanguageContextType {
   dir: 'ltr' | 'rtl';
   currency: 'USD' | 'ILS';
   setCurrency: (c: 'USD' | 'ILS') => void;
+  rates: Record<string, number>;
 }
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
@@ -15,6 +17,7 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [locale, setLocaleState] = useState<Locale>('en');
   const [currency, setCurrency] = useState<'USD' | 'ILS'>('USD');
+  const rates = useExchangeRates();
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -31,7 +34,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const dir = (locale === 'he' || locale === 'ar') ? 'rtl' : 'ltr';
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, dir, currency, setCurrency }}>
+    <LanguageContext.Provider value={{ locale, setLocale, t, dir, currency, setCurrency, rates }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -44,6 +47,7 @@ const fallback: LanguageContextType = {
   dir: 'ltr',
   currency: 'USD',
   setCurrency: () => {},
+  rates: { USD: 1, ILS: 3.7 },
 };
 
 export const useLanguage = () => {
