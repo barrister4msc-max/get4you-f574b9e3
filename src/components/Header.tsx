@@ -1,20 +1,40 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
-import { Menu, X, User } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, X, User, LayoutDashboard, LogOut } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
   const { t } = useLanguage();
-  const { user, profile, roles } = useAuth();
+  const { user, profile, roles, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
   const isAdmin = user && roles.includes('admin');
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    await signOut();
+    navigate('/');
+  };
 
   const navLinks = [
     { to: '/', label: t('nav.home') },
@@ -24,6 +44,52 @@ export const Header = () => {
     { to: '/for-taskers', label: t('nav.forTaskers') },
     ...(isAdmin ? [{ to: '/admin/esek-patur', label: t('nav.admin') }] : []),
   ];
+
+  const ProfileDropdown = () => (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className="shrink-0 focus:outline-none"
+      >
+        {profile?.avatar_url ? (
+          <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-border hover:border-primary transition-colors cursor-pointer" />
+        ) : (
+          <span className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity cursor-pointer">
+            <User className="w-4 h-4" />
+            {profile?.display_name || t('nav.profile')}
+          </span>
+        )}
+      </button>
+      {dropdownOpen && (
+        <div className="absolute end-0 mt-2 w-48 rounded-xl border border-border bg-card shadow-lg py-1 z-50">
+          <Link
+            to="/profile"
+            onClick={() => setDropdownOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+          >
+            <User className="w-4 h-4" />
+            {t('nav.profile')}
+          </Link>
+          <Link
+            to="/dashboard"
+            onClick={() => setDropdownOpen(false)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            {t('nav.dashboard')}
+          </Link>
+          <div className="border-t border-border my-1" />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm text-destructive hover:bg-secondary transition-colors w-full text-start"
+          >
+            <LogOut className="w-4 h-4" />
+            {t('nav.logout')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
@@ -57,19 +123,7 @@ export const Header = () => {
           <LanguageSwitcher />
           <NotificationBell />
           {user ? (
-            <div className="flex items-center gap-2">
-              {profile?.avatar_url ? (
-                <Link to="/profile" className="shrink-0">
-                  <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-border hover:border-primary transition-colors" />
-                </Link>
-              ) : (
-                <Link to="/profile"
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity">
-                  <User className="w-4 h-4" />
-                  {profile?.display_name || t('nav.profile')}
-                </Link>
-              )}
-            </div>
+            <ProfileDropdown />
           ) : (
             <Link
               to="/login"
@@ -105,17 +159,28 @@ export const Header = () => {
             <LanguageSwitcher />
             <NotificationBell />
           </div>
-          <div className="pt-3">
+          <div className="pt-3 space-y-2">
             {user ? (
               <>
-                <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg hover:bg-secondary transition-colors">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
                   ) : (
                     <User className="w-4 h-4" />
                   )}
-                  {profile?.display_name || t('nav.profile')}
+                  {t('nav.profile')}
                 </Link>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg hover:bg-secondary transition-colors">
+                  <LayoutDashboard className="w-4 h-4" />
+                  {t('nav.dashboard')}
+                </Link>
+                <button
+                  onClick={() => { setMobileOpen(false); handleLogout(); }}
+                  className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg text-destructive hover:bg-secondary transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t('nav.logout')}
+                </button>
               </>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
