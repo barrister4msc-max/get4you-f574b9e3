@@ -233,10 +233,11 @@ const ProfilePage = () => {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5">{t('profile.about')}</label>
+            <label className="block text-sm font-medium mb-1.5">{isTasker ? t('profile.skills') : t('profile.about')}</label>
             <div className="relative">
               <FileText className="absolute start-3 top-3 w-4 h-4 text-muted-foreground" />
               <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={4}
+                placeholder={isTasker ? t('profile.skills.placeholder') : ''}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none" />
             </div>
           </div>
