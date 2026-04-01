@@ -1475,6 +1475,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.city': 'المدينة',
     'profile.save': 'حفظ',
     'profile.saved': 'تم حفظ الملف الشخصي!',
+    'profile.avatar.uploaded': 'تم تحديث الصورة!',
     'profile.roles': 'أدواري',
     'profile.roles.updated': 'تم تحديث الأدوار!',
     'profile.roles.needOne': 'يجب أن يكون لديك دور واحد على الأقل',
