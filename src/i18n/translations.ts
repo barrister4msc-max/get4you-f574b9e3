@@ -574,6 +574,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.filter.budgetFrom': 'Бюджет от',
     'tasks.filter.budgetTo': 'Бюджет до',
     'tasks.filter.clear': 'Сбросить фильтры',
+    'tasks.filter.radius': 'Радиус',
+    'tasks.filter.anyDistance': 'Любое расстояние',
+    'tasks.filter.detectLocation': 'Определить моё местоположение',
+    'tasks.filter.locationDetected': 'Местоположение определено',
+    'profile.skills.placeholder': 'Перечислите ваши навыки и опыт...',
     'tasks.status.draft': 'Черновик',
     'tasks.status.cancelled': 'Отменена',
 
