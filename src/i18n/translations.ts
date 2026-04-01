@@ -1100,6 +1100,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.myOrders': 'ההזמנות שלי',
     'dashboard.tasker.earnings': 'רווחים',
     'dashboard.comingSoon': 'בקרוב',
+    'dashboard.rating': 'הדירוג שלי',
+    'dashboard.rating.reviews': 'ביקורות',
+    'dashboard.rating.noReviews': 'אין ביקורות עדיין',
+    'dashboard.earnings.total': 'סה"כ הרוויח',
+    'dashboard.earnings.noData': 'אין רווחים עדיין',
+    'dashboard.loading': 'טוען...',
 
     'notifications.title': 'התראות',
     'notifications.markAllRead': 'סמן הכל כנקרא',
