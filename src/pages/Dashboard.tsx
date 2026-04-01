@@ -27,7 +27,7 @@ interface ReviewRow {
   created_at: string; task?: { title: string } | null;
 }
 
-type Tab = 'overview' | 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating';
+type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
@@ -43,8 +43,9 @@ const DashboardPage = () => {
   const { t, currency } = useLanguage();
   const { user, profile, roles } = useAuth();
 
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('myTasks');
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
+  const [assignedTasks, setAssignedTasks] = useState<MyTaskRow[]>([]);
   const [myProposals, setMyProposals] = useState<ProposalRow[]>([]);
   const [escrowData, setEscrowData] = useState<EscrowRow[]>([]);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
@@ -57,7 +58,7 @@ const DashboardPage = () => {
     if (!user) return;
     const fetchAll = async () => {
       setLoading(true);
-      const [tasksRes, proposalsRes, escrowRes, reviewsRes] = await Promise.all([
+      const queries: Promise<any>[] = [
         supabase.from('tasks').select('id, title, status, budget_fixed, budget_min, currency, created_at')
           .eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('proposals').select('id, task_id, price, currency, status, created_at, tasks:task_id(title, status)')
@@ -66,8 +67,12 @@ const DashboardPage = () => {
           .eq('tasker_id', user.id).eq('status', 'released'),
         supabase.from('reviews').select('id, rating, comment, created_at, tasks:task_id(title)')
           .eq('reviewee_id', user.id).order('created_at', { ascending: false }),
-      ]);
+        supabase.from('tasks').select('id, title, status, budget_fixed, budget_min, currency, created_at')
+          .eq('assigned_to', user.id).order('created_at', { ascending: false }),
+      ];
+      const [tasksRes, proposalsRes, escrowRes, reviewsRes, assignedRes] = await Promise.all(queries);
       setMyTasks((tasksRes.data as MyTaskRow[]) || []);
+      setAssignedTasks((assignedRes.data as MyTaskRow[]) || []);
       setMyProposals((proposalsRes.data as any[])?.map(p => ({ ...p, task: Array.isArray(p.tasks) ? p.tasks[0] : p.tasks })) || []);
       setEscrowData((escrowRes.data as any[])?.map(e => ({ ...e, task: Array.isArray(e.tasks) ? e.tasks[0] : e.tasks })) || []);
       setReviews((reviewsRes.data as any[])?.map(r => ({ ...r, task: Array.isArray(r.tasks) ? r.tasks[0] : r.tasks })) || []);
@@ -80,10 +85,10 @@ const DashboardPage = () => {
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : null;
 
+  // All users see myTasks; taskers also get extra tabs
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'overview', label: t('dashboard.overview'), icon: <User className="w-4 h-4" /> },
+    { key: 'myTasks', label: t('dashboard.client.myTasks'), icon: <ClipboardList className="w-4 h-4" /> },
   ];
-  if (isClient) tabs.push({ key: 'myTasks', label: t('dashboard.client.myTasks'), icon: <ClipboardList className="w-4 h-4" /> });
   if (isTasker) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
     tabs.push({ key: 'myProposals', label: t('dashboard.tasker.myProposals'), icon: <Briefcase className="w-4 h-4" /> });
@@ -91,16 +96,23 @@ const DashboardPage = () => {
     tabs.push({ key: 'rating', label: t('dashboard.rating'), icon: <Star className="w-4 h-4" /> });
   }
 
+  // Decide which tasks to show: client sees created tasks, tasker sees assigned tasks
+  const displayedTasks = isTasker && !isClient ? assignedTasks : myTasks;
+
   return (
     <div className="min-h-[80vh] py-8">
       <div className="container max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-gradient-emerald flex items-center justify-center shrink-0">
-            <User className="w-6 h-6 text-primary-foreground" />
-          </div>
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="w-14 h-14 rounded-full object-cover shrink-0 border-2 border-border" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-gradient-emerald flex items-center justify-center shrink-0">
+              <User className="w-6 h-6 text-primary-foreground" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold truncate">{profile?.display_name || t('dashboard.overview')}</h1>
+            <h1 className="text-xl font-bold truncate">{profile?.display_name || t('nav.dashboard')}</h1>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
             {avgRating && (
               <div className="flex items-center gap-1 mt-0.5">
@@ -115,87 +127,72 @@ const DashboardPage = () => {
           </Link>
         </div>
 
+        {/* Stats summary */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="p-3 rounded-2xl border border-border bg-card text-center">
+            <p className="text-xl font-bold text-primary">{displayedTasks.length}</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.client.myTasks')}</p>
+          </div>
+          <div className="p-3 rounded-2xl border border-border bg-card text-center">
+            <p className="text-xl font-bold text-primary">{myProposals.length}</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.tasker.myProposals')}</p>
+          </div>
+          <div className="p-3 rounded-2xl border border-border bg-card text-center">
+            <p className="text-xl font-bold text-primary">{avgRating || '—'}</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.rating')}</p>
+          </div>
+        </div>
+
         {/* Tabs */}
         <div className="flex flex-wrap rounded-xl bg-muted p-1 mb-6 gap-1">
-          {tabs.map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)}
+          {tabs.map((tb) => (
+            <button key={tb.key} onClick={() => setTab(tb.key)}
               className={`flex items-center gap-1.5 flex-1 min-w-0 py-2 px-2 rounded-lg text-xs font-semibold transition-all justify-center ${
-                tab === t.key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
+                tab === tb.key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
               }`}>
-              {t.icon}
-              <span className="truncate hidden sm:inline">{t.label}</span>
+              {tb.icon}
+              <span className="truncate hidden sm:inline">{tb.label}</span>
             </button>
           ))}
         </div>
-
-        {/* OVERVIEW */}
-        {tab === 'overview' && (
-          <div className="space-y-4">
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-4 rounded-2xl border border-border bg-card text-center">
-                <p className="text-2xl font-bold text-primary">{myTasks.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('dashboard.client.myTasks')}</p>
-              </div>
-              <div className="p-4 rounded-2xl border border-border bg-card text-center">
-                <p className="text-2xl font-bold text-primary">{myProposals.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('dashboard.tasker.myProposals')}</p>
-              </div>
-              <div className="p-4 rounded-2xl border border-border bg-card text-center">
-                <p className="text-2xl font-bold text-primary">{avgRating || '—'}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('dashboard.rating')}</p>
-              </div>
-            </div>
-
-            {isTasker && totalEarnings > 0 && (
-              <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 text-center cursor-pointer hover:bg-primary/10 transition-colors"
-                onClick={() => setTab('earnings')}>
-                <p className="text-sm text-muted-foreground">{t('dashboard.earnings.total')}</p>
-                <p className="text-2xl font-extrabold text-primary mt-1">
-                  {formatPrice(totalEarnings, currency, escrowData[0]?.currency || 'USD')}
-                </p>
-              </div>
-            )}
-
-            {/* Quick actions */}
-            <div className="grid grid-cols-2 gap-3">
-              {isClient && (
-                <Link to="/create-task" className="flex items-center gap-2 p-4 rounded-2xl border border-border bg-card hover:shadow-card-hover transition-all">
-                  <Plus className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">{t('dashboard.client.createTask')}</span>
-                </Link>
-              )}
-              {isTasker && (
-                <Link to="/tasks" className="flex items-center gap-2 p-4 rounded-2xl border border-border bg-card hover:shadow-card-hover transition-all">
-                  <Search className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">{t('dashboard.tasker.findTasks')}</span>
-                </Link>
-              )}
-              <button onClick={() => setTab(isClient ? 'myTasks' : 'myProposals')}
-                className="flex items-center gap-2 p-4 rounded-2xl border border-border bg-card hover:shadow-card-hover transition-all text-start">
-                <ClipboardList className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium">{isClient ? t('dashboard.client.myTasks') : t('dashboard.tasker.myProposals')}</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* MY TASKS */}
         {tab === 'myTasks' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold">{t('dashboard.client.myTasks')}</h2>
-              <Link to="/create-task" className="flex items-center gap-1 text-sm text-primary font-medium hover:underline">
-                <Plus className="w-4 h-4" /> {t('dashboard.client.createTask')}
-              </Link>
+              {isClient && (
+                <Link to="/create-task" className="flex items-center gap-1 text-sm text-primary font-medium hover:underline">
+                  <Plus className="w-4 h-4" /> {t('dashboard.client.createTask')}
+                </Link>
+              )}
             </div>
+
+            {/* For users who are both client+tasker, show assigned tasks too */}
+            {isClient && isTasker && assignedTasks.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2">{t('dashboard.tasker.assignedTasks')}</h3>
+                {assignedTasks.map((task) => (
+                  <Link key={task.id} to={`/tasks/${task.id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all mb-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate">{task.title}</h3>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(task.status || 'draft')}`}>{t(`tasks.status.${task.status || 'draft'}`)}</span>
+                      </div>
+                      <div className="text-primary font-bold text-sm">{formatPrice(task.budget_fixed || task.budget_min || 0, currency, task.currency)}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
             {loading ? <p className="text-center text-muted-foreground py-8">{t('dashboard.loading')}</p>
-            : myTasks.length === 0 ? (
+            : displayedTasks.length === 0 ? (
               <div className="text-center py-12">
                 <ClipboardList className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">{t('tasks.noResults')}</p>
               </div>
-            ) : myTasks.map((task) => (
+            ) : (isClient ? myTasks : displayedTasks).map((task) => (
               <Link key={task.id} to={`/tasks/${task.id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
