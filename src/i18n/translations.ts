@@ -11,6 +11,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'Log In',
     'nav.signup': 'Sign Up',
     'nav.profile': 'Profile',
+    'nav.dashboard': 'Dashboard',
     'nav.account': 'My Account',
     'nav.myTasks': 'My Tasks',
     'nav.messages': 'Messages',
