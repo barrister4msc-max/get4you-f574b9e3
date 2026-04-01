@@ -1290,6 +1290,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'تسجيل الدخول',
     'nav.signup': 'إنشاء حساب',
     'nav.profile': 'الملف الشخصي',
+    'nav.dashboard': 'لوحة التحكم',
     'nav.account': 'حسابي',
     'nav.myTasks': 'مهامي',
     'nav.messages': 'الرسائل',
