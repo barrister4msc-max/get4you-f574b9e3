@@ -1015,6 +1015,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.filter.budgetFrom': 'תקציב מ-',
     'tasks.filter.budgetTo': 'תקציב עד',
     'tasks.filter.clear': 'נקה סינון',
+    'tasks.filter.radius': 'רדיוס',
+    'tasks.filter.anyDistance': 'כל מרחק',
+    'tasks.filter.detectLocation': 'זהה את המיקום שלי',
+    'tasks.filter.locationDetected': 'המיקום זוהה',
+    'profile.skills.placeholder': 'רשום את הכישורים והניסיון שלך...',
     'tasks.status.draft': 'טיוטה',
     'tasks.status.cancelled': 'בוטל',
 
