@@ -1311,6 +1311,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'הסטטוס עודכן',
     'admin.employment.error.update': 'שגיאה בעדכון הסטטוס',
     'admin.employment.signedAt': 'נחתם',
+
+    // Chat
+    'chat.openChat': 'פתח צ׳אט',
+    'chat.placeholder': 'כתוב הודעה...',
+    'chat.sendError': 'שליחת ההודעה נכשלה',
+    'chat.unavailable': 'הצ׳אט אינו זמין למשימה זו',
+    'chat.backToTask': 'חזרה למשימה',
+    'chat.empty': 'אין הודעות עדיין. התחל את השיחה!',
+
+    // AI Limits
+    'ai.dailyLimit': 'הגעת למגבלה היומית של AI ({limit} בקשות). נסה שוב מחר.',
   },
   ar: {
     'nav.home': 'الرئيسية',
