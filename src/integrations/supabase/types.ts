@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          function_name: string
+          id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          function_name: string
+          id?: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          function_name?: string
+          id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -43,6 +64,38 @@ export type Database = {
           sort_order?: number | null
         }
         Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          task_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          task_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contractor_agreements: {
         Row: {
@@ -565,6 +618,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_ai_rate_limit: {
+        Args: {
+          _function_name: string
+          _max_requests?: number
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
