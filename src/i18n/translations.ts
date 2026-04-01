@@ -1514,6 +1514,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step2': 'عُد وسجل الدخول إلى حسابك',
     'auth.welcome.step3': 'ابدأ بنشر أو إنجاز المهام — واكسب!',
 
+    'dashboard.overview': 'نظرة عامة',
     'dashboard.client.title': 'لوحة العميل',
     'dashboard.client.myTasks': 'مهامي',
     'dashboard.client.createTask': 'إنشاء مهمة',
