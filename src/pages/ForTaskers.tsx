@@ -87,7 +87,39 @@ const ForTaskersPage = () => {
           </div>
         )}
 
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
+        {/* Benefits section */}
+        <div className="mt-14">
+          <h2 className="text-2xl font-bold text-center">{t('taskers.benefits.title')}</h2>
+          <p className="text-muted-foreground text-center mt-2">{t('taskers.benefits.subtitle')}</p>
+          <div className="mt-8 grid sm:grid-cols-2 gap-4">
+            {benefits.map((b, i) => (
+              <motion.div
+                key={b.key}
+                initial={{ opacity: 0, x: i % 2 === 0 ? -15 : 15 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="flex items-start gap-3 p-4 rounded-xl border border-border bg-card"
+              >
+                <b.icon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <span className="text-sm">{t(b.key)}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Rating → Earnings bridge */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-8 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center"
+        >
+          <p className="font-semibold text-primary">{t('taskers.ratingBridge')}</p>
+        </motion.div>
+
+        <h2 className="text-2xl font-bold text-center mt-14">{t('taskers.plans.title')}</h2>
+        <div className="mt-6 grid md:grid-cols-3 gap-6">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.key}
