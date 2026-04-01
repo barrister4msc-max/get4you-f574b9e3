@@ -58,11 +58,6 @@ export const Header = () => {
           <NotificationBell />
           {user ? (
             <div className="flex items-center gap-2">
-              <Link to="/dashboard"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                <LayoutDashboard className="w-4 h-4" />
-                {t('nav.dashboard')}
-              </Link>
               {profile?.avatar_url ? (
                 <Link to="/profile" className="shrink-0">
                   <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-border hover:border-primary transition-colors" />
