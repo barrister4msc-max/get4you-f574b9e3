@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const DAILY_LIMIT = 30;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -12,6 +15,36 @@ serve(async (req) => {
     const { messages, type } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Rate limiting
+    const authHeader = req.headers.get("authorization");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: { user } } = await supabase.auth.getUser(token);
+
+      if (user) {
+        const { data: allowed } = await supabase.rpc("check_ai_rate_limit", {
+          _user_id: user.id,
+          _function_name: "task-assistant",
+          _max_requests: DAILY_LIMIT,
+        });
+
+        if (!allowed) {
+          return new Response(JSON.stringify({ error: "daily_limit", limit: DAILY_LIMIT }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        await supabase.from("ai_usage").insert({
+          user_id: user.id,
+          function_name: "task-assistant",
+        });
+      }
+    }
 
     const systemPrompts: Record<string, string> = {
       assist: `You are a helpful task creation assistant for a task marketplace platform called TaskFlow. 

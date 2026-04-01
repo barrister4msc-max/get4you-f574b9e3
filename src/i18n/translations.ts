@@ -445,6 +445,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'Status updated',
     'admin.employment.error.update': 'Failed to update status',
     'admin.employment.signedAt': 'Signed',
+
+    // Chat
+    'chat.openChat': 'Open Chat',
+    'chat.placeholder': 'Type a message...',
+    'chat.sendError': 'Failed to send message',
+    'chat.unavailable': 'Chat is not available for this task',
+    'chat.backToTask': 'Back to task',
+    'chat.empty': 'No messages yet. Start the conversation!',
+
+    // AI Limits
+    'ai.dailyLimit': 'You have reached the daily AI limit ({limit} requests). Try again tomorrow.',
   },
   ru: {
     'nav.home': 'Главная',
@@ -867,6 +878,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'Статус обновлён',
     'admin.employment.error.update': 'Ошибка обновления статуса',
     'admin.employment.signedAt': 'Подписано',
+
+    // Chat
+    'chat.openChat': 'Открыть чат',
+    'chat.placeholder': 'Напишите сообщение...',
+    'chat.sendError': 'Не удалось отправить сообщение',
+    'chat.unavailable': 'Чат недоступен для этой задачи',
+    'chat.backToTask': 'Вернуться к задаче',
+    'chat.empty': 'Сообщений пока нет. Начните диалог!',
+
+    // AI Limits
+    'ai.dailyLimit': 'Вы достигли дневного лимита AI ({limit} запросов). Попробуйте завтра.',
   },
   he: {
     'nav.home': 'ראשי',
@@ -1289,6 +1311,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'הסטטוס עודכן',
     'admin.employment.error.update': 'שגיאה בעדכון הסטטוס',
     'admin.employment.signedAt': 'נחתם',
+
+    // Chat
+    'chat.openChat': 'פתח צ׳אט',
+    'chat.placeholder': 'כתוב הודעה...',
+    'chat.sendError': 'שליחת ההודעה נכשלה',
+    'chat.unavailable': 'הצ׳אט אינו זמין למשימה זו',
+    'chat.backToTask': 'חזרה למשימה',
+    'chat.empty': 'אין הודעות עדיין. התחל את השיחה!',
+
+    // AI Limits
+    'ai.dailyLimit': 'הגעת למגבלה היומית של AI ({limit} בקשות). נסה שוב מחר.',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -1711,5 +1744,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'تم تحديث الحالة',
     'admin.employment.error.update': 'فشل في تحديث الحالة',
     'admin.employment.signedAt': 'تم التوقيع',
+
+    // Chat
+    'chat.openChat': 'فتح المحادثة',
+    'chat.placeholder': 'اكتب رسالة...',
+    'chat.sendError': 'فشل في إرسال الرسالة',
+    'chat.unavailable': 'المحادثة غير متاحة لهذه المهمة',
+    'chat.backToTask': 'العودة للمهمة',
+    'chat.empty': 'لا توجد رسائل بعد. ابدأ المحادثة!',
+
+    // AI Limits
+    'ai.dailyLimit': 'لقد وصلت إلى الحد اليومي للذكاء الاصطناعي ({limit} طلبات). حاول مرة أخرى غداً.',
   },
 };

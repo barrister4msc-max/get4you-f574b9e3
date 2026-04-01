@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { formatPrice } from '@/components/CurrencyToggle';
@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
-  Lock, Unlock, AlertTriangle,
+  Lock, Unlock, AlertTriangle, MessageSquare,
 } from 'lucide-react';
 
 interface Proposal {
@@ -545,6 +545,17 @@ const TaskDetailPage = () => {
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* Chat button */}
+              {task.status === 'in_progress' && user && (task.user_id === user.id || task.assigned_to === user.id) && (
+                <Link
+                  to={`/chat/${id}`}
+                  className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  {t('chat.openChat')}
+                </Link>
               )}
 
               <div className="mt-5 pt-5 border-t border-border">

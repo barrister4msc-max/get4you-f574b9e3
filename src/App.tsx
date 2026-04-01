@@ -26,6 +26,7 @@ import ContractorAgreement from "./pages/ContractorAgreement";
 import ResetPassword from "./pages/ResetPassword";
 import EmploymentAgreement from "./pages/EmploymentAgreement";
 import AdminEmployment from "./pages/AdminEmployment";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/signup" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/chat/:taskId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
               </Route>
