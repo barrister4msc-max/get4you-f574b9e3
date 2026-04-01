@@ -109,6 +109,28 @@ const LoginPage = () => {
     }
   };
 
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+    setSocialLoading(provider);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(String(result.error));
+        setSocialLoading(null);
+        return;
+      }
+      if (result.redirected) {
+        return;
+      }
+      const returnTo = searchParams.get('returnTo');
+      navigate(returnTo || '/');
+    } catch (err: any) {
+      toast.error(err?.message || 'OAuth error');
+      setSocialLoading(null);
+    }
+  };
+
   const roles: { value: Role; label: string }[] = [
     { value: 'client', label: t('auth.role.client') },
     { value: 'tasker', label: t('auth.role.tasker') },
