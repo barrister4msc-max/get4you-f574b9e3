@@ -26,6 +26,7 @@ import ContractorAgreement from "./pages/ContractorAgreement";
 import ResetPassword from "./pages/ResetPassword";
 import EmploymentAgreement from "./pages/EmploymentAgreement";
 import AdminEmployment from "./pages/AdminEmployment";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
