@@ -24,6 +24,8 @@ const ProfilePage = () => {
   const [showEmploymentDialog, setShowEmploymentDialog] = useState(false);
   const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPopoverOpen, setAvatarPopoverOpen] = useState(false);
+  const fileInputRef = useState<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState({
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
