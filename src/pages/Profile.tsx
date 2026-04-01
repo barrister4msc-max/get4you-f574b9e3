@@ -70,6 +70,24 @@ const ProfilePage = () => {
     }
   };
 
+  const handleAvatarDelete = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      const { data: files } = await supabase.storage.from('avatars').list(user.id);
+      if (files && files.length > 0) {
+        await supabase.storage.from('avatars').remove(files.map(f => `${user.id}/${f.name}`));
+      }
+      await supabase.from('profiles').update({ avatar_url: null }).eq('user_id', user.id);
+      await refreshProfile();
+      toast.success(t('profile.avatar.deleted'));
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handlePaymentSelect = (value: string) => {
     setForm({ ...form, payment_method: value });
     if (value === 'cash_or_check' && hasEmploymentAgreement === false) setShowEmploymentDialog(true);
