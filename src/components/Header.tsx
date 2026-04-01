@@ -108,10 +108,6 @@ export const Header = () => {
           <div className="pt-3">
             {user ? (
               <>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-secondary text-foreground mb-2">
-                  <LayoutDashboard className="w-4 h-4" />
-                  {t('nav.dashboard')}
-                </Link>
                 <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
