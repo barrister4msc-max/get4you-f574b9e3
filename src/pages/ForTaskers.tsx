@@ -58,35 +58,6 @@ const ForTaskersPage = () => {
           <p className="text-lg text-muted-foreground mt-3">{t('taskers.subtitle')}</p>
         </div>
 
-        {/* Become client CTA for tasker-only users */}
-        {isTaskerOnly && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 p-6 rounded-2xl border border-primary/30 bg-emerald-50 text-center"
-          >
-            <UserPlus className="w-8 h-8 text-primary mx-auto mb-2" />
-            <h2 className="font-semibold text-lg">{t('taskers.becomeClient.title')}</h2>
-            <p className="text-sm text-muted-foreground mt-1">{t('taskers.becomeClient.description')}</p>
-            <Button onClick={becomeClient} disabled={adding} className="mt-4">
-              {t('taskers.becomeClient.cta')}
-            </Button>
-          </motion.div>
-        )}
-
-        {/* Show create task button if user is also a client */}
-        {user && isClient && (
-          <div className="mt-6 text-center">
-            <Link
-              to="/create-task"
-              className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-            >
-              {t('nav.create')}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        )}
-
         {/* Benefits section */}
         <div className="mt-14">
           <h2 className="text-2xl font-bold text-center">{t('taskers.benefits.title')}</h2>
@@ -108,17 +79,19 @@ const ForTaskersPage = () => {
           </div>
         </div>
 
-        {/* Rating → Earnings bridge */}
+        {/* Rating → Earnings bridge — clicks to plans */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-8 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center"
+          onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+          className="mt-8 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center cursor-pointer hover:bg-primary/10 transition-colors"
         >
           <p className="font-semibold text-primary">{t('taskers.ratingBridge')}</p>
+          <p className="text-xs text-primary/70 mt-1">{t('taskers.ratingBridge.clickHint')}</p>
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-center mt-14">{t('taskers.plans.title')}</h2>
+        <h2 id="plans" className="text-2xl font-bold text-center mt-14 scroll-mt-20">{t('taskers.plans.title')}</h2>
         <div className="mt-6 grid md:grid-cols-3 gap-6">
           {plans.map((plan, i) => (
             <motion.div
@@ -202,6 +175,35 @@ const ForTaskersPage = () => {
             </Link>
           </div>
         </div>
+        {/* Become client CTA for tasker-only users — at bottom */}
+        {isTaskerOnly && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-8 p-6 rounded-2xl border border-primary/30 bg-emerald-50 text-center"
+          >
+            <UserPlus className="w-8 h-8 text-primary mx-auto mb-2" />
+            <h2 className="font-semibold text-lg">{t('taskers.becomeClient.title')}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t('taskers.becomeClient.description')}</p>
+            <Button onClick={becomeClient} disabled={adding} className="mt-4">
+              {t('taskers.becomeClient.cta')}
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Show create task button if user is also a client */}
+        {user && isClient && (
+          <div className="mt-6 text-center">
+            <Link
+              to="/create-task"
+              className="inline-flex items-center gap-2 bg-accent text-accent-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
+              {t('nav.create')}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
