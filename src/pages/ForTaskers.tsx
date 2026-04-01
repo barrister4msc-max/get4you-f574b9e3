@@ -90,13 +90,13 @@ const ForTaskersPage = () => {
           <p className="text-muted-foreground text-center mt-2">{t('taskers.earnings.subtitle')}</p>
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
             {[
-              { emoji: '🧹', key: 'cleaning', range: '150 – 350', note: 'taskers.earnings.cleaning.note' },
-              { emoji: '🔧', key: 'repair', range: '200 – 600', note: 'taskers.earnings.repair.note' },
-              { emoji: '🎨', key: 'design', range: '300 – 1 200', note: 'taskers.earnings.design.note' },
-              { emoji: '📦', key: 'moving', range: '400 – 1 000', note: 'taskers.earnings.moving.note' },
-              { emoji: '📚', key: 'tutoring', range: '100 – 250', note: 'taskers.earnings.tutoring.note' },
-              { emoji: '🚚', key: 'delivery', range: '50 – 150', note: 'taskers.earnings.delivery.note' },
-              { emoji: '💅', key: 'beauty', range: '150 – 500', note: 'taskers.earnings.beauty.note' },
+              { emoji: '🧹', key: 'cleaning', min: 150, max: 350, note: 'taskers.earnings.cleaning.note' },
+              { emoji: '🔧', key: 'repair', min: 200, max: 600, note: 'taskers.earnings.repair.note' },
+              { emoji: '🎨', key: 'design', min: 300, max: 1200, note: 'taskers.earnings.design.note' },
+              { emoji: '📦', key: 'moving', min: 400, max: 1000, note: 'taskers.earnings.moving.note' },
+              { emoji: '📚', key: 'tutoring', min: 100, max: 250, note: 'taskers.earnings.tutoring.note' },
+              { emoji: '🚚', key: 'delivery', min: 50, max: 150, note: 'taskers.earnings.delivery.note' },
+              { emoji: '💅', key: 'beauty', min: 150, max: 500, note: 'taskers.earnings.beauty.note' },
             ].map((item, i) => (
               <motion.div
                 key={item.key}
@@ -109,7 +109,7 @@ const ForTaskersPage = () => {
                 <span className="text-3xl">{item.emoji}</span>
                 <div>
                   <p className="font-semibold">{t(`taskers.earnings.${item.key}`)}</p>
-                  <p className="text-primary font-bold">₪{item.range}</p>
+                  <p className="text-primary font-bold">{formatPrice(item.min, currency, 'ILS')} – {formatPrice(item.max, currency, 'ILS')}</p>
                   <p className="text-xs text-muted-foreground">{t(item.note)}</p>
                 </div>
               </motion.div>
