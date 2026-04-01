@@ -119,7 +119,7 @@ export const Header = () => {
                 </Link>
                 <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
                   ) : (
                     <User className="w-4 h-4" />
                   )}
