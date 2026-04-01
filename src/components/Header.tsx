@@ -63,15 +63,17 @@ export const Header = () => {
                 <LayoutDashboard className="w-4 h-4" />
                 {t('nav.dashboard')}
               </Link>
-              <Link to="/profile"
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
-                ) : (
+              {profile?.avatar_url ? (
+                <Link to="/profile" className="shrink-0">
+                  <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-border hover:border-primary transition-colors" />
+                </Link>
+              ) : (
+                <Link to="/profile"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity">
                   <User className="w-4 h-4" />
-                )}
-                {profile?.display_name || t('nav.profile')}
-              </Link>
+                  {profile?.display_name || t('nav.profile')}
+                </Link>
+              )}
             </div>
           ) : (
             <Link
@@ -117,7 +119,7 @@ export const Header = () => {
                 </Link>
                 <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
                   ) : (
                     <User className="w-4 h-4" />
                   )}

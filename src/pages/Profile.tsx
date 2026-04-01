@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -70,6 +70,24 @@ const ProfilePage = () => {
     }
   };
 
+  const handleAvatarDelete = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+    try {
+      const { data: files } = await supabase.storage.from('avatars').list(user.id);
+      if (files && files.length > 0) {
+        await supabase.storage.from('avatars').remove(files.map(f => `${user.id}/${f.name}`));
+      }
+      await supabase.from('profiles').update({ avatar_url: null }).eq('user_id', user.id);
+      await refreshProfile();
+      toast.success(t('profile.avatar.deleted'));
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handlePaymentSelect = (value: string) => {
     setForm({ ...form, payment_method: value });
     if (value === 'cash_or_check' && hasEmploymentAgreement === false) setShowEmploymentDialog(true);
@@ -129,6 +147,15 @@ const ProfilePage = () => {
               <Camera className="w-3.5 h-3.5" />
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
             </label>
+            {profile?.avatar_url && (
+              <button
+                onClick={handleAvatarDelete}
+                disabled={uploadingAvatar}
+                className="absolute top-0 end-0 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
           </div>
           {uploadingAvatar && <p className="text-xs text-muted-foreground">{t('dashboard.loading')}</p>}
           <h1 className="text-2xl font-bold">{profile?.display_name || t('nav.profile')}</h1>
