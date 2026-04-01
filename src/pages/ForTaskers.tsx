@@ -79,17 +79,19 @@ const ForTaskersPage = () => {
           </div>
         </div>
 
-        {/* Rating → Earnings bridge */}
+        {/* Rating → Earnings bridge — clicks to plans */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-8 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center"
+          onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+          className="mt-8 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center cursor-pointer hover:bg-primary/10 transition-colors"
         >
           <p className="font-semibold text-primary">{t('taskers.ratingBridge')}</p>
+          <p className="text-xs text-primary/70 mt-1">{t('taskers.ratingBridge.clickHint')}</p>
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-center mt-14">{t('taskers.plans.title')}</h2>
+        <h2 id="plans" className="text-2xl font-bold text-center mt-14 scroll-mt-20">{t('taskers.plans.title')}</h2>
         <div className="mt-6 grid md:grid-cols-3 gap-6">
           {plans.map((plan, i) => (
             <motion.div
