@@ -1522,6 +1522,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.saved': 'تم حفظ الملف الشخصي!',
     'profile.avatar.uploaded': 'تم تحديث الصورة!',
     'profile.avatar.deleted': 'تمت إزالة الصورة!',
+    'profile.avatar.upload': 'تحميل صورة',
+    'profile.avatar.delete': 'إزالة الصورة',
     'profile.roles': 'أدواري',
     'profile.roles.updated': 'تم تحديث الأدوار!',
     'profile.roles.needOne': 'يجب أن يكون لديك دور واحد على الأقل',
