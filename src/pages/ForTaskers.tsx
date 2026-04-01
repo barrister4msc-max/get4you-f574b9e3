@@ -157,7 +157,7 @@ const ForTaskersPage = () => {
                     </div>
                     {plan.price > 0 && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {currency === 'ILS' ? `₪${Math.round(plan.price * 3.7)}` : `$${plan.price}`}{t('taskers.perMonth')}
+                        {formatPrice(plan.price, currency, 'USD')}{t('taskers.perMonth')}
                       </p>
                     )}
                     <ul className="mt-5 space-y-2">
