@@ -247,6 +247,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step3': 'Start posting or completing tasks — and earn!',
 
     // Dashboard
+    'dashboard.overview': 'Overview',
     'dashboard.client.title': 'Client Dashboard',
     'dashboard.client.myTasks': 'My Tasks',
     'dashboard.client.createTask': 'Create Task',
