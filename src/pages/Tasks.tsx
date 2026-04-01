@@ -107,7 +107,7 @@ const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus }:
 
 const TasksPage = () => {
   const { t, currency, locale } = useLanguage();
-  const { user, roles } = useAuth();
+  const { user, roles, profile } = useAuth();
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
   const [filterCity, setFilterCity] = useState('');
@@ -121,6 +121,13 @@ const TasksPage = () => {
   const [tab, setTab] = useState<'all' | 'my'>('all');
 
   const isTasker = roles.includes('tasker');
+
+  // Auto-set city filter from user profile on initial load
+  useEffect(() => {
+    if (profile?.city) {
+      setFilterCity(profile.city);
+    }
+  }, [profile?.city]);
 
   useEffect(() => {
     const fetchData = async () => {
