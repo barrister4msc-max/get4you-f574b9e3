@@ -88,13 +88,13 @@ const ForTaskersPage = () => {
           <p className="text-muted-foreground text-center mt-2">{t('taskers.earnings.subtitle')}</p>
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
             {[
-              { emoji: '🧹', key: 'cleaning', range: '3 000 – 8 000', note: 'taskers.earnings.cleaning.note' },
-              { emoji: '🔧', key: 'repair', range: '5 000 – 15 000', note: 'taskers.earnings.repair.note' },
-              { emoji: '🎨', key: 'design', range: '8 000 – 30 000', note: 'taskers.earnings.design.note' },
-              { emoji: '📦', key: 'moving', range: '10 000 – 25 000', note: 'taskers.earnings.moving.note' },
-              { emoji: '📚', key: 'tutoring', range: '2 000 – 5 000', note: 'taskers.earnings.tutoring.note' },
-              { emoji: '🚚', key: 'delivery', range: '1 500 – 4 000', note: 'taskers.earnings.delivery.note' },
-              { emoji: '💅', key: 'beauty', range: '3 000 – 12 000', note: 'taskers.earnings.beauty.note' },
+              { emoji: '🧹', key: 'cleaning', range: '150 – 350', note: 'taskers.earnings.cleaning.note' },
+              { emoji: '🔧', key: 'repair', range: '200 – 600', note: 'taskers.earnings.repair.note' },
+              { emoji: '🎨', key: 'design', range: '300 – 1 200', note: 'taskers.earnings.design.note' },
+              { emoji: '📦', key: 'moving', range: '400 – 1 000', note: 'taskers.earnings.moving.note' },
+              { emoji: '📚', key: 'tutoring', range: '100 – 250', note: 'taskers.earnings.tutoring.note' },
+              { emoji: '🚚', key: 'delivery', range: '50 – 150', note: 'taskers.earnings.delivery.note' },
+              { emoji: '💅', key: 'beauty', range: '150 – 500', note: 'taskers.earnings.beauty.note' },
             ].map((item, i) => (
               <motion.div
                 key={item.key}
