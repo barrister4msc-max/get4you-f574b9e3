@@ -31,6 +31,7 @@ const plans = [
 
 const ForTaskersPage = () => {
   const { t, currency } = useLanguage();
+  const formatPrice = useFormatPrice();
   const { user, roles, refreshProfile } = useAuth();
   const [adding, setAdding] = useState(false);
   const [plansOpen, setPlansOpen] = useState(false);
