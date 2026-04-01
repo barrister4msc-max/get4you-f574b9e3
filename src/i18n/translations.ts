@@ -257,6 +257,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.myOrders': 'My Orders',
     'dashboard.tasker.earnings': 'Earnings',
     'dashboard.comingSoon': 'Coming soon',
+    'dashboard.rating': 'My Rating',
+    'dashboard.rating.reviews': 'reviews',
+    'dashboard.rating.noReviews': 'No reviews yet',
+    'dashboard.earnings.total': 'Total earned',
+    'dashboard.earnings.noData': 'No earnings yet',
+    'dashboard.loading': 'Loading...',
 
     // Notifications
     'notifications.title': 'Notifications',
