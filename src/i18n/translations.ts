@@ -650,6 +650,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.saved': 'Профиль сохранён!',
     'profile.avatar.uploaded': 'Аватар обновлён!',
     'profile.avatar.deleted': 'Аватар удалён!',
+    'profile.avatar.upload': 'Загрузить фото',
+    'profile.avatar.delete': 'Удалить фото',
     'profile.roles': 'Мои роли',
     'profile.roles.updated': 'Роли обновлены!',
     'profile.roles.needOne': 'Нужна хотя бы одна роль',
