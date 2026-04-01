@@ -1456,6 +1456,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.filter.budgetFrom': 'الميزانية من',
     'tasks.filter.budgetTo': 'الميزانية إلى',
     'tasks.filter.clear': 'مسح الفلاتر',
+    'tasks.filter.radius': 'نصف القطر',
+    'tasks.filter.anyDistance': 'أي مسافة',
+    'tasks.filter.detectLocation': 'تحديد موقعي',
+    'tasks.filter.locationDetected': 'تم تحديد الموقع',
+    'profile.skills.placeholder': 'اذكر مهاراتك وخبراتك...',
     'tasks.status.draft': 'مسودة',
     'tasks.status.cancelled': 'ملغى',
 
