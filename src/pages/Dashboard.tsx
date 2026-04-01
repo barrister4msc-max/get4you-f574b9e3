@@ -58,7 +58,7 @@ const DashboardPage = () => {
     if (!user) return;
     const fetchAll = async () => {
       setLoading(true);
-      const queries: Promise<any>[] = [
+      const [tasksRes, proposalsRes, escrowRes, reviewsRes, assignedRes] = await Promise.all([
         supabase.from('tasks').select('id, title, status, budget_fixed, budget_min, currency, created_at')
           .eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('proposals').select('id, task_id, price, currency, status, created_at, tasks:task_id(title, status)')
@@ -69,8 +69,7 @@ const DashboardPage = () => {
           .eq('reviewee_id', user.id).order('created_at', { ascending: false }),
         supabase.from('tasks').select('id, title, status, budget_fixed, budget_min, currency, created_at')
           .eq('assigned_to', user.id).order('created_at', { ascending: false }),
-      ];
-      const [tasksRes, proposalsRes, escrowRes, reviewsRes, assignedRes] = await Promise.all(queries);
+      ]);
       setMyTasks((tasksRes.data as MyTaskRow[]) || []);
       setAssignedTasks((assignedRes.data as MyTaskRow[]) || []);
       setMyProposals((proposalsRes.data as any[])?.map(p => ({ ...p, task: Array.isArray(p.tasks) ? p.tasks[0] : p.tasks })) || []);
