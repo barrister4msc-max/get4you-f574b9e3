@@ -81,65 +81,74 @@ const ForTaskersPage = () => {
           </div>
         </div>
 
-        {/* Rating → Earnings bridge — clicks to plans */}
+        {/* Rating → Earnings bridge — toggles plans */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+          onClick={() => setPlansOpen(prev => !prev)}
           className="mt-8 p-5 rounded-2xl border border-primary/20 bg-primary/5 text-center cursor-pointer hover:bg-primary/10 transition-colors"
         >
           <p className="font-semibold text-primary">{t('taskers.ratingBridge')}</p>
-          <p className="text-xs text-primary/70 mt-1">{t('taskers.ratingBridge.clickHint')}</p>
+          <div className="flex items-center justify-center gap-1 mt-1">
+            <p className="text-xs text-primary/70">{t('taskers.ratingBridge.clickHint')}</p>
+            <ChevronDown className={`w-4 h-4 text-primary/70 transition-transform ${plansOpen ? 'rotate-180' : ''}`} />
+          </div>
         </motion.div>
 
-        <h2 id="plans" className="text-2xl font-bold text-center mt-14 scroll-mt-20">{t('taskers.plans.title')}</h2>
-        <div className="mt-6 grid md:grid-cols-3 gap-6">
-          {plans.map((plan, i) => (
+        <AnimatePresence>
+          {plansOpen && (
             <motion.div
-              key={plan.key}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className={`rounded-2xl border p-6 ${
-                i === 1 ? 'border-primary bg-emerald-50 shadow-trust' : 'border-border bg-card shadow-card'
-              }`}
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
             >
-              <h3 className="font-bold text-lg">{t(`taskers.plan.${plan.key}`)}</h3>
-              <div className="mt-2">
-                <span className="text-3xl font-extrabold text-primary">{plan.commission}</span>
-                <span className="text-sm text-muted-foreground ms-1">{t('taskers.commission')}</span>
-              </div>
-              {plan.price > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {currency === 'ILS' ? `₪${Math.round(plan.price * 3.7)}` : `$${plan.price}`}{t('taskers.perMonth')}
-                </p>
-              )}
-              <ul className="mt-5 space-y-2">
-                {plan.featureKeys.map((fKey) => (
-                  <li key={fKey} className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    {t(fKey)}
-                  </li>
+              <h2 className="text-2xl font-bold text-center mt-8">{t('taskers.plans.title')}</h2>
+              <div className="mt-6 grid md:grid-cols-3 gap-6">
+                {plans.map((plan, i) => (
+                  <div
+                    key={plan.key}
+                    className={`rounded-2xl border p-6 ${
+                      i === 1 ? 'border-primary bg-emerald-50 shadow-trust' : 'border-border bg-card shadow-card'
+                    }`}
+                  >
+                    <h3 className="font-bold text-lg">{t(`taskers.plan.${plan.key}`)}</h3>
+                    <div className="mt-2">
+                      <span className="text-3xl font-extrabold text-primary">{plan.commission}</span>
+                      <span className="text-sm text-muted-foreground ms-1">{t('taskers.commission')}</span>
+                    </div>
+                    {plan.price > 0 && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {currency === 'ILS' ? `₪${Math.round(plan.price * 3.7)}` : `$${plan.price}`}{t('taskers.perMonth')}
+                      </p>
+                    )}
+                    <ul className="mt-5 space-y-2">
+                      {plan.featureKeys.map((fKey) => (
+                        <li key={fKey} className="flex items-center gap-2 text-sm">
+                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                          {t(fKey)}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      to="/signup"
+                      className={`mt-6 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-opacity ${
+                        i === 1
+                          ? 'bg-accent text-accent-foreground hover:opacity-90'
+                          : 'border border-border text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      {t('taskers.cta')}
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
                 ))}
-              </ul>
-              <Link
-                to="/signup"
-                className={`mt-6 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-opacity ${
-                  i === 1
-                    ? 'bg-accent text-accent-foreground hover:opacity-90'
-                    : 'border border-border text-foreground hover:bg-secondary'
-                }`}
-              >
-                {t('taskers.cta')}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              </div>
             </motion.div>
-          ))}
-        </div>
-
-        {/* Contractor Agreement CTA */}
+          )}
+        </AnimatePresence>
         <div className="mt-12 p-8 rounded-2xl border border-primary/30 bg-primary/5 text-center">
           <FileSignature className="w-10 h-10 text-primary mx-auto mb-3" />
           <h2 className="text-xl font-bold">{t('contract.cta.title')}</h2>
