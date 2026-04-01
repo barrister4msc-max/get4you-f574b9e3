@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 
 const ProfilePage = () => {
@@ -21,6 +24,8 @@ const ProfilePage = () => {
   const [showEmploymentDialog, setShowEmploymentDialog] = useState(false);
   const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPopoverOpen, setAvatarPopoverOpen] = useState(false);
+  
 
   const [form, setForm] = useState({
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
@@ -143,19 +148,30 @@ const ProfilePage = () => {
                 <User className="w-8 h-8 text-primary-foreground" />
               </div>
             )}
-            <label className="absolute bottom-0 end-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer shadow-md hover:opacity-90 transition-opacity">
-              <Camera className="w-3.5 h-3.5" />
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
-            </label>
-            {profile?.avatar_url && (
-              <button
-                onClick={handleAvatarDelete}
-                disabled={uploadingAvatar}
-                className="absolute top-0 end-0 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
+            <Popover open={avatarPopoverOpen} onOpenChange={setAvatarPopoverOpen}>
+              <PopoverTrigger asChild>
+                <button className="absolute bottom-0 end-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer shadow-md hover:opacity-90 transition-opacity">
+                  <Camera className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="center" className="w-44 p-2">
+                <label className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-secondary transition-colors">
+                  <Camera className="w-4 h-4" />
+                  {t('profile.avatar.upload')}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleAvatarUpload(e); setAvatarPopoverOpen(false); }} disabled={uploadingAvatar} />
+                </label>
+                {profile?.avatar_url && (
+                  <button
+                    onClick={() => { handleAvatarDelete(); setAvatarPopoverOpen(false); }}
+                    disabled={uploadingAvatar}
+                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {t('profile.avatar.delete')}
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
           {uploadingAvatar && <p className="text-xs text-muted-foreground">{t('dashboard.loading')}</p>}
           <h1 className="text-2xl font-bold">{profile?.display_name || t('nav.profile')}</h1>

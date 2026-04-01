@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface ProposalRow {
   id: string; task_id: string; price: number; currency: string | null;
@@ -42,6 +42,7 @@ const statusBadge = (status: string) => {
 const DashboardPage = () => {
   const { t, currency } = useLanguage();
   const { user, profile, roles } = useAuth();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<Tab>('myTasks');
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
@@ -145,7 +146,10 @@ const DashboardPage = () => {
         {/* Tabs */}
         <div className="flex flex-wrap rounded-xl bg-muted p-1 mb-6 gap-1">
           {tabs.map((tb) => (
-            <button key={tb.key} onClick={() => setTab(tb.key)}
+            <button key={tb.key} onClick={() => {
+              if (tb.key === 'findTasks') { navigate('/tasks'); return; }
+              setTab(tb.key);
+            }}
               className={`flex items-center gap-1.5 flex-1 min-w-0 py-2 px-2 rounded-lg text-xs font-semibold transition-all justify-center ${
                 tab === tb.key ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
               }`}>
