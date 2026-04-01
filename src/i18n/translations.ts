@@ -687,6 +687,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.findTasks': 'Найти задачи',
     'dashboard.tasker.myProposals': 'Мои отклики',
     'dashboard.tasker.myOrders': 'Мои заказы',
+    'dashboard.tasker.assignedTasks': 'Назначены мне',
     'dashboard.tasker.earnings': 'Заработок',
     'dashboard.comingSoon': 'Скоро',
     'dashboard.rating': 'Мой рейтинг',
