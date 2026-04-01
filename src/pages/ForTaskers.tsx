@@ -4,10 +4,21 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useEsekPaturCount } from '@/hooks/useEsekPaturCount';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight, UserPlus, FileSignature } from 'lucide-react';
+import { CheckCircle2, ArrowRight, UserPlus, FileSignature, Clock, UserCheck, Globe, Megaphone, ShieldCheck, Search, TrendingUp, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useState } from 'react';
+
+const benefits = [
+  { icon: Clock, key: 'taskers.benefit.quickStart' },
+  { icon: UserCheck, key: 'taskers.benefit.profile' },
+  { icon: Globe, key: 'taskers.benefit.noWebsite' },
+  { icon: Megaphone, key: 'taskers.benefit.seoAds' },
+  { icon: ShieldCheck, key: 'taskers.benefit.brandTrust' },
+  { icon: Search, key: 'taskers.benefit.matching' },
+  { icon: TrendingUp, key: 'taskers.benefit.noSearch' },
+  { icon: Star, key: 'taskers.benefit.ratingEarnings' },
+];
 
 const plans = [
   { key: 'starter', commission: '15%', price: 0, featureKeys: ['taskers.feature.basicProfile', 'taskers.feature.5offers', 'taskers.feature.standardSupport'] },
