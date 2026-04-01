@@ -674,6 +674,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'auth.welcome.step2': 'Вернитесь и войдите в свой аккаунт',
     'auth.welcome.step3': 'Начните размещать или выполнять задачи — и зарабатывайте!',
 
+    'dashboard.overview': 'Обзор',
     'dashboard.client.title': 'Панель заказчика',
     'dashboard.client.myTasks': 'Мои задачи',
     'dashboard.client.createTask': 'Создать задачу',
