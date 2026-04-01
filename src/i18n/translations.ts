@@ -871,6 +871,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.login': 'התחברות',
     'nav.signup': 'הרשמה',
     'nav.profile': 'פרופיל',
+    'nav.dashboard': 'לוח בקרה',
     'nav.account': 'החשבון שלי',
     'nav.myTasks': 'המשימות שלי',
     'nav.messages': 'הודעות',
