@@ -106,14 +106,16 @@ export const Header = () => {
           </div>
           <div className="pt-3">
             {user ? (
-              <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-secondary text-foreground mb-2">
-                <LayoutDashboard className="w-4 h-4" />
-                {t('nav.dashboard')}
-              </Link>
-              <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
-                <User className="w-4 h-4" />
-                {profile?.display_name || t('nav.profile')}
-              </Link>
+              <>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-secondary text-foreground mb-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  {t('nav.dashboard')}
+                </Link>
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                  <User className="w-4 h-4" />
+                  {profile?.display_name || t('nav.profile')}
+                </Link>
+              </>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
                 <User className="w-4 h-4" />
