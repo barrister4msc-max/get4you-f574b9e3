@@ -122,6 +122,7 @@ const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, d
     </Link>
   </motion.div>
 );
+}
 
 const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 
