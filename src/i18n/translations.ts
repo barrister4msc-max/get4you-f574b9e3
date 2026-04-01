@@ -116,6 +116,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.filter.budgetFrom': 'Budget from',
     'tasks.filter.budgetTo': 'Budget to',
     'tasks.filter.clear': 'Clear all filters',
+    'tasks.filter.radius': 'Radius',
+    'tasks.filter.anyDistance': 'Any distance',
+    'tasks.filter.detectLocation': 'Detect my location',
+    'tasks.filter.locationDetected': 'Location detected',
+    'profile.skills.placeholder': 'List your skills and experience...',
     'tasks.status.draft': 'Draft',
     'tasks.status.cancelled': 'Cancelled',
 
