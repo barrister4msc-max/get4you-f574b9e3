@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface ProposalRow {
   id: string; task_id: string; price: number; currency: string | null;
