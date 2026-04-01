@@ -47,7 +47,9 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, distanceKm }: any) => (
+const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, distanceKm }: any) => {
+  const formatPrice = useFormatPrice();
+  return (
   <motion.div
     key={task.id}
     initial={{ opacity: 0, y: 10 }}
