@@ -721,6 +721,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'taskers.benefit.noSearch': 'Вам не нужно самому искать клиентов — они приходят к вам',
     'taskers.benefit.ratingEarnings': 'Чем выше рейтинг — тем больше заказов и выше заработок',
     'taskers.ratingBridge': '⭐ Чем выше ваш рейтинг, тем больше вы зарабатываете — посмотрите наши варианты подписок!',
+    'taskers.ratingBridge.clickHint': '👆 Нажмите, чтобы увидеть планы',
     'taskers.plans.title': 'Выберите свой план',
     'taskers.plan.starter': 'Старт',
     'taskers.plan.pro': 'Про',
