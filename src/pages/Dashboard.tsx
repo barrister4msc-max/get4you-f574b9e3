@@ -42,6 +42,7 @@ const statusBadge = (status: string) => {
 const DashboardPage = () => {
   const { t, currency } = useLanguage();
   const { user, profile, roles } = useAuth();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<Tab>('myTasks');
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
