@@ -65,7 +65,11 @@ export const Header = () => {
               </Link>
               <Link to="/profile"
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity">
-                <User className="w-4 h-4" />
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                ) : (
+                  <User className="w-4 h-4" />
+                )}
                 {profile?.display_name || t('nav.profile')}
               </Link>
             </div>
