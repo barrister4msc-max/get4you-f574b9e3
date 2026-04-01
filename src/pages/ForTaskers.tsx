@@ -92,6 +92,9 @@ const ForTaskersPage = () => {
               { emoji: '🔧', key: 'repair', range: '5 000 – 15 000', note: 'taskers.earnings.repair.note' },
               { emoji: '🎨', key: 'design', range: '8 000 – 30 000', note: 'taskers.earnings.design.note' },
               { emoji: '📦', key: 'moving', range: '10 000 – 25 000', note: 'taskers.earnings.moving.note' },
+              { emoji: '📚', key: 'tutoring', range: '2 000 – 5 000', note: 'taskers.earnings.tutoring.note' },
+              { emoji: '🚚', key: 'delivery', range: '1 500 – 4 000', note: 'taskers.earnings.delivery.note' },
+              { emoji: '💅', key: 'beauty', range: '3 000 – 12 000', note: 'taskers.earnings.beauty.note' },
             ].map((item, i) => (
               <motion.div
                 key={item.key}
