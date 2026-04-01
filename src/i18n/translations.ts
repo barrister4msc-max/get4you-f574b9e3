@@ -1531,6 +1531,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'dashboard.tasker.findTasks': 'ابحث عن مهام',
     'dashboard.tasker.myProposals': 'عروضي',
     'dashboard.tasker.myOrders': 'طلباتي',
+    'dashboard.tasker.assignedTasks': 'مخصصة لي',
     'dashboard.tasker.earnings': 'الأرباح',
     'dashboard.comingSoon': 'قريباً',
     'dashboard.rating': 'تقييمي',
