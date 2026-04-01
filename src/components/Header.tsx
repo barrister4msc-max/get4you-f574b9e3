@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
-import { Menu, X, User, LayoutDashboard } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 
 export const Header = () => {
@@ -58,11 +58,6 @@ export const Header = () => {
           <NotificationBell />
           {user ? (
             <div className="flex items-center gap-2">
-              <Link to="/dashboard"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                <LayoutDashboard className="w-4 h-4" />
-                {t('nav.dashboard')}
-              </Link>
               {profile?.avatar_url ? (
                 <Link to="/profile" className="shrink-0">
                   <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-border hover:border-primary transition-colors" />
@@ -113,10 +108,6 @@ export const Header = () => {
           <div className="pt-3">
             {user ? (
               <>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-secondary text-foreground mb-2">
-                  <LayoutDashboard className="w-4 h-4" />
-                  {t('nav.dashboard')}
-                </Link>
                 <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
                   {profile?.avatar_url ? (
                     <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
