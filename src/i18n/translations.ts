@@ -445,6 +445,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.statusUpdated': 'Status updated',
     'admin.employment.error.update': 'Failed to update status',
     'admin.employment.signedAt': 'Signed',
+
+    // Chat
+    'chat.openChat': 'Open Chat',
+    'chat.placeholder': 'Type a message...',
+    'chat.sendError': 'Failed to send message',
+    'chat.unavailable': 'Chat is not available for this task',
+    'chat.backToTask': 'Back to task',
+    'chat.empty': 'No messages yet. Start the conversation!',
+
+    // AI Limits
+    'ai.dailyLimit': 'You have reached the daily AI limit ({limit} requests). Try again tomorrow.',
   },
   ru: {
     'nav.home': 'Главная',
