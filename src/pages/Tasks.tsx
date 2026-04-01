@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatPrice } from '@/components/CurrencyToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X } from 'lucide-react';
+import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from 'lucide-react';
 
 interface TaskRow {
   id: string;
@@ -23,6 +23,8 @@ interface TaskRow {
   category_id: string | null;
   currency: string | null;
   task_type: string | null;
+  latitude: number | null;
+  longitude: number | null;
   categories?: { name_en: string; name_ru: string | null; name_he: string | null } | null;
 }
 
@@ -37,7 +39,15 @@ const statusColors: Record<string, string> = {
   completed: 'bg-secondary text-muted-foreground',
 };
 
-const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus }: any) => (
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, distanceKm }: any) => (
   <motion.div
     key={task.id}
     initial={{ opacity: 0, y: 10 }}
@@ -70,6 +80,12 @@ const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus }:
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
                     {task.city || task.address}
+                  </span>
+                )}
+                {distanceKm != null && (
+                  <span className="flex items-center gap-1 text-xs">
+                    <Navigation className="w-3 h-3" />
+                    {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)} km`}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
@@ -105,6 +121,8 @@ const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus }:
   </motion.div>
 );
 
+const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
+
 const TasksPage = () => {
   const { t, currency, locale } = useLanguage();
   const { user, roles, profile } = useAuth();
@@ -113,12 +131,15 @@ const TasksPage = () => {
   const [filterCity, setFilterCity] = useState('');
   const [filterBudgetMin, setFilterBudgetMin] = useState('');
   const [filterBudgetMax, setFilterBudgetMax] = useState('');
+  const [filterRadius, setFilterRadius] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [myTasks, setMyTasks] = useState<TaskRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<{ id: string; name_en: string; name_ru: string | null; name_he: string | null }[]>([]);
   const [tab, setTab] = useState<'all' | 'my'>('all');
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   const isTasker = roles.includes('tasker');
 
@@ -128,6 +149,28 @@ const TasksPage = () => {
       setFilterCity(profile.city);
     }
   }, [profile?.city]);
+
+  // Try to get user geolocation
+  const requestGeolocation = () => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoLoading(false);
+        if (!filterRadius) setFilterRadius('25');
+      },
+      () => setGeoLoading(false),
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
+
+  useEffect(() => {
+    // Use profile coords if available
+    if (profile?.latitude && profile?.longitude) {
+      setUserCoords({ lat: profile.latitude, lng: profile.longitude });
+    }
+  }, [profile?.latitude, profile?.longitude]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -168,8 +211,12 @@ const TasksPage = () => {
     return cat.name_en;
   };
 
-  // Extract unique cities from tasks
   const cities = [...new Set(tasks.map(t => t.city).filter(Boolean))] as string[];
+
+  const getTaskDistance = (task: TaskRow): number | null => {
+    if (!userCoords || !task.latitude || !task.longitude) return null;
+    return getDistanceKm(userCoords.lat, userCoords.lng, task.latitude, task.longitude);
+  };
 
   const filtered = tasks.filter((task) => {
     if (filterCat && task.category_id !== filterCat) return false;
@@ -178,16 +225,22 @@ const TasksPage = () => {
     const budget = task.budget_fixed || task.budget_min || 0;
     if (filterBudgetMin && budget < Number(filterBudgetMin)) return false;
     if (filterBudgetMax && budget > Number(filterBudgetMax)) return false;
+    if (filterRadius && userCoords) {
+      const dist = getTaskDistance(task);
+      if (dist === null) return true; // show tasks without coords
+      if (dist > Number(filterRadius)) return false;
+    }
     return true;
   });
 
-  const activeFilters = [filterCat, filterCity, filterBudgetMin, filterBudgetMax].filter(Boolean).length;
+  const activeFilters = [filterCat, filterCity, filterBudgetMin, filterBudgetMax, filterRadius].filter(Boolean).length;
 
   const clearFilters = () => {
     setFilterCat('');
     setFilterCity('');
     setFilterBudgetMin('');
     setFilterBudgetMax('');
+    setFilterRadius('');
     setSearch('');
   };
 
@@ -198,7 +251,6 @@ const TasksPage = () => {
       <div className="container">
         <h1 className="text-2xl font-bold mb-6">{t('tasks.title')}</h1>
 
-        {/* Tabs for taskers */}
         {isTasker && (
           <div className="flex gap-2 mb-6">
             <button
@@ -250,7 +302,6 @@ const TasksPage = () => {
               </button>
             </div>
 
-            {/* Expanded filters */}
             {showFilters && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
@@ -258,7 +309,7 @@ const TasksPage = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-6 p-4 rounded-2xl border border-border bg-card space-y-3"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <div>
                     <label className="block text-xs font-medium mb-1 text-muted-foreground">{t('task.category')}</label>
                     <select
@@ -307,6 +358,40 @@ const TasksPage = () => {
                       className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1 text-muted-foreground">{t('tasks.filter.radius')}</label>
+                    <div className="flex gap-1">
+                      <select
+                        value={filterRadius}
+                        onChange={(e) => {
+                          setFilterRadius(e.target.value);
+                          if (e.target.value && !userCoords) requestGeolocation();
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      >
+                        <option value="">{t('tasks.filter.anyDistance')}</option>
+                        {RADIUS_OPTIONS.map((r) => (
+                          <option key={r} value={r}>{r} km</option>
+                        ))}
+                      </select>
+                      {!userCoords && (
+                        <button
+                          onClick={requestGeolocation}
+                          disabled={geoLoading}
+                          className="shrink-0 px-2 py-2 rounded-xl border border-input bg-background hover:bg-secondary transition-colors"
+                          title={t('tasks.filter.detectLocation')}
+                        >
+                          <Navigation className={`w-4 h-4 ${geoLoading ? 'animate-pulse text-primary' : 'text-muted-foreground'}`} />
+                        </button>
+                      )}
+                    </div>
+                    {userCoords && (
+                      <p className="text-[10px] text-primary mt-0.5 flex items-center gap-1">
+                        <Navigation className="w-2.5 h-2.5" />
+                        {t('tasks.filter.locationDetected')}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 {activeFilters > 0 && (
                   <button
@@ -339,6 +424,7 @@ const TasksPage = () => {
               t={t}
               getCategoryName={getCategoryName}
               showStatus={tab === 'my'}
+              distanceKm={tab === 'all' ? getTaskDistance(task) : null}
             />
           ))}
         </div>
