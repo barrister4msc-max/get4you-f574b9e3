@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
 import { Mail, Lock, User, ArrowRight, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import PasswordInput from '@/components/PasswordInput';
 import { toast } from 'sonner';
