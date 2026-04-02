@@ -21,7 +21,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Hero
     'hero.title': 'Get Things Done',
     'hero.titleAccent': 'With Local Pros',
-    'hero.subtitle': 'Post a task, get offers from verified professionals, pay securely through escrow. From home repairs to digital services.',
+    'hero.subtitle': 'Post a task, get offers from verified professionals. Secure payment through escrow. Find clients or hire pros in minutes!',
     'hero.cta': 'Post a Task',
     'hero.browse': 'Browse Tasks',
     'hero.tasksCompleted': 'Tasks Completed',
@@ -502,7 +502,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'hero.title': 'Решите любую задачу',
     'hero.titleAccent': 'с местными профессионалами',
-    'hero.subtitle': 'Опубликуйте задачу, получите предложения от проверенных специалистов. Безопасная оплата через эскроу.',
+    'hero.subtitle': 'Опубликуйте задачу, получите предложения от проверенных специалистов. Безопасная оплата через эскроу. Получай клиентов или находи исполнителей за минуты!',
     'hero.cta': 'Создать задачу',
     'hero.browse': 'Смотреть задачи',
     'hero.tasksCompleted': 'Задач выполнено',
@@ -962,7 +962,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'hero.title': 'בצעו כל משימה',
     'hero.titleAccent': 'עם מקצוענים מקומיים',
-    'hero.subtitle': 'פרסמו משימה, קבלו הצעות ממקצוענים מאומתים. תשלום מאובטח דרך נאמנות.',
+    'hero.subtitle': 'פרסמו משימה, קבלו הצעות ממקצוענים מאומתים. תשלום מאובטח דרך נאמנות. מצאו לקוחות או שכרו מקצוענים תוך דקות!',
     'hero.cta': 'פרסם משימה',
     'hero.browse': 'חפש משימות',
     'hero.tasksCompleted': 'משימות הושלמו',
@@ -1422,7 +1422,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'hero.title': 'أنجز أي مهمة',
     'hero.titleAccent': 'مع محترفين محليين',
-    'hero.subtitle': 'انشر مهمة، احصل على عروض من محترفين موثقين. دفع آمن عبر الضمان.',
+    'hero.subtitle': 'انشر مهمة، احصل على عروض من محترفين موثقين. دفع آمن عبر الضمان. اعثر على عملاء أو استعن بمحترفين في دقائق!',
     'hero.cta': 'انشر مهمة',
     'hero.browse': 'تصفح المهام',
     'hero.tasksCompleted': 'مهام مكتملة',
