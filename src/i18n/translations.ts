@@ -1459,6 +1459,34 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'הגעת למגבלה היומית של AI ({limit} בקשות). נסה שוב מחר.',
+
+    // Balance & Withdrawal
+    'balance.title': 'יתרה',
+    'balance.available': 'זמין למשיכה',
+    'balance.pending': 'בהמתנה',
+    'balance.withdraw': 'משיכה',
+    'balance.withdraw.success': 'בקשת המשיכה נשלחה!',
+    'balance.withdraw.bank': 'לחשבון בנק',
+    'balance.history': 'היסטוריית עסקאות',
+    'balance.noTransactions': 'אין עסקאות עדיין',
+    'balance.transaction.released': 'תשלום התקבל',
+    'balance.transaction.held': 'כספים מוחזקים',
+
+    // Payment
+    'payment.title': 'תשלום עבור המשימה',
+    'payment.card': 'כרטיס',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'מספר כרטיס',
+    'payment.expiry': 'MM/YY',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'שלם',
+    'payment.processing': 'מעבד...',
+    'payment.success': 'התשלום בוצע! הכספים מוחזקים בנאמנות.',
+    'payment.demo': 'מצב הדגמה — ללא חיוב אמיתי',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'צרף תמונה',
+    'task.ai.photoAttached': 'תמונה צורפה',
   },
   ar: {
     'nav.home': 'الرئيسية',
