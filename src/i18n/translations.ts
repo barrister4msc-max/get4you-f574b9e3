@@ -1420,8 +1420,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.logout': 'تسجيل الخروج',
     'nav.admin': 'إدارة',
 
-    'hero.title': 'أنجز أي مهمة',
-    'hero.titleAccent': 'مع محترفين محليين',
+    'hero.title': 'أي مهمة —',
+    'hero.titleAccent': 'منفذ موثوق',
     'hero.subtitle': 'انشر مهمة، احصل على عروض من محترفين موثقين. دفع آمن عبر الضمان. اعثر على عملاء أو استعن بمحترفين في دقائق!',
     'hero.cta': 'انشر مهمة',
     'hero.browse': 'تصفح المهام',
