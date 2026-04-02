@@ -19,8 +19,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.admin': 'Admin',
 
     // Hero
-    'hero.title': 'Get Things Done',
-    'hero.titleAccent': 'With Local Pros',
+    'hero.title': 'Any Task —',
+    'hero.titleAccent': 'A Reliable Pro',
     'hero.subtitle': 'Post a task, get offers from verified professionals. Secure payment through escrow. Find clients or hire pros in minutes!',
     'hero.cta': 'Post a Task',
     'hero.browse': 'Browse Tasks',
@@ -500,8 +500,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.logout': 'Выйти',
     'nav.admin': 'Админ',
 
-    'hero.title': 'Решите любую задачу',
-    'hero.titleAccent': 'с местными профессионалами',
+    'hero.title': 'Любая задача —',
+    'hero.titleAccent': 'надёжный исполнитель',
     'hero.subtitle': 'Опубликуйте задачу, получите предложения от проверенных специалистов. Безопасная оплата через эскроу. Получай клиентов или находи исполнителей за минуты!',
     'hero.cta': 'Создать задачу',
     'hero.browse': 'Смотреть задачи',
@@ -960,8 +960,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.logout': 'התנתקות',
     'nav.admin': 'ניהול',
 
-    'hero.title': 'בצעו כל משימה',
-    'hero.titleAccent': 'עם מקצוענים מקומיים',
+    'hero.title': 'כל משימה —',
+    'hero.titleAccent': 'מקצוען אמין',
     'hero.subtitle': 'פרסמו משימה, קבלו הצעות ממקצוענים מאומתים. תשלום מאובטח דרך נאמנות. מצאו לקוחות או שכרו מקצוענים תוך דקות!',
     'hero.cta': 'פרסם משימה',
     'hero.browse': 'חפש משימות',
@@ -1420,8 +1420,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.logout': 'تسجيل الخروج',
     'nav.admin': 'إدارة',
 
-    'hero.title': 'أنجز أي مهمة',
-    'hero.titleAccent': 'مع محترفين محليين',
+    'hero.title': 'أي مهمة —',
+    'hero.titleAccent': 'منفذ موثوق',
     'hero.subtitle': 'انشر مهمة، احصل على عروض من محترفين موثقين. دفع آمن عبر الضمان. اعثر على عملاء أو استعن بمحترفين في دقائق!',
     'hero.cta': 'انشر مهمة',
     'hero.browse': 'تصفح المهام',
