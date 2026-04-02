@@ -19,8 +19,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.admin': 'Admin',
 
     // Hero
-    'hero.title': 'Get Things Done',
-    'hero.titleAccent': 'With Local Pros',
+    'hero.title': 'Any Task —',
+    'hero.titleAccent': 'A Reliable Pro',
     'hero.subtitle': 'Post a task, get offers from verified professionals. Secure payment through escrow. Find clients or hire pros in minutes!',
     'hero.cta': 'Post a Task',
     'hero.browse': 'Browse Tasks',
