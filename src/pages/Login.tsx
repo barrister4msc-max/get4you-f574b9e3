@@ -92,6 +92,15 @@ const LoginPage = () => {
     } else {
       setSignupEmail(email);
       setSignupComplete(true);
+      // Send welcome email
+      supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'welcome',
+          recipientEmail: email,
+          idempotencyKey: `welcome-${email}-${Date.now()}`,
+          templateData: { name },
+        },
+      }).catch(() => {});
     }
   };
 
