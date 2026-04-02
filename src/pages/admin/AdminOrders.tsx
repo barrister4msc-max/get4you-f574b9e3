@@ -76,8 +76,8 @@ export default function AdminOrders() {
             {tasks.map((t) => (
               <TableRow key={t.id}>
                 <TableCell className="font-medium max-w-[200px] truncate">{t.title}</TableCell>
-                <TableCell>{(t as any).owner?.display_name || '—'}</TableCell>
-                <TableCell>{(t as any).performer?.display_name || '—'}</TableCell>
+                <TableCell>{t.ownerName}</TableCell>
+                <TableCell>{t.performerName}</TableCell>
                 <TableCell>
                   <Select value={t.status} onValueChange={(v) => updateStatus(t.id, v)}>
                     <SelectTrigger className="w-[130px] h-8">
