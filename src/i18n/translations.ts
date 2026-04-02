@@ -1422,7 +1422,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'hero.title': 'أنجز أي مهمة',
     'hero.titleAccent': 'مع محترفين محليين',
-    'hero.subtitle': 'انشر مهمة، احصل على عروض من محترفين موثقين. دفع آمن عبر الضمان.',
+    'hero.subtitle': 'انشر مهمة، احصل على عروض من محترفين موثقين. دفع آمن عبر الضمان. اعثر على عملاء أو استعن بمحترفين في دقائق!',
     'hero.cta': 'انشر مهمة',
     'hero.browse': 'تصفح المهام',
     'hero.tasksCompleted': 'مهام مكتملة',
