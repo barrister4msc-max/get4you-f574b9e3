@@ -21,7 +21,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Hero
     'hero.title': 'Get Things Done',
     'hero.titleAccent': 'With Local Pros',
-    'hero.subtitle': 'Post a task, get offers from verified professionals, pay securely through escrow. From home repairs to digital services.',
+    'hero.subtitle': 'Post a task, get offers from verified professionals. Secure payment through escrow. Find clients or hire pros in minutes!',
     'hero.cta': 'Post a Task',
     'hero.browse': 'Browse Tasks',
     'hero.tasksCompleted': 'Tasks Completed',
