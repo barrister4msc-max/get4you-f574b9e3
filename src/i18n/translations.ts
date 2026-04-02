@@ -962,7 +962,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'hero.title': 'בצעו כל משימה',
     'hero.titleAccent': 'עם מקצוענים מקומיים',
-    'hero.subtitle': 'פרסמו משימה, קבלו הצעות ממקצוענים מאומתים. תשלום מאובטח דרך נאמנות.',
+    'hero.subtitle': 'פרסמו משימה, קבלו הצעות ממקצוענים מאומתים. תשלום מאובטח דרך נאמנות. מצאו לקוחות או שכרו מקצוענים תוך דקות!',
     'hero.cta': 'פרסם משימה',
     'hero.browse': 'חפש משימות',
     'hero.tasksCompleted': 'משימות הושלמו',
