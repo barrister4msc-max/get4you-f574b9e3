@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
-  Lock, Unlock, AlertTriangle, MessageSquare,
+  Lock, Unlock, AlertTriangle, MessageSquare, CreditCard, Star,
 } from 'lucide-react';
 
 interface Proposal {
@@ -20,7 +20,9 @@ interface Proposal {
   status: 'pending' | 'accepted' | 'rejected';
   currency: string | null;
   created_at: string;
-  profile?: { display_name: string | null; avatar_url: string | null } | null;
+  profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null; phone: string | null } | null;
+  avgRating?: number | null;
+  reviewCount?: number;
 }
 
 const TaskDetailPage = () => {
@@ -44,6 +46,11 @@ const TaskDetailPage = () => {
   // Escrow state
   const [escrow, setEscrow] = useState<any>(null);
   const [completing, setCompleting] = useState(false);
+
+  // Payment dialog state
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [pendingAcceptProposalId, setPendingAcceptProposalId] = useState<string | null>(null);
 
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id);
@@ -72,7 +79,7 @@ const TaskDetailPage = () => {
     fetchTask();
   }, [id]);
 
-  // Fetch proposals
+  // Fetch proposals with profiles and ratings
   useEffect(() => {
     const fetchProposals = async () => {
       if (!id) return;
@@ -83,18 +90,27 @@ const TaskDetailPage = () => {
         .order('created_at', { ascending: false });
 
       if (data) {
-        // Fetch profiles for each proposal
         const userIds = [...new Set(data.map(p => p.user_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, avatar_url')
-          .in('user_id', userIds);
+        const [profilesRes, reviewsRes] = await Promise.all([
+          supabase.from('profiles').select('user_id, display_name, avatar_url, bio, city, phone').in('user_id', userIds),
+          supabase.from('reviews').select('reviewee_id, rating').in('reviewee_id', userIds),
+        ]);
 
-        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+        const profileMap = new Map(profilesRes.data?.map(p => [p.user_id, p]) || []);
+        
+        // Calculate avg rating per user
+        const ratingMap = new Map<string, { sum: number; count: number }>();
+        reviewsRes.data?.forEach(r => {
+          const existing = ratingMap.get(r.reviewee_id) || { sum: 0, count: 0 };
+          ratingMap.set(r.reviewee_id, { sum: existing.sum + r.rating, count: existing.count + 1 });
+        });
+
         const enriched = data.map(p => ({
           ...p,
           status: p.status as 'pending' | 'accepted' | 'rejected',
           profile: profileMap.get(p.user_id) || null,
+          avgRating: ratingMap.has(p.user_id) ? ratingMap.get(p.user_id)!.sum / ratingMap.get(p.user_id)!.count : null,
+          reviewCount: ratingMap.get(p.user_id)?.count || 0,
         }));
         setProposals(enriched);
       }
@@ -120,18 +136,14 @@ const TaskDetailPage = () => {
     if (!id || !escrow) return;
     setCompleting(true);
     try {
-      // Release escrow
       await supabase
         .from('escrow_transactions')
         .update({ status: 'released', released_at: new Date().toISOString() })
         .eq('id', escrow.id);
-
-      // Mark task as completed
       await supabase
         .from('tasks')
         .update({ status: 'completed' })
         .eq('id', id);
-
       setEscrow((prev: any) => ({ ...prev, status: 'released' }));
       setTask((prev: any) => ({ ...prev, status: 'completed' }));
       toast.success(t('escrow.released'));
@@ -156,10 +168,9 @@ const TaskDetailPage = () => {
 
       if (error) throw error;
 
-      // Fetch profile for new proposal
       const { data: profile } = await supabase
         .from('profiles')
-        .select('user_id, display_name, avatar_url')
+        .select('user_id, display_name, avatar_url, bio, city, phone')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -167,6 +178,8 @@ const TaskDetailPage = () => {
         ...data,
         status: data.status as 'pending' | 'accepted' | 'rejected',
         profile,
+        avgRating: null,
+        reviewCount: 0,
       }, ...prev]);
       setShowForm(false);
       setPrice('');
@@ -176,6 +189,26 @@ const TaskDetailPage = () => {
       toast.error(t('proposal.error'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // When accepting, show payment dialog first
+  const handleAcceptClick = (proposalId: string) => {
+    setPendingAcceptProposalId(proposalId);
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentConfirm = async () => {
+    setPaymentProcessing(true);
+    // Simulate payment processing
+    await new Promise(r => setTimeout(r, 2000));
+    setPaymentProcessing(false);
+    setShowPaymentDialog(false);
+    toast.success(t('payment.success'));
+    
+    if (pendingAcceptProposalId) {
+      await handleUpdateProposal(pendingAcceptProposalId, 'accepted');
+      setPendingAcceptProposalId(null);
     }
   };
 
@@ -189,7 +222,6 @@ const TaskDetailPage = () => {
 
       if (error) throw error;
 
-      // If accepted, update task status, assigned_to, and create escrow
       if (status === 'accepted') {
         const proposal = proposals.find(p => p.id === proposalId);
         if (proposal) {
@@ -199,7 +231,6 @@ const TaskDetailPage = () => {
             .eq('id', id!);
           setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
 
-          // Create escrow transaction
           const commissionRate = 0.15;
           const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
           const netAmount = proposal.price - commissionAmount;
@@ -217,7 +248,6 @@ const TaskDetailPage = () => {
           }).select().single();
           if (escrowData) setEscrow(escrowData);
         }
-        // Reject all other pending proposals
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
         for (const p of otherPending) {
           await supabase.from('proposals').update({ status: 'rejected' }).eq('id', p.id);
@@ -375,13 +405,26 @@ const TaskDetailPage = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
-                          <User className="w-5 h-5 text-primary" />
-                        </div>
+                        {proposal.profile?.avatar_url ? (
+                          <img src={proposal.profile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-border" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                            <User className="w-5 h-5 text-primary" />
+                          </div>
+                        )}
                         <div>
                           <div className="font-semibold text-sm">{proposal.profile?.display_name || 'User'}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(proposal.created_at).toLocaleDateString()}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {proposal.profile?.city && (
+                              <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{proposal.profile.city}</span>
+                            )}
+                            {proposal.avgRating && (
+                              <span className="flex items-center gap-0.5">
+                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                {proposal.avgRating.toFixed(1)} ({proposal.reviewCount})
+                              </span>
+                            )}
+                            <span>{new Date(proposal.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
                       </div>
@@ -392,6 +435,12 @@ const TaskDetailPage = () => {
                         </span>
                       </div>
                     </div>
+
+                    {/* Expanded tasker info for task owner */}
+                    {isOwner && proposal.profile?.bio && (
+                      <p className="text-xs text-muted-foreground mt-2 bg-muted/50 rounded-lg p-2">{proposal.profile.bio}</p>
+                    )}
+
                     {proposal.comment && (
                       <p className="text-sm text-muted-foreground mt-2">{proposal.comment}</p>
                     )}
@@ -400,7 +449,7 @@ const TaskDetailPage = () => {
                     {isOwner && proposal.status === 'pending' && task.status === 'open' && (
                       <div className="flex gap-2 mt-3">
                         <button
-                          onClick={() => handleUpdateProposal(proposal.id, 'accepted')}
+                          onClick={() => handleAcceptClick(proposal.id)}
                           disabled={updating === proposal.id}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
                         >
@@ -527,7 +576,6 @@ const TaskDetailPage = () => {
                     </div>
                   </div>
 
-                  {/* Complete task button - only for task owner when escrow is held */}
                   {isOwner && escrow.status === 'held' && task.status === 'in_progress' && (
                     <button
                       onClick={handleCompleteTask}
@@ -578,6 +626,90 @@ const TaskDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Dialog Overlay */}
+      <AnimatePresence>
+        {showPaymentDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => !paymentProcessing && setShowPaymentDialog(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm space-y-4"
+            >
+              <div className="text-center">
+                <CreditCard className="w-8 h-8 text-primary mx-auto mb-2" />
+                <h3 className="font-bold text-lg">{t('payment.title')}</h3>
+                <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5 mt-2 inline-block">
+                  {t('payment.demo')}
+                </p>
+              </div>
+
+              {/* Amount */}
+              {pendingAcceptProposalId && (() => {
+                const p = proposals.find(pr => pr.id === pendingAcceptProposalId);
+                return p ? (
+                  <div className="text-center text-2xl font-bold text-primary">
+                    {formatPrice(p.price, currency, p.currency)}
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Card form (mock) */}
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder={t('payment.cardNumber')}
+                  maxLength={19}
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm"
+                  defaultValue="4242 4242 4242 4242"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder={t('payment.expiry')}
+                    maxLength={5}
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm"
+                    defaultValue="12/28"
+                  />
+                  <input
+                    type="text"
+                    placeholder={t('payment.cvc')}
+                    maxLength={4}
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm"
+                    defaultValue="123"
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={handlePaymentConfirm}
+                disabled={paymentProcessing}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {paymentProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('payment.processing')}
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    {t('payment.pay')}
+                  </>
+                )}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

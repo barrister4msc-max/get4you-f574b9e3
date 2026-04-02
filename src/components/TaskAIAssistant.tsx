@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { streamChat } from '@/lib/streamChat';
-import { Bot, Send, X, Sparkles, Mic, MicOff } from 'lucide-react';
+import { Bot, Send, X, Sparkles, Mic, MicOff, ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type Msg = { role: 'user' | 'assistant'; content: string };
+type Msg = { role: 'user' | 'assistant'; content: string; imageUrl?: string };
 
 interface Props {
   onApplySuggestion?: (text: string) => void;
@@ -19,18 +19,32 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachedImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const send = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg: Msg = { role: 'user', content: input };
+    if ((!input.trim() && !attachedImage) || loading) return;
+    const userMsg: Msg = { role: 'user', content: input, imageUrl: attachedImage || undefined };
     const contextMsg = context ? `[Current task context: ${context}]\n\n${input}` : input;
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setAttachedImage(null);
     setLoading(true);
 
     let assistantSoFar = '';
@@ -47,7 +61,7 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
 
     await streamChat({
       functionName: 'ai-task-assistant',
-      messages: [{ role: 'user', content: contextMsg }],
+      messages: [{ role: 'user', content: attachedImage ? `[User attached a photo]\n${contextMsg}` : contextMsg }],
       extraBody: { type: 'assist' },
       onDelta: updateAssistant,
       onDone: () => setLoading(false),
@@ -102,6 +116,9 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
                         : 'bg-muted text-foreground'
                     }`}
                   >
+                    {m.imageUrl && (
+                      <img src={m.imageUrl} alt="" className="w-32 h-24 object-cover rounded-lg mb-1" />
+                    )}
                     {m.content}
                     {m.role === 'assistant' && onApplySuggestion && (
                       <button
@@ -117,6 +134,16 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
               ))}
             </div>
 
+            {/* Attached image preview */}
+            {attachedImage && (
+              <div className="px-3 pb-1 flex items-center gap-2">
+                <img src={attachedImage} alt="" className="w-12 h-12 object-cover rounded-lg border border-border" />
+                <button type="button" onClick={() => setAttachedImage(null)} className="text-xs text-destructive hover:underline">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 p-3 border-t border-border">
               <input
                 value={input}
@@ -125,11 +152,29 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
                 placeholder="..."
                 className="flex-1 text-sm px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
               />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-2 rounded-lg transition-colors shrink-0 ${
+                  attachedImage
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+                title={t('task.ai.attachPhoto')}
+              >
+                <ImageIcon className="w-4 h-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   if (!voice.isSupported) {
-                    // Fallback: prompt user to type instead
                     const text = window.prompt(t('task.voice.unsupported') || 'Voice input is not supported in this browser. Type your message:');
                     if (text) setInput(prev => (prev ? prev + ' ' : '') + text);
                     return;
@@ -158,7 +203,7 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
               <button
                 type="button"
                 onClick={send}
-                disabled={loading || !input.trim()}
+                disabled={loading || (!input.trim() && !attachedImage)}
                 className="p-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />

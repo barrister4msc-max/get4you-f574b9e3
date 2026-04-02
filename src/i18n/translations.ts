@@ -483,6 +483,34 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'You have reached the daily AI limit ({limit} requests). Try again tomorrow.',
+
+    // Balance & Withdrawal
+    'balance.title': 'Balance',
+    'balance.available': 'Available for withdrawal',
+    'balance.pending': 'Pending',
+    'balance.withdraw': 'Withdraw',
+    'balance.withdraw.success': 'Withdrawal request submitted!',
+    'balance.withdraw.bank': 'To bank account',
+    'balance.history': 'Transaction History',
+    'balance.noTransactions': 'No transactions yet',
+    'balance.transaction.released': 'Payment received',
+    'balance.transaction.held': 'Funds on hold',
+
+    // Payment
+    'payment.title': 'Pay for the task',
+    'payment.card': 'Card',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'Card number',
+    'payment.expiry': 'MM/YY',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'Pay',
+    'payment.processing': 'Processing...',
+    'payment.success': 'Payment successful! Funds are held in escrow.',
+    'payment.demo': 'Demo mode — no real charges',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'Attach photo',
+    'task.ai.photoAttached': 'Photo attached',
   },
   ru: {
     'nav.home': 'Главная',
@@ -943,6 +971,34 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'Вы достигли дневного лимита AI ({limit} запросов). Попробуйте завтра.',
+
+    // Balance & Withdrawal
+    'balance.title': 'Баланс',
+    'balance.available': 'Доступно к выводу',
+    'balance.pending': 'В ожидании',
+    'balance.withdraw': 'Вывести',
+    'balance.withdraw.success': 'Запрос на вывод отправлен!',
+    'balance.withdraw.bank': 'На банковский счёт',
+    'balance.history': 'История транзакций',
+    'balance.noTransactions': 'Транзакций пока нет',
+    'balance.transaction.released': 'Оплата получена',
+    'balance.transaction.held': 'Средства заморожены',
+
+    // Payment
+    'payment.title': 'Оплата задачи',
+    'payment.card': 'Картой',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'Номер карты',
+    'payment.expiry': 'ММ/ГГ',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'Оплатить',
+    'payment.processing': 'Обработка...',
+    'payment.success': 'Оплата прошла! Средства удержаны на эскроу.',
+    'payment.demo': 'Демо-режим — реальных списаний нет',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'Прикрепить фото',
+    'task.ai.photoAttached': 'Фото прикреплено',
   },
   he: {
     'nav.home': 'ראשי',
@@ -1403,6 +1459,34 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'הגעת למגבלה היומית של AI ({limit} בקשות). נסה שוב מחר.',
+
+    // Balance & Withdrawal
+    'balance.title': 'יתרה',
+    'balance.available': 'זמין למשיכה',
+    'balance.pending': 'בהמתנה',
+    'balance.withdraw': 'משיכה',
+    'balance.withdraw.success': 'בקשת המשיכה נשלחה!',
+    'balance.withdraw.bank': 'לחשבון בנק',
+    'balance.history': 'היסטוריית עסקאות',
+    'balance.noTransactions': 'אין עסקאות עדיין',
+    'balance.transaction.released': 'תשלום התקבל',
+    'balance.transaction.held': 'כספים מוחזקים',
+
+    // Payment
+    'payment.title': 'תשלום עבור המשימה',
+    'payment.card': 'כרטיס',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'מספר כרטיס',
+    'payment.expiry': 'MM/YY',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'שלם',
+    'payment.processing': 'מעבד...',
+    'payment.success': 'התשלום בוצע! הכספים מוחזקים בנאמנות.',
+    'payment.demo': 'מצב הדגמה — ללא חיוב אמיתי',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'צרף תמונה',
+    'task.ai.photoAttached': 'תמונה צורפה',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -1863,5 +1947,33 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'لقد وصلت إلى الحد اليومي للذكاء الاصطناعي ({limit} طلبات). حاول مرة أخرى غداً.',
+
+    // Balance & Withdrawal
+    'balance.title': 'الرصيد',
+    'balance.available': 'متاح للسحب',
+    'balance.pending': 'قيد الانتظار',
+    'balance.withdraw': 'سحب',
+    'balance.withdraw.success': 'تم تقديم طلب السحب!',
+    'balance.withdraw.bank': 'إلى الحساب البنكي',
+    'balance.history': 'سجل المعاملات',
+    'balance.noTransactions': 'لا توجد معاملات بعد',
+    'balance.transaction.released': 'تم استلام الدفعة',
+    'balance.transaction.held': 'أموال محتجزة',
+
+    // Payment
+    'payment.title': 'الدفع مقابل المهمة',
+    'payment.card': 'بطاقة',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'رقم البطاقة',
+    'payment.expiry': 'MM/YY',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'ادفع',
+    'payment.processing': 'جاري المعالجة...',
+    'payment.success': 'تم الدفع! الأموال محتجزة في الضمان.',
+    'payment.demo': 'وضع تجريبي — بدون رسوم حقيقية',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'إرفاق صورة',
+    'task.ai.photoAttached': 'تم إرفاق الصورة',
   },
 };
