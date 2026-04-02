@@ -25,8 +25,10 @@ export default function AdminReviews() {
 
   const deleteReview = async (id: string) => {
     if (!confirm('Удалить отзыв?')) return;
-    // Reviews table doesn't have DELETE RLS for admin yet — we'd need a migration
-    toast.error('Удаление отзывов требует дополнительных прав');
+    const { error } = await supabase.from('reviews').delete().eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Удалено');
+    load();
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
