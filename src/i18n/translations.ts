@@ -500,8 +500,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nav.logout': 'Выйти',
     'nav.admin': 'Админ',
 
-    'hero.title': 'Решите любую задачу',
-    'hero.titleAccent': 'с местными профессионалами',
+    'hero.title': 'Любая задача —',
+    'hero.titleAccent': 'надёжный исполнитель',
     'hero.subtitle': 'Опубликуйте задачу, получите предложения от проверенных специалистов. Безопасная оплата через эскроу. Получай клиентов или находи исполнителей за минуты!',
     'hero.cta': 'Создать задачу',
     'hero.browse': 'Смотреть задачи',
