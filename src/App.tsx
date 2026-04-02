@@ -61,6 +61,7 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
               </Route>
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
