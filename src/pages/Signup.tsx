@@ -44,7 +44,6 @@ const SignupPage = () => {
   const roles: { value: Role; label: string }[] = [
     { value: 'client', label: t('auth.role.client') },
     { value: 'tasker', label: t('auth.role.tasker') },
-    { value: 'both', label: t('auth.role.both') },
   ];
 
   return (
