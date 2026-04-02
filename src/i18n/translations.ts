@@ -1947,5 +1947,33 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'لقد وصلت إلى الحد اليومي للذكاء الاصطناعي ({limit} طلبات). حاول مرة أخرى غداً.',
+
+    // Balance & Withdrawal
+    'balance.title': 'الرصيد',
+    'balance.available': 'متاح للسحب',
+    'balance.pending': 'قيد الانتظار',
+    'balance.withdraw': 'سحب',
+    'balance.withdraw.success': 'تم تقديم طلب السحب!',
+    'balance.withdraw.bank': 'إلى الحساب البنكي',
+    'balance.history': 'سجل المعاملات',
+    'balance.noTransactions': 'لا توجد معاملات بعد',
+    'balance.transaction.released': 'تم استلام الدفعة',
+    'balance.transaction.held': 'أموال محتجزة',
+
+    // Payment
+    'payment.title': 'الدفع مقابل المهمة',
+    'payment.card': 'بطاقة',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'رقم البطاقة',
+    'payment.expiry': 'MM/YY',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'ادفع',
+    'payment.processing': 'جاري المعالجة...',
+    'payment.success': 'تم الدفع! الأموال محتجزة في الضمان.',
+    'payment.demo': 'وضع تجريبي — بدون رسوم حقيقية',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'إرفاق صورة',
+    'task.ai.photoAttached': 'تم إرفاق الصورة',
   },
 };
