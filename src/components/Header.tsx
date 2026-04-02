@@ -42,7 +42,7 @@ export const Header = () => {
     ...(!isTaskerOnly ? [{ to: '/create-task', label: t('nav.create') }] : []),
     { to: '/how-it-works', label: t('nav.howItWorks') },
     { to: '/for-taskers', label: t('nav.forTaskers') },
-    ...(isAdmin ? [{ to: '/admin/esek-patur', label: t('nav.admin') }] : []),
+    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin') }] : []),
   ];
 
   const ProfileDropdown = () => (

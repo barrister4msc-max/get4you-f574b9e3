@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import Index from "./pages/Index";
 import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
@@ -29,6 +30,14 @@ import AdminEmployment from "./pages/AdminEmployment";
 import Chat from "./pages/Chat";
 import Unsubscribe from "./pages/Unsubscribe";
 import AdminBroadcast from "./pages/AdminBroadcast";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminTaskers from "./pages/admin/AdminTaskers";
+import AdminReviews from "./pages/admin/AdminReviews";
+import AdminComplaints from "./pages/admin/AdminComplaints";
+import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -49,9 +58,6 @@ const App = () => (
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/for-taskers" element={<ForTaskers />} />
                 <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
-                <Route path="/admin/esek-patur" element={<ProtectedRoute><AdminEsekPatur /></ProtectedRoute>} />
-                <Route path="/admin/broadcast" element={<ProtectedRoute><AdminBroadcast /></ProtectedRoute>} />
-                <Route path="/admin/employment" element={<ProtectedRoute><AdminEmployment /></ProtectedRoute>} />
                 <Route path="/contractor-agreement" element={<ProtectedRoute><ContractorAgreement /></ProtectedRoute>} />
                 <Route path="/employment-agreement" element={<ProtectedRoute><EmploymentAgreement /></ProtectedRoute>} />
                 <Route path="/login" element={<Login />} />
@@ -62,6 +68,21 @@ const App = () => (
                 <Route path="/chat/:taskId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+
+                {/* Admin panel with sidebar */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="taskers" element={<AdminTaskers />} />
+                  <Route path="reviews" element={<AdminReviews />} />
+                  <Route path="complaints" element={<AdminComplaints />} />
+                  <Route path="categories" element={<AdminCategoriesPage />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="esek-patur" element={<AdminEsekPatur />} />
+                  <Route path="broadcast" element={<AdminBroadcast />} />
+                  <Route path="employment" element={<AdminEmployment />} />
+                </Route>
               </Route>
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="*" element={<NotFound />} />
