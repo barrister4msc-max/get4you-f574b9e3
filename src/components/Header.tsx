@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
-import { Menu, X, User, LayoutDashboard, LogOut } from 'lucide-react';
+import { Menu, X, User, LayoutDashboard, LogOut, MessageSquare } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
