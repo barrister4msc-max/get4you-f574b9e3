@@ -42,7 +42,7 @@ export const Header = () => {
     ...(!isTaskerOnly ? [{ to: '/create-task', label: t('nav.create') }] : []),
     { to: '/how-it-works', label: t('nav.howItWorks') },
     { to: '/for-taskers', label: t('nav.forTaskers') },
-    ...(isAdmin ? [{ to: '/admin/esek-patur', label: t('nav.admin') }] : []),
+    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin') }] : []),
   ];
 
   const ProfileDropdown = () => (
@@ -80,12 +80,12 @@ export const Header = () => {
           </Link>
           {isAdmin && (
             <Link
-              to="/admin/broadcast"
+              to="/admin"
               onClick={() => setDropdownOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
             >
-              <MessageSquare className="w-4 h-4" />
-              WhatsApp Broadcast
+              <LayoutDashboard className="w-4 h-4" />
+              Админ-панель
             </Link>
           )}
           <div className="border-t border-border my-1" />
