@@ -24,10 +24,16 @@ export default function AdminOrders() {
   const load = async () => {
     const { data } = await supabase
       .from('tasks')
-      .select('*, owner:profiles!tasks_user_id_fkey(display_name), performer:profiles!tasks_assigned_to_fkey(display_name)')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
-    setTasks(data || []);
+    
+    // Fetch profile names for owners and performers
+    const userIds = [...new Set((data || []).flatMap(t => [t.user_id, t.assigned_to].filter(Boolean)))];
+    const { data: profiles } = await supabase.from('profiles').select('user_id, display_name').in('user_id', userIds);
+    const nameMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.display_name]));
+
+    setTasks((data || []).map(t => ({ ...t, ownerName: nameMap[t.user_id] || '—', performerName: t.assigned_to ? (nameMap[t.assigned_to] || '—') : '—' })));
     setLoading(false);
   };
 
