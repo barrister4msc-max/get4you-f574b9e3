@@ -971,6 +971,34 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // AI Limits
     'ai.dailyLimit': 'Вы достигли дневного лимита AI ({limit} запросов). Попробуйте завтра.',
+
+    // Balance & Withdrawal
+    'balance.title': 'Баланс',
+    'balance.available': 'Доступно к выводу',
+    'balance.pending': 'В ожидании',
+    'balance.withdraw': 'Вывести',
+    'balance.withdraw.success': 'Запрос на вывод отправлен!',
+    'balance.withdraw.bank': 'На банковский счёт',
+    'balance.history': 'История транзакций',
+    'balance.noTransactions': 'Транзакций пока нет',
+    'balance.transaction.released': 'Оплата получена',
+    'balance.transaction.held': 'Средства заморожены',
+
+    // Payment
+    'payment.title': 'Оплата задачи',
+    'payment.card': 'Картой',
+    'payment.applePay': 'Apple Pay',
+    'payment.cardNumber': 'Номер карты',
+    'payment.expiry': 'ММ/ГГ',
+    'payment.cvc': 'CVC',
+    'payment.pay': 'Оплатить',
+    'payment.processing': 'Обработка...',
+    'payment.success': 'Оплата прошла! Средства удержаны на эскроу.',
+    'payment.demo': 'Демо-режим — реальных списаний нет',
+
+    // AI Photo
+    'task.ai.attachPhoto': 'Прикрепить фото',
+    'task.ai.photoAttached': 'Фото прикреплено',
   },
   he: {
     'nav.home': 'ראשי',
