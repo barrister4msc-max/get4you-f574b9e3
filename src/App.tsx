@@ -28,6 +28,7 @@ import EmploymentAgreement from "./pages/EmploymentAgreement";
 import AdminEmployment from "./pages/AdminEmployment";
 import Chat from "./pages/Chat";
 import Unsubscribe from "./pages/Unsubscribe";
+import AdminBroadcast from "./pages/AdminBroadcast";
 
 const queryClient = new QueryClient();
 
