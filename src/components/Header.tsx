@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
-import { Menu, X, User, LayoutDashboard, LogOut } from 'lucide-react';
+import { Menu, X, User, LayoutDashboard, LogOut, MessageSquare } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
@@ -78,6 +78,16 @@ export const Header = () => {
             <LayoutDashboard className="w-4 h-4" />
             {t('nav.dashboard')}
           </Link>
+          {isAdmin && (
+            <Link
+              to="/admin/broadcast"
+              onClick={() => setDropdownOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+              WhatsApp Broadcast
+            </Link>
+          )}
           <div className="border-t border-border my-1" />
           <button
             onClick={handleLogout}

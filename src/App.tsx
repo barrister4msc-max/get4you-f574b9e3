@@ -28,6 +28,7 @@ import EmploymentAgreement from "./pages/EmploymentAgreement";
 import AdminEmployment from "./pages/AdminEmployment";
 import Chat from "./pages/Chat";
 import Unsubscribe from "./pages/Unsubscribe";
+import AdminBroadcast from "./pages/AdminBroadcast";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="/for-taskers" element={<ForTaskers />} />
                 <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
                 <Route path="/admin/esek-patur" element={<ProtectedRoute><AdminEsekPatur /></ProtectedRoute>} />
+                <Route path="/admin/broadcast" element={<ProtectedRoute><AdminBroadcast /></ProtectedRoute>} />
                 <Route path="/admin/employment" element={<ProtectedRoute><AdminEmployment /></ProtectedRoute>} />
                 <Route path="/contractor-agreement" element={<ProtectedRoute><ContractorAgreement /></ProtectedRoute>} />
                 <Route path="/employment-agreement" element={<ProtectedRoute><EmploymentAgreement /></ProtectedRoute>} />

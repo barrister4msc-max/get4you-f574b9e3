@@ -184,7 +184,26 @@ const TaskDetailPage = () => {
       setShowForm(false);
       setPrice('');
       setComment('');
-      toast.success(t('proposal.sent'));
+        toast.success(t('proposal.sent'));
+
+        // Send WhatsApp to task owner about new proposal
+        if (task?.user_id) {
+          const { data: ownerProf } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('user_id', task.user_id)
+            .maybeSingle();
+          if (ownerProf?.phone) {
+            const { data: session } = await supabase.auth.getSession();
+            supabase.functions.invoke('send-whatsapp', {
+              body: {
+                type: 'new_proposal',
+                phone: ownerProf.phone,
+                task_id: id,
+              },
+            }).catch(console.error);
+          }
+        }
     } catch {
       toast.error(t('proposal.error'));
     } finally {
@@ -253,6 +272,17 @@ const TaskDetailPage = () => {
           await supabase.from('proposals').update({ status: 'rejected' }).eq('id', p.id);
         }
         toast.success(t('proposal.accepted'));
+
+          // Send WhatsApp to tasker about being hired
+          if (proposal?.profile?.phone) {
+            supabase.functions.invoke('send-whatsapp', {
+              body: {
+                type: 'tasker_hired',
+                phone: proposal.profile.phone,
+                task_id: id,
+              },
+            }).catch(console.error);
+          }
       } else {
         toast.success(t('proposal.rejected'));
       }
