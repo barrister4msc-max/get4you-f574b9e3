@@ -134,7 +134,6 @@ const LoginPage = () => {
   const roles: { value: Role; label: string }[] = [
     { value: 'client', label: t('auth.role.client') },
     { value: 'tasker', label: t('auth.role.tasker') },
-    { value: 'both', label: t('auth.role.both') },
   ];
 
   const strengthColors = {
@@ -493,7 +492,7 @@ const LoginPage = () => {
 
             <div>
               <label className="block text-sm font-medium mb-2">{t('auth.role')}</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {roles.map((r) => (
                   <button
                     key={r.value}
