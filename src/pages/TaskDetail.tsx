@@ -75,6 +75,20 @@ const TaskDetailPage = () => {
         setOwnerProfile(profile);
       }
 
+      // Fetch assigned tasker profile
+      if (data?.assigned_to) {
+        const [profileRes, reviewsRes] = await Promise.all([
+          supabase.from('profiles').select('display_name, avatar_url, bio, city, phone').eq('user_id', data.assigned_to).maybeSingle(),
+          supabase.from('reviews').select('rating').eq('reviewee_id', data.assigned_to),
+        ]);
+        setAssignedProfile(profileRes.data);
+        const ratings = reviewsRes.data || [];
+        if (ratings.length > 0) {
+          const avg = ratings.reduce((s, r) => s + r.rating, 0) / ratings.length;
+          setAssignedRating({ avg, count: ratings.length });
+        }
+      }
+
       setTask(data);
       setLoading(false);
     };
