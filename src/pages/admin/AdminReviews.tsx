@@ -36,7 +36,14 @@ export default function AdminReviews() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Отзывы ({reviews.length})</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-foreground">Отзывы ({reviews.length})</h1>
+        <Button variant="outline" size="sm" onClick={() => exportToCsv('reviews.csv', reviews, [
+          { key: 'reviewerName', label: 'От кого' }, { key: 'revieweeName', label: 'Кому' },
+          { key: 'rating', label: 'Оценка' }, { key: 'comment', label: 'Текст' },
+          { key: 'created_at', label: 'Дата' },
+        ])}><Download className="w-4 h-4 mr-2" />CSV</Button>
+      </div>
       <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>

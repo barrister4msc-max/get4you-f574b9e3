@@ -40,7 +40,14 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Пользователи ({users.length})</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-foreground">Пользователи ({users.length})</h1>
+        <Button variant="outline" size="sm" onClick={() => exportToCsv('users.csv', users, [
+          { key: 'display_name', label: 'Имя' }, { key: 'phone', label: 'Телефон' },
+          { key: 'city', label: 'Город' }, { key: 'roles', label: 'Роли' },
+          { key: 'created_at', label: 'Дата' },
+        ])}><Download className="w-4 h-4 mr-2" />CSV</Button>
+      </div>
       <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>

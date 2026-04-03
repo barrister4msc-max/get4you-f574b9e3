@@ -59,7 +59,15 @@ export default function AdminOrders() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Заказы</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-foreground">Заказы</h1>
+        <Button variant="outline" size="sm" onClick={() => exportToCsv('orders.csv', tasks, [
+          { key: 'title', label: 'Услуга' }, { key: 'ownerName', label: 'Заказчик' },
+          { key: 'performerName', label: 'Исполнитель' }, { key: 'status', label: 'Статус' },
+          { key: 'budget_fixed', label: 'Цена' }, { key: 'currency', label: 'Валюта' },
+          { key: 'created_at', label: 'Дата' },
+        ])}><Download className="w-4 h-4 mr-2" />CSV</Button>
+      </div>
       <div className="rounded-lg border border-border bg-card">
         <Table>
           <TableHeader>
