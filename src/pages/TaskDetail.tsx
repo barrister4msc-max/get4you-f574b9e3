@@ -31,7 +31,9 @@ const TaskDetailPage = () => {
   const formatPrice = useFormatPrice();
   const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
-  const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null } | null>(null);
+  const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  const [assignedProfile, setAssignedProfile] = useState<{ display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null; phone: string | null } | null>(null);
+  const [assignedRating, setAssignedRating] = useState<{ avg: number | null; count: number }>({ avg: null, count: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -71,6 +73,20 @@ const TaskDetailPage = () => {
           .eq('user_id', data.user_id)
           .maybeSingle();
         setOwnerProfile(profile);
+      }
+
+      // Fetch assigned tasker profile
+      if (data?.assigned_to) {
+        const [profileRes, reviewsRes] = await Promise.all([
+          supabase.from('profiles').select('display_name, avatar_url, bio, city, phone').eq('user_id', data.assigned_to).maybeSingle(),
+          supabase.from('reviews').select('rating').eq('reviewee_id', data.assigned_to),
+        ]);
+        setAssignedProfile(profileRes.data);
+        const ratings = reviewsRes.data || [];
+        if (ratings.length > 0) {
+          const avg = ratings.reduce((s, r) => s + r.rating, 0) / ratings.length;
+          setAssignedRating({ avg, count: ratings.length });
+        }
       }
 
       setTask(data);
@@ -647,6 +663,39 @@ const TaskDetailPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Assigned tasker profile */}
+              {task.assigned_to && assignedProfile && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">{t('task.assignedTasker')}</p>
+                  <div className="flex items-center gap-3">
+                    {assignedProfile.avatar_url ? (
+                      <img src={assignedProfile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-border" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                        <User className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-semibold text-sm">{assignedProfile.display_name || 'Tasker'}</div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {assignedProfile.city && (
+                          <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{assignedProfile.city}</span>
+                        )}
+                        {assignedRating.avg && (
+                          <span className="flex items-center gap-0.5">
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                            {assignedRating.avg.toFixed(1)} ({assignedRating.count})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {assignedProfile.bio && (
+                    <p className="text-xs text-muted-foreground mt-2">{assignedProfile.bio}</p>
+                  )}
+                </div>
+              )}
 
               <div className="mt-4 flex items-center gap-2 text-xs text-primary font-medium">
                 <Shield className="w-4 h-4" />
