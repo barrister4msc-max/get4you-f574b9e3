@@ -1,5 +1,6 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/i18n/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Users, Wrench, Star,
   AlertTriangle, Grid3X3, Settings, ChevronLeft, ChevronRight
@@ -7,20 +8,21 @@ import {
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
-const links = [
-  { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/admin/orders', icon: ClipboardList, label: 'Заказы' },
-  { to: '/admin/users', icon: Users, label: 'Пользователи' },
-  { to: '/admin/taskers', icon: Wrench, label: 'Исполнители' },
-  { to: '/admin/reviews', icon: Star, label: 'Отзывы' },
-  { to: '/admin/complaints', icon: AlertTriangle, label: 'Жалобы' },
-  { to: '/admin/categories', icon: Grid3X3, label: 'Категории' },
-  { to: '/admin/settings', icon: Settings, label: 'Настройки' },
-];
-
 export const AdminLayout = () => {
   const { user, roles, loading } = useAuth();
+  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
+
+  const links = [
+    { to: '/admin', icon: LayoutDashboard, label: t('admin.dashboard'), end: true },
+    { to: '/admin/orders', icon: ClipboardList, label: t('admin.orders') },
+    { to: '/admin/users', icon: Users, label: t('admin.users') },
+    { to: '/admin/taskers', icon: Wrench, label: t('admin.taskers') },
+    { to: '/admin/reviews', icon: Star, label: t('admin.reviews') },
+    { to: '/admin/complaints', icon: AlertTriangle, label: t('admin.complaints') },
+    { to: '/admin/categories', icon: Grid3X3, label: t('admin.categories') },
+    { to: '/admin/settings', icon: Settings, label: t('admin.settings') },
+  ];
 
   if (loading) {
     return (
@@ -41,7 +43,7 @@ export const AdminLayout = () => {
         collapsed ? "w-16" : "w-56"
       )}>
         <div className="flex items-center justify-between p-3 border-b border-border">
-          {!collapsed && <span className="font-semibold text-sm text-foreground">Админ-панель</span>}
+          {!collapsed && <span className="font-semibold text-sm text-foreground">{t('admin.panel')}</span>}
           <button onClick={() => setCollapsed(!collapsed)} className="p-1 rounded hover:bg-secondary">
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
