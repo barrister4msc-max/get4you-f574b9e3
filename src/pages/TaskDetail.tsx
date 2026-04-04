@@ -314,7 +314,7 @@ const TaskDetailPage = () => {
   if (loading) {
     return (
       <div className="py-8">
-        <div className="container max-w-4xl text-center text-muted-foreground py-20">Loading...</div>
+        <div className="container max-w-4xl text-center text-muted-foreground py-20">{t('dashboard.loading')}</div>
       </div>
     );
   }
