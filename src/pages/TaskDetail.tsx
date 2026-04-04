@@ -104,7 +104,7 @@ const TaskDetailPage = () => {
       if (data) {
         const userIds = [...new Set(data.map(p => p.user_id))];
         const [profilesRes, reviewsRes] = await Promise.all([
-          supabase.from('profiles').select('user_id, display_name, avatar_url, bio, city, phone').in('user_id', userIds),
+          supabase.rpc('get_public_profiles', { target_user_ids: userIds }),
           supabase.from('reviews').select('reviewee_id, rating').in('reviewee_id', userIds),
         ]);
 
