@@ -81,7 +81,7 @@ const AdminBroadcast = () => {
       setSelectedTaskers([]);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to send broadcast');
+      toast.error(t('admin.broadcast.error') || 'Failed to send broadcast');
     } finally {
       setSending(false);
     }
