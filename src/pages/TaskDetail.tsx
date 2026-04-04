@@ -74,10 +74,10 @@ const TaskDetailPage = () => {
       // Fetch assigned tasker profile
       if (data?.assigned_to) {
         const [profileRes, reviewsRes] = await Promise.all([
-          supabase.from('profiles').select('display_name, avatar_url, bio, city, phone').eq('user_id', data.assigned_to).maybeSingle(),
+          supabase.rpc('get_public_profile', { target_user_id: data.assigned_to }),
           supabase.from('reviews').select('rating').eq('reviewee_id', data.assigned_to),
         ]);
-        setAssignedProfile(profileRes.data);
+        setAssignedProfile(profileRes.data?.[0] || null);
         const ratings = reviewsRes.data || [];
         if (ratings.length > 0) {
           const avg = ratings.reduce((s, r) => s + r.rating, 0) / ratings.length;
