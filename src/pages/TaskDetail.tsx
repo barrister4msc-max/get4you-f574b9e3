@@ -286,15 +286,13 @@ const TaskDetailPage = () => {
         toast.success(t('proposal.accepted'));
 
           // Send WhatsApp to tasker about being hired
-          if (proposal?.profile?.phone) {
-            supabase.functions.invoke('send-whatsapp', {
-              body: {
-                type: 'tasker_hired',
-                phone: proposal.profile.phone,
-                task_id: id,
-              },
-            }).catch(console.error);
-          }
+          supabase.functions.invoke('send-whatsapp', {
+            body: {
+              type: 'tasker_hired',
+              user_id: proposal?.user_id,
+              task_id: id,
+            },
+          }).catch(console.error);
       } else {
         toast.success(t('proposal.rejected'));
       }
