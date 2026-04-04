@@ -65,7 +65,7 @@ export default function AdminOrders() {
         <Button variant="outline" size="sm" onClick={() => exportToCsv('orders.csv', filtered, [
           { key: 'title', label: t('admin.service') }, { key: 'ownerName', label: t('admin.client') },
           { key: 'performerName', label: t('admin.performer') }, { key: 'status', label: t('admin.status') },
-          { key: 'budget_fixed', label: t('admin.price') }, { key: 'currency', label: 'Currency' },
+          { key: 'budget_fixed', label: t('admin.price') }, { key: 'currency', label: t('currency.usd') },
           { key: 'created_at', label: t('admin.date') },
         ])}><Download className="w-4 h-4 mr-2" />CSV</Button>
       </div>

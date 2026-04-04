@@ -412,7 +412,7 @@ const TasksPage = () => {
         )}
 
         <div className="grid gap-4">
-          {loading && <p className="text-center text-muted-foreground py-12">Loading...</p>}
+          {loading && <p className="text-center text-muted-foreground py-12">{t('dashboard.loading')}</p>}
           {!loading && displayTasks.length === 0 && (
             <p className="text-center text-muted-foreground py-12">
               {tab === 'my' ? t('tasks.noMyTasks') : t('tasks.noResults')}

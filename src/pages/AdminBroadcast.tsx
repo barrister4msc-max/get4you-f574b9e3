@@ -81,14 +81,14 @@ const AdminBroadcast = () => {
       setSelectedTaskers([]);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to send broadcast');
+      toast.error(t('admin.broadcast.error') || 'Failed to send broadcast');
     } finally {
       setSending(false);
     }
   };
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
-  if (!isAdmin) return <div className="container py-20 text-center text-muted-foreground">Access denied</div>;
+  if (loading) return <div className="container py-20 text-center text-muted-foreground">{t('dashboard.loading')}</div>;
+  if (!isAdmin) return <div className="container py-20 text-center text-muted-foreground">{t('admin.esek.accessDenied')}</div>;
 
   return (
     <div className="container max-w-2xl py-8 space-y-6">

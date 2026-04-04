@@ -85,7 +85,7 @@ export const Header = () => {
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
             >
               <LayoutDashboard className="w-4 h-4" />
-              Админ-панель
+              {t('admin.panel')}
             </Link>
           )}
           <div className="border-t border-border my-1" />
