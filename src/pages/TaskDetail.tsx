@@ -67,12 +67,8 @@ const TaskDetailPage = () => {
         .maybeSingle();
 
       if (data?.user_id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name, avatar_url')
-          .eq('user_id', data.user_id)
-          .maybeSingle();
-        setOwnerProfile(profile);
+        const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: data.user_id });
+        setOwnerProfile(profile?.[0] || null);
       }
 
       // Fetch assigned tasker profile
