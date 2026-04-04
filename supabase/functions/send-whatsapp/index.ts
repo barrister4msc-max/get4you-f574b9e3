@@ -80,16 +80,34 @@ Deno.serve(async (req) => {
     const results: any[] = [];
 
     if (type === "tasker_hired") {
-      // Send to tasker when they are hired
-      if (!phone || !task_id) {
-        return new Response(JSON.stringify({ error: "Missing phone or task_id" }), {
+      if (!task_id || (!phone && !body.user_id)) {
+        return new Response(JSON.stringify({ error: "Missing phone/user_id or task_id" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      let targetPhone = phone;
+      if (!targetPhone && body.user_id) {
+        const adminClient = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        );
+        const { data: profile } = await adminClient
+          .from("profiles")
+          .select("phone")
+          .eq("user_id", body.user_id)
+          .maybeSingle();
+        targetPhone = profile?.phone;
+      }
+      if (!targetPhone) {
+        return new Response(JSON.stringify({ error: "No phone found" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const taskUrl = `https://get4you.lovable.app/tasks/${task_id}`;
       const text = message || `🎉 You've been selected for a task! View details: ${taskUrl}`;
-      results.push(await sendWhatsApp(phone, text));
+      results.push(await sendWhatsApp(targetPhone, text));
     } else if (type === "new_proposal") {
       // Notify task owner about a new proposal
       if (!phone || !task_id) {

@@ -20,7 +20,7 @@ interface Proposal {
   status: 'pending' | 'accepted' | 'rejected';
   currency: string | null;
   created_at: string;
-  profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null; phone: string | null } | null;
+  profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null;
   avgRating?: number | null;
   reviewCount?: number;
 }
@@ -32,7 +32,7 @@ const TaskDetailPage = () => {
   const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
   const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
-  const [assignedProfile, setAssignedProfile] = useState<{ display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null; phone: string | null } | null>(null);
+  const [assignedProfile, setAssignedProfile] = useState<{ display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null>(null);
   const [assignedRating, setAssignedRating] = useState<{ avg: number | null; count: number }>({ avg: null, count: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -67,21 +67,17 @@ const TaskDetailPage = () => {
         .maybeSingle();
 
       if (data?.user_id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name, avatar_url')
-          .eq('user_id', data.user_id)
-          .maybeSingle();
-        setOwnerProfile(profile);
+        const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: data.user_id });
+        setOwnerProfile(profile?.[0] || null);
       }
 
       // Fetch assigned tasker profile
       if (data?.assigned_to) {
         const [profileRes, reviewsRes] = await Promise.all([
-          supabase.from('profiles').select('display_name, avatar_url, bio, city, phone').eq('user_id', data.assigned_to).maybeSingle(),
+          supabase.rpc('get_public_profile', { target_user_id: data.assigned_to }),
           supabase.from('reviews').select('rating').eq('reviewee_id', data.assigned_to),
         ]);
-        setAssignedProfile(profileRes.data);
+        setAssignedProfile(profileRes.data?.[0] || null);
         const ratings = reviewsRes.data || [];
         if (ratings.length > 0) {
           const avg = ratings.reduce((s, r) => s + r.rating, 0) / ratings.length;
@@ -108,7 +104,7 @@ const TaskDetailPage = () => {
       if (data) {
         const userIds = [...new Set(data.map(p => p.user_id))];
         const [profilesRes, reviewsRes] = await Promise.all([
-          supabase.from('profiles').select('user_id, display_name, avatar_url, bio, city, phone').in('user_id', userIds),
+          supabase.rpc('get_public_profiles', { target_user_ids: userIds }),
           supabase.from('reviews').select('reviewee_id, rating').in('reviewee_id', userIds),
         ]);
 
@@ -290,15 +286,13 @@ const TaskDetailPage = () => {
         toast.success(t('proposal.accepted'));
 
           // Send WhatsApp to tasker about being hired
-          if (proposal?.profile?.phone) {
-            supabase.functions.invoke('send-whatsapp', {
-              body: {
-                type: 'tasker_hired',
-                phone: proposal.profile.phone,
-                task_id: id,
-              },
-            }).catch(console.error);
-          }
+          supabase.functions.invoke('send-whatsapp', {
+            body: {
+              type: 'tasker_hired',
+              user_id: proposal?.user_id,
+              task_id: id,
+            },
+          }).catch(console.error);
       } else {
         toast.success(t('proposal.rejected'));
       }
