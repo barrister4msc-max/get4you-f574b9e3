@@ -32,7 +32,7 @@ const TaskDetailPage = () => {
   const { user } = useAuth();
   const [task, setTask] = useState<any>(null);
   const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
-  const [assignedProfile, setAssignedProfile] = useState<{ display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null; phone: string | null } | null>(null);
+  const [assignedProfile, setAssignedProfile] = useState<{ display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null>(null);
   const [assignedRating, setAssignedRating] = useState<{ avg: number | null; count: number }>({ avg: null, count: 0 });
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
