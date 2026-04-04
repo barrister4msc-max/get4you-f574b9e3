@@ -20,7 +20,7 @@ interface Proposal {
   status: 'pending' | 'accepted' | 'rejected';
   currency: string | null;
   created_at: string;
-  profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null; phone: string | null } | null;
+  profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null;
   avgRating?: number | null;
   reviewCount?: number;
 }
