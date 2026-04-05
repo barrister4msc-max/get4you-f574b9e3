@@ -6,6 +6,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from 'lucide-react';
+import type { Locale } from '@/i18n/translations';
 
 interface TaskRow {
   id: string;
@@ -28,6 +29,18 @@ interface TaskRow {
   categories?: { name_en: string; name_ru: string | null; name_he: string | null } | null;
 }
 
+interface TranslatedTaskCopy {
+  title: string;
+  description: string | null;
+}
+
+interface TaskTranslationResult extends TranslatedTaskCopy {
+  id: string;
+}
+
+const getTaskTranslationKey = (locale: Locale, task: Pick<TaskRow, 'id' | 'title' | 'description'>) =>
+  `${locale}:${task.id}:${task.title}:${task.description ?? ''}`;
+
 const urgencyColors: Record<string, string> = {
   normal: 'bg-secondary text-muted-foreground',
   urgent: 'bg-red-50 text-red-600',
@@ -47,7 +60,7 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, distanceKm }: any) => {
+const TaskCard = ({ task, i, currency, t, getCategoryName, showStatus, distanceKm, displayTitle, displayDescription }: any) => {
   const formatPrice = useFormatPrice();
   return (
   <motion.div
@@ -73,9 +86,9 @@ const TaskCard = ({ task, i, locale, currency, t, getCategoryName, showStatus, d
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{task.title}</h3>
-              {task.description && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{task.description}</p>
+              <h3 className="font-semibold text-foreground truncate">{displayTitle}</h3>
+              {displayDescription && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{displayDescription}</p>
               )}
               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                 {(task.city || task.address) && (
@@ -143,6 +156,7 @@ const TasksPage = () => {
   const [tab, setTab] = useState<'all' | 'my'>('all');
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
 
   const isTasker = roles.includes('tasker');
 
@@ -215,7 +229,58 @@ const TasksPage = () => {
     return cat.name_en;
   };
 
+  const getDisplayedTaskCopy = (task: TaskRow): TranslatedTaskCopy => {
+    const translated = translatedTasks[getTaskTranslationKey(locale, task)];
+    return translated || { title: task.title, description: task.description };
+  };
+
   const cities = [...new Set(tasks.map(t => t.city).filter(Boolean))] as string[];
+
+  const tasksForCurrentTab = tab === 'my' ? myTasks : tasks;
+
+  useEffect(() => {
+    const tasksNeedingTranslation = tasksForCurrentTab
+      .filter((task) => task.title || task.description)
+      .filter((task) => !translatedTasks[getTaskTranslationKey(locale, task)]);
+
+    if (tasksNeedingTranslation.length === 0) return;
+
+    let cancelled = false;
+
+    const translateTasks = async () => {
+      const { data, error } = await supabase.functions.invoke('ai-task-assistant', {
+        body: {
+          type: 'translate_tasks',
+          targetLocale: locale,
+          tasks: tasksNeedingTranslation.map(({ id, title, description }) => ({ id, title, description })),
+        },
+      });
+
+      if (cancelled || error || !data?.translations) return;
+
+      setTranslatedTasks((prev) => {
+        const next = { ...prev };
+
+        (data.translations as TaskTranslationResult[]).forEach((translation) => {
+          const originalTask = tasksNeedingTranslation.find((task) => task.id === translation.id);
+          if (!originalTask) return;
+
+          next[getTaskTranslationKey(locale, originalTask)] = {
+            title: translation.title || originalTask.title,
+            description: translation.description ?? originalTask.description,
+          };
+        });
+
+        return next;
+      });
+    };
+
+    translateTasks().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, tasksForCurrentTab, translatedTasks]);
 
   const getTaskDistance = (task: TaskRow): number | null => {
     if (!userCoords || !task.latitude || !task.longitude) return null;
@@ -224,7 +289,13 @@ const TasksPage = () => {
 
   const filtered = tasks.filter((task) => {
     if (filterCat && task.category_id !== filterCat) return false;
-    if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search) {
+      const displayedCopy = getDisplayedTaskCopy(task);
+      const query = search.toLowerCase();
+      const matches = [task.title, task.description || '', displayedCopy.title, displayedCopy.description || '']
+        .some((value) => value.toLowerCase().includes(query));
+      if (!matches) return false;
+    }
     if (filterCity && task.city !== filterCity) return false;
     const budget = task.budget_fixed || task.budget_min || 0;
     if (filterBudgetMin && budget < Number(filterBudgetMin)) return false;
@@ -423,12 +494,13 @@ const TasksPage = () => {
               key={task.id}
               task={task}
               i={i}
-              locale={locale}
               currency={currency}
               t={t}
               getCategoryName={getCategoryName}
               showStatus={tab === 'my'}
               distanceKm={tab === 'all' ? getTaskDistance(task) : null}
+              displayTitle={getDisplayedTaskCopy(task).title}
+              displayDescription={getDisplayedTaskCopy(task).description}
             />
           ))}
         </div>

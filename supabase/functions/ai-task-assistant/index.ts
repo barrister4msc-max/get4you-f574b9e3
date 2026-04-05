@@ -12,7 +12,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, type } = await req.json();
+    const { messages = [], type, tasks = [], targetLocale } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -61,13 +61,29 @@ Given a task description, you must determine:
 4. Suggested urgency: flexible, soon, or urgent
 
 You MUST respond using the provided tool/function.`,
+
+      translate_tasks: `You translate marketplace task listings.
+Translate every task title and description into the requested target locale.
+Preserve meaning, tone, names, addresses, and numbers.
+If text is already in the target language, keep it natural.
+You MUST respond using the provided tool/function.`,
     };
+
+    const promptMessages = type === "translate_tasks"
+      ? [{
+          role: "user",
+          content: JSON.stringify({
+            target_locale: targetLocale,
+            tasks,
+          }),
+        }]
+      : messages;
 
     const body: Record<string, unknown> = {
       model: "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: systemPrompts[type] || systemPrompts.assist },
-        ...messages,
+        ...promptMessages,
       ],
     };
 
@@ -95,6 +111,38 @@ You MUST respond using the provided tool/function.`,
         },
       ];
       body.tool_choice = { type: "function", function: { name: "categorize_task" } };
+      body.stream = false;
+    } else if (type === "translate_tasks") {
+      body.tools = [
+        {
+          type: "function",
+          function: {
+            name: "translate_tasks",
+            description: "Translate task titles and descriptions into the requested language",
+            parameters: {
+              type: "object",
+              properties: {
+                translations: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      id: { type: "string" },
+                      title: { type: "string" },
+                      description: { type: ["string", "null"] },
+                    },
+                    required: ["id", "title", "description"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ["translations"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ];
+      body.tool_choice = { type: "function", function: { name: "translate_tasks" } };
       body.stream = false;
     } else {
       body.stream = true;
@@ -127,7 +175,7 @@ You MUST respond using the provided tool/function.`,
       });
     }
 
-    if (type === "categorize") {
+    if (type === "categorize" || type === "translate_tasks") {
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       if (toolCall) {
@@ -136,7 +184,7 @@ You MUST respond using the provided tool/function.`,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: "No categorization result" }), {
+      return new Response(JSON.stringify({ error: type === "categorize" ? "No categorization result" : "No translation result" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
