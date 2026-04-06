@@ -230,6 +230,10 @@ const TasksPage = () => {
     return cat.name_en;
   };
 
+  const cities = [...new Set(tasks.map(t => t.city).filter(Boolean))] as string[];
+
+  const tasksForCurrentTab = tab === 'my' ? myTasks : tasks;
+
   const getDisplayedTaskCopy = (task: TaskRow): TranslatedTaskCopy => {
     const key = makeKey(locale, task.id);
     const inState = translatedTasks[key];
