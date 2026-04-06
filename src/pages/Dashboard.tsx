@@ -89,6 +89,38 @@ const DashboardPage = () => {
     fetchAll();
   }, [user]);
 
+  // Translate all visible task titles
+  useEffect(() => {
+    const allTitles: { id: string; title: string; description: string | null }[] = [];
+    const addUnique = (id: string, title: string) => {
+      if (!allTitles.find(t => t.id === id)) allTitles.push({ id, title, description: null });
+    };
+    myTasks.forEach(t => addUnique(t.id, t.title));
+    assignedTasks.forEach(t => addUnique(t.id, t.title));
+    myProposals.forEach(p => { if (p.task?.title) addUnique(p.task_id, p.task.title); });
+    allEscrow.forEach((e, i) => { if (e.task?.title) addUnique(`escrow-${i}`, e.task.title); });
+
+    const needTranslation = allTitles.filter(t => !translatedTitles[`${locale}:${t.id}`]);
+    if (needTranslation.length === 0) return;
+
+    let cancelled = false;
+    const doTranslate = async () => {
+      const { data, error } = await supabase.functions.invoke('ai-task-assistant', {
+        body: { type: 'translate_tasks', targetLocale: locale, tasks: needTranslation },
+      });
+      if (cancelled || error || !data?.translations) return;
+      setTranslatedTitles(prev => {
+        const next = { ...prev };
+        data.translations.forEach((tr: any) => { next[`${locale}:${tr.id}`] = tr.title; });
+        return next;
+      });
+    };
+    doTranslate().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [locale, myTasks, assignedTasks, myProposals, allEscrow]);
+
+  const tt = (id: string, original: string) => translatedTitles[`${locale}:${id}`] || original;
+
   const totalEarnings = escrowData.reduce((sum, e) => sum + Number(e.net_amount), 0);
   const pendingEarnings = allEscrow.filter(e => e.status === 'held').reduce((sum, e) => sum + Number(e.net_amount), 0);
   const avgRating = reviews.length > 0
