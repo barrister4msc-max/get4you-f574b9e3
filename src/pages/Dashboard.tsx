@@ -42,13 +42,14 @@ const statusBadge = (status: string) => {
 };
 
 const DashboardPage = () => {
-  const { t, currency } = useLanguage();
+  const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<Tab>('myTasks');
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [assignedTasks, setAssignedTasks] = useState<MyTaskRow[]>([]);
   const [myProposals, setMyProposals] = useState<ProposalRow[]>([]);
   const [escrowData, setEscrowData] = useState<EscrowRow[]>([]);
@@ -87,6 +88,38 @@ const DashboardPage = () => {
     };
     fetchAll();
   }, [user]);
+
+  // Translate all visible task titles
+  useEffect(() => {
+    const allTitles: { id: string; title: string; description: string | null }[] = [];
+    const addUnique = (id: string, title: string) => {
+      if (!allTitles.find(t => t.id === id)) allTitles.push({ id, title, description: null });
+    };
+    myTasks.forEach(t => addUnique(t.id, t.title));
+    assignedTasks.forEach(t => addUnique(t.id, t.title));
+    myProposals.forEach(p => { if (p.task?.title) addUnique(p.task_id, p.task.title); });
+    allEscrow.forEach((e, i) => { if (e.task?.title) addUnique(`escrow-${i}`, e.task.title); });
+
+    const needTranslation = allTitles.filter(t => !translatedTitles[`${locale}:${t.id}`]);
+    if (needTranslation.length === 0) return;
+
+    let cancelled = false;
+    const doTranslate = async () => {
+      const { data, error } = await supabase.functions.invoke('ai-task-assistant', {
+        body: { type: 'translate_tasks', targetLocale: locale, tasks: needTranslation },
+      });
+      if (cancelled || error || !data?.translations) return;
+      setTranslatedTitles(prev => {
+        const next = { ...prev };
+        data.translations.forEach((tr: any) => { next[`${locale}:${tr.id}`] = tr.title; });
+        return next;
+      });
+    };
+    doTranslate().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [locale, myTasks, assignedTasks, myProposals, allEscrow]);
+
+  const tt = (id: string, original: string) => translatedTitles[`${locale}:${id}`] || original;
 
   const totalEarnings = escrowData.reduce((sum, e) => sum + Number(e.net_amount), 0);
   const pendingEarnings = allEscrow.filter(e => e.status === 'held').reduce((sum, e) => sum + Number(e.net_amount), 0);
@@ -188,7 +221,7 @@ const DashboardPage = () => {
                   <Link key={task.id} to={`/tasks/${task.id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all mb-2">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm truncate">{task.title}</h3>
+                        <h3 className="font-semibold text-sm truncate">{tt(task.id, task.title)}</h3>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(task.status || 'draft')}`}>{t(`tasks.status.${task.status || 'draft'}`)}</span>
                       </div>
                       <div className="text-primary font-bold text-sm">{formatPrice(task.budget_fixed || task.budget_min || 0, currency, task.currency)}</div>
@@ -208,7 +241,7 @@ const DashboardPage = () => {
               <Link key={task.id} to={`/tasks/${task.id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{task.title}</h3>
+                    <h3 className="font-semibold text-sm truncate">{tt(task.id, task.title)}</h3>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(task.status || 'draft')}`}>{t(`tasks.status.${task.status || 'draft'}`)}</span>
                       <span className="text-xs text-muted-foreground">{new Date(task.created_at).toLocaleDateString()}</span>
@@ -249,7 +282,7 @@ const DashboardPage = () => {
               <Link key={p.id} to={`/tasks/${p.task_id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{p.task?.title || '—'}</h3>
+                    <h3 className="font-semibold text-sm truncate">{tt(p.task_id, p.task?.title || '—')}</h3>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(p.status)}`}>{t(`proposal.status.${p.status}`)}</span>
                       <span className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
@@ -318,7 +351,7 @@ const DashboardPage = () => {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm truncate">{e.task?.title || '—'}</p>
+                          <p className="text-sm truncate">{tt(`escrow-${i}`, e.task?.title || '—')}</p>
                           <p className="text-xs text-muted-foreground">
                             {t(e.status === 'released' ? 'balance.transaction.released' : 'balance.transaction.held')}
                             {' · '}
