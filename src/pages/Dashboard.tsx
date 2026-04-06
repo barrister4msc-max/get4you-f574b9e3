@@ -42,13 +42,14 @@ const statusBadge = (status: string) => {
 };
 
 const DashboardPage = () => {
-  const { t, currency } = useLanguage();
+  const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState<Tab>('myTasks');
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
+  const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
   const [assignedTasks, setAssignedTasks] = useState<MyTaskRow[]>([]);
   const [myProposals, setMyProposals] = useState<ProposalRow[]>([]);
   const [escrowData, setEscrowData] = useState<EscrowRow[]>([]);

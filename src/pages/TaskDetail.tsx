@@ -393,9 +393,9 @@ const TaskDetailPage = () => {
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">{task.title}</h1>
-              {task.description && (
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{task.description}</p>
+              <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
+              {(translatedDescription ?? task.description) && (
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{translatedDescription ?? task.description}</p>
               )}
 
               <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
