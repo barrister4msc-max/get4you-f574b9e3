@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
