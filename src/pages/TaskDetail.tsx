@@ -95,6 +95,28 @@ const TaskDetailPage = () => {
     fetchTask();
   }, [id]);
 
+  // Translate task title & description when locale changes
+  useEffect(() => {
+    if (!task) return;
+    setTranslatedTitle(null);
+    setTranslatedDescription(null);
+    let cancelled = false;
+    const doTranslate = async () => {
+      const { data, error } = await supabase.functions.invoke('ai-task-assistant', {
+        body: {
+          type: 'translate_tasks',
+          targetLocale: locale,
+          tasks: [{ id: task.id, title: task.title, description: task.description }],
+        },
+      });
+      if (cancelled || error || !data?.translations?.[0]) return;
+      setTranslatedTitle(data.translations[0].title || task.title);
+      setTranslatedDescription(data.translations[0].description ?? task.description);
+    };
+    doTranslate().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [task?.id, task?.title, task?.description, locale]);
+
   // Fetch proposals with profiles and ratings
   useEffect(() => {
     const fetchProposals = async () => {
