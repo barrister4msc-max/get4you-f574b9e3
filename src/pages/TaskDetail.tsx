@@ -4,6 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
+import { getCachedTranslation, setCachedTranslations } from '@/lib/translationCache';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
