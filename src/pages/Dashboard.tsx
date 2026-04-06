@@ -282,7 +282,7 @@ const DashboardPage = () => {
               <Link key={p.id} to={`/tasks/${p.task_id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{p.task?.title || '—'}</h3>
+                    <h3 className="font-semibold text-sm truncate">{tt(p.task_id, p.task?.title || '—')}</h3>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(p.status)}`}>{t(`proposal.status.${p.status}`)}</span>
                       <span className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
