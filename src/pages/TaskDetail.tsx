@@ -4,6 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
+import { getCachedTranslation, setCachedTranslations } from '@/lib/translationCache';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -98,6 +99,13 @@ const TaskDetailPage = () => {
   // Translate task title & description when locale changes
   useEffect(() => {
     if (!task) return;
+    // Check cache first
+    const cached = getCachedTranslation(locale, task.id);
+    if (cached) {
+      setTranslatedTitle(cached.title);
+      setTranslatedDescription(cached.description);
+      return;
+    }
     setTranslatedTitle(null);
     setTranslatedDescription(null);
     let cancelled = false;
@@ -110,8 +118,10 @@ const TaskDetailPage = () => {
         },
       });
       if (cancelled || error || !data?.translations?.[0]) return;
-      setTranslatedTitle(data.translations[0].title || task.title);
-      setTranslatedDescription(data.translations[0].description ?? task.description);
+      const tr = data.translations[0];
+      setCachedTranslations(locale, [{ id: tr.id, title: tr.title || task.title, description: tr.description ?? task.description }]);
+      setTranslatedTitle(tr.title || task.title);
+      setTranslatedDescription(tr.description ?? task.description);
     };
     doTranslate().catch(() => undefined);
     return () => { cancelled = true; };
