@@ -54,6 +54,10 @@ const TaskDetailPage = () => {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [pendingAcceptProposalId, setPendingAcceptProposalId] = useState<string | null>(null);
 
+  // Translation state
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
+  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id);
 
