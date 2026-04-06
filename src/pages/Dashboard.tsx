@@ -101,7 +101,19 @@ const DashboardPage = () => {
     myProposals.forEach(p => { if (p.task?.title) addUnique(p.task_id, p.task.title); });
     allEscrow.forEach((e, i) => { if (e.task?.title) addUnique(`escrow-${i}`, e.task.title); });
 
-    const needTranslation = allTitles.filter(t => !translatedTitles[`${locale}:${t.id}`]);
+    // Load from cache first
+    const fromCache: Record<string, string> = {};
+    const needTranslation = allTitles.filter(t => {
+      if (translatedTitles[makeKey(locale, t.id)]) return false;
+      const cached = getCachedTranslation(locale, t.id);
+      if (cached) { fromCache[makeKey(locale, t.id)] = cached.title; return false; }
+      return true;
+    });
+
+    if (Object.keys(fromCache).length > 0) {
+      setTranslatedTitles(prev => ({ ...prev, ...fromCache }));
+    }
+
     if (needTranslation.length === 0) return;
 
     let cancelled = false;
@@ -110,9 +122,10 @@ const DashboardPage = () => {
         body: { type: 'translate_tasks', targetLocale: locale, tasks: needTranslation },
       });
       if (cancelled || error || !data?.translations) return;
+      setCachedTranslations(locale, data.translations);
       setTranslatedTitles(prev => {
         const next = { ...prev };
-        data.translations.forEach((tr: any) => { next[`${locale}:${tr.id}`] = tr.title; });
+        data.translations.forEach((tr: any) => { next[makeKey(locale, tr.id)] = tr.title; });
         return next;
       });
     };
@@ -120,7 +133,7 @@ const DashboardPage = () => {
     return () => { cancelled = true; };
   }, [locale, myTasks, assignedTasks, myProposals, allEscrow]);
 
-  const tt = (id: string, original: string) => translatedTitles[`${locale}:${id}`] || original;
+  const tt = (id: string, original: string) => translatedTitles[makeKey(locale, id)] || original;
 
   const totalEarnings = escrowData.reduce((sum, e) => sum + Number(e.net_amount), 0);
   const pendingEarnings = allEscrow.filter(e => e.status === 'held').reduce((sum, e) => sum + Number(e.net_amount), 0);

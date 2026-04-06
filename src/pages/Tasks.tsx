@@ -39,8 +39,6 @@ interface TaskTranslationResult extends TranslatedTaskCopy {
   id: string;
 }
 
-const getTaskTranslationKey = (locale: Locale, task: Pick<TaskRow, 'id' | 'title' | 'description'>) =>
-  `${locale}:${task.id}:${task.title}:${task.description ?? ''}`;
 
 const urgencyColors: Record<string, string> = {
   normal: 'bg-secondary text-muted-foreground',
