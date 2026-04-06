@@ -231,18 +231,21 @@ const TasksPage = () => {
   };
 
   const getDisplayedTaskCopy = (task: TaskRow): TranslatedTaskCopy => {
-    const translated = translatedTasks[getTaskTranslationKey(locale, task)];
-    return translated || { title: task.title, description: task.description };
+    const key = makeKey(locale, task.id);
+    const inState = translatedTasks[key];
+    if (inState) return inState;
+    const cached = getCachedTranslation(locale, task.id);
+    if (cached) return { title: cached.title, description: cached.description };
+    return { title: task.title, description: task.description };
   };
-
-  const cities = [...new Set(tasks.map(t => t.city).filter(Boolean))] as string[];
-
-  const tasksForCurrentTab = tab === 'my' ? myTasks : tasks;
 
   useEffect(() => {
     const tasksNeedingTranslation = tasksForCurrentTab
       .filter((task) => task.title || task.description)
-      .filter((task) => !translatedTasks[getTaskTranslationKey(locale, task)]);
+      .filter((task) => {
+        const key = makeKey(locale, task.id);
+        return !translatedTasks[key] && !getCachedTranslation(locale, task.id);
+      });
 
     if (tasksNeedingTranslation.length === 0) return;
 
@@ -259,19 +262,19 @@ const TasksPage = () => {
 
       if (cancelled || error || !data?.translations) return;
 
+      const translations = data.translations as TaskTranslationResult[];
+      setCachedTranslations(locale, translations);
+
       setTranslatedTasks((prev) => {
         const next = { ...prev };
-
-        (data.translations as TaskTranslationResult[]).forEach((translation) => {
+        translations.forEach((translation) => {
           const originalTask = tasksNeedingTranslation.find((task) => task.id === translation.id);
           if (!originalTask) return;
-
-          next[getTaskTranslationKey(locale, originalTask)] = {
+          next[makeKey(locale, originalTask.id)] = {
             title: translation.title || originalTask.title,
             description: translation.description ?? originalTask.description,
           };
         });
-
         return next;
       });
     };
