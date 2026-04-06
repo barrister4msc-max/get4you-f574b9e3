@@ -351,7 +351,7 @@ const DashboardPage = () => {
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm truncate">{e.task?.title || '—'}</p>
+                          <p className="text-sm truncate">{tt(`escrow-${i}`, e.task?.title || '—')}</p>
                           <p className="text-xs text-muted-foreground">
                             {t(e.status === 'released' ? 'balance.transaction.released' : 'balance.transaction.held')}
                             {' · '}
