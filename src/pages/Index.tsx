@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
+import { useRef } from 'react';
 import heroImage from '@/assets/hero-image.jpg';
 
 const categoryIcons = [
