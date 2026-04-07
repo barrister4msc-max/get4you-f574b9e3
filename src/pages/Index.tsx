@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
+import { useRef } from 'react';
 import heroImage from '@/assets/hero-image.jpg';
 
 const categoryIcons = [
@@ -29,17 +30,21 @@ const IndexPage = () => {
   const { t } = useLanguage();
   const { user, roles } = useAuth();
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const imgY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
 
   return (
     <div>
-      {/* Hero — full-screen with background image & dark overlay */}
-      <section className="relative min-h-[100svh] flex items-center overflow-hidden">
-        {/* Background image */}
-        <img
+      {/* Hero — full-screen with background image, dark overlay & parallax */}
+      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden">
+        {/* Background image with parallax */}
+        <motion.img
           src={heroImage}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover"
+          style={{ y: imgY }}
+          className="absolute inset-0 w-full h-full object-cover scale-110"
         />
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/60" />
