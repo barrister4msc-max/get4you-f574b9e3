@@ -241,6 +241,22 @@ const TasksPage = () => {
     return { title: task.title, description: task.description };
   };
 
+  // Pre-seed state from localStorage cache whenever locale or tasks change
+  useEffect(() => {
+    const fromCache: Record<string, TranslatedTaskCopy> = {};
+    for (const task of tasksForCurrentTab) {
+      const key = makeKey(locale, task.id);
+      if (!translatedTasks[key]) {
+        const cached = getCachedTranslation(locale, task.id);
+        if (cached) fromCache[key] = { title: cached.title, description: cached.description };
+      }
+    }
+    if (Object.keys(fromCache).length > 0) {
+      setTranslatedTasks(prev => ({ ...prev, ...fromCache }));
+    }
+  }, [locale, tasksForCurrentTab]);
+
+  // Fetch translations for tasks not in cache
   useEffect(() => {
     const tasksNeedingTranslation = tasksForCurrentTab
       .filter((task) => task.title || task.description)
@@ -286,7 +302,7 @@ const TasksPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [locale, tasksForCurrentTab, translatedTasks]);
+  }, [locale, tasksForCurrentTab]);
 
   const getTaskDistance = (task: TaskRow): number | null => {
     if (!userCoords || !task.latitude || !task.longitude) return null;

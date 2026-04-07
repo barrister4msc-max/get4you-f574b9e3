@@ -90,7 +90,31 @@ const DashboardPage = () => {
     fetchAll();
   }, [user]);
 
-  // Translate all visible task titles
+  // Pre-seed translations from localStorage cache
+  useEffect(() => {
+    const allTitles: { id: string; title: string }[] = [];
+    const addUnique = (id: string, title: string) => {
+      if (!allTitles.find(t => t.id === id)) allTitles.push({ id, title });
+    };
+    myTasks.forEach(t => addUnique(t.id, t.title));
+    assignedTasks.forEach(t => addUnique(t.id, t.title));
+    myProposals.forEach(p => { if (p.task?.title) addUnique(p.task_id, p.task.title); });
+    allEscrow.forEach((e, i) => { if (e.task?.title) addUnique(`escrow-${i}`, e.task.title); });
+
+    const fromCache: Record<string, string> = {};
+    for (const t of allTitles) {
+      const key = makeKey(locale, t.id);
+      if (!translatedTitles[key]) {
+        const cached = getCachedTranslation(locale, t.id);
+        if (cached) fromCache[key] = cached.title;
+      }
+    }
+    if (Object.keys(fromCache).length > 0) {
+      setTranslatedTitles(prev => ({ ...prev, ...fromCache }));
+    }
+  }, [locale, myTasks, assignedTasks, myProposals, allEscrow]);
+
+  // Fetch missing translations from AI
   useEffect(() => {
     const allTitles: { id: string; title: string; description: string | null }[] = [];
     const addUnique = (id: string, title: string) => {
@@ -101,18 +125,10 @@ const DashboardPage = () => {
     myProposals.forEach(p => { if (p.task?.title) addUnique(p.task_id, p.task.title); });
     allEscrow.forEach((e, i) => { if (e.task?.title) addUnique(`escrow-${i}`, e.task.title); });
 
-    // Load from cache first
-    const fromCache: Record<string, string> = {};
     const needTranslation = allTitles.filter(t => {
-      if (translatedTitles[makeKey(locale, t.id)]) return false;
-      const cached = getCachedTranslation(locale, t.id);
-      if (cached) { fromCache[makeKey(locale, t.id)] = cached.title; return false; }
-      return true;
+      const key = makeKey(locale, t.id);
+      return !translatedTitles[key] && !getCachedTranslation(locale, t.id);
     });
-
-    if (Object.keys(fromCache).length > 0) {
-      setTranslatedTitles(prev => ({ ...prev, ...fromCache }));
-    }
 
     if (needTranslation.length === 0) return;
 
