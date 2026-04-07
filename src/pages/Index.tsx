@@ -44,10 +44,10 @@ const IndexPage = () => {
           alt=""
           aria-hidden="true"
           style={{ y: imgY }}
-          className="absolute inset-0 w-full h-full object-cover scale-110"
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-[2px]"
         />
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        {/* Gradient overlay – light cyan tint */}
+        <div className="absolute inset-0 bg-gradient-to-t from-sky-900/60 via-sky-700/25 to-transparent" />
 
         <div className="container relative z-10 py-20 md:py-28">
           <motion.div
