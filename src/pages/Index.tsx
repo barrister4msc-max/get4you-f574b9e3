@@ -32,63 +32,59 @@ const IndexPage = () => {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-background to-warm-surface" />
-        <div className="container relative py-20 md:py-28">
-          <div className="grid md:grid-cols-[1.2fr_1fr] gap-8 md:gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-                {t('hero.title')}{' '}
-                <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
-              </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-                {t('hero.subtitle')}
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                {!isTaskerOnly && (
-                  <Link
-                    to="/create-task"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
-                  >
-                    {t('hero.cta')}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                )}
+      {/* Hero — full-screen with background image & dark overlay */}
+      <section className="relative min-h-[100svh] flex items-center overflow-hidden">
+        {/* Background image */}
+        <img
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/60" />
+
+        <div className="container relative z-10 py-20 md:py-28">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="max-w-2xl"
+          >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
+              {t('hero.title')}{' '}
+              <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
+            </h1>
+            <p className="mt-6 text-lg text-white/80 max-w-xl leading-relaxed">
+              {t('hero.subtitle')}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              {!isTaskerOnly && (
                 <Link
-                  to="/tasks"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-colors"
+                  to="/create-task"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                 >
-                  {t('hero.browse')}
+                  {t('hero.cta')}
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-              </div>
+              )}
+              <Link
+                to="/tasks"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-white/30 text-white hover:bg-white/10 transition-colors"
+              >
+                {t('hero.browse')}
+              </Link>
+            </div>
 
-              <div className="mt-12 grid grid-cols-3 gap-6">
-                {stats.map((s) => (
-                  <div key={s.key}>
-                    <div className="text-2xl md:text-3xl font-bold text-primary">{s.value}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{t(s.key)}</div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              <img
-                src={heroImage}
-                alt="TaskFlow — professionals helping with everyday tasks"
-                className="w-full rounded-3xl shadow-card-hover"
-              />
-            </motion.div>
-          </div>
+            <div className="mt-12 grid grid-cols-3 gap-6">
+              {stats.map((s) => (
+                <div key={s.key}>
+                  <div className="text-2xl md:text-3xl font-bold text-white">{s.value}</div>
+                  <div className="text-sm text-white/60 mt-1">{t(s.key)}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
