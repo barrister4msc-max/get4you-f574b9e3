@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useRef, useMemo } from 'react';
 import heroImage from '@/assets/hero-image.png';
+import heroImage2 from '@/assets/hero-image-2.jpg';
 
 const sparklePositions = [
   { top: '15%', left: '42%', delay: 0, size: 4 },
@@ -80,46 +81,61 @@ const IndexPage = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,15%,95%,0.6)] via-transparent to-transparent" />
 
         <div className="container relative z-10 py-20 md:py-28">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="max-w-2xl"
-          >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
-              {t('hero.title')}{' '}
-              <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              {t('hero.subtitle')}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              {!isTaskerOnly && (
+          <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="flex-1 max-w-2xl"
+            >
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
+                {t('hero.title')}{' '}
+                <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
+              </h1>
+              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
+                {t('hero.subtitle')}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                {!isTaskerOnly && (
+                  <Link
+                    to="/create-task"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                  >
+                    {t('hero.cta')}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                )}
                 <Link
-                  to="/create-task"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                  to="/tasks"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
                 >
-                  {t('hero.cta')}
-                  <ArrowRight className="w-4 h-4" />
+                  {t('hero.browse')}
                 </Link>
-              )}
-              <Link
-                to="/tasks"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
-              >
-                {t('hero.browse')}
-              </Link>
-            </div>
+              </div>
 
-            <div className="mt-12 grid grid-cols-3 gap-6">
-              {stats.map((s) => (
-                <div key={s.key}>
-                  <div className="text-2xl md:text-3xl font-bold text-foreground">{s.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{t(s.key)}</div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+              <div className="mt-12 grid grid-cols-3 gap-6">
+                {stats.map((s) => (
+                  <div key={s.key}>
+                    <div className="text-2xl md:text-3xl font-bold text-foreground">{s.value}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{t(s.key)}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex-1 hidden md:flex justify-center"
+            >
+              <img
+                src={heroImage2}
+                alt="Get4You services"
+                className="w-full max-w-lg rounded-2xl object-cover"
+              />
+            </motion.div>
+          </div>
         </div>
       </section>
 
