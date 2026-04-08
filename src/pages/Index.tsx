@@ -37,7 +37,7 @@ const IndexPage = () => {
   return (
     <div>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
-      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-[hsl(40,15%,95%)]">
+      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,30%,88%)] via-[hsl(210,20%,85%)] to-[hsl(40,15%,82%)]">
         {/* Phoenix watermark */}
         <motion.div
           style={{ y: imgY }}
@@ -47,7 +47,7 @@ const IndexPage = () => {
           <img
             src={heroImage}
             alt=""
-            className="w-full h-full object-cover mix-blend-multiply opacity-25"
+            className="w-full h-full object-cover mix-blend-multiply opacity-30"
           />
         </motion.div>
         {/* Subtle overlay for text readability */}
