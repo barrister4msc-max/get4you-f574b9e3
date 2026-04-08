@@ -37,21 +37,21 @@ const IndexPage = () => {
   return (
     <div>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
-      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-b from-[hsl(40,30%,90%)] via-[hsl(40,20%,85%)] to-[hsl(210,30%,80%)]">
         {/* Background image with parallax */}
         <motion.div
           style={{ y: imgY }}
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 flex items-end md:items-center justify-center md:justify-end md:pr-[5%]"
           aria-hidden="true"
         >
           <img
             src={heroImage}
             alt=""
-            className="max-w-full max-h-full object-contain"
+            className="h-[60%] md:h-[85%] w-auto object-contain drop-shadow-[0_0_80px_rgba(218,165,32,0.4)] opacity-60 md:opacity-100"
           />
         </motion.div>
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(210,40%,15%,0.45)] via-[hsl(210,50%,30%,0.15)] to-[hsl(210,60%,70%,0.05)]" />
+        {/* Subtle overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[hsl(210,20%,15%,0.65)] via-[hsl(210,20%,15%,0.35)] to-transparent" />
 
         <div className="container relative z-10 py-20 md:py-28">
           <motion.div
