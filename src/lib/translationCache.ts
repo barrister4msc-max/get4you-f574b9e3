@@ -58,7 +58,8 @@ export function isTranslatedCopyUsable(
   if (hasExpectedScript(locale, translatedText)) return true;
 
   const originalText = `${originalTitle ?? ''} ${originalDescription ?? ''}`.trim();
-  return Boolean(originalText) && hasExpectedScript(locale, originalText);
+  const matchesOriginal = copy.title === originalTitle && (copy.description ?? '') === (originalDescription ?? '');
+  return matchesOriginal && Boolean(originalText) && hasExpectedScript(locale, originalText);
 }
 
 export function makeKey(locale: string, taskId: string): string {
