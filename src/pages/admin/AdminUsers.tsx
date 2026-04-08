@@ -66,6 +66,7 @@ export default function AdminUsers() {
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="font-medium">{u.display_name || '—'}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{u.email || '—'}</TableCell>
                 <TableCell>{u.phone || '—'}</TableCell>
                 <TableCell>{u.city || '—'}</TableCell>
                 <TableCell>
