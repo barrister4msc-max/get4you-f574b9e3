@@ -53,7 +53,7 @@ const IndexPage = () => {
   return (
     <div>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
-      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,30%,88%)] via-[hsl(210,20%,85%)] to-[hsl(40,15%,82%)]">
+      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,35%,72%)] via-[hsl(200,28%,68%)] to-[hsl(40,20%,70%)]">
         {/* Phoenix watermark */}
         <div className="absolute inset-0 flex items-center justify-start md:pl-32" aria-hidden="true">
           <img

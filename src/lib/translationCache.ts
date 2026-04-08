@@ -42,7 +42,14 @@ function writeCache(cache: Cache) {
 
 function hasExpectedScript(locale: string, value: string): boolean {
   const matcher = localeScriptMatchers[locale];
-  return matcher ? matcher.test(value) : true;
+  if (!matcher) return true;
+  // Count how many alphabetic characters match the expected script
+  const alphaChars = value.replace(/[\d\s\p{P}\p{S}]/gu, '');
+  if (alphaChars.length === 0) return true;
+  const matches = alphaChars.match(new RegExp(matcher.source, matcher.flags + (matcher.flags.includes('g') ? '' : 'g')));
+  const matchCount = matches ? matches.join('').length : 0;
+  // At least 50% of alphabetic characters should be in the expected script
+  return matchCount / alphaChars.length >= 0.5;
 }
 
 export function isTranslatedCopyUsable(
