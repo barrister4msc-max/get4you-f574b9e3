@@ -41,17 +41,17 @@ const IndexPage = () => {
         {/* Background image with parallax */}
         <motion.div
           style={{ y: imgY }}
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 flex items-end md:items-center justify-center md:justify-end md:pr-[5%]"
           aria-hidden="true"
         >
           <img
             src={heroImage}
             alt=""
-            className="h-[85%] w-auto object-contain drop-shadow-[0_0_80px_rgba(218,165,32,0.4)]"
+            className="h-[60%] md:h-[85%] w-auto object-contain drop-shadow-[0_0_80px_rgba(218,165,32,0.4)] opacity-60 md:opacity-100"
           />
         </motion.div>
         {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(210,20%,15%,0.55)] via-[hsl(210,20%,15%,0.25)] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[hsl(210,20%,15%,0.65)] via-[hsl(210,20%,15%,0.35)] to-transparent" />
 
         <div className="container relative z-10 py-20 md:py-28">
           <motion.div
