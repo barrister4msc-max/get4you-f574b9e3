@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,14 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Download, Search } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search } from 'lucide-react';
 import { exportToCsv } from '@/lib/exportCsv';
+
+type SortKey = 'user_number' | 'display_name' | 'email' | 'phone' | 'city' | 'created_at';
+type SortDir = 'asc' | 'desc';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('created_at');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const load = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
@@ -39,15 +44,37 @@ export default function AdminUsers() {
     load();
   };
 
-  const filtered = users.filter((u) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      (u.email || '').toLowerCase().includes(q) ||
-      (u.display_name || '').toLowerCase().includes(q) ||
-      String(u.user_number || '').includes(q)
-    );
-  });
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
+
+  const filtered = useMemo(() => {
+    let list = users;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((u) =>
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.display_name || '').toLowerCase().includes(q) ||
+        String(u.user_number || '').includes(q)
+      );
+    }
+    return [...list].sort((a, b) => {
+      const av = a[sortKey] ?? '';
+      const bv = b[sortKey] ?? '';
+      const cmp = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [users, search, sortKey, sortDir]);
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
@@ -71,17 +98,29 @@ export default function AdminUsers() {
           className="pl-9"
         />
       </div>
-      <div className="rounded-lg border border-border bg-card">
+      <div className="rounded-lg border border-border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>{t('admin.name')}</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>{t('admin.phone')}</TableHead>
-              <TableHead>{t('admin.city')}</TableHead>
+              <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('user_number')}>
+                <span className="inline-flex items-center">ID<SortIcon col="user_number" /></span>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('display_name')}>
+                <span className="inline-flex items-center">{t('admin.name')}<SortIcon col="display_name" /></span>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('email')}>
+                <span className="inline-flex items-center">Email<SortIcon col="email" /></span>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('phone')}>
+                <span className="inline-flex items-center">{t('admin.phone')}<SortIcon col="phone" /></span>
+              </TableHead>
+              <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('city')}>
+                <span className="inline-flex items-center">{t('admin.city')}<SortIcon col="city" /></span>
+              </TableHead>
               <TableHead>{t('admin.roles')}</TableHead>
-              <TableHead>{t('admin.date')}</TableHead>
+              <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort('created_at')}>
+                <span className="inline-flex items-center">{t('admin.date')}<SortIcon col="created_at" /></span>
+              </TableHead>
               <TableHead>{t('admin.actions')}</TableHead>
             </TableRow>
           </TableHeader>
