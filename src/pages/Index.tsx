@@ -39,13 +39,17 @@ const IndexPage = () => {
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden">
         {/* Background image with parallax */}
-        <motion.img
-          src={heroImage}
-          alt=""
-          aria-hidden="true"
+        <motion.div
           style={{ y: imgY }}
-          className="absolute inset-0 w-full h-full object-cover scale-110"
-        />
+          className="absolute inset-0 flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <img
+            src={heroImage}
+            alt=""
+            className="max-w-full max-h-full object-contain"
+          />
+        </motion.div>
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[hsl(210,40%,15%,0.45)] via-[hsl(210,50%,30%,0.15)] to-[hsl(210,60%,70%,0.05)]" />
 
