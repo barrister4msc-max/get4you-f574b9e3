@@ -55,7 +55,20 @@ const IndexPage = () => {
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,35%,72%)] via-[hsl(200,28%,68%)] to-[hsl(40,20%,70%)]">
         {/* Phoenix watermark */}
-        <div className="absolute inset-0 flex items-center justify-start md:pl-32" aria-hidden="true">
+        <motion.div
+          className="absolute inset-0 flex items-center justify-start md:pl-32"
+          aria-hidden="true"
+          animate={{
+            y: [0, -12, 0],
+            rotate: [0, 1.5, 0, -1.5, 0],
+            scale: [1, 1.02, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        >
           <img
             src={heroImage}
             alt=""
@@ -64,7 +77,7 @@ const IndexPage = () => {
             className="h-[85%] w-auto max-w-none object-contain opacity-30"
             style={{ mask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)', WebkitMask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)' }}
           />
-        </div>
+        </motion.div>
         {/* Sparkles */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           {sparklePositions.map((s, i) => (
