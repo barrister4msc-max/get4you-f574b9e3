@@ -45,7 +45,7 @@ const IndexPage = () => {
             alt=""
             width={1024}
             height={1024}
-            className="h-[80%] w-auto object-contain opacity-20"
+            className="h-[80%] w-auto object-contain opacity-40"
           />
         </div>
         {/* Subtle overlay for text readability */}
