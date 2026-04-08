@@ -6,8 +6,23 @@ import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import heroImage from '@/assets/hero-image.png';
+
+const sparklePositions = [
+  { top: '15%', left: '42%', delay: 0, size: 4 },
+  { top: '25%', left: '55%', delay: 0.8, size: 3 },
+  { top: '20%', left: '38%', delay: 1.5, size: 5 },
+  { top: '35%', left: '60%', delay: 0.3, size: 3 },
+  { top: '40%', left: '45%', delay: 2.1, size: 4 },
+  { top: '30%', left: '50%', delay: 1.2, size: 3 },
+  { top: '50%', left: '48%', delay: 0.6, size: 5 },
+  { top: '55%', left: '53%', delay: 1.8, size: 3 },
+  { top: '18%', left: '58%', delay: 2.5, size: 4 },
+  { top: '45%', left: '40%', delay: 0.4, size: 3 },
+  { top: '60%', left: '52%', delay: 1.0, size: 4 },
+  { top: '22%', left: '48%', delay: 2.8, size: 5 },
+];
 
 const categoryIcons = [
   { key: 'cleaning', icon: Sparkles },
@@ -45,9 +60,21 @@ const IndexPage = () => {
             alt=""
             width={1024}
             height={1024}
-            className="h-[85%] w-auto max-w-none object-contain mix-blend-luminosity opacity-30"
+            className="h-[85%] w-auto max-w-none object-contain opacity-30"
             style={{ mask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)', WebkitMask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)' }}
           />
+        </div>
+        {/* Sparkles */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {sparklePositions.map((s, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-[hsl(42,80%,65%)]"
+              style={{ top: s.top, left: s.left, width: s.size, height: s.size }}
+              animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+              transition={{ duration: 2.5, repeat: Infinity, delay: s.delay, ease: 'easeInOut' }}
+            />
+          ))}
         </div>
         {/* Subtle overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,15%,95%,0.6)] via-transparent to-transparent" />
