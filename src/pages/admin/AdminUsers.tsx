@@ -44,7 +44,8 @@ export default function AdminUsers() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">{t('admin.users')} ({users.length})</h1>
         <Button variant="outline" size="sm" onClick={() => exportToCsv('users.csv', users, [
-          { key: 'display_name', label: t('admin.name') }, { key: 'phone', label: t('admin.phone') },
+          { key: 'display_name', label: t('admin.name') }, { key: 'email', label: 'Email' },
+          { key: 'phone', label: t('admin.phone') },
           { key: 'city', label: t('admin.city') }, { key: 'roles', label: t('admin.roles') },
           { key: 'created_at', label: t('admin.date') },
         ])}><Download className="w-4 h-4 mr-2" />CSV</Button>
@@ -54,6 +55,7 @@ export default function AdminUsers() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('admin.name')}</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>{t('admin.phone')}</TableHead>
               <TableHead>{t('admin.city')}</TableHead>
               <TableHead>{t('admin.roles')}</TableHead>
@@ -65,6 +67,7 @@ export default function AdminUsers() {
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="font-medium">{u.display_name || '—'}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{u.email || '—'}</TableCell>
                 <TableCell>{u.phone || '—'}</TableCell>
                 <TableCell>{u.city || '—'}</TableCell>
                 <TableCell>

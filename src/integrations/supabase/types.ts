@@ -508,6 +508,7 @@ export type Database = {
           city: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           latitude: number | null
           longitude: number | null
@@ -524,6 +525,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
@@ -540,6 +542,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
