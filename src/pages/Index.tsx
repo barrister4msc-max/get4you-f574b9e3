@@ -37,8 +37,8 @@ const IndexPage = () => {
   return (
     <div>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
-      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-[hsl(40,20%,88%)]">
-        {/* Background image — blended seamlessly */}
+      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-[hsl(40,15%,95%)]">
+        {/* Phoenix watermark */}
         <motion.div
           style={{ y: imgY }}
           className="absolute inset-0"
@@ -47,11 +47,11 @@ const IndexPage = () => {
           <img
             src={heroImage}
             alt=""
-            className="w-full h-full object-cover mix-blend-multiply"
+            className="w-full h-full object-cover mix-blend-multiply opacity-25"
           />
         </motion.div>
         {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,20%,88%,0.9)] via-[hsl(40,20%,88%,0.4)] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,15%,95%,0.6)] via-transparent to-transparent" />
 
         <div className="container relative z-10 py-20 md:py-28">
           <motion.div
@@ -60,11 +60,11 @@ const IndexPage = () => {
             transition={{ duration: 0.7 }}
             className="max-w-2xl"
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-white">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
               {t('hero.title')}{' '}
               <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
             </h1>
-            <p className="mt-6 text-lg text-white/80 max-w-xl leading-relaxed">
+            <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
               {t('hero.subtitle')}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -79,7 +79,7 @@ const IndexPage = () => {
               )}
               <Link
                 to="/tasks"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-white/30 text-white hover:bg-white/10 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
               >
                 {t('hero.browse')}
               </Link>
@@ -88,8 +88,8 @@ const IndexPage = () => {
             <div className="mt-12 grid grid-cols-3 gap-6">
               {stats.map((s) => (
                 <div key={s.key}>
-                  <div className="text-2xl md:text-3xl font-bold text-white">{s.value}</div>
-                  <div className="text-sm text-white/60 mt-1">{t(s.key)}</div>
+                  <div className="text-2xl md:text-3xl font-bold text-foreground">{s.value}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{t(s.key)}</div>
                 </div>
               ))}
             </div>
