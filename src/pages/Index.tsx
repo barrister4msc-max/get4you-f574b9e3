@@ -169,7 +169,7 @@ const IndexPage = () => {
                 >
                   <Link
                     to={`/tasks?category=${cat.key}`}
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-card border border-border shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all"
+                    className="flex flex-col items-center justify-center gap-3 p-4 aspect-square rounded-2xl bg-card border border-border shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all"
                   >
                     <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
                       <Icon className="w-6 h-6 text-primary" />
