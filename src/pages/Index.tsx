@@ -64,6 +64,18 @@ const IndexPage = () => {
             style={{ mask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)', WebkitMask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)' }}
           />
         </div>
+        {/* Sparkles */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {sparklePositions.map((s, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-[hsl(42,80%,65%)]"
+              style={{ top: s.top, left: s.left, width: s.size, height: s.size }}
+              animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+              transition={{ duration: 2.5, repeat: Infinity, delay: s.delay, ease: 'easeInOut' }}
+            />
+          ))}
+        </div>
         {/* Subtle overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,15%,95%,0.6)] via-transparent to-transparent" />
 
