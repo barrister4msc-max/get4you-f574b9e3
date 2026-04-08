@@ -47,7 +47,7 @@ const IndexPage = () => {
           <img
             src={heroImage}
             alt=""
-            className="w-full h-full object-cover mix-blend-multiply opacity-30"
+            className="w-full h-full object-contain mix-blend-multiply opacity-30"
           />
         </motion.div>
         {/* Subtle overlay for text readability */}
