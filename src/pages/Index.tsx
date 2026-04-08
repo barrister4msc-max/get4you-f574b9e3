@@ -51,7 +51,7 @@ const IndexPage = () => {
           />
         </motion.div>
         {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,20%,88%,0.85)] via-[hsl(40,20%,88%,0.5)] to-[hsl(40,20%,88%,0.15)]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,20%,88%,0.9)] via-[hsl(40,20%,88%,0.4)] to-transparent" />
 
         <div className="container relative z-10 py-20 md:py-28">
           <motion.div
