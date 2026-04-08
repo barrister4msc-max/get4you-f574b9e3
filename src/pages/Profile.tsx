@@ -176,6 +176,9 @@ const ProfilePage = () => {
           {uploadingAvatar && <p className="text-xs text-muted-foreground">{t('dashboard.loading')}</p>}
           <h1 className="text-2xl font-bold">{profile?.display_name || t('nav.profile')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
+          {(profile as any)?.user_number && (
+            <p className="text-xs text-muted-foreground mt-1">ID: {(profile as any).user_number}</p>
+          )}
         </div>
 
         {/* Dashboard link */}
