@@ -119,7 +119,7 @@ const TaskCard = ({ task, i, currency, t, getCategoryName, showStatus, distanceK
               </div>
               <div className="text-end shrink-0">
                 <div className="text-lg font-bold text-primary">
-                  {useFormatPrice()(task.budget_fixed || task.budget_min || 0, currency, task.currency)}
+                  {formatPrice(task.budget_fixed || task.budget_min || 0, currency, task.currency)}
                 </div>
                 <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
                   task.is_urgent ? urgencyColors.urgent : urgencyColors.normal
