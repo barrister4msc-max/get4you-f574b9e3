@@ -54,6 +54,7 @@ export default function AdminUsers() {
           <TableHeader>
             <TableRow>
               <TableHead>{t('admin.name')}</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>{t('admin.phone')}</TableHead>
               <TableHead>{t('admin.city')}</TableHead>
               <TableHead>{t('admin.roles')}</TableHead>
