@@ -55,7 +55,7 @@ const IndexPage = () => {
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,30%,88%)] via-[hsl(210,20%,85%)] to-[hsl(40,15%,82%)]">
         {/* Phoenix watermark */}
-        <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+        <div className="absolute inset-0 flex items-center justify-start md:pl-16" aria-hidden="true">
           <img
             src={heroImage}
             alt=""
@@ -132,7 +132,7 @@ const IndexPage = () => {
               <img
                 src={heroImage2}
                 alt="Get4You services"
-                className="w-full max-w-lg rounded-2xl object-cover"
+                className="w-full max-w-lg rounded-2xl object-cover border border-border/40 shadow-xl ring-1 ring-black/5"
               />
             </motion.div>
           </div>
