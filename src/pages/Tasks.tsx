@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
+import { getCachedTranslation, setCachedTranslations, makeKey, isTranslatedCopyUsable } from '@/lib/translationCache';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +7,6 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from 'lucide-react';
-import type { Locale } from '@/i18n/translations';
 
 interface TaskRow {
   id: string;
@@ -39,7 +38,6 @@ interface TaskTranslationResult extends TranslatedTaskCopy {
   id: string;
 }
 
-
 const urgencyColors: Record<string, string> = {
   normal: 'bg-secondary text-muted-foreground',
   urgent: 'bg-red-50 text-red-600',
@@ -61,80 +59,81 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
 
 const TaskCard = ({ task, i, currency, t, getCategoryName, showStatus, distanceKm, displayTitle, displayDescription }: any) => {
   const formatPrice = useFormatPrice();
+
   return (
-  <motion.div
-    key={task.id}
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: i * 0.05 }}
-  >
-    <Link
-      to={`/tasks/${task.id}`}
-      className="block bg-card border border-border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+    <motion.div
+      key={task.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.05 }}
     >
-      <div className="flex items-start gap-4">
-        {task.photos && task.photos.length > 0 ? (
-          <div className="w-20 h-20 rounded-xl overflow-hidden border border-border shrink-0">
-            <img src={task.photos[0]} alt="" className="w-full h-full object-cover" />
-          </div>
-        ) : (
-          <div className="w-20 h-20 rounded-xl border border-border bg-secondary flex items-center justify-center shrink-0">
-            <ImageIcon className="w-6 h-6 text-muted-foreground" />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{displayTitle}</h3>
-              {displayDescription && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{displayDescription}</p>
-              )}
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                {(task.city || task.address) && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {task.city || task.address}
-                  </span>
-                )}
-                {distanceKm != null && (
-                  <span className="flex items-center gap-1 text-xs">
-                    <Navigation className="w-3 h-3" />
-                    {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)} km`}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
-                  {new Date(task.created_at).toLocaleDateString()}
-                </span>
-                {getCategoryName(task) && (
-                  <span className="bg-emerald-50 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
-                    {getCategoryName(task)}
-                  </span>
-                )}
-                {showStatus && task.status && (
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[task.status] || 'bg-secondary text-muted-foreground'}`}>
-                    {t(`tasks.status.${task.status}`)}
-                  </span>
-                )}
-              </div>
+      <Link
+        to={`/tasks/${task.id}`}
+        className="block bg-card border border-border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+      >
+        <div className="flex items-start gap-4">
+          {task.photos && task.photos.length > 0 ? (
+            <div className="w-20 h-20 rounded-xl overflow-hidden border border-border shrink-0">
+              <img src={task.photos[0]} alt="" className="w-full h-full object-cover" />
             </div>
-            <div className="text-end shrink-0">
-              <div className="text-lg font-bold text-primary">
-                {formatPrice(task.budget_fixed || task.budget_min || 0, currency, task.currency)}
+          ) : (
+            <div className="w-20 h-20 rounded-xl border border-border bg-secondary flex items-center justify-center shrink-0">
+              <ImageIcon className="w-6 h-6 text-muted-foreground" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground truncate">{displayTitle}</h3>
+                {displayDescription && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{displayDescription}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                  {(task.city || task.address) && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {task.city || task.address}
+                    </span>
+                  )}
+                  {distanceKm != null && (
+                    <span className="flex items-center gap-1 text-xs">
+                      <Navigation className="w-3 h-3" />
+                      {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)} km`}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {new Date(task.created_at).toLocaleDateString()}
+                  </span>
+                  {getCategoryName(task) && (
+                    <span className="bg-emerald-50 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
+                      {getCategoryName(task)}
+                    </span>
+                  )}
+                  {showStatus && task.status && (
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[task.status] || 'bg-secondary text-muted-foreground'}`}>
+                      {t(`tasks.status.${task.status}`)}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                task.is_urgent ? urgencyColors.urgent : urgencyColors.normal
-              }`}>
-                {task.is_urgent ? t('task.urgency.urgent') : t('task.urgency.flexible')}
-              </span>
+              <div className="text-end shrink-0">
+                <div className="text-lg font-bold text-primary">
+                  {formatPrice(task.budget_fixed || task.budget_min || 0, currency, task.currency)}
+                </div>
+                <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                  task.is_urgent ? urgencyColors.urgent : urgencyColors.normal
+                }`}>
+                  {task.is_urgent ? t('task.urgency.urgent') : t('task.urgency.flexible')}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Link>
-  </motion.div>
-);
-}
+      </Link>
+    </motion.div>
+  );
+};
 
 const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 
@@ -159,14 +158,12 @@ const TasksPage = () => {
 
   const isTasker = roles.includes('tasker');
 
-  // Auto-set city filter from user profile on initial load
   useEffect(() => {
     if (profile?.city) {
       setFilterCity(profile.city);
     }
   }, [profile?.city]);
 
-  // Try to get user geolocation
   const requestGeolocation = () => {
     if (!navigator.geolocation) return;
     setGeoLoading(true);
@@ -182,7 +179,6 @@ const TasksPage = () => {
   };
 
   useEffect(() => {
-    // Use profile coords if available
     const p = profile as any;
     if (p?.latitude && p?.longitude) {
       setUserCoords({ lat: p.latitude, lng: p.longitude });
@@ -228,41 +224,48 @@ const TasksPage = () => {
     return cat.name_en;
   };
 
-  const cities = [...new Set(tasks.map(t => t.city).filter(Boolean))] as string[];
-
+  const cities = [...new Set(tasks.map((task) => task.city).filter(Boolean))] as string[];
   const tasksForCurrentTab = tab === 'my' ? myTasks : tasks;
 
   const getDisplayedTaskCopy = (task: TaskRow): TranslatedTaskCopy => {
     const key = makeKey(locale, task.id);
     const inState = translatedTasks[key];
-    if (inState) return inState;
+    if (isTranslatedCopyUsable(locale, task.title, task.description, inState)) {
+      return inState;
+    }
+
     const cached = getCachedTranslation(locale, task.id);
-    if (cached) return { title: cached.title, description: cached.description };
+    if (isTranslatedCopyUsable(locale, task.title, task.description, cached)) {
+      return { title: cached!.title, description: cached!.description };
+    }
+
     return { title: task.title, description: task.description };
   };
 
-  // Pre-seed state from localStorage cache whenever locale or tasks change
   useEffect(() => {
     const fromCache: Record<string, TranslatedTaskCopy> = {};
     for (const task of tasksForCurrentTab) {
       const key = makeKey(locale, task.id);
-      if (!translatedTasks[key]) {
+      if (!isTranslatedCopyUsable(locale, task.title, task.description, translatedTasks[key])) {
         const cached = getCachedTranslation(locale, task.id);
-        if (cached) fromCache[key] = { title: cached.title, description: cached.description };
+        if (isTranslatedCopyUsable(locale, task.title, task.description, cached)) {
+          fromCache[key] = { title: cached!.title, description: cached!.description };
+        }
       }
     }
-    if (Object.keys(fromCache).length > 0) {
-      setTranslatedTasks(prev => ({ ...prev, ...fromCache }));
-    }
-  }, [locale, tasksForCurrentTab]);
 
-  // Fetch translations for tasks not in cache
+    if (Object.keys(fromCache).length > 0) {
+      setTranslatedTasks((prev) => ({ ...prev, ...fromCache }));
+    }
+  }, [locale, tasksForCurrentTab, translatedTasks]);
+
   useEffect(() => {
     const tasksNeedingTranslation = tasksForCurrentTab
       .filter((task) => task.title || task.description)
       .filter((task) => {
         const key = makeKey(locale, task.id);
-        return !translatedTasks[key] && !getCachedTranslation(locale, task.id);
+        return !isTranslatedCopyUsable(locale, task.title, task.description, translatedTasks[key]) &&
+          !isTranslatedCopyUsable(locale, task.title, task.description, getCachedTranslation(locale, task.id));
       });
 
     if (tasksNeedingTranslation.length === 0) return;
@@ -280,17 +283,32 @@ const TasksPage = () => {
 
       if (cancelled || error || !data?.translations) return;
 
-      const translations = data.translations as TaskTranslationResult[];
-      setCachedTranslations(locale, translations);
-
-      setTranslatedTasks((prev) => {
-        const next = { ...prev };
-        translations.forEach((translation) => {
+      const validTranslations = (data.translations as TaskTranslationResult[])
+        .map((translation) => {
           const originalTask = tasksNeedingTranslation.find((task) => task.id === translation.id);
-          if (!originalTask) return;
-          next[makeKey(locale, originalTask.id)] = {
+          if (!originalTask) return null;
+
+          const nextCopy: TaskTranslationResult = {
+            id: translation.id,
             title: translation.title || originalTask.title,
             description: translation.description ?? originalTask.description,
+          };
+
+          return isTranslatedCopyUsable(locale, originalTask.title, originalTask.description, nextCopy)
+            ? nextCopy
+            : null;
+        })
+        .filter((translation): translation is TaskTranslationResult => Boolean(translation));
+
+      if (validTranslations.length === 0) return;
+
+      setCachedTranslations(locale, validTranslations);
+      setTranslatedTasks((prev) => {
+        const next = { ...prev };
+        validTranslations.forEach((translation) => {
+          next[makeKey(locale, translation.id)] = {
+            title: translation.title,
+            description: translation.description,
           };
         });
         return next;
@@ -302,7 +320,7 @@ const TasksPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [locale, tasksForCurrentTab]);
+  }, [locale, tasksForCurrentTab, translatedTasks]);
 
   const getTaskDistance = (task: TaskRow): number | null => {
     if (!userCoords || !task.latitude || !task.longitude) return null;
@@ -324,7 +342,7 @@ const TasksPage = () => {
     if (filterBudgetMax && budget > Number(filterBudgetMax)) return false;
     if (filterRadius && userCoords) {
       const dist = getTaskDistance(task);
-      if (dist === null) return true; // show tasks without coords
+      if (dist === null) return true;
       if (dist > Number(filterRadius)) return false;
     }
     return true;
@@ -511,20 +529,23 @@ const TasksPage = () => {
               {tab === 'my' ? t('tasks.noMyTasks') : t('tasks.noResults')}
             </p>
           )}
-          {displayTasks.map((task, i) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              i={i}
-              currency={currency}
-              t={t}
-              getCategoryName={getCategoryName}
-              showStatus={tab === 'my'}
-              distanceKm={tab === 'all' ? getTaskDistance(task) : null}
-              displayTitle={getDisplayedTaskCopy(task).title}
-              displayDescription={getDisplayedTaskCopy(task).description}
-            />
-          ))}
+          {displayTasks.map((task, i) => {
+            const displayCopy = getDisplayedTaskCopy(task);
+            return (
+              <TaskCard
+                key={task.id}
+                task={task}
+                i={i}
+                currency={currency}
+                t={t}
+                getCategoryName={getCategoryName}
+                showStatus={tab === 'my'}
+                distanceKm={tab === 'all' ? getTaskDistance(task) : null}
+                displayTitle={displayCopy.title}
+                displayDescription={displayCopy.description}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

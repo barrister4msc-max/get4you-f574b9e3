@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'task-translations';
+const STORAGE_KEY = 'task-translations-v2';
 const MAX_ENTRIES = 500;
 
 interface CacheEntry {
@@ -8,6 +8,13 @@ interface CacheEntry {
 }
 
 type Cache = Record<string, CacheEntry>;
+
+const localeScriptMatchers: Record<string, RegExp> = {
+  en: /[A-Za-z]/,
+  ru: /\p{Script=Cyrillic}/u,
+  he: /\p{Script=Hebrew}/u,
+  ar: /\p{Script=Arabic}/u,
+};
 
 function readCache(): Cache {
   try {
@@ -20,19 +27,39 @@ function readCache(): Cache {
 
 function writeCache(cache: Cache) {
   try {
-    // Evict oldest entries if over limit
     const keys = Object.keys(cache);
     if (keys.length > MAX_ENTRIES) {
       const sorted = keys.sort((a, b) => (cache[a].ts || 0) - (cache[b].ts || 0));
-      sorted.slice(0, keys.length - MAX_ENTRIES).forEach(k => delete cache[k]);
+      sorted.slice(0, keys.length - MAX_ENTRIES).forEach((k) => delete cache[k]);
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
   } catch {
-    // storage full — clear and retry
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {}
   }
+}
+
+function hasExpectedScript(locale: string, value: string): boolean {
+  const matcher = localeScriptMatchers[locale];
+  return matcher ? matcher.test(value) : true;
+}
+
+export function isTranslatedCopyUsable(
+  locale: string,
+  originalTitle: string,
+  originalDescription: string | null,
+  copy: { title: string; description: string | null } | null | undefined,
+): boolean {
+  if (!copy) return false;
+
+  const translatedText = `${copy.title ?? ''} ${copy.description ?? ''}`.trim();
+  if (!translatedText) return false;
+  if (hasExpectedScript(locale, translatedText)) return true;
+
+  const originalText = `${originalTitle ?? ''} ${originalDescription ?? ''}`.trim();
+  const matchesOriginal = copy.title === originalTitle && (copy.description ?? '') === (originalDescription ?? '');
+  return matchesOriginal && Boolean(originalText) && hasExpectedScript(locale, originalText);
 }
 
 export function makeKey(locale: string, taskId: string): string {

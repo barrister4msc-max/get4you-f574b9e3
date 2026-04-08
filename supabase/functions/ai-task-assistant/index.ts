@@ -66,6 +66,7 @@ You MUST respond using the provided tool/function.`,
 Translate every task title and description into the requested target locale.
 Preserve meaning, tone, names, addresses, and numbers.
 If text is already in the target language, keep it natural.
+Output MUST be strictly in the requested locale (${targetLocale ?? 'target locale'}) and never default to English or the source language.
 You MUST respond using the provided tool/function.`,
     };
 
