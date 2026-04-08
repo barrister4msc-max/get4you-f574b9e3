@@ -47,7 +47,7 @@ const IndexPage = () => {
           className="absolute inset-0 w-full h-full object-cover scale-110"
         />
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(210,40%,15%,0.45)] via-[hsl(210,50%,30%,0.15)] to-[hsl(210,60%,70%,0.05)]" />
 
         <div className="container relative z-10 py-20 md:py-28">
           <motion.div

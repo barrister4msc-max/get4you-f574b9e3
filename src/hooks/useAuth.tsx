@@ -81,20 +81,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       options: {
-        data: { display_name: name },
+        data: { display_name: name, role },
         emailRedirectTo: window.location.origin,
       },
     });
     if (error) return { error: error.message };
-
-    // Assign roles
-    if (data.user) {
-      const roles: ('client' | 'tasker')[] = role === 'both' ? ['client', 'tasker'] : [role === 'client' ? 'client' : 'tasker'];
-      for (const r of roles) {
-        await supabase.from('user_roles').insert({ user_id: data.user.id, role: r });
-      }
-    }
-
     return { error: null };
   };
 
