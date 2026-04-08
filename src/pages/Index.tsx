@@ -45,7 +45,8 @@ const IndexPage = () => {
             alt=""
             width={1024}
             height={1024}
-            className="h-[80%] w-auto object-contain opacity-20"
+            className="h-[85%] w-auto max-w-none object-contain mix-blend-luminosity opacity-30"
+            style={{ mask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)', WebkitMask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)' }}
           />
         </div>
         {/* Subtle overlay for text readability */}
