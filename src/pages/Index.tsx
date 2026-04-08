@@ -6,8 +6,23 @@ import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import heroImage from '@/assets/hero-image.png';
+
+const sparklePositions = [
+  { top: '15%', left: '42%', delay: 0, size: 4 },
+  { top: '25%', left: '55%', delay: 0.8, size: 3 },
+  { top: '20%', left: '38%', delay: 1.5, size: 5 },
+  { top: '35%', left: '60%', delay: 0.3, size: 3 },
+  { top: '40%', left: '45%', delay: 2.1, size: 4 },
+  { top: '30%', left: '50%', delay: 1.2, size: 3 },
+  { top: '50%', left: '48%', delay: 0.6, size: 5 },
+  { top: '55%', left: '53%', delay: 1.8, size: 3 },
+  { top: '18%', left: '58%', delay: 2.5, size: 4 },
+  { top: '45%', left: '40%', delay: 0.4, size: 3 },
+  { top: '60%', left: '52%', delay: 1.0, size: 4 },
+  { top: '22%', left: '48%', delay: 2.8, size: 5 },
+];
 
 const categoryIcons = [
   { key: 'cleaning', icon: Sparkles },
