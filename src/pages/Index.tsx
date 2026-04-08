@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useRef, useMemo } from 'react';
 import heroImage from '@/assets/hero-image.png';
+import heroImage2 from '@/assets/hero-image-2.jpg';
 
 const sparklePositions = [
   { top: '15%', left: '42%', delay: 0, size: 4 },
