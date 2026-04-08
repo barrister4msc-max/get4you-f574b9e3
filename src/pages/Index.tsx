@@ -43,8 +43,9 @@ const IndexPage = () => {
           <img
             src={heroImage}
             alt=""
-            className="h-full w-auto max-w-none object-contain opacity-20 saturate-50"
-            style={{ filter: 'brightness(1.1) contrast(0.8)' }}
+            width={1024}
+            height={1024}
+            className="h-[80%] w-auto object-contain opacity-20"
           />
         </div>
         {/* Subtle overlay for text readability */}
