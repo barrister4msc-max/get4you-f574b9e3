@@ -7,7 +7,7 @@ import {
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
 import { useRef } from 'react';
-import heroImage from '@/assets/hero-image.jpg';
+import heroImage from '@/assets/hero-image.png';
 
 const categoryIcons = [
   { key: 'cleaning', icon: Sparkles },
@@ -39,17 +39,15 @@ const IndexPage = () => {
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,30%,88%)] via-[hsl(210,20%,85%)] to-[hsl(40,15%,82%)]">
         {/* Phoenix watermark */}
-        <motion.div
-          style={{ y: imgY }}
-          className="absolute inset-0"
-          aria-hidden="true"
-        >
+        <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
           <img
             src={heroImage}
             alt=""
-            className="w-full h-full object-cover mix-blend-multiply opacity-30"
+            width={1024}
+            height={1024}
+            className="h-[80%] w-auto object-contain opacity-20"
           />
-        </motion.div>
+        </div>
         {/* Subtle overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,15%,95%,0.6)] via-transparent to-transparent" />
 
