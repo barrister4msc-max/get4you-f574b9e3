@@ -7,7 +7,7 @@ import {
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
 import { useRef } from 'react';
-import heroImage from '@/assets/hero-image.png';
+import heroImage from '@/assets/hero-phoenix.png';
 
 const categoryIcons = [
   { key: 'cleaning', icon: Sparkles },
