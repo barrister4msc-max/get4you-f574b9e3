@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Users, Wrench, Star,
-  AlertTriangle, Grid3X3, Settings, ChevronLeft, ChevronRight, MessageSquare
+  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ export const AdminLayout = () => {
     { to: '/admin/complaints', icon: AlertTriangle, label: t('admin.complaints') },
     { to: '/admin/categories', icon: Grid3X3, label: t('admin.categories') },
     { to: '/admin/chat', icon: MessageSquare, label: t('admin.chat') },
-    { to: '/admin/settings', icon: Settings, label: t('admin.settings') },
+    { to: '/admin/settings', icon: FolderOpen, label: t('admin.settings') },
   ];
 
   if (loading) {

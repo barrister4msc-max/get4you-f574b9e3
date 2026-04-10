@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare } from 'lucide-react';
 import { exportToCsv } from '@/lib/exportCsv';
+import { Link } from 'react-router-dom';
 
 type SortKey = 'user_number' | 'display_name' | 'email' | 'phone' | 'city' | 'created_at';
 type SortDir = 'asc' | 'desc';
@@ -149,6 +150,11 @@ export default function AdminUsers() {
                           onClick={() => toggleRole(u.user_id, role, has)}>{role}</Button>
                       );
                     })}
+                    <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
+                      <Link to={`/admin/chat?user=${u.user_id}`}>
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

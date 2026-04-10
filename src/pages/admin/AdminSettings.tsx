@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { MessageSquare, FileText, Briefcase } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const settingsLinks = [
   { to: '/admin/broadcast', label: 'WhatsApp Рассылка', icon: MessageSquare, desc: 'Отправка массовых сообщений исполнителям' },
@@ -9,9 +10,10 @@ const settingsLinks = [
 ];
 
 export default function AdminSettings() {
+  const { t } = useLanguage();
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Настройки</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">{t('admin.settings')}</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {settingsLinks.map((s) => (
           <Link key={s.to} to={s.to}>
