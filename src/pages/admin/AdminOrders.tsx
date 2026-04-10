@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, Trash2, Download, Search } from 'lucide-react';
+import { Eye, Trash2, Download, Search, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -129,6 +129,7 @@ export default function AdminOrders() {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" asChild><Link to={`/tasks/${t.id}`}><Eye className="w-4 h-4" /></Link></Button>
+                    <Button variant="ghost" size="icon" asChild><Link to={`/admin/chat?task=${t.id}`}><MessageSquare className="w-4 h-4" /></Link></Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteTask(t.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
                 </TableCell>
