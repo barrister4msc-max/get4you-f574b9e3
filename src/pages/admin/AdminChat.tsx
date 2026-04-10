@@ -161,6 +161,9 @@ export default function AdminChat() {
   const selectedConvo = conversations.find(c => c.task_id === selectedTaskId);
 
   const filtered = conversations.filter(c => {
+    if (filterUserId) {
+      if (c.client_id !== filterUserId && c.tasker_id !== filterUserId) return false;
+    }
     if (!search.trim()) return true;
     const s = search.toLowerCase();
     return (
