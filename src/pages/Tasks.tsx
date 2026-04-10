@@ -188,25 +188,23 @@ const TasksPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const queries: Promise<any>[] = [
-        supabase
-          .from('tasks')
-          .select('*, categories(name_en, name_ru, name_he)')
-          .eq('status', 'open')
-          .order('created_at', { ascending: false }),
-        supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order'),
-      ];
-      // Fetch user's proposals to filter out applied tasks
-      if (user) {
-        queries.push(
-          supabase.from('proposals').select('task_id').eq('user_id', user.id)
-        );
-      }
-      const results = await Promise.all(queries);
-      setTasks((results[0].data as TaskRow[]) || []);
-      setCategories(results[1].data || []);
-      if (user && results[2]?.data) {
-        setMyProposalTaskIds(new Set(results[2].data.map((p: any) => p.task_id)));
+      const tasksPromise = supabase
+        .from('tasks')
+        .select('*, categories(name_en, name_ru, name_he)')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+      const catsPromise = supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order');
+      const proposalsPromise = user
+        ? supabase.from('proposals').select('task_id').eq('user_id', user.id)
+        : null;
+
+      const [tasksRes, catsRes, proposalsRes] = await Promise.all([
+        tasksPromise, catsPromise, ...(proposalsPromise ? [proposalsPromise] : []),
+      ]);
+      setTasks((tasksRes.data as TaskRow[]) || []);
+      setCategories(catsRes.data || []);
+      if (proposalsRes?.data) {
+        setMyProposalTaskIds(new Set(proposalsRes.data.map((p: any) => p.task_id)));
       }
       setLoading(false);
     };
