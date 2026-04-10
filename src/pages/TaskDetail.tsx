@@ -673,7 +673,7 @@ const TaskDetailPage = () => {
               )}
 
               {/* Chat button */}
-              {task.status === 'in_progress' && user && (task.user_id === user.id || task.assigned_to === user.id) && (
+              {user && (task.user_id === user.id || task.assigned_to === user.id || hasProposed) && (
                 <Link
                   to={`/chat/${id}`}
                   className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold bg-secondary text-foreground hover:bg-secondary/80 transition-colors"

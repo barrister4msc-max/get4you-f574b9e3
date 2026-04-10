@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight,
-  Wallet, ArrowDownToLine, Clock, CheckCircle2,
+  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ interface ReviewRow {
   created_at: string; task?: { title: string } | null;
 }
 
-type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating';
+type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
@@ -56,6 +56,7 @@ const DashboardPage = () => {
   const [escrowData, setEscrowData] = useState<EscrowRow[]>([]);
   const [allEscrow, setAllEscrow] = useState<EscrowRow[]>([]);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  const [chatTasks, setChatTasks] = useState<{ id: string; title: string; last_message: string | null; last_at: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isClient = roles.includes('client');
@@ -85,6 +86,33 @@ const DashboardPage = () => {
       setEscrowData((releasedRes.data as any[])?.map(e => ({ ...e, task: Array.isArray(e.tasks) ? e.tasks[0] : e.tasks })) || []);
       setAllEscrow((allEscrowRes.data as any[])?.map(e => ({ ...e, task: Array.isArray(e.tasks) ? e.tasks[0] : e.tasks })) || []);
       setReviews((reviewsRes.data as any[])?.map(r => ({ ...r, task: Array.isArray(r.tasks) ? r.tasks[0] : r.tasks })) || []);
+
+      // Fetch chat tasks - tasks where user has messages
+      const { data: chatMsgs } = await supabase
+        .from('chat_messages')
+        .select('task_id, content, created_at')
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      if (chatMsgs && chatMsgs.length > 0) {
+        const taskIds = [...new Set(chatMsgs.map(m => m.task_id))];
+        const { data: chatTasksData } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .in('id', taskIds);
+        const taskMap = new Map(chatTasksData?.map(t => [t.id, t.title]) || []);
+        const lastMsgMap = new Map<string, { content: string; created_at: string }>();
+        chatMsgs.forEach(m => {
+          if (!lastMsgMap.has(m.task_id)) lastMsgMap.set(m.task_id, { content: m.content, created_at: m.created_at });
+        });
+        setChatTasks(taskIds.filter(id => taskMap.has(id)).map(id => ({
+          id,
+          title: taskMap.get(id)!,
+          last_message: lastMsgMap.get(id)?.content || null,
+          last_at: lastMsgMap.get(id)?.created_at || null,
+        })));
+      }
+
       setLoading(false);
     };
     fetchAll();
@@ -158,6 +186,7 @@ const DashboardPage = () => {
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'myTasks', label: t('dashboard.client.myTasks'), icon: <ClipboardList className="w-4 h-4" /> },
+    { key: 'messages', label: t('chat.title') || 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
   if (isTasker) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
@@ -319,6 +348,36 @@ const DashboardPage = () => {
                     </div>
                   </div>
                   <div className="text-primary font-bold text-sm">{formatPrice(p.price, currency, p.currency)}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* MESSAGES */}
+        {tab === 'messages' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold mb-2">{t('chat.title') || 'Messages'}</h2>
+            {chatTasks.length === 0 ? (
+              <div className="text-center py-12">
+                <MessageSquare className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{t('chat.empty')}</p>
+              </div>
+            ) : chatTasks.map(ct => (
+              <Link key={ct.id} to={`/chat/${ct.id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm truncate">{ct.title}</h3>
+                    {ct.last_message && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{ct.last_message}</p>
+                    )}
+                    {ct.last_at && (
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(ct.last_at).toLocaleString()}</p>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
