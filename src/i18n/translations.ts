@@ -474,6 +474,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.signedAt': 'Signed',
 
     // Chat
+    'chat.title': 'Messages',
     'chat.openChat': 'Open Chat',
     'chat.placeholder': 'Type a message...',
     'chat.sendError': 'Failed to send message',
@@ -1022,6 +1023,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.signedAt': 'Подписано',
 
     // Chat
+    'chat.title': 'Сообщения',
     'chat.openChat': 'Открыть чат',
     'chat.placeholder': 'Напишите сообщение...',
     'chat.sendError': 'Не удалось отправить сообщение',
@@ -1570,6 +1572,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.signedAt': 'נחתם',
 
     // Chat
+    'chat.title': 'הודעות',
     'chat.openChat': 'פתח צ׳אט',
     'chat.placeholder': 'כתוב הודעה...',
     'chat.sendError': 'שליחת ההודעה נכשלה',
