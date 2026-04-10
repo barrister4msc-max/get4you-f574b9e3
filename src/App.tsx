@@ -37,6 +37,7 @@ import AdminTaskers from "./pages/admin/AdminTaskers";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminComplaints from "./pages/admin/AdminComplaints";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminChat from "./pages/admin/AdminChat";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const App = () => (
                   <Route path="reviews" element={<AdminReviews />} />
                   <Route path="complaints" element={<AdminComplaints />} />
                   <Route path="categories" element={<AdminCategoriesPage />} />
+                  <Route path="chat" element={<AdminChat />} />
                   <Route path="settings" element={<AdminSettings />} />
                   <Route path="esek-patur" element={<AdminEsekPatur />} />
                   <Route path="broadcast" element={<AdminBroadcast />} />
