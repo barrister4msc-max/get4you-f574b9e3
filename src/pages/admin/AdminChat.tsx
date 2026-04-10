@@ -138,15 +138,44 @@ export default function AdminChat() {
     const content = newMessage.trim();
     setNewMessage('');
 
-    const { error } = await supabase.from('chat_messages').insert({
+    const { error, data: inserted } = await supabase.from('chat_messages').insert({
       task_id: selectedTaskId,
       sender_id: user.id,
       content,
-    });
+    }).select('id').single();
 
     if (error) {
       toast.error(t('chat.sendError'));
       setNewMessage(content);
+    } else if (selectedConvo) {
+      // Send email notifications to task participants
+      const recipients = [
+        selectedConvo.client_id !== user.id ? selectedConvo.client_id : null,
+        selectedConvo.tasker_id && selectedConvo.tasker_id !== user.id ? selectedConvo.tasker_id : null,
+      ].filter(Boolean) as string[];
+
+      const taskUrl = `${window.location.origin}/tasks/${selectedTaskId}`;
+
+      for (const recipientId of recipients) {
+        // Get recipient email from profiles
+        const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: recipientId });
+        // get_public_profile doesn't return email, fetch it directly
+        const { data: profileData } = await supabase.from('profiles').select('email').eq('user_id', recipientId).single();
+        if (profileData?.email) {
+          supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'admin-message',
+              recipientEmail: profileData.email,
+              idempotencyKey: `admin-msg-${inserted?.id}-${recipientId}`,
+              templateData: {
+                taskTitle: selectedConvo.task_title,
+                messagePreview: content.length > 200 ? content.slice(0, 200) + '...' : content,
+                taskUrl,
+              },
+            },
+          });
+        }
+      }
     }
     setSending(false);
   };
