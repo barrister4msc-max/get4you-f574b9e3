@@ -150,6 +150,11 @@ export default function AdminUsers() {
                           onClick={() => toggleRole(u.user_id, role, has)}>{role}</Button>
                       );
                     })}
+                    <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
+                      <Link to={`/admin/chat?user=${u.user_id}`}>
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
