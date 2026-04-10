@@ -15,7 +15,6 @@ export default function AdminTaskers() {
 
       const { data: profiles } = await supabase.from('profiles').select('*').in('user_id', taskerIds);
       
-      // Get review averages and task counts
       const { data: reviews } = await supabase.from('reviews').select('reviewee_id, rating');
       const { data: tasks } = await supabase.from('tasks').select('assigned_to').not('assigned_to', 'is', null);
 
@@ -41,6 +40,7 @@ export default function AdminTaskers() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>№</TableHead>
               <TableHead>Имя</TableHead>
               <TableHead>Город</TableHead>
               <TableHead>Рейтинг</TableHead>
@@ -51,6 +51,7 @@ export default function AdminTaskers() {
           <TableBody>
             {taskers.map((t) => (
               <TableRow key={t.id}>
+                <TableCell className="text-muted-foreground font-mono text-xs">#{t.user_number}</TableCell>
                 <TableCell className="font-medium">{t.display_name || '—'}</TableCell>
                 <TableCell>{t.city || '—'}</TableCell>
                 <TableCell>
@@ -61,7 +62,7 @@ export default function AdminTaskers() {
               </TableRow>
             ))}
             {taskers.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Нет исполнителей</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Нет исполнителей</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,7 @@ import { ClipboardList, Users, Wrench, DollarSign } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ tasks: 0, todayTasks: 0, activeTaskers: 0, revenue: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -26,10 +28,10 @@ export default function AdminDashboard() {
   }, []);
 
   const cards = [
-    { title: t('admin.totalOrders'), value: stats.tasks, icon: ClipboardList, color: 'text-primary' },
-    { title: t('admin.newToday'), value: stats.todayTasks, icon: ClipboardList, color: 'text-accent-foreground' },
-    { title: t('admin.taskersCount'), value: stats.activeTaskers, icon: Wrench, color: 'text-primary' },
-    { title: t('admin.revenue'), value: `₪ ${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-primary' },
+    { title: t('admin.totalOrders'), value: stats.tasks, icon: ClipboardList, color: 'text-primary', link: '/admin/orders' },
+    { title: t('admin.newToday'), value: stats.todayTasks, icon: ClipboardList, color: 'text-accent-foreground', link: '/admin/orders' },
+    { title: t('admin.taskersCount'), value: stats.activeTaskers, icon: Wrench, color: 'text-primary', link: '/admin/taskers' },
+    { title: t('admin.revenue'), value: `₪ ${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-primary', link: '/admin/orders' },
   ];
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -39,7 +41,11 @@ export default function AdminDashboard() {
       <h1 className="text-2xl font-bold text-foreground mb-6">{t('admin.dashboard')}</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c) => (
-          <Card key={c.title}>
+          <Card
+            key={c.title}
+            className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+            onClick={() => navigate(c.link)}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">{c.title}</CardTitle>
               <c.icon className={`w-5 h-5 ${c.color}`} />
