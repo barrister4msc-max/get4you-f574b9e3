@@ -160,7 +160,7 @@ const ChatPage = () => {
     }
   };
 
-  const canChat = isParticipant && task && (task.status === 'in_progress' || task.status === 'completed' || task.status === 'open');
+  const canChat = isParticipant && !!task;
 
   if (loading) {
     return (
