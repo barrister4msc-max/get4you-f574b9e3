@@ -65,6 +65,45 @@ export type Database = {
         }
         Relationships: []
       }
+      category_suggestions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          match_count: number
+          matched_task_ids: string[]
+          status: string
+          suggested_name: string
+          suggested_name_he: string | null
+          suggested_name_ru: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          match_count?: number
+          matched_task_ids?: string[]
+          status?: string
+          suggested_name: string
+          suggested_name_he?: string | null
+          suggested_name_ru?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          match_count?: number
+          matched_task_ids?: string[]
+          status?: string
+          suggested_name?: string
+          suggested_name_he?: string | null
+          suggested_name_ru?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
