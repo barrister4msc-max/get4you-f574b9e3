@@ -32,8 +32,9 @@ interface Message {
 export default function AdminChat() {
   const { user } = useAuth();
   const { t, dir } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(searchParams.get('task'));
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -42,11 +43,12 @@ export default function AdminChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = useCallback(async () => {
-    // Get all tasks that have chat messages
+    // Get all tasks (admin can chat on any task)
     const { data: tasks } = await supabase
       .from('tasks')
       .select('id, title, user_id, assigned_to, status')
-      .in('status', ['in_progress', 'completed']);
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (!tasks?.length) {
       setConversations([]);
