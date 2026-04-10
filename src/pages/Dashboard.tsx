@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight,
-  Wallet, ArrowDownToLine, Clock, CheckCircle2,
+  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ interface ReviewRow {
   created_at: string; task?: { title: string } | null;
 }
 
-type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating';
+type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
@@ -158,6 +158,7 @@ const DashboardPage = () => {
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'myTasks', label: t('dashboard.client.myTasks'), icon: <ClipboardList className="w-4 h-4" /> },
+    { key: 'messages', label: t('chat.title') || 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
   if (isTasker) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
