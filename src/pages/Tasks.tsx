@@ -337,6 +337,8 @@ const TasksPage = () => {
   };
 
   const filtered = tasks.filter((task) => {
+    // Hide tasks user already proposed on
+    if (myProposalTaskIds.size > 0 && myProposalTaskIds.has(task.id)) return false;
     if (filterCat && task.category_id !== filterCat) return false;
     if (search) {
       const displayedCopy = getDisplayedTaskCopy(task);
