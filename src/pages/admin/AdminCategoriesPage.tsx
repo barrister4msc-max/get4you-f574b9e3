@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import AdminCategorySuggestions from '@/components/admin/AdminCategorySuggestions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -129,6 +130,8 @@ export default function AdminCategoriesPage() {
           </TableBody>
         </Table>
       </div>
+
+      <AdminCategorySuggestions />
     </div>
   );
 }
