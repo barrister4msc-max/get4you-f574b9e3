@@ -35,6 +35,7 @@ export default function AdminChat() {
   const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(searchParams.get('task'));
+  const filterUserId = searchParams.get('user');
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
