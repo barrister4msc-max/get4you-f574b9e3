@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare } from 'lucide-react';
 import { exportToCsv } from '@/lib/exportCsv';
+import { Link } from 'react-router-dom';
 
 type SortKey = 'user_number' | 'display_name' | 'email' | 'phone' | 'city' | 'created_at';
 type SortDir = 'asc' | 'desc';
