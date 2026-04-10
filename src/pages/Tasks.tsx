@@ -155,6 +155,7 @@ const TasksPage = () => {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
+  const [myProposalTaskIds, setMyProposalTaskIds] = useState<Set<string>>(new Set());
 
   const isTasker = roles.includes('tasker');
 
@@ -187,20 +188,30 @@ const TasksPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: tasksData }, { data: catsData }] = await Promise.all([
+      const queries: Promise<any>[] = [
         supabase
           .from('tasks')
           .select('*, categories(name_en, name_ru, name_he)')
           .eq('status', 'open')
           .order('created_at', { ascending: false }),
         supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order'),
-      ]);
-      setTasks((tasksData as TaskRow[]) || []);
-      setCategories(catsData || []);
+      ];
+      // Fetch user's proposals to filter out applied tasks
+      if (user) {
+        queries.push(
+          supabase.from('proposals').select('task_id').eq('user_id', user.id)
+        );
+      }
+      const results = await Promise.all(queries);
+      setTasks((results[0].data as TaskRow[]) || []);
+      setCategories(results[1].data || []);
+      if (user && results[2]?.data) {
+        setMyProposalTaskIds(new Set(results[2].data.map((p: any) => p.task_id)));
+      }
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!user || !isTasker) return;
