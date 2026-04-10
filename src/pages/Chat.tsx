@@ -3,13 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, ArrowLeft, User } from 'lucide-react';
+import { Send, ArrowLeft, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
   id: string;
   task_id: string;
   sender_id: string;
+  recipient_id: string | null;
   content: string;
   created_at: string;
 }
@@ -32,13 +33,14 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isParticipant, setIsParticipant] = useState(false);
+  const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Fetch task and messages
   useEffect(() => {
     if (!taskId || !user) return;
 
@@ -49,26 +51,50 @@ const ChatPage = () => {
         .eq('id', taskId)
         .maybeSingle();
 
-      if (taskData) {
-        setTask(taskData as TaskInfo);
-        const otherId = taskData.user_id === user.id ? taskData.assigned_to : taskData.user_id;
-        if (otherId) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name, avatar_url')
-            .eq('user_id', otherId)
-            .maybeSingle();
-          setOtherProfile(profile);
-        }
+      if (!taskData) { setLoading(false); return; }
+      setTask(taskData as TaskInfo);
+
+      // Check if current user is a participant (owner, assigned, or proposer)
+      const isOwnerOrAssigned = taskData.user_id === user.id || taskData.assigned_to === user.id;
+      let isProposer = false;
+      if (!isOwnerOrAssigned) {
+        const { data: proposal } = await supabase
+          .from('proposals')
+          .select('id')
+          .eq('task_id', taskId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        isProposer = !!proposal;
+      }
+      const participant = isOwnerOrAssigned || isProposer;
+      setIsParticipant(participant);
+
+      // Get other user's profile (for 1-on-1 between owner and assigned)
+      const otherId = taskData.user_id === user.id ? taskData.assigned_to : taskData.user_id;
+      if (otherId) {
+        const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: otherId });
+        setOtherProfile(profile?.[0] || null);
       }
 
+      // Fetch messages
       const { data: msgs } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('task_id', taskId)
         .order('created_at', { ascending: true });
 
-      setMessages((msgs as Message[]) || []);
+      const allMsgs = (msgs as Message[]) || [];
+      setMessages(allMsgs);
+
+      // Get sender names for all unique senders
+      const senderIds = [...new Set(allMsgs.map(m => m.sender_id))];
+      if (senderIds.length > 0) {
+        const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: senderIds });
+        const names: Record<string, string> = {};
+        profiles?.forEach(p => { names[p.user_id] = p.display_name || 'User'; });
+        setSenderNames(names);
+      }
+
       setLoading(false);
     };
 
@@ -90,12 +116,20 @@ const ChatPage = () => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+          // Fetch sender name if unknown
+          if (!senderNames[newMsg.sender_id]) {
+            supabase.rpc('get_public_profile', { target_user_id: newMsg.sender_id }).then(({ data }) => {
+              if (data?.[0]) {
+                setSenderNames(prev => ({ ...prev, [newMsg.sender_id]: data[0].display_name || 'User' }));
+              }
+            });
+          }
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [taskId]);
+  }, [taskId, senderNames]);
 
   useEffect(() => { scrollToBottom(); }, [messages]);
 
@@ -125,8 +159,7 @@ const ChatPage = () => {
     }
   };
 
-  const isParticipant = task && user && (task.user_id === user.id || task.assigned_to === user.id);
-  const canChat = isParticipant && (task?.status === 'in_progress' || task?.status === 'completed');
+  const canChat = isParticipant && task && (task.status === 'in_progress' || task.status === 'completed' || task.status === 'open');
 
   if (loading) {
     return (
@@ -136,7 +169,7 @@ const ChatPage = () => {
     );
   }
 
-  if (!task || !canChat) {
+  if (!task || !isParticipant) {
     return (
       <div className="min-h-[80vh] py-12">
         <div className="container max-w-2xl mx-auto px-4 text-center">
@@ -148,6 +181,9 @@ const ChatPage = () => {
       </div>
     );
   }
+
+  // Check if there are admin messages
+  const hasAdminMessages = messages.some(m => m.recipient_id !== null);
 
   return (
     <div className="min-h-[80vh] flex flex-col">
@@ -165,8 +201,8 @@ const ChatPage = () => {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{otherProfile?.display_name || 'User'}</p>
-            <p className="text-xs text-muted-foreground truncate">{task.title}</p>
+            <p className="font-semibold text-sm truncate">{task.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{otherProfile?.display_name || 'Chat'}</p>
           </div>
         </div>
       </div>
@@ -179,13 +215,23 @@ const ChatPage = () => {
           )}
           {messages.map((msg) => {
             const isMine = msg.sender_id === user?.id;
+            const isAdminMsg = msg.recipient_id !== null && !isMine;
+            const senderName = senderNames[msg.sender_id] || 'User';
             return (
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                   isMine
                     ? 'bg-primary text-primary-foreground rounded-br-md'
+                    : isAdminMsg
+                    ? 'bg-amber-50 border border-amber-200 text-foreground rounded-bl-md dark:bg-amber-900/20 dark:border-amber-800'
                     : 'bg-card border border-border text-foreground rounded-bl-md'
                 }`}>
+                  {!isMine && (
+                    <p className="text-[10px] font-medium mb-1 opacity-70 flex items-center gap-1">
+                      {isAdminMsg && <Shield className="w-2.5 h-2.5" />}
+                      {senderName}
+                    </p>
+                  )}
                   <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                   <p className={`text-[10px] mt-1 ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -199,7 +245,7 @@ const ChatPage = () => {
       </div>
 
       {/* Input */}
-      {task.status === 'in_progress' && (
+      {canChat && (
         <div className="border-t border-border bg-card sticky bottom-0">
           <div className="container max-w-2xl mx-auto px-4 py-3 flex items-end gap-2">
             <textarea
