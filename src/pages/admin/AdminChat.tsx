@@ -9,9 +9,8 @@ import { Send, Search, MessageSquare, User, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-/** Each "conversation" is a (task, participant) pair so admin chats separately with client & tasker. */
 interface Conversation {
-  key: string;            // `${task_id}__${participant_id}`
+  key: string;
   task_id: string;
   task_title: string;
   participant_id: string;
@@ -48,7 +47,6 @@ export default function AdminChat() {
 
   const selectedConvo = conversations.find(c => c.key === selectedKey) ?? null;
 
-  /* ── load conversations ── */
   const loadConversations = useCallback(async () => {
     const { data: tasks } = await supabase
       .from('tasks')
@@ -58,21 +56,41 @@ export default function AdminChat() {
 
     if (!tasks?.length) { setConversations([]); setLoading(false); return; }
 
-    const userIds = [...new Set(tasks.flatMap(t => [t.user_id, t.assigned_to].filter(Boolean) as string[]))];
-    const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: userIds });
+    // Get proposals to find taskers who responded
+    const { data: proposals } = await supabase
+      .from('proposals')
+      .select('task_id, user_id')
+      .in('task_id', tasks.map(t => t.id));
+
+    // Build tasker map per task: assigned_to + all proposers
+    const taskTaskersMap = new Map<string, Set<string>>();
+    for (const task of tasks) {
+      const taskers = new Set<string>();
+      if (task.assigned_to) taskers.add(task.assigned_to);
+      taskTaskersMap.set(task.id, taskers);
+    }
+    for (const p of (proposals ?? [])) {
+      const set = taskTaskersMap.get(p.task_id);
+      if (set && p.user_id !== tasks.find(t => t.id === p.task_id)?.user_id) {
+        set.add(p.user_id);
+      }
+    }
+
+    const allUserIds = new Set<string>();
+    tasks.forEach(t => { allUserIds.add(t.user_id); });
+    taskTaskersMap.forEach(set => set.forEach(id => allUserIds.add(id)));
+
+    const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: [...allUserIds] });
     const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
 
-    // last message per (task, participant) — admin messages have recipient_id set
     const { data: allMessages } = await supabase
       .from('chat_messages')
       .select('task_id, content, created_at, sender_id, recipient_id')
       .in('task_id', tasks.map(t => t.id))
       .order('created_at', { ascending: false });
 
-    // Build a map: `taskId__participantId` → last message
     const lastMsgMap = new Map<string, { content: string; created_at: string }>();
     allMessages?.forEach(m => {
-      // Determine participant: if sender is admin, participant = recipient_id; else participant = sender_id
       const participantId = m.recipient_id ?? m.sender_id;
       const key = `${m.task_id}__${participantId}`;
       if (!lastMsgMap.has(key)) lastMsgMap.set(key, { content: m.content, created_at: m.created_at });
@@ -95,16 +113,17 @@ export default function AdminChat() {
         last_message_at: clientLastMsg?.created_at ?? null,
       });
 
-      // Tasker conversation (if assigned)
-      if (task.assigned_to) {
-        const taskerKey = `${task.id}__${task.assigned_to}`;
+      // Tasker conversations (assigned + proposers)
+      const taskers = taskTaskersMap.get(task.id) ?? new Set();
+      for (const taskerId of taskers) {
+        const taskerKey = `${task.id}__${taskerId}`;
         const taskerLastMsg = lastMsgMap.get(taskerKey);
         convos.push({
           key: taskerKey,
           task_id: task.id,
           task_title: task.title,
-          participant_id: task.assigned_to,
-          participant_name: profileMap.get(task.assigned_to) ?? null,
+          participant_id: taskerId,
+          participant_name: profileMap.get(taskerId) ?? null,
           participant_role: 'tasker',
           last_message: taskerLastMsg?.content ?? null,
           last_message_at: taskerLastMsg?.created_at ?? null,
@@ -112,7 +131,6 @@ export default function AdminChat() {
       }
     }
 
-    // Sort: conversations with messages first, then by date
     convos.sort((a, b) => {
       const aHas = a.last_message ? 1 : 0;
       const bHas = b.last_message ? 1 : 0;
@@ -122,9 +140,7 @@ export default function AdminChat() {
 
     setConversations(convos);
 
-    // Auto-select from URL params
     if (preselectedTask && !selectedKey) {
-      // Prefer client conversation for the task
       const match = convos.find(c => c.task_id === preselectedTask);
       if (match) setSelectedKey(match.key);
     }
@@ -138,16 +154,13 @@ export default function AdminChat() {
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
-  /* ── load messages for selected conversation ── */
   const loadMessages = useCallback(async (taskId: string, participantId: string) => {
-    // Messages in this direct thread: admin↔participant
     const { data } = await supabase
       .from('chat_messages')
       .select('*')
       .eq('task_id', taskId)
       .order('created_at', { ascending: true });
 
-    // Filter: messages where (recipient_id = participant OR sender = participant) — admin's direct thread
     const filtered = (data as Message[] ?? []).filter(m =>
       m.recipient_id === participantId || m.sender_id === participantId
     );
@@ -167,7 +180,6 @@ export default function AdminChat() {
         filter: `task_id=eq.${selectedConvo.task_id}`,
       }, (payload) => {
         const msg = payload.new as Message;
-        // Only add if relevant to this thread
         if (msg.recipient_id === selectedConvo.participant_id || msg.sender_id === selectedConvo.participant_id) {
           setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
         }
@@ -181,7 +193,6 @@ export default function AdminChat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /* ── send message ── */
   const handleSend = async () => {
     if (!newMessage.trim() || !user || !selectedConvo || sending) return;
     setSending(true);
@@ -199,7 +210,6 @@ export default function AdminChat() {
       toast.error(t('chat.sendError'));
       setNewMessage(content);
     } else {
-      // Send email notification
       const { data: profileData } = await supabase
         .from('profiles').select('email').eq('user_id', selectedConvo.participant_id).single();
       if (profileData?.email) {
@@ -225,7 +235,6 @@ export default function AdminChat() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  /* ── filter conversations ── */
   const filtered = conversations.filter(c => {
     if (filterUserId && c.participant_id !== filterUserId) return false;
     if (!search.trim()) return true;
@@ -248,17 +257,11 @@ export default function AdminChat() {
     <div dir={dir}>
       <h1 className="text-2xl font-bold text-foreground mb-4">{t('admin.chat')}</h1>
       <div className="flex border border-border rounded-lg bg-card overflow-hidden" style={{ height: 'calc(100vh - 14rem)' }}>
-        {/* Conversation list */}
         <div className={cn("w-80 border-e border-border flex flex-col shrink-0", selectedKey && "hidden md:flex")}>
           <div className="p-3 border-b border-border">
             <div className="relative">
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder={t('admin.search')}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="ps-9"
-              />
+              <Input placeholder={t('admin.search')} value={search} onChange={e => setSearch(e.target.value)} className="ps-9" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -300,7 +303,6 @@ export default function AdminChat() {
           </div>
         </div>
 
-        {/* Chat area */}
         <div className={cn("flex-1 flex flex-col", !selectedKey && "hidden md:flex")}>
           {!selectedKey ? (
             <div className="flex-1 flex items-center justify-center text-muted-foreground">
@@ -311,14 +313,8 @@ export default function AdminChat() {
             </div>
           ) : (
             <>
-              {/* Chat header */}
               <div className="px-4 py-3 border-b border-border flex items-center gap-3">
-                <button
-                  className="md:hidden text-muted-foreground"
-                  onClick={() => setSelectedKey(null)}
-                >
-                  ←
-                </button>
+                <button className="md:hidden text-muted-foreground" onClick={() => setSelectedKey(null)}>←</button>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm truncate">{selectedConvo?.task_title}</p>
                   <div className="flex items-center gap-1.5">
@@ -333,7 +329,6 @@ export default function AdminChat() {
                 </div>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                 {messages.length === 0 && (
                   <p className="text-center text-sm text-muted-foreground py-12">{t('chat.empty')}</p>
@@ -364,7 +359,6 @@ export default function AdminChat() {
                 <div ref={bottomRef} />
               </div>
 
-              {/* Input */}
               <div className="border-t border-border px-4 py-3 flex items-end gap-2">
                 <textarea
                   value={newMessage}
