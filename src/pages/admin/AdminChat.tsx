@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -31,8 +32,9 @@ interface Message {
 export default function AdminChat() {
   const { user } = useAuth();
   const { t, dir } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(searchParams.get('task'));
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -41,11 +43,12 @@ export default function AdminChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = useCallback(async () => {
-    // Get all tasks that have chat messages
+    // Get all tasks (admin can chat on any task)
     const { data: tasks } = await supabase
       .from('tasks')
       .select('id, title, user_id, assigned_to, status')
-      .in('status', ['in_progress', 'completed']);
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (!tasks?.length) {
       setConversations([]);
@@ -70,7 +73,6 @@ export default function AdminChat() {
     });
 
     const convos: Conversation[] = tasks
-      .filter(t => lastMsgMap.has(t.id)) // only show tasks with messages
       .map(t => ({
         task_id: t.id,
         task_title: t.title,
@@ -79,10 +81,16 @@ export default function AdminChat() {
         client_id: t.user_id,
         tasker_id: t.assigned_to,
         last_message: lastMsgMap.get(t.id)?.content ?? null,
-        last_message_at: lastMsgMap.get(t.id)?.created_at ?? null,
+        last_message_at: lastMsgMap.get(t.id)?.created_at ?? t.id, // fallback for sorting
         unread_count: 0,
       }))
-      .sort((a, b) => (b.last_message_at ?? '').localeCompare(a.last_message_at ?? ''));
+      .sort((a, b) => {
+        // Tasks with messages first, then by date
+        const aHasMsg = a.last_message ? 1 : 0;
+        const bHasMsg = b.last_message ? 1 : 0;
+        if (aHasMsg !== bHasMsg) return bHasMsg - aHasMsg;
+        return (b.last_message_at ?? '').localeCompare(a.last_message_at ?? '');
+      });
 
     setConversations(convos);
     setLoading(false);
