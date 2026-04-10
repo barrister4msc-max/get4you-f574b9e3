@@ -354,6 +354,36 @@ const DashboardPage = () => {
           </div>
         )}
 
+        {/* MESSAGES */}
+        {tab === 'messages' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold mb-2">{t('chat.title') || 'Messages'}</h2>
+            {chatTasks.length === 0 ? (
+              <div className="text-center py-12">
+                <MessageSquare className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{t('chat.empty')}</p>
+              </div>
+            ) : chatTasks.map(ct => (
+              <Link key={ct.id} to={`/chat/${ct.id}`} className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm truncate">{ct.title}</h3>
+                    {ct.last_message && (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">{ct.last_message}</p>
+                    )}
+                    {ct.last_at && (
+                      <p className="text-[10px] text-muted-foreground mt-1">{new Date(ct.last_at).toLocaleString()}</p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
         {/* BALANCE / EARNINGS (Wolt-style) */}
         {tab === 'earnings' && (
           <div className="space-y-4">
