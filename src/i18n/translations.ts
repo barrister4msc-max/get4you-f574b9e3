@@ -2121,6 +2121,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.employment.signedAt': 'تم التوقيع',
 
     // Chat
+    'chat.title': 'الرسائل',
     'chat.openChat': 'فتح المحادثة',
     'chat.placeholder': 'اكتب رسالة...',
     'chat.sendError': 'فشل في إرسال الرسالة',
