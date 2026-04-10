@@ -86,6 +86,33 @@ const DashboardPage = () => {
       setEscrowData((releasedRes.data as any[])?.map(e => ({ ...e, task: Array.isArray(e.tasks) ? e.tasks[0] : e.tasks })) || []);
       setAllEscrow((allEscrowRes.data as any[])?.map(e => ({ ...e, task: Array.isArray(e.tasks) ? e.tasks[0] : e.tasks })) || []);
       setReviews((reviewsRes.data as any[])?.map(r => ({ ...r, task: Array.isArray(r.tasks) ? r.tasks[0] : r.tasks })) || []);
+
+      // Fetch chat tasks - tasks where user has messages
+      const { data: chatMsgs } = await supabase
+        .from('chat_messages')
+        .select('task_id, content, created_at')
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      if (chatMsgs && chatMsgs.length > 0) {
+        const taskIds = [...new Set(chatMsgs.map(m => m.task_id))];
+        const { data: chatTasksData } = await supabase
+          .from('tasks')
+          .select('id, title')
+          .in('id', taskIds);
+        const taskMap = new Map(chatTasksData?.map(t => [t.id, t.title]) || []);
+        const lastMsgMap = new Map<string, { content: string; created_at: string }>();
+        chatMsgs.forEach(m => {
+          if (!lastMsgMap.has(m.task_id)) lastMsgMap.set(m.task_id, { content: m.content, created_at: m.created_at });
+        });
+        setChatTasks(taskIds.filter(id => taskMap.has(id)).map(id => ({
+          id,
+          title: taskMap.get(id)!,
+          last_message: lastMsgMap.get(id)?.content || null,
+          last_at: lastMsgMap.get(id)?.created_at || null,
+        })));
+      }
+
       setLoading(false);
     };
     fetchAll();
