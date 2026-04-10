@@ -554,6 +554,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.roles': 'Roles',
     'admin.roleAdded': 'Role {role} added',
     'admin.roleRemoved': 'Role {role} removed',
+    'admin.chat': 'Chat',
+    'admin.chat.noConversations': 'No conversations yet',
+    'admin.chat.selectConversation': 'Select a conversation',
+    'admin.chat.you': 'You (Admin)',
 
     // Task assigned tasker
     'task.assignedTasker': 'Assigned Tasker',
@@ -1088,6 +1092,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.roles': 'Роли',
     'admin.roleAdded': 'Роль {role} добавлена',
     'admin.roleRemoved': 'Роль {role} снята',
+    'admin.chat': 'Чат',
+    'admin.chat.noConversations': 'Нет диалогов',
+    'admin.chat.selectConversation': 'Выберите диалог',
+    'admin.chat.you': 'Вы (Админ)',
 
     // Task assigned tasker
     'task.assignedTasker': 'Назначенный исполнитель',
@@ -1622,6 +1630,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.roles': 'תפקידים',
     'admin.roleAdded': 'תפקיד {role} נוסף',
     'admin.roleRemoved': 'תפקיד {role} הוסר',
+    'admin.chat': 'צ׳אט',
+    'admin.chat.noConversations': 'אין שיחות עדיין',
+    'admin.chat.selectConversation': 'בחר שיחה',
+    'admin.chat.you': 'אתה (מנהל)',
 
     // Task assigned tasker
     'task.assignedTasker': 'נותן שירות מוקצה',
@@ -2156,6 +2168,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.roles': 'الأدوار',
     'admin.roleAdded': 'تمت إضافة الدور {role}',
     'admin.roleRemoved': 'تمت إزالة الدور {role}',
+    'admin.chat': 'المحادثات',
+    'admin.chat.noConversations': 'لا توجد محادثات بعد',
+    'admin.chat.selectConversation': 'اختر محادثة',
+    'admin.chat.you': 'أنت (مدير)',
 
     // Task assigned tasker
     'task.assignedTasker': 'مقدم الخدمة المعين',
