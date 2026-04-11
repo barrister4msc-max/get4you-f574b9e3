@@ -266,16 +266,40 @@ const TaskDetailPage = () => {
   };
 
   const handlePaymentConfirm = async () => {
+    if (!pendingAcceptProposalId || !id) return;
     setPaymentProcessing(true);
-    // Simulate payment processing
-    await new Promise(r => setTimeout(r, 2000));
-    setPaymentProcessing(false);
-    setShowPaymentDialog(false);
-    toast.success(t('payment.success'));
-    
-    if (pendingAcceptProposalId) {
-      await handleUpdateProposal(pendingAcceptProposalId, 'accepted');
-      setPendingAcceptProposalId(null);
+    try {
+      const proposal = proposals.find(p => p.id === pendingAcceptProposalId);
+      if (!proposal) throw new Error('Proposal not found');
+
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          task_id: id,
+          proposal_id: pendingAcceptProposalId,
+          amount: proposal.price,
+          currency: proposal.currency || currency || 'ILS',
+          item_name: task?.title || 'Task payment',
+          success_url: window.location.href,
+          lang: locale === 'ru' ? 'RU' : locale === 'he' ? 'HE' : 'EN',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.payment_url) {
+        // Accept the proposal first, then redirect
+        await handleUpdateProposal(pendingAcceptProposalId, 'accepted');
+        setPendingAcceptProposalId(null);
+        setShowPaymentDialog(false);
+        window.location.href = data.payment_url;
+      } else {
+        throw new Error(data?.error || 'No payment URL returned');
+      }
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      toast.error(err.message || t('payment.error'));
+    } finally {
+      setPaymentProcessing(false);
     }
   };
 
