@@ -132,8 +132,12 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const newStatus = String(status) === "1" ? "paid" : "failed";
-    console.log("[WEBHOOK] New status:", newStatus);
+    // Allpay can send status as "1", "success", "approved" for successful payments
+    const statusStr = String(status).toLowerCase();
+    const successStatuses = ["1", "success", "approved"];
+    const newStatus = successStatuses.includes(statusStr) ? "paid" : "failed";
+    console.log("[WEBHOOK] Raw status value:", status, "| Type:", typeof status);
+    console.log("[WEBHOOK] Normalized:", statusStr, "| → newStatus:", newStatus);
 
     // Check if order exists first
     const { data: existingOrder, error: fetchError } = await serviceClient
