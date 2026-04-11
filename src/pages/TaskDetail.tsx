@@ -471,9 +471,34 @@ const TaskDetailPage = () => {
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
-              {(translatedDescription ?? task.description) && (
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{translatedDescription ?? task.description}</p>
+              <div className="flex items-center gap-2">
+                {editing ? (
+                  <input
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    className="text-xl font-bold w-full border border-input rounded-lg px-2 py-1 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                ) : (
+                  <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
+                )}
+                {isOwner && task.status === 'open' && !editing && (
+                  <button onClick={handleStartEdit} className="shrink-0 p-1.5 rounded-lg hover:bg-secondary transition-colors" title={t('task.edit')}>
+                    <Pencil className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+              {editing ? (
+                <textarea
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                  rows={4}
+                  className="mt-3 w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  placeholder={t('task.description')}
+                />
+              ) : (
+                (translatedDescription ?? task.description) && (
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{translatedDescription ?? task.description}</p>
+                )
               )}
 
               <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
