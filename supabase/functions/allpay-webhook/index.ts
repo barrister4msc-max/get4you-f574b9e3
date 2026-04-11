@@ -139,10 +139,10 @@ Deno.serve(async (req) => {
     console.log("[WEBHOOK] Raw status value:", status, "| Type:", typeof status);
     console.log("[WEBHOOK] Normalized:", statusStr, "| → newStatus:", newStatus);
 
-    // Check if order exists first
+    // Check if order exists
     const { data: existingOrder, error: fetchError } = await serviceClient
       .from("orders")
-      .select("id, status, allpay_order_id")
+      .select("id, status, allpay_order_id, amount, currency")
       .eq("allpay_order_id", orderId)
       .maybeSingle();
 
@@ -158,6 +158,25 @@ Deno.serve(async (req) => {
 
     console.log("[WEBHOOK] Found order:", JSON.stringify(existingOrder));
 
+    // ── Security: skip if already paid (duplicate webhook) ──
+    if (existingOrder.status === "paid") {
+      console.log(`[WEBHOOK] Order ${orderId} already paid — ignoring duplicate webhook`);
+      return new Response("OK", { status: 200 });
+    }
+
+    // ── Security: validate amount matches ──
+    const webhookAmount = postData.amount != null ? Number(postData.amount) : null;
+    if (webhookAmount != null && existingOrder.amount != null) {
+      const dbAmount = Number(existingOrder.amount);
+      if (Math.abs(webhookAmount - dbAmount) > 0.01) {
+        console.error(`[WEBHOOK] AMOUNT MISMATCH for ${orderId}. DB: ${dbAmount}, Webhook: ${webhookAmount}`);
+        return new Response("OK", { status: 200 });
+      }
+      console.log(`[WEBHOOK] Amount verified: ${webhookAmount}`);
+    } else {
+      console.log("[WEBHOOK] Amount not in webhook payload — skipping amount check");
+    }
+
     // Update the order
     const { data: updateResult, error: updateError } = await serviceClient
       .from("orders")
@@ -167,10 +186,13 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       })
       .eq("allpay_order_id", orderId)
+      .neq("status", "paid")  // extra guard against race conditions
       .select("id, status");
 
     if (updateError) {
       console.error("[WEBHOOK] DB update error:", JSON.stringify(updateError));
+    } else if (!updateResult?.length) {
+      console.log(`[WEBHOOK] No rows updated for ${orderId} — likely already paid (race condition)`);
     } else {
       console.log(`[WEBHOOK] ✅ Order ${orderId} → ${newStatus}. Result:`, JSON.stringify(updateResult));
     }
