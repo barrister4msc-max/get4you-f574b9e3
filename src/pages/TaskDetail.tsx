@@ -373,7 +373,7 @@ const TaskDetailPage = () => {
             .eq('id', id!);
           setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
 
-          const commissionRate = 0.15;
+          const commissionRate = 0.12;
           const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
           const netAmount = proposal.price - commissionAmount;
           const { data: escrowData } = await supabase.from('escrow_transactions').insert({
