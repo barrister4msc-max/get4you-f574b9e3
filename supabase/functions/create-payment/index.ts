@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        order_id: orderId,
+        order_id: allpayOrderId,
         payment_url: allpayData.payment_url,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
