@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
     // ── 2. Parse request body ──
     const body = await req.json();
-    const { task_id, proposal_id, amount, currency, item_name, success_url, lang } = body;
+    const { task_id, proposal_id, amount, currency, item_name, success_url, cancel_url, lang } = body;
 
     if (!amount || !item_name) {
       return new Response(
@@ -138,6 +138,10 @@ Deno.serve(async (req) => {
 
     if (lang) allpayRequest.lang = String(lang);
     if (success_url) allpayRequest.success_url = String(success_url);
+    if (cancel_url) allpayRequest.cancel_url = String(cancel_url);
+
+    console.log("[CREATE-PAYMENT] success_url:", success_url || "(not set)");
+    console.log("[CREATE-PAYMENT] cancel_url:", cancel_url || "(not set)");
 
     // ── 7. Generate SHA-256 signature ──
     const sign = await getApiSignatureAsync(allpayRequest, allpayApiKey);
