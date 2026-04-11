@@ -6,7 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-
+/**
+ * Generate Allpay SHA256 signature.
+ * Algorithm: sort all param keys alphabetically, collect non-empty string values
+ * (for arrays — iterate items, sort their keys, collect values),
+ * join with ":", append ":" + apiKey, then SHA-256 hex.
+ */
 async function getApiSignatureAsync(
   params: Record<string, unknown>,
   apiKey: string
@@ -14,30 +19,28 @@ async function getApiSignatureAsync(
   const sortedKeys = Object.keys(params).sort();
   const chunks: string[] = [];
 
-  sortedKeys.forEach((key) => {
-    if (key === "sign") return;
+  for (const key of sortedKeys) {
+    if (key === "sign") continue;
     const value = params[key];
 
     if (Array.isArray(value)) {
-      value.forEach((item) => {
+      for (const item of value) {
         if (typeof item === "object" && item !== null) {
-          const sortedItemKeys = Object.keys(
-            item as Record<string, unknown>
-          ).sort();
-          sortedItemKeys.forEach((name) => {
+          const itemKeys = Object.keys(item as Record<string, unknown>).sort();
+          for (const name of itemKeys) {
             const val = (item as Record<string, unknown>)[name];
             if (typeof val === "string" && val.trim() !== "") {
               chunks.push(val);
             }
-          });
+          }
         }
-      });
+      }
     } else {
       if (typeof value === "string" && value.trim() !== "") {
         chunks.push(value);
       }
     }
-  });
+  }
 
   const signatureString = chunks.join(":") + ":" + apiKey;
   const encoder = new TextEncoder();
@@ -48,12 +51,13 @@ async function getApiSignatureAsync(
 }
 
 Deno.serve(async (req) => {
+  // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Auth check
+    // ── 1. Auth check ──
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -66,12 +70,13 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify user
+    // Verify user via JWT claims
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    const { data: claimsData, error: claimsError } =
+      await userClient.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -80,41 +85,41 @@ Deno.serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    // Parse body
+    // ── 2. Parse request body ──
     const body = await req.json();
     const { task_id, proposal_id, amount, currency, item_name, success_url, lang } = body;
 
     if (!amount || !item_name) {
       return new Response(
         JSON.stringify({ error: "amount and item_name are required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // ── 3. Load Allpay credentials from secrets ──
     const allpayLogin = Deno.env.get("ALLPAY_LOGIN")!;
     const allpayApiKey = Deno.env.get("ALLPAY_API_KEY")!;
 
     if (!allpayLogin || !allpayApiKey) {
       return new Response(
         JSON.stringify({ error: "Payment service not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Generate unique order ID
+    // ── 4. Generate unique order ID ──
     const orderId = crypto.randomUUID();
 
-    // Build webhook URL
-    const projectId = supabaseUrl.replace("https://", "").split(".")[0];
-    const webhookUrl = `https://${projectId}.supabase.co/functions/v1/allpay-webhook`;
+    // ── 5. Build webhook URL explicitly ──
+    // This is the public URL of the allpay-webhook edge function
+    const projectRef = supabaseUrl.replace("https://", "").split(".")[0];
+    const webhookUrl = `https://${projectRef}.supabase.co/functions/v1/allpay-webhook`;
 
-    // Build Allpay request (API v11)
+    console.log("Webhook URL:", webhookUrl);
+    console.log("Order ID:", orderId);
+    console.log("Amount:", amount, "Currency:", currency);
+
+    // ── 6. Build Allpay API v11 request ──
     const allpayRequest: Record<string, unknown> = {
       login: allpayLogin,
       order_id: orderId,
@@ -128,17 +133,19 @@ Deno.serve(async (req) => {
       ],
       currency: currency || "ILS",
       webhook_url: webhookUrl,
-      expire: String(Math.floor(Date.now() / 1000) + 3600),
+      expire: String(Math.floor(Date.now() / 1000) + 3600), // 1 hour
     };
 
     if (lang) allpayRequest.lang = String(lang);
     if (success_url) allpayRequest.success_url = String(success_url);
 
-    // Generate signature
+    // ── 7. Generate SHA-256 signature ──
     const sign = await getApiSignatureAsync(allpayRequest, allpayApiKey);
     allpayRequest.sign = sign;
 
-    // Call Allpay API
+    console.log("Allpay request (without sign):", JSON.stringify({ ...allpayRequest, sign: "[REDACTED]" }));
+
+    // ── 8. Call Allpay API ──
     const allpayResponse = await fetch(
       "https://allpay.to/app/?show=getpayment&mode=api11",
       {
@@ -149,8 +156,9 @@ Deno.serve(async (req) => {
     );
 
     const allpayData = await allpayResponse.json();
+    console.log("Allpay response:", JSON.stringify(allpayData));
 
-    // Insert order into DB using service role
+    // ── 9. Insert order into DB using service role ──
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     const { error: insertError } = await serviceClient.from("orders").insert({
       id: orderId,
@@ -169,23 +177,19 @@ Deno.serve(async (req) => {
       console.error("Insert error:", insertError);
       return new Response(
         JSON.stringify({ error: "Failed to create order" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // ── 10. Return result ──
     if (allpayData.error_code) {
       return new Response(
         JSON.stringify({
           error: allpayData.error_msg || "Payment creation failed",
+          error_code: allpayData.error_code,
           order_id: orderId,
         }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -194,19 +198,13 @@ Deno.serve(async (req) => {
         order_id: orderId,
         payment_url: allpayData.payment_url,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("create-payment error:", err);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

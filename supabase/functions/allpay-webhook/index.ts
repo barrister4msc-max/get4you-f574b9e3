@@ -1,5 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+/**
+ * Allpay Webhook Handler
+ *
+ * Called by Allpay when a payment status changes.
+ * - Verifies SHA-256 signature using ALLPAY_API_KEY
+ * - Updates the order status to "paid" (status=1) or "failed"
+ * - Always returns HTTP 200 (Allpay requirement)
+ */
+
 async function getApiSignatureAsync(
   params: Record<string, unknown>,
   apiKey: string
@@ -7,30 +16,28 @@ async function getApiSignatureAsync(
   const sortedKeys = Object.keys(params).sort();
   const chunks: string[] = [];
 
-  sortedKeys.forEach((key) => {
-    if (key === "sign") return;
+  for (const key of sortedKeys) {
+    if (key === "sign") continue;
     const value = params[key];
 
     if (Array.isArray(value)) {
-      value.forEach((item) => {
+      for (const item of value) {
         if (typeof item === "object" && item !== null) {
-          const sortedItemKeys = Object.keys(
-            item as Record<string, unknown>
-          ).sort();
-          sortedItemKeys.forEach((name) => {
+          const itemKeys = Object.keys(item as Record<string, unknown>).sort();
+          for (const name of itemKeys) {
             const val = (item as Record<string, unknown>)[name];
             if (typeof val === "string" && val.trim() !== "") {
               chunks.push(val);
             }
-          });
+          }
         }
-      });
+      }
     } else {
       if (typeof value === "string" && value.trim() !== "") {
         chunks.push(value);
       }
     }
-  });
+  }
 
   const signatureString = chunks.join(":") + ":" + apiKey;
   const encoder = new TextEncoder();
@@ -41,19 +48,20 @@ async function getApiSignatureAsync(
 }
 
 Deno.serve(async (req) => {
-  // Webhook is always POST from Allpay — always return 200
+  // Allpay sends POST; for anything else just return 200
   if (req.method !== "POST") {
     return new Response("OK", { status: 200 });
   }
 
   try {
+    // ── 1. Load API key ──
     const allpayApiKey = Deno.env.get("ALLPAY_API_KEY");
     if (!allpayApiKey) {
       console.error("ALLPAY_API_KEY not configured");
       return new Response("OK", { status: 200 });
     }
 
-    // Parse webhook body (Allpay sends form-encoded or JSON)
+    // ── 2. Parse webhook body (JSON or form-encoded) ──
     let postData: Record<string, unknown>;
     const contentType = req.headers.get("content-type") || "";
 
@@ -66,12 +74,10 @@ Deno.serve(async (req) => {
         postData[key] = String(value);
       });
     } else {
-      // Try JSON first, fallback to text
       const text = await req.text();
       try {
         postData = JSON.parse(text);
       } catch {
-        // Try URL-encoded
         const params = new URLSearchParams(text);
         postData = {};
         params.forEach((value, key) => {
@@ -82,16 +88,17 @@ Deno.serve(async (req) => {
 
     console.log("Webhook received:", JSON.stringify(postData));
 
+    // ── 3. Extract fields ──
     const receivedSign = postData.sign as string;
     const orderId = postData.order_id as string;
     const status = postData.status;
 
     if (!orderId) {
-      console.error("No order_id in webhook");
+      console.error("No order_id in webhook payload");
       return new Response("OK", { status: 200 });
     }
 
-    // Verify signature
+    // ── 4. Verify signature ──
     const calculatedSign = await getApiSignatureAsync(postData, allpayApiKey);
 
     if (receivedSign !== calculatedSign) {
@@ -101,12 +108,14 @@ Deno.serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
-    // Update order status
+    console.log(`Signature verified for order ${orderId}`);
+
+    // ── 5. Update order in database ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // status === 1 or "1" means paid
+    // Allpay: status === "1" means successful payment
     const newStatus = String(status) === "1" ? "paid" : "failed";
 
     const { error: updateError } = await serviceClient
