@@ -2164,6 +2164,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'جاري المعالجة...',
     'payment.success': 'تم الدفع! الأموال محتجزة في الضمان.',
     'payment.demo': 'وضع تجريبي — بدون رسوم حقيقية',
+    'payment.redirect': 'سيتم تحويلك إلى صفحة الدفع',
+    'payment.cancel': 'إلغاء',
+    'payment.error': 'خطأ في الدفع',
 
     // AI Photo
     'task.ai.attachPhoto': 'إرفاق صورة',
