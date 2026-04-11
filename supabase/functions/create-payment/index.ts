@@ -6,45 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-function getApiSignature(params: Record<string, unknown>, apiKey: string): string {
-  const sortedKeys = Object.keys(params).sort();
-  const chunks: string[] = [];
-
-  sortedKeys.forEach((key) => {
-    if (key === "sign") return;
-    const value = params[key];
-
-    if (Array.isArray(value)) {
-      value.forEach((item) => {
-        if (typeof item === "object" && item !== null) {
-          const sortedItemKeys = Object.keys(item as Record<string, unknown>).sort();
-          sortedItemKeys.forEach((name) => {
-            const val = (item as Record<string, unknown>)[name];
-            if (typeof val === "string" && val.trim() !== "") {
-              chunks.push(val);
-            }
-          });
-        }
-      });
-    } else {
-      if (typeof value === "string" && value.trim() !== "") {
-        chunks.push(value);
-      }
-    }
-  });
-
-  const signatureString = chunks.join(":") + ":" + apiKey;
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(signatureString);
-  // Deno crypto
-  const hashBuffer = new Uint8Array(
-    // We'll use the sync approach below
-  );
-
-  // Use SubtleCrypto
-  return signatureString; // placeholder, we'll use async version
-}
 
 async function getApiSignatureAsync(
   params: Record<string, unknown>,
