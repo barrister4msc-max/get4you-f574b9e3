@@ -372,6 +372,7 @@ const TaskDetailPage = () => {
       if (error) throw error;
 
       if (data?.payment_url) {
+        await handleUpdateProposal(pendingAcceptProposalId, 'accepted');
         setPendingAcceptProposalId(null);
         setShowPaymentDialog(false);
         window.location.href = data.payment_url;
@@ -397,6 +398,48 @@ const TaskDetailPage = () => {
       if (error) throw error;
 
       if (status === 'accepted') {
+        const proposal = proposals.find(p => p.id === proposalId);
+
+        if (!proposal || !user || !id) {
+          throw new Error('proposal_not_found');
+        }
+
+        const { error: taskUpdateError } = await supabase
+          .from('tasks')
+          .update({ status: 'in_progress', assigned_to: proposal.user_id })
+          .eq('id', id);
+
+        if (taskUpdateError) throw taskUpdateError;
+
+        setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
+
+        const commissionRate = 0.12;
+        const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
+        const netAmount = proposal.price - commissionAmount;
+
+        const { data: escrowData, error: escrowError } = await supabase
+          .from('escrow_transactions')
+          .insert({
+            task_id: id,
+            proposal_id: proposalId,
+            client_id: user.id,
+            tasker_id: proposal.user_id,
+            amount: proposal.price,
+            currency: proposal.currency || currency,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            net_amount: netAmount,
+            status: 'held',
+          })
+          .select()
+          .single();
+
+        if (escrowError) throw escrowError;
+
+        if (escrowData) {
+          setEscrow(escrowData);
+        }
+
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
         for (const p of otherPending) {
           const { error: rejectError } = await supabase
@@ -405,6 +448,15 @@ const TaskDetailPage = () => {
             .eq('id', p.id);
           if (rejectError) throw rejectError;
         }
+
+        supabase.functions.invoke('send-whatsapp', {
+          body: {
+            type: 'tasker_hired',
+            user_id: proposal.user_id,
+            task_id: id,
+          },
+        }).catch(console.error);
+
         toast.success(t('proposal.accepted'));
       } else {
         toast.success(t('proposal.rejected'));
