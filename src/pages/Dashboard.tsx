@@ -202,6 +202,7 @@ const DashboardPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'myTasks', label: t('dashboard.client.myTasks'), icon: <ClipboardList className="w-4 h-4" /> },
     { key: 'messages', label: t('chat.title') || 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
+    { key: 'orders', label: t('orders.title') || 'Orders', icon: <ShoppingCart className="w-4 h-4" /> },
   ];
   if (isTasker) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
