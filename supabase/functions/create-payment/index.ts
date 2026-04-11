@@ -158,16 +158,23 @@ Deno.serve(async (req) => {
     const allpayData = await allpayResponse.json();
     console.log("Allpay response:", JSON.stringify(allpayData));
 
-    // ── 9. Insert order into DB using service role ──
+    // ── 9. Determine the order_id Allpay will use in webhook ──
+    // Allpay may return their own order_id or echo ours back.
+    // The webhook will send order_id — we must store whatever Allpay uses.
+    const allpayOrderId = allpayData.order_id ? String(allpayData.order_id) : orderId;
+    console.log("[CREATE-PAYMENT] Our orderId:", orderId);
+    console.log("[CREATE-PAYMENT] Allpay returned order_id:", allpayData.order_id);
+    console.log("[CREATE-PAYMENT] Storing allpay_order_id as:", allpayOrderId);
+
+    // ── 10. Insert order into DB using service role ──
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     const { error: insertError } = await serviceClient.from("orders").insert({
-      id: orderId,
       user_id: userId,
       task_id: task_id || null,
       proposal_id: proposal_id || null,
       amount: Number(amount),
       currency: currency || "ILS",
-      allpay_order_id: orderId,
+      allpay_order_id: allpayOrderId,
       status: "pending",
       payment_url: allpayData.payment_url || null,
       allpay_response: allpayData,
