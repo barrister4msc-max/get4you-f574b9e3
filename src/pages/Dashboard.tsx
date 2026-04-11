@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight,
-  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare,
+  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare, ShoppingCart,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -30,7 +30,13 @@ interface ReviewRow {
   created_at: string; task?: { title: string } | null;
 }
 
-type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages';
+interface OrderRow {
+  id: string; amount: number; currency: string; status: string;
+  created_at: string; payment_url: string | null;
+  task?: { title: string } | null;
+}
+
+type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages' | 'orders';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
@@ -57,6 +63,7 @@ const DashboardPage = () => {
   const [allEscrow, setAllEscrow] = useState<EscrowRow[]>([]);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [chatTasks, setChatTasks] = useState<{ id: string; title: string; last_message: string | null; last_at: string | null }[]>([]);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isClient = roles.includes('client');
@@ -112,6 +119,14 @@ const DashboardPage = () => {
           last_at: lastMsgMap.get(id)?.created_at || null,
         })));
       }
+
+      // Fetch orders
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('id, amount, currency, status, created_at, payment_url, tasks:task_id(title)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      setOrders((ordersData as any[])?.map(o => ({ ...o, task: Array.isArray(o.tasks) ? o.tasks[0] : o.tasks })) || []);
 
       setLoading(false);
     };
@@ -187,6 +202,7 @@ const DashboardPage = () => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'myTasks', label: t('dashboard.client.myTasks'), icon: <ClipboardList className="w-4 h-4" /> },
     { key: 'messages', label: t('chat.title') || 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
+    { key: 'orders', label: t('orders.title') || 'Orders', icon: <ShoppingCart className="w-4 h-4" /> },
   ];
   if (isTasker) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
@@ -384,7 +400,60 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* BALANCE / EARNINGS (Wolt-style) */}
+        {/* ORDERS */}
+        {tab === 'orders' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold mb-2">{t('orders.title')}</h2>
+            {loading ? <p className="text-center text-muted-foreground py-8">{t('dashboard.loading')}</p>
+            : orders.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingCart className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{t('orders.empty')}</p>
+              </div>
+            ) : orders.map((order) => (
+              <div key={order.id} className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      order.status === 'paid' ? 'bg-emerald-50' : order.status === 'failed' ? 'bg-red-50' : 'bg-amber-50'
+                    }`}>
+                      {order.status === 'paid' ? (
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                      ) : order.status === 'failed' ? (
+                        <ShoppingCart className="w-4 h-4 text-red-600" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-600" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{order.task?.title || order.id.slice(0, 8)}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(order.status)}`}>
+                          {t(`orders.status.${order.status}`) || order.status}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-primary shrink-0">
+                    {formatPrice(order.amount, currency, order.currency)}
+                  </span>
+                </div>
+                {order.status === 'pending' && order.payment_url && (
+                  <a
+                    href={order.payment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex items-center justify-center gap-2 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    {t('payment.pay')} <ArrowRight className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {tab === 'earnings' && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">{t('balance.title')}</h2>

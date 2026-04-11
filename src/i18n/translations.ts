@@ -511,6 +511,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.redirect': 'You will be redirected to the payment page',
     'payment.cancel': 'Cancel',
     'payment.error': 'Payment error',
+    'orders.title': 'Orders',
+    'orders.empty': 'No orders yet',
+    'orders.status.pending': 'Pending',
+    'orders.status.paid': 'Paid',
+    'orders.status.failed': 'Failed',
 
     // AI Photo
     'task.ai.attachPhoto': 'Attach photo',
@@ -1063,6 +1068,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.redirect': 'Вы будете перенаправлены на страницу оплаты',
     'payment.cancel': 'Отмена',
     'payment.error': 'Ошибка оплаты',
+    'orders.title': 'Заказы',
+    'orders.empty': 'Заказов пока нет',
+    'orders.status.pending': 'Ожидание',
+    'orders.status.paid': 'Оплачен',
+    'orders.status.failed': 'Ошибка',
 
     // AI Photo
     'task.ai.attachPhoto': 'Прикрепить фото',
@@ -1615,6 +1625,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.redirect': 'תועבר לדף התשלום',
     'payment.cancel': 'ביטול',
     'payment.error': 'שגיאת תשלום',
+    'orders.title': 'הזמנות',
+    'orders.empty': 'אין הזמנות עדיין',
+    'orders.status.pending': 'ממתין',
+    'orders.status.paid': 'שולם',
+    'orders.status.failed': 'נכשל',
 
     // AI Photo
     'task.ai.attachPhoto': 'צרף תמונה',
@@ -2167,6 +2182,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.redirect': 'سيتم تحويلك إلى صفحة الدفع',
     'payment.cancel': 'إلغاء',
     'payment.error': 'خطأ في الدفع',
+    'orders.title': 'الطلبات',
+    'orders.empty': 'لا توجد طلبات بعد',
+    'orders.status.pending': 'معلق',
+    'orders.status.paid': 'مدفوع',
+    'orders.status.failed': 'فشل',
 
     // AI Photo
     'task.ai.attachPhoto': 'إرفاق صورة',
