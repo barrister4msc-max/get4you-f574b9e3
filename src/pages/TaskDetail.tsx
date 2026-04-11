@@ -780,8 +780,8 @@ const TaskDetailPage = () => {
               <div className="text-center">
                 <CreditCard className="w-8 h-8 text-primary mx-auto mb-2" />
                 <h3 className="font-bold text-lg">{t('payment.title')}</h3>
-                <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-1.5 mt-2 inline-block">
-                  {t('payment.demo')}
+                <p className="text-xs text-muted-foreground mt-2">
+                  {t('payment.redirect')}
                 </p>
               </div>
 
@@ -795,33 +795,6 @@ const TaskDetailPage = () => {
                 ) : null;
               })()}
 
-              {/* Card form (mock) */}
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder={t('payment.cardNumber')}
-                  maxLength={19}
-                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm"
-                  defaultValue="4242 4242 4242 4242"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder={t('payment.expiry')}
-                    maxLength={5}
-                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm"
-                    defaultValue="12/28"
-                  />
-                  <input
-                    type="text"
-                    placeholder={t('payment.cvc')}
-                    maxLength={4}
-                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-sm"
-                    defaultValue="123"
-                  />
-                </div>
-              </div>
-
               <button
                 onClick={handlePaymentConfirm}
                 disabled={paymentProcessing}
@@ -834,10 +807,18 @@ const TaskDetailPage = () => {
                   </>
                 ) : (
                   <>
-                    <Lock className="w-4 h-4" />
+                    <CreditCard className="w-4 h-4" />
                     {t('payment.pay')}
                   </>
                 )}
+              </button>
+              <button
+                onClick={() => { setShowPaymentDialog(false); setPendingAcceptProposalId(null); }}
+                disabled={paymentProcessing}
+                className="w-full py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-secondary transition-colors"
+              >
+                {t('payment.cancel')}
+              </button>
               </button>
             </motion.div>
           </motion.div>
