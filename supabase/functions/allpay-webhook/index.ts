@@ -132,10 +132,21 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Allpay can send status as "1", "success", "approved" for successful payments
-    const statusStr = String(status).toLowerCase();
+    // Allpay status mapping
+    const statusStr = String(status).toLowerCase().trim();
     const successStatuses = ["1", "success", "approved"];
-    const newStatus = successStatuses.includes(statusStr) ? "paid" : "failed";
+    const failureStatuses = ["0", "failed", "declined"];
+
+    let newStatus: string;
+    if (successStatuses.includes(statusStr)) {
+      newStatus = "paid";
+    } else if (failureStatuses.includes(statusStr)) {
+      newStatus = "failed";
+    } else {
+      console.warn(`[WEBHOOK] ⚠️ UNKNOWN status "${status}" for order ${orderId} — ignoring`);
+      return new Response("OK", { status: 200 });
+    }
+
     console.log("[WEBHOOK] Raw status value:", status, "| Type:", typeof status);
     console.log("[WEBHOOK] Normalized:", statusStr, "| → newStatus:", newStatus);
 
