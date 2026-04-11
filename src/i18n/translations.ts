@@ -1612,6 +1612,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'מעבד...',
     'payment.success': 'התשלום בוצע! הכספים מוחזקים בנאמנות.',
     'payment.demo': 'מצב הדגמה — ללא חיוב אמיתי',
+    'payment.redirect': 'תועבר לדף התשלום',
+    'payment.cancel': 'ביטול',
+    'payment.error': 'שגיאת תשלום',
 
     // AI Photo
     'task.ai.attachPhoto': 'צרף תמונה',
