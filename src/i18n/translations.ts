@@ -508,6 +508,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'Processing...',
     'payment.success': 'Payment successful! Funds are held in escrow.',
     'payment.demo': 'Demo mode — no real charges',
+    'payment.redirect': 'You will be redirected to the payment page',
+    'payment.cancel': 'Cancel',
+    'payment.error': 'Payment error',
 
     // AI Photo
     'task.ai.attachPhoto': 'Attach photo',
@@ -1057,6 +1060,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'Обработка...',
     'payment.success': 'Оплата прошла! Средства удержаны на эскроу.',
     'payment.demo': 'Демо-режим — реальных списаний нет',
+    'payment.redirect': 'Вы будете перенаправлены на страницу оплаты',
+    'payment.cancel': 'Отмена',
+    'payment.error': 'Ошибка оплаты',
 
     // AI Photo
     'task.ai.attachPhoto': 'Прикрепить фото',
@@ -1606,6 +1612,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'מעבד...',
     'payment.success': 'התשלום בוצע! הכספים מוחזקים בנאמנות.',
     'payment.demo': 'מצב הדגמה — ללא חיוב אמיתי',
+    'payment.redirect': 'תועבר לדף התשלום',
+    'payment.cancel': 'ביטול',
+    'payment.error': 'שגיאת תשלום',
 
     // AI Photo
     'task.ai.attachPhoto': 'צרף תמונה',
@@ -2155,6 +2164,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'جاري المعالجة...',
     'payment.success': 'تم الدفع! الأموال محتجزة في الضمان.',
     'payment.demo': 'وضع تجريبي — بدون رسوم حقيقية',
+    'payment.redirect': 'سيتم تحويلك إلى صفحة الدفع',
+    'payment.cancel': 'إلغاء',
+    'payment.error': 'خطأ في الدفع',
 
     // AI Photo
     'task.ai.attachPhoto': 'إرفاق صورة',
