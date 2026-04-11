@@ -30,7 +30,13 @@ interface ReviewRow {
   created_at: string; task?: { title: string } | null;
 }
 
-type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages';
+interface OrderRow {
+  id: string; amount: number; currency: string; status: string;
+  created_at: string; payment_url: string | null;
+  task?: { title: string } | null;
+}
+
+type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages' | 'orders';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
