@@ -543,6 +543,66 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          allpay_order_id: string
+          allpay_response: Json | null
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          payment_url: string | null
+          proposal_id: string | null
+          status: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allpay_order_id: string
+          allpay_response?: Json | null
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_url?: string | null
+          proposal_id?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allpay_order_id?: string
+          allpay_response?: Json | null
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_url?: string | null
+          proposal_id?: string | null
+          status?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
