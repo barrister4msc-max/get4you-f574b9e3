@@ -177,15 +177,44 @@ const TaskDetailPage = () => {
   // Fetch escrow
   useEffect(() => {
     if (!id) return;
+
     const fetchEscrow = async () => {
       const { data } = await supabase
         .from('escrow_transactions')
         .select('*')
         .eq('task_id', id)
         .maybeSingle();
-      if (data) setEscrow(data);
+      setEscrow(data || null);
     };
+
     fetchEscrow();
+
+    const escrowChannel = supabase
+      .channel(`task-escrow-${id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'escrow_transactions', filter: `task_id=eq.${id}` },
+        () => {
+          fetchEscrow();
+        }
+      )
+      .subscribe();
+
+    const taskChannel = supabase
+      .channel(`task-status-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tasks', filter: `id=eq.${id}` },
+        () => {
+          fetchTask();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(escrowChannel);
+      supabase.removeChannel(taskChannel);
+    };
   }, [id]);
 
   const handleCompleteTask = async () => {
@@ -338,8 +367,6 @@ const TaskDetailPage = () => {
       if (error) throw error;
 
       if (data?.payment_url) {
-        // Accept the proposal first, then redirect
-        await handleUpdateProposal(pendingAcceptProposalId, 'accepted');
         setPendingAcceptProposalId(null);
         setShowPaymentDialog(false);
         window.location.href = data.payment_url;
@@ -365,45 +392,15 @@ const TaskDetailPage = () => {
       if (error) throw error;
 
       if (status === 'accepted') {
-        const proposal = proposals.find(p => p.id === proposalId);
-        if (proposal) {
-          await supabase
-            .from('tasks')
-            .update({ status: 'in_progress', assigned_to: proposal.user_id })
-            .eq('id', id!);
-          setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
-
-          const commissionRate = 0.12;
-          const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
-          const netAmount = proposal.price - commissionAmount;
-          const { data: escrowData } = await supabase.from('escrow_transactions').insert({
-            task_id: id!,
-            proposal_id: proposalId,
-            client_id: user!.id,
-            tasker_id: proposal.user_id,
-            amount: proposal.price,
-            currency: proposal.currency || currency,
-            commission_rate: commissionRate,
-            commission_amount: commissionAmount,
-            net_amount: netAmount,
-            status: 'held',
-          }).select().single();
-          if (escrowData) setEscrow(escrowData);
-        }
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
         for (const p of otherPending) {
-          await supabase.from('proposals').update({ status: 'rejected' }).eq('id', p.id);
+          const { error: rejectError } = await supabase
+            .from('proposals')
+            .update({ status: 'rejected' })
+            .eq('id', p.id);
+          if (rejectError) throw rejectError;
         }
         toast.success(t('proposal.accepted'));
-
-          // Send WhatsApp to tasker about being hired
-          supabase.functions.invoke('send-whatsapp', {
-            body: {
-              type: 'tasker_hired',
-              user_id: proposal?.user_id,
-              task_id: id,
-            },
-          }).catch(console.error);
       } else {
         toast.success(t('proposal.rejected'));
       }
@@ -417,6 +414,7 @@ const TaskDetailPage = () => {
       );
     } catch {
       toast.error(t('proposal.error'));
+      throw new Error('proposal_update_failed');
     } finally {
       setUpdating(null);
     }
