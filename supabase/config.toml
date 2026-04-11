@@ -13,3 +13,5 @@ project_id = "emkiekjlxmtnzrgzfdep"
     verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
+  [functions.allpay-webhook]
+    verify_jwt = false
