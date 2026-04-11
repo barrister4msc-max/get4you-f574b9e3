@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
     // Check if order exists
     const { data: existingOrder, error: fetchError } = await serviceClient
       .from("orders")
-      .select("id, status, allpay_order_id, amount, currency")
+      .select("id, status, allpay_order_id, amount, currency, proposal_id, task_id")
       .eq("allpay_order_id", orderId)
       .maybeSingle();
 
@@ -206,6 +206,38 @@ Deno.serve(async (req) => {
       console.log(`[WEBHOOK] No rows updated for ${orderId} — likely already paid (race condition)`);
     } else {
       console.log(`[WEBHOOK] ✅ Order ${orderId} → ${newStatus}. Result:`, JSON.stringify(updateResult));
+
+      // ── Notify tasker on successful payment ──
+      if (newStatus === "paid" && existingOrder.proposal_id) {
+        try {
+          // Get proposal to find tasker_id, and task for title
+          const { data: proposal } = await serviceClient
+            .from("proposals")
+            .select("user_id, task_id")
+            .eq("id", existingOrder.proposal_id)
+            .single();
+
+          if (proposal) {
+            const { data: task } = await serviceClient
+              .from("tasks")
+              .select("title")
+              .eq("id", proposal.task_id)
+              .single();
+
+            await serviceClient.from("notifications").insert({
+              user_id: proposal.user_id,
+              type: "payment_received",
+              title: `Payment received for "${task?.title || "task"}"`,
+              message: `Client paid ${existingOrder.amount} ${existingOrder.currency}. You can start working!`,
+              task_id: proposal.task_id,
+              proposal_id: existingOrder.proposal_id,
+            });
+            console.log(`[WEBHOOK] ✅ Notification sent to tasker ${proposal.user_id}`);
+          }
+        } catch (notifErr) {
+          console.error("[WEBHOOK] Failed to send tasker notification:", notifErr);
+        }
+      }
     }
 
     return new Response("OK", { status: 200 });
