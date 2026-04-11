@@ -120,6 +120,14 @@ const DashboardPage = () => {
         })));
       }
 
+      // Fetch orders
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('id, amount, currency, status, created_at, payment_url, tasks:task_id(title)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      setOrders((ordersData as any[])?.map(o => ({ ...o, task: Array.isArray(o.tasks) ? o.tasks[0] : o.tasks })) || []);
+
       setLoading(false);
     };
     fetchAll();
