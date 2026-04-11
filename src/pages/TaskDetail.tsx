@@ -819,7 +819,6 @@ const TaskDetailPage = () => {
               >
                 {t('payment.cancel')}
               </button>
-              </button>
             </motion.div>
           </motion.div>
         )}
