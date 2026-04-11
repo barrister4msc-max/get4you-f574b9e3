@@ -70,37 +70,42 @@ const TaskDetailPage = () => {
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
+  const fetchTask = async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from('tasks')
+      .select('*, categories(name_en, name_ru, name_he)')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (data?.user_id) {
+      const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: data.user_id });
+      setOwnerProfile(profile?.[0] || null);
+    }
+
+    if (data?.assigned_to) {
+      const [profileRes, reviewsRes] = await Promise.all([
+        supabase.rpc('get_public_profile', { target_user_id: data.assigned_to }),
+        supabase.from('reviews').select('rating').eq('reviewee_id', data.assigned_to),
+      ]);
+      setAssignedProfile(profileRes.data?.[0] || null);
+      const ratings = reviewsRes.data || [];
+      if (ratings.length > 0) {
+        const avg = ratings.reduce((s, r) => s + r.rating, 0) / ratings.length;
+        setAssignedRating({ avg, count: ratings.length });
+      } else {
+        setAssignedRating({ avg: null, count: 0 });
+      }
+    } else {
+      setAssignedProfile(null);
+      setAssignedRating({ avg: null, count: 0 });
+    }
+
+    setTask(data);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchTask = async () => {
-      if (!id) return;
-      const { data } = await supabase
-        .from('tasks')
-        .select('*, categories(name_en, name_ru, name_he)')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (data?.user_id) {
-        const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: data.user_id });
-        setOwnerProfile(profile?.[0] || null);
-      }
-
-      // Fetch assigned tasker profile
-      if (data?.assigned_to) {
-        const [profileRes, reviewsRes] = await Promise.all([
-          supabase.rpc('get_public_profile', { target_user_id: data.assigned_to }),
-          supabase.from('reviews').select('rating').eq('reviewee_id', data.assigned_to),
-        ]);
-        setAssignedProfile(profileRes.data?.[0] || null);
-        const ratings = reviewsRes.data || [];
-        if (ratings.length > 0) {
-          const avg = ratings.reduce((s, r) => s + r.rating, 0) / ratings.length;
-          setAssignedRating({ avg, count: ratings.length });
-        }
-      }
-
-      setTask(data);
-      setLoading(false);
-    };
     fetchTask();
   }, [id]);
 
