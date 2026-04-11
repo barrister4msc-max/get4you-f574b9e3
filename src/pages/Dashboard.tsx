@@ -63,6 +63,7 @@ const DashboardPage = () => {
   const [allEscrow, setAllEscrow] = useState<EscrowRow[]>([]);
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [chatTasks, setChatTasks] = useState<{ id: string; title: string; last_message: string | null; last_at: string | null }[]>([]);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isClient = roles.includes('client');
