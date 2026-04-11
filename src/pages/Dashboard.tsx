@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight,
-  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare,
+  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare, ShoppingCart,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
