@@ -137,7 +137,11 @@ Deno.serve(async (req) => {
     };
 
     if (lang) allpayRequest.lang = String(lang);
-    if (success_url) allpayRequest.success_url = String(success_url);
+    // Append order_id to success_url so the success page can look up the order
+    if (success_url) {
+      const sep = String(success_url).includes("?") ? "&" : "?";
+      allpayRequest.success_url = `${String(success_url)}${sep}order_id=${encodeURIComponent(orderId)}`;
+    }
     if (cancel_url) allpayRequest.cancel_url = String(cancel_url);
 
     console.log("[CREATE-PAYMENT] success_url:", success_url || "(not set)");
