@@ -262,6 +262,41 @@ Deno.serve(async (req) => {
           console.error("[WEBHOOK] Failed to send tasker notification:", notifErr);
         }
       }
+
+      // ── Send receipt email to client ──
+      if (newStatus === "paid" && existingOrder.user_id) {
+        try {
+          const { data: clientProfile } = await serviceClient
+            .from("profiles")
+            .select("email, display_name")
+            .eq("user_id", existingOrder.user_id)
+            .single();
+
+          if (clientProfile?.email) {
+            const { data: task } = existingOrder.task_id
+              ? await serviceClient.from("tasks").select("title").eq("id", existingOrder.task_id).single()
+              : { data: null };
+
+            await serviceClient.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "payment-receipt",
+                recipientEmail: clientProfile.email,
+                idempotencyKey: `payment-receipt-${existingOrder.id}`,
+                templateData: {
+                  clientName: clientProfile.display_name || undefined,
+                  taskTitle: task?.title || undefined,
+                  amount: String(existingOrder.amount),
+                  currency: existingOrder.currency || "USD",
+                  orderId: existingOrder.allpay_order_id,
+                },
+              },
+            });
+            console.log(`[WEBHOOK] ✅ Receipt email sent to client ${clientProfile.email}`);
+          }
+        } catch (receiptErr) {
+          console.error("[WEBHOOK] Failed to send client receipt:", receiptErr);
+        }
+      }
     }
 
     return new Response("OK", { status: 200 });
