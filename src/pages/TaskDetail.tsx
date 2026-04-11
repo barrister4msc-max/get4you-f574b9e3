@@ -210,7 +210,41 @@ const TaskDetailPage = () => {
     }
   };
 
-  const handleSubmitProposal = async () => {
+  const handleStartEdit = () => {
+    setEditTitle(task.title);
+    setEditDescription(task.description || '');
+    setEditBudget(String(task.budget_fixed || task.budget_min || ''));
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const updates: Record<string, unknown> = {};
+      if (editTitle.trim() && editTitle !== task.title) updates.title = editTitle.trim();
+      if (editDescription !== (task.description || '')) updates.description = editDescription.trim() || null;
+      const newBudget = Number(editBudget);
+      if (newBudget > 0 && newBudget !== (task.budget_fixed || task.budget_min)) {
+        updates.budget_fixed = newBudget;
+      }
+      if (Object.keys(updates).length === 0) {
+        setEditing(false);
+        return;
+      }
+      const { error } = await supabase.from('tasks').update(updates).eq('id', id);
+      if (error) throw error;
+      setTask((prev: any) => ({ ...prev, ...updates }));
+      setEditing(false);
+      toast.success(t('task.edit.saved'));
+    } catch {
+      toast.error(t('task.edit.error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
     if (!user || !id || !price) return;
     setSubmitting(true);
     try {
