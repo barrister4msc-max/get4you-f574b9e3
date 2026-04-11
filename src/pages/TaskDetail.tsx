@@ -11,6 +11,7 @@ import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
   Lock, Unlock, AlertTriangle, MessageSquare, CreditCard, Star,
+  Pencil, Save, X,
 } from 'lucide-react';
 
 interface Proposal {
@@ -58,6 +59,13 @@ const TaskDetailPage = () => {
   // Translation state
   const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editBudget, setEditBudget] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id);
