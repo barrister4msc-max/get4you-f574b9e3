@@ -26,7 +26,6 @@ async function getApiSignatureAsync(
           const itemKeys = Object.keys(item as Record<string, unknown>).sort();
           for (const name of itemKeys) {
             const val = (item as Record<string, unknown>)[name];
-            // Convert any non-null value to string (Allpay may send numbers)
             const strVal = val != null ? String(val).trim() : "";
             if (strVal !== "") {
               chunks.push(strVal);
@@ -35,7 +34,6 @@ async function getApiSignatureAsync(
         }
       }
     } else {
-      // Convert any non-null value to string (handles numbers, booleans)
       const strVal = value != null ? String(value).trim() : "";
       if (strVal !== "") {
         chunks.push(strVal);
@@ -45,9 +43,9 @@ async function getApiSignatureAsync(
 
   const signatureString = chunks.join(":") + ":" + apiKey;
 
-  console.log("[SIGN DEBUG] Sorted keys:", sortedKeys.filter(k => k !== "sign").join(", "));
-  console.log("[SIGN DEBUG] Chunks:", JSON.stringify(chunks));
-  console.log("[SIGN DEBUG] Signature string (redacted key):", chunks.join(":") + ":[API_KEY]");
+  console.log("[SIGN] Sorted keys:", sortedKeys.filter(k => k !== "sign").join(", "));
+  console.log("[SIGN] Chunks:", JSON.stringify(chunks));
+  console.log("[SIGN] Signature string (key redacted):", chunks.join(":") + ":[KEY]");
 
   const encoder = new TextEncoder();
   const data = encoder.encode(signatureString);
@@ -57,12 +55,10 @@ async function getApiSignatureAsync(
 }
 
 Deno.serve(async (req) => {
-  console.log(`[WEBHOOK] ${req.method} received from ${req.headers.get("x-forwarded-for") || "unknown"}`);
+  console.log(`[WEBHOOK] ${req.method} from ${req.headers.get("x-forwarded-for") || "unknown"}`);
   console.log(`[WEBHOOK] Content-Type: ${req.headers.get("content-type")}`);
 
-  // Allpay sends POST; for anything else just return 200
   if (req.method !== "POST") {
-    console.log("[WEBHOOK] Non-POST request, returning 200");
     return new Response("OK", { status: 200 });
   }
 
@@ -73,9 +69,8 @@ Deno.serve(async (req) => {
       console.error("[WEBHOOK] ALLPAY_API_KEY not configured!");
       return new Response("OK", { status: 200 });
     }
-    console.log("[WEBHOOK] ALLPAY_API_KEY loaded (length:", allpayApiKey.length, ")");
 
-    // ── 2. Parse webhook body (JSON or form-encoded) ──
+    // ── 2. Parse webhook body ──
     let postData: Record<string, unknown>;
     const contentType = req.headers.get("content-type") || "";
 
@@ -94,14 +89,12 @@ Deno.serve(async (req) => {
       console.log("[WEBHOOK] Raw body:", text.substring(0, 500));
       try {
         postData = JSON.parse(text);
-        console.log("[WEBHOOK] Parsed raw text as JSON");
       } catch {
         const params = new URLSearchParams(text);
         postData = {};
         params.forEach((value, key) => {
           postData[key] = value;
         });
-        console.log("[WEBHOOK] Parsed raw text as URL params");
       }
     }
 
@@ -113,40 +106,36 @@ Deno.serve(async (req) => {
     const status = postData.status;
 
     console.log("[WEBHOOK] order_id:", orderId);
-    console.log("[WEBHOOK] status:", status);
+    console.log("[WEBHOOK] status:", String(status));
     console.log("[WEBHOOK] received sign:", receivedSign);
 
     if (!orderId) {
-      console.error("[WEBHOOK] No order_id in webhook payload");
+      console.error("[WEBHOOK] No order_id in payload");
       return new Response("OK", { status: 200 });
     }
 
-    // ── 4. Verify signature ──
+    // ── 4. Verify signature (strict) ──
     const calculatedSign = await getApiSignatureAsync(postData, allpayApiKey);
 
     console.log("[WEBHOOK] Calculated sign:", calculatedSign);
-    console.log("[WEBHOOK] Signs match:", receivedSign === calculatedSign);
+    console.log("[WEBHOOK] Match:", receivedSign === calculatedSign);
 
     if (receivedSign !== calculatedSign) {
-      console.error(
-        `[WEBHOOK] Signature MISMATCH for order ${orderId}. Expected: ${calculatedSign}, Got: ${receivedSign}`
-      );
-      // Still update DB but mark in logs — uncomment below to be strict
-      // return new Response("OK", { status: 200 });
+      console.error(`[WEBHOOK] SIGNATURE MISMATCH for ${orderId}. Expected: ${calculatedSign}, Got: ${receivedSign}`);
+      return new Response("OK", { status: 200 });
     }
 
-    console.log(`[WEBHOOK] Signature verified for order ${orderId}`);
+    console.log(`[WEBHOOK] ✅ Signature verified for ${orderId}`);
 
     // ── 5. Update order in database ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Allpay: status === "1" or status === 1 means successful payment
     const newStatus = String(status) === "1" ? "paid" : "failed";
-    console.log("[WEBHOOK] Will update order to status:", newStatus);
+    console.log("[WEBHOOK] New status:", newStatus);
 
-    // First check if order exists
+    // Check if order exists first
     const { data: existingOrder, error: fetchError } = await serviceClient
       .from("orders")
       .select("id, status, allpay_order_id")
@@ -154,26 +143,32 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (fetchError) {
-      console.error("[WEBHOOK] Error fetching order:", JSON.stringify(fetchError));
-    } else if (!existingOrder) {
-      console.error(`[WEBHOOK] Order with allpay_order_id="${orderId}" NOT FOUND in DB`);
-    } else {
-      console.log("[WEBHOOK] Found order:", JSON.stringify(existingOrder));
+      console.error("[WEBHOOK] DB fetch error:", JSON.stringify(fetchError));
+      return new Response("OK", { status: 200 });
     }
 
-    const { data: updateData, error: updateError } = await serviceClient
+    if (!existingOrder) {
+      console.error(`[WEBHOOK] Order "${orderId}" NOT FOUND in orders table`);
+      return new Response("OK", { status: 200 });
+    }
+
+    console.log("[WEBHOOK] Found order:", JSON.stringify(existingOrder));
+
+    // Update the order
+    const { data: updateResult, error: updateError } = await serviceClient
       .from("orders")
       .update({
         status: newStatus,
         allpay_response: postData,
+        updated_at: new Date().toISOString(),
       })
       .eq("allpay_order_id", orderId)
-      .select();
+      .select("id, status");
 
     if (updateError) {
-      console.error("[WEBHOOK] Failed to update order:", JSON.stringify(updateError));
+      console.error("[WEBHOOK] DB update error:", JSON.stringify(updateError));
     } else {
-      console.log(`[WEBHOOK] Order ${orderId} updated to ${newStatus}. Result:`, JSON.stringify(updateData));
+      console.log(`[WEBHOOK] ✅ Order ${orderId} → ${newStatus}. Result:`, JSON.stringify(updateResult));
     }
 
     return new Response("OK", { status: 200 });
