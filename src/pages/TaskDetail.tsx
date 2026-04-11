@@ -11,6 +11,7 @@ import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
   Lock, Unlock, AlertTriangle, MessageSquare, CreditCard, Star,
+  Pencil, Save, X,
 } from 'lucide-react';
 
 interface Proposal {
@@ -58,6 +59,13 @@ const TaskDetailPage = () => {
   // Translation state
   const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+
+  // Edit state
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editBudget, setEditBudget] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id);
@@ -202,7 +210,41 @@ const TaskDetailPage = () => {
     }
   };
 
-  const handleSubmitProposal = async () => {
+  const handleStartEdit = () => {
+    setEditTitle(task.title);
+    setEditDescription(task.description || '');
+    setEditBudget(String(task.budget_fixed || task.budget_min || ''));
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const updates: Record<string, unknown> = {};
+      if (editTitle.trim() && editTitle !== task.title) updates.title = editTitle.trim();
+      if (editDescription !== (task.description || '')) updates.description = editDescription.trim() || null;
+      const newBudget = Number(editBudget);
+      if (newBudget > 0 && newBudget !== (task.budget_fixed || task.budget_min)) {
+        updates.budget_fixed = newBudget;
+      }
+      if (Object.keys(updates).length === 0) {
+        setEditing(false);
+        return;
+      }
+      const { error } = await supabase.from('tasks').update(updates).eq('id', id);
+      if (error) throw error;
+      setTask((prev: any) => ({ ...prev, ...updates }));
+      setEditing(false);
+      toast.success(t('task.edit.saved'));
+    } catch {
+      toast.error(t('task.edit.error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
     if (!user || !id || !price) return;
     setSubmitting(true);
     try {
@@ -429,9 +471,34 @@ const TaskDetailPage = () => {
                   </span>
                 )}
               </div>
-              <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
-              {(translatedDescription ?? task.description) && (
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{translatedDescription ?? task.description}</p>
+              <div className="flex items-center gap-2">
+                {editing ? (
+                  <input
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    className="text-xl font-bold w-full border border-input rounded-lg px-2 py-1 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                ) : (
+                  <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
+                )}
+                {isOwner && task.status === 'open' && !editing && (
+                  <button onClick={handleStartEdit} className="shrink-0 p-1.5 rounded-lg hover:bg-secondary transition-colors" title={t('task.edit')}>
+                    <Pencil className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+              {editing ? (
+                <textarea
+                  value={editDescription}
+                  onChange={e => setEditDescription(e.target.value)}
+                  rows={4}
+                  className="mt-3 w-full text-sm border border-input rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  placeholder={t('task.description')}
+                />
+              ) : (
+                (translatedDescription ?? task.description) && (
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{translatedDescription ?? task.description}</p>
+                )
               )}
 
               <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
@@ -577,8 +644,43 @@ const TaskDetailPage = () => {
           {/* Sidebar */}
           <div className="space-y-4">
             <div className="bg-card border border-border rounded-2xl p-5 sticky top-20">
-              <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency, task.currency)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
+              {editing ? (
+                <div>
+                  <label className="block text-xs font-medium mb-1">{t('task.budget')}</label>
+                  <div className="relative">
+                    <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="number"
+                      value={editBudget}
+                      onChange={e => setEditBudget(e.target.value)}
+                      className="w-full ps-10 pe-4 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                    >
+                      {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                      {t('task.edit.save')}
+                    </button>
+                    <button
+                      onClick={() => setEditing(false)}
+                      disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border border-border text-muted-foreground hover:bg-secondary"
+                    >
+                      <X className="w-3 h-3" />
+                      {t('payment.cancel')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency, task.currency)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
+                </>
+              )}
 
               {/* Offer button / form */}
               {!isOwner && task.status === 'open' && (
