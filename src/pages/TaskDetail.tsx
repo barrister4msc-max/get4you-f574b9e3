@@ -644,8 +644,43 @@ const TaskDetailPage = () => {
           {/* Sidebar */}
           <div className="space-y-4">
             <div className="bg-card border border-border rounded-2xl p-5 sticky top-20">
-              <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency, task.currency)}</div>
-              <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
+              {editing ? (
+                <div>
+                  <label className="block text-xs font-medium mb-1">{t('task.budget')}</label>
+                  <div className="relative">
+                    <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="number"
+                      value={editBudget}
+                      onChange={e => setEditBudget(e.target.value)}
+                      className="w-full ps-10 pe-4 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                    >
+                      {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                      {t('task.edit.save')}
+                    </button>
+                    <button
+                      onClick={() => setEditing(false)}
+                      disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border border-border text-muted-foreground hover:bg-secondary"
+                    >
+                      <X className="w-3 h-3" />
+                      {t('payment.cancel')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency, task.currency)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
+                </>
+              )}
 
               {/* Offer button / form */}
               {!isOwner && task.status === 'open' && (
