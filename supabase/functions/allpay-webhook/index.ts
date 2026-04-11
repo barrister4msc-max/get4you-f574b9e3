@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
     // Check if order exists
     const { data: existingOrder, error: fetchError } = await serviceClient
       .from("orders")
-      .select("id, status, allpay_order_id, amount, currency")
+      .select("id, status, allpay_order_id, amount, currency, proposal_id, task_id")
       .eq("allpay_order_id", orderId)
       .maybeSingle();
 
