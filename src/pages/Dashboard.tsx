@@ -400,7 +400,60 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* BALANCE / EARNINGS (Wolt-style) */}
+        {/* ORDERS */}
+        {tab === 'orders' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold mb-2">{t('orders.title')}</h2>
+            {loading ? <p className="text-center text-muted-foreground py-8">{t('dashboard.loading')}</p>
+            : orders.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingCart className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{t('orders.empty')}</p>
+              </div>
+            ) : orders.map((order) => (
+              <div key={order.id} className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                      order.status === 'paid' ? 'bg-emerald-50' : order.status === 'failed' ? 'bg-red-50' : 'bg-amber-50'
+                    }`}>
+                      {order.status === 'paid' ? (
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                      ) : order.status === 'failed' ? (
+                        <ShoppingCart className="w-4 h-4 text-red-600" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-600" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{order.task?.title || order.id.slice(0, 8)}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(order.status)}`}>
+                          {t(`orders.status.${order.status}`) || order.status}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-primary shrink-0">
+                    {formatPrice(order.amount, currency, order.currency)}
+                  </span>
+                </div>
+                {order.status === 'pending' && order.payment_url && (
+                  <a
+                    href={order.payment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex items-center justify-center gap-2 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    {t('payment.pay')} <ArrowRight className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {tab === 'earnings' && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">{t('balance.title')}</h2>
