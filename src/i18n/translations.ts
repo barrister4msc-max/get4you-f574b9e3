@@ -1060,6 +1060,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'Обработка...',
     'payment.success': 'Оплата прошла! Средства удержаны на эскроу.',
     'payment.demo': 'Демо-режим — реальных списаний нет',
+    'payment.redirect': 'Вы будете перенаправлены на страницу оплаты',
+    'payment.cancel': 'Отмена',
+    'payment.error': 'Ошибка оплаты',
 
     // AI Photo
     'task.ai.attachPhoto': 'Прикрепить фото',
