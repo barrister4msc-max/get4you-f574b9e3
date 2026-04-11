@@ -162,27 +162,30 @@ Deno.serve(async (req) => {
     const allpayData = await allpayResponse.json();
     console.log("Allpay response:", JSON.stringify(allpayData));
 
-    // ── 9. Determine the order_id Allpay will use in webhook ──
-    // Allpay may return their own order_id or echo ours back.
-    // The webhook will send order_id — we must store whatever Allpay uses.
-    const allpayOrderId = allpayData.order_id ? String(allpayData.order_id) : orderId;
-    console.log("[CREATE-PAYMENT] Our orderId:", orderId);
-    console.log("[CREATE-PAYMENT] Allpay returned order_id:", allpayData.order_id);
-    console.log("[CREATE-PAYMENT] Storing allpay_order_id as:", allpayOrderId);
+    // ── 9. Strict order_id linking ──
+    // ALWAYS use our generated orderId — this is what we sent to Allpay
+    // and what Allpay will echo back in the webhook callback.
+    // Never use Allpay's returned order_id to avoid mismatch.
+    console.log("[CREATE-PAYMENT] Generated orderId:", orderId);
+    console.log("[CREATE-PAYMENT] Sent to Allpay as order_id:", allpayRequest.order_id);
+    console.log("[CREATE-PAYMENT] Allpay response order_id:", allpayData.order_id || "(none)");
+    console.log("[CREATE-PAYMENT] Saving allpay_order_id =", orderId);
 
     // ── 10. Insert order into DB using service role ──
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
-    const { error: insertError } = await serviceClient.from("orders").insert({
+    const { data: insertResult, error: insertError } = await serviceClient.from("orders").insert({
       user_id: userId,
       task_id: task_id || null,
       proposal_id: proposal_id || null,
       amount: Number(amount),
       currency: currency || "ILS",
-      allpay_order_id: allpayOrderId,
+      allpay_order_id: orderId,
       status: "pending",
       payment_url: allpayData.payment_url || null,
       allpay_response: allpayData,
-    });
+    }).select("id, allpay_order_id").single();
+
+    console.log("[CREATE-PAYMENT] DB insert result:", JSON.stringify(insertResult));
 
     if (insertError) {
       console.error("Insert error:", insertError);
@@ -206,7 +209,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        order_id: allpayOrderId,
+        order_id: orderId,
         payment_url: allpayData.payment_url,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
