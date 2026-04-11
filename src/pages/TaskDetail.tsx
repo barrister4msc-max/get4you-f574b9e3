@@ -272,6 +272,7 @@ const TaskDetailPage = () => {
       const proposal = proposals.find(p => p.id === pendingAcceptProposalId);
       if (!proposal) throw new Error('Proposal not found');
 
+      const baseUrl = window.location.origin;
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           task_id: id,
@@ -279,7 +280,8 @@ const TaskDetailPage = () => {
           amount: proposal.price,
           currency: proposal.currency || currency || 'ILS',
           item_name: task?.title || 'Task payment',
-          success_url: window.location.href,
+          success_url: `${baseUrl}/payment-success?order_id=${encodeURIComponent(id)}`,
+          cancel_url: `${baseUrl}/payment-cancel`,
           lang: locale === 'ru' ? 'RU' : locale === 'he' ? 'HE' : 'EN',
         },
       });
