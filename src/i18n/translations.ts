@@ -508,6 +508,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.processing': 'Processing...',
     'payment.success': 'Payment successful! Funds are held in escrow.',
     'payment.demo': 'Demo mode — no real charges',
+    'payment.redirect': 'You will be redirected to the payment page',
+    'payment.cancel': 'Cancel',
+    'payment.error': 'Payment error',
 
     // AI Photo
     'task.ai.attachPhoto': 'Attach photo',
