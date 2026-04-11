@@ -280,7 +280,7 @@ const TaskDetailPage = () => {
           amount: proposal.price,
           currency: proposal.currency || currency || 'ILS',
           item_name: task?.title || 'Task payment',
-          success_url: `${baseUrl}/payment-success?order_id=${encodeURIComponent(id)}`,
+          success_url: `${baseUrl}/payment-success`,
           cancel_url: `${baseUrl}/payment-cancel`,
           lang: locale === 'ru' ? 'RU' : locale === 'he' ? 'HE' : 'EN',
         },
