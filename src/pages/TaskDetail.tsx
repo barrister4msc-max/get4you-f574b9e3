@@ -68,7 +68,7 @@ const TaskDetailPage = () => {
   const [saving, setSaving] = useState(false);
 
   const isOwner = user?.id === task?.user_id;
-  const hasProposed = proposals.some(p => p.user_id === user?.id);
+  const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -235,6 +235,12 @@ const TaskDetailPage = () => {
       const { error } = await supabase.from('tasks').update(updates).eq('id', id);
       if (error) throw error;
       setTask((prev: any) => ({ ...prev, ...updates }));
+      // Reset rejected proposals so those taskers can re-propose
+      const rejectedIds = proposals.filter(p => p.status === 'rejected').map(p => p.id);
+      if (rejectedIds.length > 0) {
+        await supabase.from('proposals').delete().in('id', rejectedIds);
+        setProposals(prev => prev.filter(p => p.status !== 'rejected'));
+      }
       setEditing(false);
       toast.success(t('task.edit.saved'));
     } catch {
@@ -245,6 +251,7 @@ const TaskDetailPage = () => {
   };
 
 
+  const handleSubmitProposal = async () => {
     if (!user || !id || !price) return;
     setSubmitting(true);
     try {
