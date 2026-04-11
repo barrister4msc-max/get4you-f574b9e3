@@ -233,6 +233,30 @@ Deno.serve(async (req) => {
               proposal_id: existingOrder.proposal_id,
             });
             console.log(`[WEBHOOK] ✅ Notification sent to tasker ${proposal.user_id}`);
+
+            // Send transactional email to tasker
+            const { data: taskerProfile } = await serviceClient
+              .from("profiles")
+              .select("email, display_name")
+              .eq("user_id", proposal.user_id)
+              .single();
+
+            if (taskerProfile?.email) {
+              await serviceClient.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "payment-received",
+                  recipientEmail: taskerProfile.email,
+                  idempotencyKey: `payment-received-${existingOrder.id}`,
+                  templateData: {
+                    taskerName: taskerProfile.display_name || undefined,
+                    taskTitle: task?.title || undefined,
+                    amount: String(existingOrder.amount),
+                    currency: existingOrder.currency || "USD",
+                  },
+                },
+              });
+              console.log(`[WEBHOOK] ✅ Payment email sent to ${taskerProfile.email}`);
+            }
           }
         } catch (notifErr) {
           console.error("[WEBHOOK] Failed to send tasker notification:", notifErr);
