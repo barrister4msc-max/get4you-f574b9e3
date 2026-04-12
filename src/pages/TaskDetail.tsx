@@ -67,6 +67,12 @@ const TaskDetailPage = () => {
   const [editBudget, setEditBudget] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Review state
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [existingReview, setExistingReview] = useState<any>(null);
+
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
@@ -222,6 +228,18 @@ const TaskDetailPage = () => {
     };
   }, [id]);
 
+  // Fetch existing review by current user for this task
+  useEffect(() => {
+    if (!id || !user) return;
+    supabase
+      .from('reviews')
+      .select('*')
+      .eq('task_id', id)
+      .eq('reviewer_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setExistingReview(data || null));
+  }, [id, user]);
+
   const handleCompleteTask = async () => {
     if (!id || !escrow) return;
     setCompleting(true);
@@ -241,6 +259,27 @@ const TaskDetailPage = () => {
       toast.error(t('escrow.error'));
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!id || !user || !task?.assigned_to || reviewRating === 0) return;
+    setReviewSubmitting(true);
+    try {
+      const { data, error } = await supabase.from('reviews').insert({
+        task_id: id,
+        reviewer_id: user.id,
+        reviewee_id: task.assigned_to,
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+      }).select().single();
+      if (error) throw error;
+      setExistingReview(data);
+      toast.success(t('review.submitted'));
+    } catch {
+      toast.error(t('review.error'));
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
