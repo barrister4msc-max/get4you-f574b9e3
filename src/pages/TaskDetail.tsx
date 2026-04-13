@@ -452,31 +452,47 @@ const TaskDetailPage = () => {
 
         setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
 
-        const commissionRate = 0.12;
-        const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
-        const netAmount = proposal.price - commissionAmount;
-
-        const { data: escrowData, error: escrowError } = await supabase
+        // Check for existing escrow to prevent duplicates
+        const { data: existingEscrow } = await supabase
           .from('escrow_transactions')
-          .insert({
-            task_id: id,
-            proposal_id: proposalId,
-            client_id: user.id,
-            tasker_id: proposal.user_id,
-            amount: proposal.price,
-            currency: proposal.currency || currency,
-            commission_rate: commissionRate,
-            commission_amount: commissionAmount,
-            net_amount: netAmount,
-            status: 'held',
-          })
-          .select()
-          .single();
+          .select('id')
+          .eq('task_id', id)
+          .eq('proposal_id', proposalId)
+          .maybeSingle();
 
-        if (escrowError) throw escrowError;
+        if (!existingEscrow) {
+          // Check tasker's payment method for cash option
+          const { data: taskerProfile } = await supabase
+            .from('profiles')
+            .select('payment_method')
+            .eq('user_id', proposal.user_id)
+            .maybeSingle();
 
-        if (escrowData) {
-          setEscrow(escrowData);
+          const isCashPayment = taskerProfile?.payment_method === 'cash';
+          const commissionRate = 0.12;
+          const escrowAmount = isCashPayment ? Math.round(proposal.price * commissionRate * 100) / 100 : proposal.price;
+          const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
+          const netAmount = isCashPayment ? 0 : proposal.price - commissionAmount;
+
+          const { data: escrowData, error: escrowError } = await supabase
+            .from('escrow_transactions')
+            .insert({
+              task_id: id,
+              proposal_id: proposalId,
+              client_id: user.id,
+              tasker_id: proposal.user_id,
+              amount: escrowAmount,
+              currency: proposal.currency || currency,
+              commission_rate: commissionRate,
+              commission_amount: commissionAmount,
+              net_amount: netAmount,
+              status: 'held',
+            })
+            .select()
+            .single();
+
+          if (escrowError) throw escrowError;
+          if (escrowData) setEscrow(escrowData);
         }
 
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
