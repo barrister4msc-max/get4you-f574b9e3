@@ -917,6 +917,52 @@ const TaskDetailPage = () => {
                 </div>
               )}
 
+              {/* Review form after completion */}
+              {isOwner && task.status === 'completed' && task.assigned_to && !existingReview && (
+                <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-3">
+                  <p className="text-sm font-semibold">{t('review.leaveReview')}</p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className="p-0.5"
+                      >
+                        <Star className={`w-6 h-6 ${star <= reviewRating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    rows={2}
+                    placeholder={t('review.commentPlaceholder')}
+                    className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  />
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={reviewSubmitting || reviewRating === 0}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                  >
+                    {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                    {t('review.submit')}
+                  </button>
+                </div>
+              )}
+
+              {/* Existing review display */}
+              {existingReview && (
+                <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-2">
+                  <p className="text-sm font-semibold">{t('review.yourReview')}</p>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star key={star} className={`w-4 h-4 ${star <= existingReview.rating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                    ))}
+                  </div>
+                  {existingReview.comment && <p className="text-xs text-muted-foreground">{existingReview.comment}</p>}
+                </div>
+              )}
+
               {/* Chat button */}
               {user && (task.user_id === user.id || task.assigned_to === user.id || hasProposed) && (
                 <Link
