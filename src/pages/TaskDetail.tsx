@@ -67,6 +67,12 @@ const TaskDetailPage = () => {
   const [editBudget, setEditBudget] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Review state
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [existingReview, setExistingReview] = useState<any>(null);
+
   const isOwner = user?.id === task?.user_id;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
@@ -222,6 +228,18 @@ const TaskDetailPage = () => {
     };
   }, [id]);
 
+  // Fetch existing review by current user for this task
+  useEffect(() => {
+    if (!id || !user) return;
+    supabase
+      .from('reviews')
+      .select('*')
+      .eq('task_id', id)
+      .eq('reviewer_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setExistingReview(data || null));
+  }, [id, user]);
+
   const handleCompleteTask = async () => {
     if (!id || !escrow) return;
     setCompleting(true);
@@ -241,6 +259,27 @@ const TaskDetailPage = () => {
       toast.error(t('escrow.error'));
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!id || !user || !task?.assigned_to || reviewRating === 0) return;
+    setReviewSubmitting(true);
+    try {
+      const { data, error } = await supabase.from('reviews').insert({
+        task_id: id,
+        reviewer_id: user.id,
+        reviewee_id: task.assigned_to,
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+      }).select().single();
+      if (error) throw error;
+      setExistingReview(data);
+      toast.success(t('review.submitted'));
+    } catch {
+      toast.error(t('review.error'));
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -413,31 +452,47 @@ const TaskDetailPage = () => {
 
         setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
 
-        const commissionRate = 0.12;
-        const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
-        const netAmount = proposal.price - commissionAmount;
-
-        const { data: escrowData, error: escrowError } = await supabase
+        // Check for existing escrow to prevent duplicates
+        const { data: existingEscrow } = await supabase
           .from('escrow_transactions')
-          .insert({
-            task_id: id,
-            proposal_id: proposalId,
-            client_id: user.id,
-            tasker_id: proposal.user_id,
-            amount: proposal.price,
-            currency: proposal.currency || currency,
-            commission_rate: commissionRate,
-            commission_amount: commissionAmount,
-            net_amount: netAmount,
-            status: 'held',
-          })
-          .select()
-          .single();
+          .select('id')
+          .eq('task_id', id)
+          .eq('proposal_id', proposalId)
+          .maybeSingle();
 
-        if (escrowError) throw escrowError;
+        if (!existingEscrow) {
+          // Check tasker's payment method for cash option
+          const { data: taskerProfile } = await supabase
+            .from('profiles')
+            .select('payment_method')
+            .eq('user_id', proposal.user_id)
+            .maybeSingle();
 
-        if (escrowData) {
-          setEscrow(escrowData);
+          const isCashPayment = taskerProfile?.payment_method === 'cash';
+          const commissionRate = 0.12;
+          const escrowAmount = isCashPayment ? Math.round(proposal.price * commissionRate * 100) / 100 : proposal.price;
+          const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
+          const netAmount = isCashPayment ? 0 : proposal.price - commissionAmount;
+
+          const { data: escrowData, error: escrowError } = await supabase
+            .from('escrow_transactions')
+            .insert({
+              task_id: id,
+              proposal_id: proposalId,
+              client_id: user.id,
+              tasker_id: proposal.user_id,
+              amount: escrowAmount,
+              currency: proposal.currency || currency,
+              commission_rate: commissionRate,
+              commission_amount: commissionAmount,
+              net_amount: netAmount,
+              status: 'held',
+            })
+            .select()
+            .single();
+
+          if (escrowError) throw escrowError;
+          if (escrowData) setEscrow(escrowData);
         }
 
         const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
@@ -859,6 +914,52 @@ const TaskDetailPage = () => {
                       {t('escrow.paymentReleased')}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Review form after completion */}
+              {isOwner && task.status === 'completed' && task.assigned_to && !existingReview && (
+                <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-3">
+                  <p className="text-sm font-semibold">{t('review.leaveReview')}</p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className="p-0.5"
+                      >
+                        <Star className={`w-6 h-6 ${star <= reviewRating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    rows={2}
+                    placeholder={t('review.commentPlaceholder')}
+                    className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  />
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={reviewSubmitting || reviewRating === 0}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                  >
+                    {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                    {t('review.submit')}
+                  </button>
+                </div>
+              )}
+
+              {/* Existing review display */}
+              {existingReview && (
+                <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-2">
+                  <p className="text-sm font-semibold">{t('review.yourReview')}</p>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Star key={star} className={`w-4 h-4 ${star <= existingReview.rating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                    ))}
+                  </div>
+                  {existingReview.comment && <p className="text-xs text-muted-foreground">{existingReview.comment}</p>}
                 </div>
               )}
 

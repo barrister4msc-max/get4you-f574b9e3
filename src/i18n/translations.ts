@@ -310,6 +310,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'Payment has been released',
     'escrow.protected': 'Escrow protected',
 
+    // Reviews
+    'review.leaveReview': 'Rate the tasker',
+    'review.commentPlaceholder': 'Leave a comment (optional)',
+    'review.submit': 'Submit Review',
+    'review.submitted': 'Review submitted!',
+    'review.error': 'Failed to submit review',
+    'review.yourReview': 'Your review',
+
     'how.escrow.title': 'Escrow Protection',
     'how.escrow.desc': 'Funds held securely until work is approved',
     'how.verified.title': 'Verified Pros',
@@ -884,6 +892,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'Оплата выплачена',
     'escrow.protected': 'Защита эскроу',
 
+    'review.leaveReview': 'Оцените исполнителя',
+    'review.commentPlaceholder': 'Оставьте комментарий (необязательно)',
+    'review.submit': 'Отправить отзыв',
+    'review.submitted': 'Отзыв отправлен!',
+    'review.error': 'Ошибка отправки отзыва',
+    'review.yourReview': 'Ваш отзыв',
+
     'how.escrow.title': 'Защита эскроу',
     'how.escrow.desc': 'Средства надёжно хранятся до подтверждения выполнения',
     'how.verified.title': 'Проверенные специалисты',
@@ -1454,6 +1469,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.paymentReleased': 'התשלום שוחרר',
     'escrow.protected': 'מוגן בנאמנות',
 
+    'review.leaveReview': 'דרג את הביצועי',
+    'review.commentPlaceholder': 'השאר תגובה (אופציונלי)',
+    'review.submit': 'שלח ביקורת',
+    'review.submitted': 'הביקורת נשלחה!',
+    'review.error': 'שגיאה בשליחת ביקורת',
+    'review.yourReview': 'הביקורת שלך',
+
     'how.escrow.title': 'הגנת נאמנות',
     'how.escrow.desc': 'הכספים מוחזקים בבטחה עד לאישור העבודה',
     'how.verified.title': 'מקצוענים מאומתים',
@@ -2023,6 +2045,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     'escrow.error': 'فشل في معالجة الدفعة',
     'escrow.paymentReleased': 'تم تحرير الدفعة',
     'escrow.protected': 'محمي بالضمان',
+
+    'review.leaveReview': 'قيّم المنفذ',
+    'review.commentPlaceholder': 'اترك تعليقاً (اختياري)',
+    'review.submit': 'إرسال التقييم',
+    'review.submitted': 'تم إرسال التقييم!',
+    'review.error': 'فشل في إرسال التقييم',
+    'review.yourReview': 'تقييمك',
 
     'how.escrow.title': 'حماية الضمان',
     'how.escrow.desc': 'الأموال محفوظة بأمان حتى الموافقة على العمل',
