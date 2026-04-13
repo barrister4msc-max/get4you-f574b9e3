@@ -494,6 +494,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.backToTask': 'Back to task',
     'chat.empty': 'No messages yet. Start the conversation!',
 
+    // Order Chat
+    'orderChat.title': 'Order Chat',
+
     // AI Limits
     'ai.dailyLimit': 'You have reached the daily AI limit ({limit} requests). Try again tomorrow.',
 
@@ -1070,6 +1073,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'Чат недоступен для этой задачи',
     'chat.backToTask': 'Вернуться к задаче',
     'chat.empty': 'Сообщений пока нет. Начните диалог!',
+
+    // Order Chat
+    'orderChat.title': 'Чат по заказу',
 
     // AI Limits
     'ai.dailyLimit': 'Вы достигли дневного лимита AI ({limit} запросов). Попробуйте завтра.',
@@ -1648,6 +1654,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.backToTask': 'חזרה למשימה',
     'chat.empty': 'אין הודעות עדיין. התחל את השיחה!',
 
+    // Order Chat
+    'orderChat.title': 'צ׳אט הזמנה',
+
     // AI Limits
     'ai.dailyLimit': 'הגעת למגבלה היומית של AI ({limit} בקשות). נסה שוב מחר.',
 
@@ -2224,6 +2233,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'المحادثة غير متاحة لهذه المهمة',
     'chat.backToTask': 'العودة للمهمة',
     'chat.empty': 'لا توجد رسائل بعد. ابدأ المحادثة!',
+
+    // Order Chat
+    'orderChat.title': 'محادثة الطلب',
 
     // AI Limits
     'ai.dailyLimit': 'لقد وصلت إلى الحد اليومي للذكاء الاصطناعي ({limit} طلبات). حاول مرة أخرى غداً.',
