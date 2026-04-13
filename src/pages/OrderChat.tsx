@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, ArrowLeft, User } from 'lucide-react';
+import { Send, ArrowLeft, User, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface OrderMessage {
@@ -36,7 +36,6 @@ const OrderChat = () => {
     if (!orderId || !user) return;
 
     const fetchData = async () => {
-      // Fetch order
       const { data: orderData } = await supabase
         .from('orders')
         .select('*')
@@ -46,7 +45,6 @@ const OrderChat = () => {
       if (!orderData) { setLoading(false); return; }
       setOrder(orderData);
 
-      // Fetch task info
       if (orderData.task_id) {
         const { data: taskData } = await supabase
           .from('tasks')
@@ -63,7 +61,6 @@ const OrderChat = () => {
         }
       }
 
-      // Fetch messages
       const { data: msgs } = await supabase
         .from('order_messages')
         .select('*')
@@ -73,7 +70,6 @@ const OrderChat = () => {
       const allMsgs = (msgs as OrderMessage[]) || [];
       setMessages(allMsgs);
 
-      // Sender names
       const senderIds = [...new Set(allMsgs.map(m => m.sender_id))];
       if (senderIds.length > 0) {
         const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: senderIds });
@@ -88,7 +84,6 @@ const OrderChat = () => {
     fetchData();
   }, [orderId, user]);
 
-  // Realtime
   useEffect(() => {
     if (!orderId) return;
 
@@ -145,6 +140,10 @@ const OrderChat = () => {
     }
   };
 
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
@@ -167,50 +166,79 @@ const OrderChat = () => {
   }
 
   return (
-    <div className="min-h-[80vh] flex flex-col">
+    <div className="min-h-[80vh] flex flex-col" style={{ background: '#e5ddd5' }}>
       {/* Header */}
-      <div className="border-b border-border bg-card sticky top-16 z-40">
-        <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
+      <div className="sticky top-16 z-40 px-0">
+        <div
+          className="max-w-2xl mx-auto flex items-center gap-3 px-4 py-3"
+          style={{ background: '#075e54' }}
+        >
+          <Link to="/dashboard" className="text-white/80 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           {otherProfile?.avatar_url ? (
-            <img src={otherProfile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-border" />
+            <img src={otherProfile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white/20" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
-              <User className="w-4 h-4 text-muted-foreground" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#128c7e' }}>
+              <User className="w-5 h-5 text-white" />
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{taskTitle || t('orderChat.title')}</p>
-            <p className="text-xs text-muted-foreground truncate">{otherProfile?.display_name || t('orderChat.title')}</p>
+            <p className="font-semibold text-sm text-white truncate">
+              {otherProfile?.display_name || t('orderChat.title')}
+            </p>
+            <p className="text-xs text-white/70 truncate">{taskTitle || t('orderChat.title')}</p>
           </div>
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="container max-w-2xl mx-auto px-4 py-4 space-y-3">
+        <div className="max-w-2xl mx-auto px-3 py-4 space-y-1">
           {messages.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-12">{t('chat.empty')}</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                style={{ background: '#128c7e20' }}
+              >
+                <MessageCircle className="w-8 h-8" style={{ color: '#128c7e' }} />
+              </div>
+              <p className="text-sm font-medium" style={{ color: '#667781' }}>
+                Начните диалог
+              </p>
+            </div>
           )}
           {messages.map((msg) => {
             const isMine = msg.sender_id === user?.id;
-            const senderName = senderNames[msg.sender_id] || 'User';
             return (
-              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
-                  isMine
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
-                    : 'bg-card border border-border text-foreground rounded-bl-md'
-                }`}>
+              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}>
+                <div
+                  className="relative px-3 py-1.5 text-sm shadow-sm"
+                  style={{
+                    maxWidth: '70%',
+                    background: isMine ? '#dcf8c6' : '#ffffff',
+                    borderRadius: isMine
+                      ? '7.5px 7.5px 0 7.5px'
+                      : '7.5px 7.5px 7.5px 0',
+                    color: '#303030',
+                  }}
+                >
                   {!isMine && (
-                    <p className="text-[10px] font-medium mb-1 opacity-70">{senderName}</p>
+                    <p className="text-xs font-semibold mb-0.5" style={{ color: '#128c7e' }}>
+                      {senderNames[msg.sender_id] || 'User'}
+                    </p>
                   )}
-                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  <p className={`text-[10px] mt-1 ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <p className="whitespace-pre-wrap break-words leading-relaxed">
+                    {msg.content}
+                    {/* Invisible spacer for time */}
+                    <span className="invisible text-[11px] ml-3 inline-block w-[58px]">00:00</span>
                   </p>
+                  <span
+                    className="absolute bottom-1 right-2 text-[11px]"
+                    style={{ color: '#667781' }}
+                  >
+                    {formatTime(msg.created_at)}
+                  </span>
                 </div>
               </div>
             );
@@ -219,23 +247,30 @@ const OrderChat = () => {
         </div>
       </div>
 
-      {/* Input */}
-      <div className="border-t border-border bg-card sticky bottom-0">
-        <div className="container max-w-2xl mx-auto px-4 py-3 flex items-end gap-2">
+      {/* Input bar */}
+      <div className="sticky bottom-0 z-40" style={{ background: '#f0f0f0' }}>
+        <div className="max-w-2xl mx-auto px-3 py-2 flex items-end gap-2">
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('chat.placeholder')}
             rows={1}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="flex-1 px-4 py-2.5 rounded-3xl border-0 text-sm resize-none focus:outline-none focus:ring-0"
+            style={{
+              background: '#ffffff',
+              color: '#303030',
+              minHeight: '42px',
+              maxHeight: '100px',
+            }}
           />
           <button
             onClick={handleSend}
             disabled={!newMessage.trim() || sending}
-            className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 flex-shrink-0"
+            style={{ background: '#00a884' }}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5 text-white" />
           </button>
         </div>
       </div>
