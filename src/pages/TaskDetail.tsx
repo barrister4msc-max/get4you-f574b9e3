@@ -1006,10 +1006,12 @@ const TaskDetailPage = () => {
                 </div>
               )}
 
-              {/* Review form after completion */}
-              {isOwner && task.status === 'completed' && task.assigned_to && !existingReview && (
+              {/* Review form after completion - for both owner and assigned tasker */}
+              {(isOwner || isAssignedTasker) && task.status === 'completed' && !existingReview && (
                 <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-3">
-                  <p className="text-sm font-semibold">{t('review.leaveReview')}</p>
+                  <p className="text-sm font-semibold">
+                    {isOwner ? t('review.leaveReview') : t('review.leaveReviewClient')}
+                  </p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map(star => (
                       <button
