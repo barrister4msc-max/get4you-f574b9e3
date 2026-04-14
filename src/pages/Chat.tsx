@@ -54,20 +54,10 @@ const ChatPage = () => {
       if (!taskData) { setLoading(false); return; }
       setTask(taskData as TaskInfo);
 
-      // Check if current user is a participant (owner, assigned, proposer, or has messages in this task)
+      // Only owner and assigned tasker can access chat, and only for active tasks
       const isOwnerOrAssigned = taskData.user_id === user.id || taskData.assigned_to === user.id;
-      let isProposer = false;
-      let hasMessages = false;
-      if (!isOwnerOrAssigned) {
-        const [proposalRes, msgRes] = await Promise.all([
-          supabase.from('proposals').select('id').eq('task_id', taskId).eq('user_id', user.id).maybeSingle(),
-          supabase.from('chat_messages').select('id').eq('task_id', taskId)
-            .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`).limit(1),
-        ]);
-        isProposer = !!proposalRes.data;
-        hasMessages = !!(msgRes.data && msgRes.data.length > 0);
-      }
-      const participant = isOwnerOrAssigned || isProposer || hasMessages;
+      const activeStatuses = ['in_progress', 'completed', 'dispute'];
+      const participant = isOwnerOrAssigned && activeStatuses.includes(taskData.status || '');
       setIsParticipant(participant);
 
       // Get other user's profile (for 1-on-1 between owner and assigned)
