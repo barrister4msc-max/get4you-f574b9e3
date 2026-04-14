@@ -1092,8 +1092,9 @@ const TaskDetailPage = () => {
                     <div className="flex items-center gap-2 text-xs text-destructive font-medium">
                       <AlertTriangle className="w-3.5 h-3.5" />
                       {t('dispute.inProgress')}
-                    </div>
                   )}
+
+                  {escrow.status === 'released' && (
                     <div className="flex items-center gap-2 text-xs text-primary font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       {t('escrow.paymentReleased')}
