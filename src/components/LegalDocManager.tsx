@@ -10,16 +10,17 @@ import { toast } from 'sonner';
 
 interface FileItem {
   name: string;
+  fullPath: string;
   url: string;
-  created_at: string;
 }
 
 interface Props {
-  folder: 'terms' | 'privacy';
+  /** prefix used to filter files, e.g. "terms" or "privacy" */
+  prefix: string;
   title: string;
 }
 
-export const LegalDocManager = ({ folder, title }: Props) => {
+export const LegalDocManager = ({ prefix, title }: Props) => {
   const { t } = useLanguage();
   const { roles } = useAuth();
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -28,21 +29,21 @@ export const LegalDocManager = ({ folder, title }: Props) => {
   const [newName, setNewName] = useState('');
 
   const isAdmin = roles.includes('admin');
-  const storagePath = `legal/${folder}`;
 
   const loadFiles = useCallback(async () => {
-    const { data } = await supabase.storage.from('portfolios').list(storagePath, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+    // List all files in the legal/ folder
+    const { data } = await supabase.storage.from('portfolios').list('legal', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
     if (data) {
-      setFiles(
-        data
-          .filter(f => f.name !== '.emptyFolderPlaceholder')
-          .map(f => {
-            const { data: urlData } = supabase.storage.from('portfolios').getPublicUrl(`${storagePath}/${f.name}`);
-            return { name: f.name, url: urlData.publicUrl, created_at: f.created_at || '' };
-          })
-      );
+      const filtered = data
+        .filter(f => f.name !== '.emptyFolderPlaceholder' && f.name.startsWith(prefix))
+        .map(f => {
+          const fullPath = `legal/${f.name}`;
+          const { data: urlData } = supabase.storage.from('portfolios').getPublicUrl(fullPath);
+          return { name: f.name, fullPath, url: urlData.publicUrl };
+        });
+      setFiles(filtered);
     }
-  }, [storagePath]);
+  }, [prefix]);
 
   useEffect(() => { loadFiles(); }, [loadFiles]);
 
@@ -51,7 +52,9 @@ export const LegalDocManager = ({ folder, title }: Props) => {
     if (!uploadFiles?.length) return;
     setLoading(true);
     for (const file of Array.from(uploadFiles)) {
-      const path = `${storagePath}/${file.name}`;
+      // Prefix the filename so it belongs to this section
+      const fileName = file.name.startsWith(prefix) ? file.name : `${prefix}_${file.name}`;
+      const path = `legal/${fileName}`;
       const { error } = await supabase.storage.from('portfolios').upload(path, file, { upsert: true });
       if (error) toast.error(`${file.name}: ${error.message}`);
     }
@@ -61,27 +64,30 @@ export const LegalDocManager = ({ folder, title }: Props) => {
     e.target.value = '';
   };
 
-  const handleDelete = async (name: string) => {
+  const handleDelete = async (fullPath: string) => {
     if (!confirm(t('legal.confirmDelete'))) return;
-    const { error } = await supabase.storage.from('portfolios').remove([`${storagePath}/${name}`]);
+    const { error } = await supabase.storage.from('portfolios').remove([fullPath]);
     if (error) { toast.error(error.message); return; }
     toast.success(t('legal.deleted'));
     await loadFiles();
   };
 
-  const handleRename = async (oldName: string) => {
+  const handleRename = async (oldName: string, oldFullPath: string) => {
     if (!newName.trim() || newName === oldName) { setRenamingFile(null); return; }
     const ext = oldName.split('.').pop();
-    const finalName = newName.includes('.') ? newName : `${newName}.${ext}`;
-    
-    // Download, re-upload with new name, delete old
-    const { data: fileData, error: dlError } = await supabase.storage.from('portfolios').download(`${storagePath}/${oldName}`);
+    let finalName = newName.includes('.') ? newName : `${newName}.${ext}`;
+    // Ensure prefix is kept
+    if (!finalName.startsWith(prefix)) finalName = `${prefix}_${finalName}`;
+
+    // Download → re-upload with new name → delete old
+    const { data: fileData, error: dlError } = await supabase.storage.from('portfolios').download(oldFullPath);
     if (dlError || !fileData) { toast.error(dlError?.message || 'Download failed'); return; }
-    
-    const { error: upError } = await supabase.storage.from('portfolios').upload(`${storagePath}/${finalName}`, fileData, { upsert: true });
+
+    const newPath = `legal/${finalName}`;
+    const { error: upError } = await supabase.storage.from('portfolios').upload(newPath, fileData, { upsert: true });
     if (upError) { toast.error(upError.message); return; }
-    
-    await supabase.storage.from('portfolios').remove([`${storagePath}/${oldName}`]);
+
+    await supabase.storage.from('portfolios').remove([oldFullPath]);
     toast.success(t('legal.renamed'));
     setRenamingFile(null);
     await loadFiles();
@@ -109,21 +115,21 @@ export const LegalDocManager = ({ folder, title }: Props) => {
         <div className="mt-8 space-y-3">
           {files.length > 0 ? (
             files.map((file) => (
-              <Card key={file.name}>
+              <Card key={file.fullPath}>
                 <CardContent className="flex items-center gap-3 py-3 px-4">
                   <FileText className="w-5 h-5 text-primary shrink-0" />
-                  
+
                   {renamingFile === file.name ? (
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <Input
                         value={newName}
                         onChange={e => setNewName(e.target.value)}
                         className="h-8 text-sm"
-                        onKeyDown={e => e.key === 'Enter' && handleRename(file.name)}
+                        onKeyDown={e => e.key === 'Enter' && handleRename(file.name, file.fullPath)}
                         autoFocus
                       />
-                      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => handleRename(file.name)}>
-                        <Check className="w-4 h-4 text-emerald-500" />
+                      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => handleRename(file.name, file.fullPath)}>
+                        <Check className="w-4 h-4 text-primary" />
                       </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => setRenamingFile(null)}>
                         <X className="w-4 h-4" />
@@ -140,7 +146,7 @@ export const LegalDocManager = ({ folder, title }: Props) => {
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setRenamingFile(file.name); setNewName(file.name.replace(/\.[^.]+$/, '')); }}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(file.name)}>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(file.fullPath)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
