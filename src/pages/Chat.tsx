@@ -246,7 +246,7 @@ const ChatPage = () => {
       </div>
 
       {/* Input */}
-      {canChat && (
+      {canChat ? (
         <div className="border-t border-border bg-card sticky bottom-0">
           <div className="container max-w-2xl mx-auto px-4 py-3 flex items-end gap-2">
             <textarea
@@ -264,6 +264,12 @@ const ChatPage = () => {
             >
               <Send className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+      ) : isParticipant && task && (
+        <div className="border-t border-border bg-card sticky bottom-0">
+          <div className="container max-w-2xl mx-auto px-4 py-3 text-center">
+            <p className="text-xs text-muted-foreground">{t('chat.restricted')}</p>
           </div>
         </div>
       )}
