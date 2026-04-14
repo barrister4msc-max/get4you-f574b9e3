@@ -2297,8 +2297,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'المحادثة غير متاحة لهذه المهمة',
     'chat.backToTask': 'العودة للمهمة',
     'chat.empty': 'لا توجد رسائل بعد. ابدأ المحادثة!',
+    'chat.restricted': 'المحادثة متاحة فقط للمهام قيد التنفيذ',
 
-    // Order Chat
+    // نزاع
+    'dispute.openDispute': 'فتح نزاع',
+    'dispute.reasonPlaceholder': 'صف سبب النزاع...',
+    'dispute.submit': 'إرسال النزاع',
+    'dispute.submitted': 'تم إرسال النزاع بنجاح',
+    'dispute.error': 'فشل في إرسال النزاع',
+    'dispute.inProgress': 'النزاع قيد المراجعة',
+
     'orderChat.title': 'محادثة الطلب',
 
     // AI Limits
