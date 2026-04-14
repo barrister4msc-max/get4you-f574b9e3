@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_one_per_task_reviewer ON public.reviews (task_id, reviewer_id);
