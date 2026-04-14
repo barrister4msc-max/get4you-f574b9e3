@@ -741,7 +741,26 @@ const TaskDetailPage = () => {
                           </div>
                         )}
                         <div>
-                          <div className="font-semibold text-sm">{proposal.profile?.display_name || 'User'}</div>
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            {proposal.profile?.display_name || 'User'}
+                            {(() => {
+                              if (!proposal.lastSeenAt) return null;
+                              const diff = Date.now() - new Date(proposal.lastSeenAt).getTime();
+                              const mins = Math.floor(diff / 60000);
+                              if (mins < 5) return (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  Online
+                                </span>
+                              );
+                              if (mins < 60) return (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                  ⏱ {mins}m
+                                </span>
+                              );
+                              return null;
+                            })()}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {proposal.profile?.city && (
                               <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{proposal.profile.city}</span>
