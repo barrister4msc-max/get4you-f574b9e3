@@ -92,8 +92,9 @@ You MUST respond using the provided tool/function.`,
         }]
       : messages;
 
+    const useToolCalling = type === "categorize" || type === "voice_to_task" || type === "translate_tasks";
     const body: Record<string, unknown> = {
-      model: "google/gemini-3-flash-preview",
+      model: useToolCalling ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview",
       messages: [
         { role: "system", content: systemPrompts[type] || systemPrompts.assist },
         ...promptMessages,
