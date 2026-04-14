@@ -54,20 +54,17 @@ const ChatPage = () => {
       if (!taskData) { setLoading(false); return; }
       setTask(taskData as TaskInfo);
 
-      // Only owner and assigned tasker can access chat, and only for active tasks
       const isOwnerOrAssigned = taskData.user_id === user.id || taskData.assigned_to === user.id;
       const activeStatuses = ['in_progress', 'completed', 'dispute'];
       const participant = isOwnerOrAssigned && activeStatuses.includes(taskData.status || '');
       setIsParticipant(participant);
 
-      // Get other user's profile (for 1-on-1 between owner and assigned)
       const otherId = taskData.user_id === user.id ? taskData.assigned_to : taskData.user_id;
       if (otherId) {
         const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: otherId });
         setOtherProfile(profile?.[0] || null);
       }
 
-      // Fetch messages
       const { data: msgs } = await supabase
         .from('chat_messages')
         .select('*')
@@ -77,7 +74,6 @@ const ChatPage = () => {
       const allMsgs = (msgs as Message[]) || [];
       setMessages(allMsgs);
 
-      // Get sender names for all unique senders
       const senderIds = [...new Set(allMsgs.map(m => m.sender_id))];
       if (senderIds.length > 0) {
         const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: senderIds });
@@ -92,7 +88,6 @@ const ChatPage = () => {
     fetchData();
   }, [taskId, user]);
 
-  // Realtime subscription
   useEffect(() => {
     if (!taskId) return;
 
@@ -107,7 +102,6 @@ const ChatPage = () => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
-          // Fetch sender name if unknown
           if (!senderNames[newMsg.sender_id]) {
             supabase.rpc('get_public_profile', { target_user_id: newMsg.sender_id }).then(({ data }) => {
               if (data?.[0]) {
@@ -178,44 +172,47 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="min-h-[80vh] flex flex-col bg-muted/30">
+    <div className="min-h-[80vh] flex flex-col">
       {/* Header */}
-      <div className="sticky top-16 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+      <div className="sticky top-16 z-40 border-b border-border bg-[#075e54] text-white">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Link to={`/tasks/${taskId}`} className="text-muted-foreground hover:text-foreground transition-colors">
+          <Link to={`/tasks/${taskId}`} className="text-white/80 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           {otherProfile?.avatar_url ? (
-            <img src={otherProfile.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-border" />
+            <img src={otherProfile.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white/20" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
-              <User className="w-4 h-4 text-muted-foreground" />
+            <div className="w-10 h-10 rounded-full bg-[#25d366]/30 flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
             </div>
           )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">{otherProfile?.display_name || 'Chat'}</p>
-            <p className="text-xs text-muted-foreground truncate">{otherProfile?.display_name || 'Chat'}</p>
+            <p className="text-xs text-white/60 truncate">{task.title}</p>
           </div>
           {task?.status && (
-            <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white/80">
               {t(`tasks.status.${task.status}`)}
             </span>
           )}
         </div>
-        <div className="mx-auto max-w-2xl px-4 pb-2">
-          <p className="truncate text-xs text-muted-foreground">{task.title}</p>
-        </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Messages area with WhatsApp-style background */}
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          backgroundColor: '#e5ddd5',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8c3bc' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      >
         <div className="mx-auto max-w-2xl px-3 py-4 space-y-1">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-                <MessageCircle className="h-8 w-8 text-primary" />
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/60">
+                <MessageCircle className="h-8 w-8 text-[#075e54]" />
               </div>
-              <p className="text-sm font-medium text-foreground">{t('chat.empty')}</p>
+              <p className="text-sm font-medium text-[#303030]">{t('chat.empty')}</p>
             </div>
           )}
           {messages.map((msg) => {
@@ -224,32 +221,48 @@ const ChatPage = () => {
             const senderName = senderNames[msg.sender_id] || 'User';
             return (
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}>
+                {/* Tail for received messages */}
+                {!isMine && (
+                  <div className="flex-shrink-0 w-2 mt-0">
+                    <svg width="8" height="13" viewBox="0 0 8 13" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 0L8 0L8 13C8 13 4 8 0 6V0Z" fill={isAdminMsg ? '#fdf6e3' : '#ffffff'} />
+                    </svg>
+                  </div>
+                )}
                 <div
-                  className={`relative max-w-[78%] px-3 py-2 text-sm shadow-sm ${
+                  className={`relative max-w-[78%] px-3 py-1.5 text-sm shadow-sm ${
                     isMine
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-[#dcf8c6] text-[#303030]'
                       : isAdminMsg
-                      ? 'bg-accent text-accent-foreground border border-border'
-                      : 'bg-card text-foreground border border-border'
+                      ? 'bg-[#fdf6e3] text-[#303030]'
+                      : 'bg-white text-[#303030]'
                   }`}
                   style={{
-                    borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    borderRadius: isMine ? '7.5px 0 7.5px 7.5px' : '0 7.5px 7.5px 7.5px',
                   }}
                 >
                   {!isMine && (
-                    <p className="mb-1 flex items-center gap-1 text-[10px] font-medium opacity-70">
+                    <p className="mb-0.5 flex items-center gap-1 text-[11px] font-semibold" style={{ color: isAdminMsg ? '#cf7d0a' : '#06cf9c' }}>
                       {isAdminMsg && <Shield className="w-2.5 h-2.5" />}
                       {senderName}
                     </p>
                   )}
                   <p className="whitespace-pre-wrap break-words leading-relaxed">
                     {msg.content}
-                    <span className="invisible ml-3 inline-block w-[58px] text-[11px]">00:00</span>
+                    <span className="invisible ml-3 inline-block w-[50px] text-[11px]">00:00</span>
                   </p>
-                  <span className={`absolute bottom-1 right-2 text-[11px] ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                  <span className="absolute bottom-1 right-2 text-[11px] text-[#667781]">
                     {formatTime(msg.created_at)}
                   </span>
                 </div>
+                {/* Tail for sent messages */}
+                {isMine && (
+                  <div className="flex-shrink-0 w-2 mt-0">
+                    <svg width="8" height="13" viewBox="0 0 8 13" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8 0L0 0L0 13C0 13 4 8 8 6V0Z" fill="#dcf8c6" />
+                    </svg>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -259,7 +272,7 @@ const ChatPage = () => {
 
       {/* Input */}
       {canChat ? (
-        <div className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+        <div className="sticky bottom-0 z-40 border-t border-border bg-[#f0f0f0]">
           <div className="mx-auto flex max-w-2xl items-end gap-2 px-3 py-2">
             <textarea
               value={newMessage}
@@ -267,21 +280,21 @@ const ChatPage = () => {
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder')}
               rows={1}
-              className="min-h-[42px] max-h-[100px] flex-1 resize-none rounded-3xl border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="min-h-[42px] max-h-[100px] flex-1 resize-none rounded-3xl border-0 bg-white px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-[#075e54]/30"
             />
             <button
               onClick={handleSend}
               disabled={!newMessage.trim() || sending}
-              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#075e54] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>
           </div>
         </div>
       ) : isParticipant && task && (
-        <div className="sticky bottom-0 border-t border-border bg-card">
+        <div className="sticky bottom-0 border-t border-border bg-[#f0f0f0]">
           <div className="mx-auto max-w-2xl px-4 py-3 text-center">
-            <p className="text-xs text-muted-foreground">{t('chat.restricted')}</p>
+            <p className="text-xs text-[#667781]">{t('chat.restricted')}</p>
           </div>
         </div>
       )}
