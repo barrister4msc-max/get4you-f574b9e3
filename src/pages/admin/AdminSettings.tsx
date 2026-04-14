@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { MessageSquare, FileText, Briefcase } from 'lucide-react';
+import { MessageSquare, FileText, Briefcase, Shield, ScrollText } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 const settingsLinks = [
   { to: '/admin/broadcast', label: 'WhatsApp Рассылка', icon: MessageSquare, desc: 'Отправка массовых сообщений исполнителям' },
   { to: '/admin/esek-patur', label: 'Осек Патур', icon: FileText, desc: 'Управление заявками Осек Патур' },
   { to: '/admin/employment', label: 'Трудовые договоры', icon: Briefcase, desc: 'Управление трудовыми договорами' },
+  { to: '/terms', label: 'Terms of Service', icon: ScrollText, desc: 'Загрузка и обновление условий использования' },
+  { to: '/privacy', label: 'Privacy Policy', icon: Shield, desc: 'Загрузка и обновление политики конфиденциальности' },
 ];
 
 export default function AdminSettings() {
