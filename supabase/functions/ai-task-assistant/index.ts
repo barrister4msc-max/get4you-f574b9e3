@@ -62,6 +62,18 @@ Given a task description, you must determine:
 
 You MUST respond using the provided tool/function.`,
 
+      voice_to_task: `You are a task structuring AI for a marketplace platform.
+Given a voice transcription from a user, extract and structure it into a task with:
+1. A clear, concise title
+2. A detailed description
+3. The best category from: cleaning, moving, repair, digital, consulting, delivery, beauty, tutoring
+4. Suggested budget in USD
+5. Whether the task is onsite or remote
+6. Location if mentioned
+
+Clean up speech artifacts, filler words, and make the text professional.
+You MUST respond using the provided tool/function.`,
+
       translate_tasks: `You translate marketplace task listings.
 Translate every task title and description into the requested target locale.
 Preserve meaning, tone, names, addresses, and numbers.
