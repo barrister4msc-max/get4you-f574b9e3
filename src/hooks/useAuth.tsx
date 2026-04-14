@@ -79,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id).finally(() => setLoading(false));
+        // Update last_seen_at
+        supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('user_id', session.user.id).then(() => {});
       } else {
         setLoading(false);
       }
