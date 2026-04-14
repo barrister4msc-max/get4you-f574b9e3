@@ -3,7 +3,7 @@ import { LegalDocManager } from '@/components/LegalDocManager';
 
 const TermsPage = () => {
   const { t } = useLanguage();
-  return <LegalDocManager folder="terms" title={t('terms.title')} />;
+  return <LegalDocManager prefix="terms" title={t('terms.title')} />;
 };
 
 export default TermsPage;
