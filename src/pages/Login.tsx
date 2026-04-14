@@ -53,6 +53,22 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
+  // Handle OAuth error returned in URL
+  useState(() => {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace('#', '?'));
+    const errorDesc = params.get('error_description') || searchParams.get('error_description');
+    const error = params.get('error') || searchParams.get('error');
+    if (error || errorDesc) {
+      const msg = errorDesc || error || 'OAuth error';
+      setTimeout(() => toast.error(msg.includes('initial state') 
+        ? 'Ошибка авторизации. Попробуйте использовать другой браузер или отключить блокировку трекеров в настройках.'
+        : msg), 100);
+      // Clean up URL
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  });
+
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const hasMinLength = password.length >= 8;
   const hasLettersAndDigits = /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
