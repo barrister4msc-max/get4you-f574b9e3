@@ -301,7 +301,29 @@ const TaskDetailPage = () => {
     }
   };
 
-  const handleEditProposal = (proposal: Proposal) => {
+  const handleSubmitDispute = async () => {
+    if (!id || !user || !disputeReason.trim()) return;
+    setDisputeSubmitting(true);
+    try {
+      const { error } = await supabase.from('complaints').insert({
+        task_id: id,
+        user_id: user.id,
+        reason: disputeReason.trim(),
+        status: 'open',
+      });
+      if (error) throw error;
+      await supabase.from('tasks').update({ status: 'dispute' }).eq('id', id);
+      setTask((prev: any) => ({ ...prev, status: 'dispute' }));
+      setShowDisputeForm(false);
+      setDisputeReason('');
+      toast.success(t('dispute.submitted'));
+    } catch {
+      toast.error(t('dispute.error'));
+    } finally {
+      setDisputeSubmitting(false);
+    }
+  };
+
     setEditingProposalId(proposal.id);
     setEditProposalPrice(String(proposal.price));
     setEditProposalComment(proposal.comment || '');
