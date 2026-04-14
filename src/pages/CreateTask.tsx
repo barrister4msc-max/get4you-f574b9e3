@@ -346,7 +346,18 @@ const CreateTaskPage = () => {
                 )}
               </AnimatePresence>
 
-              {/* Audio playback preview */}
+              {/* Voice to Task AI button */}
+              {(voice.transcript || audioRecorder.audioUrl) && !audioRecorder.isRecording && (
+                <button
+                  type="button"
+                  onClick={handleVoiceToTask}
+                  disabled={voiceProcessing}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gradient-emerald text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {voiceProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {t('task.voice.createTask') || '✨ Create task from voice'}
+                </button>
+              )}
               {audioRecorder.audioUrl && !audioRecorder.isRecording && (
                 <div className="flex items-center gap-3 bg-muted rounded-xl p-3 border border-border">
                   <Play className="w-4 h-4 text-muted-foreground shrink-0" />
