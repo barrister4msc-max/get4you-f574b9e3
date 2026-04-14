@@ -79,6 +79,7 @@ const TaskDetailPage = () => {
   const [existingReview, setExistingReview] = useState<any>(null);
 
   const isOwner = user?.id === task?.user_id;
+  const isAssignedTasker = user?.id === task?.assigned_to;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
   const fetchTask = async () => {
