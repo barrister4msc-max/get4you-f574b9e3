@@ -25,6 +25,7 @@ interface Proposal {
   profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null;
   avgRating?: number | null;
   reviewCount?: number;
+  lastSeenAt?: string | null;
 }
 
 const TaskDetailPage = () => {
@@ -164,12 +165,14 @@ const TaskDetailPage = () => {
 
       if (data) {
         const userIds = [...new Set(data.map(p => p.user_id))];
-        const [profilesRes, reviewsRes] = await Promise.all([
+        const [profilesRes, reviewsRes, lastSeenRes] = await Promise.all([
           supabase.rpc('get_public_profiles', { target_user_ids: userIds }),
           supabase.from('reviews').select('reviewee_id, rating').in('reviewee_id', userIds),
+          supabase.from('profiles').select('user_id, last_seen_at').in('user_id', userIds),
         ]);
 
         const profileMap = new Map(profilesRes.data?.map(p => [p.user_id, p]) || []);
+        const lastSeenMap = new Map(lastSeenRes.data?.map(p => [p.user_id, p.last_seen_at]) || []);
         
         // Calculate avg rating per user
         const ratingMap = new Map<string, { sum: number; count: number }>();
@@ -184,6 +187,7 @@ const TaskDetailPage = () => {
           profile: profileMap.get(p.user_id) || null,
           avgRating: ratingMap.has(p.user_id) ? ratingMap.get(p.user_id)!.sum / ratingMap.get(p.user_id)!.count : null,
           reviewCount: ratingMap.get(p.user_id)?.count || 0,
+          lastSeenAt: lastSeenMap.get(p.user_id) || null,
         }));
         setProposals(enriched);
       }
@@ -737,7 +741,26 @@ const TaskDetailPage = () => {
                           </div>
                         )}
                         <div>
-                          <div className="font-semibold text-sm">{proposal.profile?.display_name || 'User'}</div>
+                          <div className="font-semibold text-sm flex items-center gap-2">
+                            {proposal.profile?.display_name || 'User'}
+                            {(() => {
+                              if (!proposal.lastSeenAt) return null;
+                              const diff = Date.now() - new Date(proposal.lastSeenAt).getTime();
+                              const mins = Math.floor(diff / 60000);
+                              if (mins < 5) return (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  Online
+                                </span>
+                              );
+                              if (mins < 60) return (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                  ⏱ {mins}m
+                                </span>
+                              );
+                              return null;
+                            })()}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {proposal.profile?.city && (
                               <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{proposal.profile.city}</span>

@@ -62,6 +62,18 @@ Given a task description, you must determine:
 
 You MUST respond using the provided tool/function.`,
 
+      voice_to_task: `You are a task structuring AI for a marketplace platform.
+Given a voice transcription from a user, extract and structure it into a task with:
+1. A clear, concise title
+2. A detailed description
+3. The best category from: cleaning, moving, repair, digital, consulting, delivery, beauty, tutoring
+4. Suggested budget in USD
+5. Whether the task is onsite or remote
+6. Location if mentioned
+
+Clean up speech artifacts, filler words, and make the text professional.
+You MUST respond using the provided tool/function.`,
+
       translate_tasks: `You translate marketplace task listings.
 Translate every task title and description into the requested target locale.
 Preserve meaning, tone, names, addresses, and numbers.
@@ -112,6 +124,31 @@ You MUST respond using the provided tool/function.`,
         },
       ];
       body.tool_choice = { type: "function", function: { name: "categorize_task" } };
+      body.stream = false;
+    } else if (type === "voice_to_task") {
+      body.tools = [
+        {
+          type: "function",
+          function: {
+            name: "structure_task",
+            description: "Structure voice input into a task",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Clear concise task title" },
+                description: { type: "string", description: "Detailed task description" },
+                category: { type: "string", enum: ["cleaning", "moving", "repair", "digital", "consulting", "delivery", "beauty", "tutoring"] },
+                budget: { type: "number", description: "Suggested budget in USD" },
+                task_type: { type: "string", enum: ["onsite", "remote"] },
+                location: { type: "string", description: "Location if mentioned, empty string otherwise" },
+              },
+              required: ["title", "description", "category", "budget", "task_type", "location"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ];
+      body.tool_choice = { type: "function", function: { name: "structure_task" } };
       body.stream = false;
     } else if (type === "translate_tasks") {
       body.tools = [
@@ -176,7 +213,7 @@ You MUST respond using the provided tool/function.`,
       });
     }
 
-    if (type === "categorize" || type === "translate_tasks") {
+    if (type === "categorize" || type === "translate_tasks" || type === "voice_to_task") {
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       if (toolCall) {
@@ -185,7 +222,7 @@ You MUST respond using the provided tool/function.`,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: type === "categorize" ? "No categorization result" : "No translation result" }), {
+      return new Response(JSON.stringify({ error: "No result from AI" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

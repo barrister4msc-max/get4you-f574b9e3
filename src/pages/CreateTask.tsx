@@ -26,6 +26,7 @@ const CreateTaskPage = () => {
   const audioRecorder = useAudioRecorder();
   const [step, setStep] = useState(1);
   const [categorizing, setCategorizing] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -134,6 +135,47 @@ const CreateTaskPage = () => {
       toast.error(t('task.ai.error'));
     } finally {
       setCategorizing(false);
+    }
+  };
+
+  const handleVoiceToTask = async () => {
+    if (!voice.transcript && !form.description) {
+      toast.error(t('task.voice.speakFirst') || 'Record your voice first');
+      return;
+    }
+    const text = voice.transcript || form.description;
+    if (!text.trim()) return;
+
+    setVoiceProcessing(true);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task-assistant`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          type: 'voice_to_task',
+          messages: [{ role: 'user', content: text }],
+        }),
+      });
+      if (!resp.ok) throw new Error('Failed');
+      const data = await resp.json();
+      update({
+        title: data.title || form.title,
+        description: data.description || form.description,
+        category: data.category || form.category,
+        budget: data.budget || form.budget,
+        taskType: data.task_type || form.taskType,
+        location: data.location || form.location,
+      });
+      toast.success(t('task.voice.taskCreated') || 'Task structured from voice!');
+      setStep(2); // Jump to details step to review
+    } catch {
+      toast.error(t('task.ai.error'));
+    } finally {
+      setVoiceProcessing(false);
     }
   };
 
@@ -304,7 +346,18 @@ const CreateTaskPage = () => {
                 )}
               </AnimatePresence>
 
-              {/* Audio playback preview */}
+              {/* Voice to Task AI button */}
+              {(voice.transcript || audioRecorder.audioUrl) && !audioRecorder.isRecording && (
+                <button
+                  type="button"
+                  onClick={handleVoiceToTask}
+                  disabled={voiceProcessing}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gradient-emerald text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {voiceProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {t('task.voice.createTask') || '✨ Create task from voice'}
+                </button>
+              )}
               {audioRecorder.audioUrl && !audioRecorder.isRecording && (
                 <div className="flex items-center gap-3 bg-muted rounded-xl p-3 border border-border">
                   <Play className="w-4 h-4 text-muted-foreground shrink-0" />
