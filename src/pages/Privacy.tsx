@@ -3,7 +3,7 @@ import { LegalDocManager } from '@/components/LegalDocManager';
 
 const PrivacyPage = () => {
   const { t } = useLanguage();
-  return <LegalDocManager folder="privacy" title={t('privacy.title')} />;
+  return <LegalDocManager prefix="privacy" title={t('privacy.title')} />;
 };
 
 export default PrivacyPage;
