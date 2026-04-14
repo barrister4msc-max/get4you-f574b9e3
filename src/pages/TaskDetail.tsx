@@ -79,6 +79,11 @@ const TaskDetailPage = () => {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [existingReview, setExistingReview] = useState<any>(null);
 
+  // Dispute state
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+
   const isOwner = user?.id === task?.user_id;
   const isAssignedTasker = user?.id === task?.assigned_to;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
