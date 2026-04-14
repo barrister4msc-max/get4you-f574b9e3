@@ -1101,8 +1101,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'Чат недоступен для этой задачи',
     'chat.backToTask': 'Вернуться к задаче',
     'chat.empty': 'Сообщений пока нет. Начните диалог!',
+    'chat.restricted': 'Чат доступен только для задач в работе',
 
-    // Order Chat
+    // Диспут
+    'dispute.openDispute': 'Открыть спор',
+    'dispute.reasonPlaceholder': 'Опишите причину спора...',
+    'dispute.submit': 'Отправить спор',
+    'dispute.submitted': 'Спор успешно отправлен',
+    'dispute.error': 'Не удалось отправить спор',
+    'dispute.inProgress': 'Спор на рассмотрении',
+
     'orderChat.title': 'Чат по заказу',
 
     // AI Limits
