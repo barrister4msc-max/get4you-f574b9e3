@@ -25,6 +25,7 @@ interface Proposal {
   profile?: { display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null;
   avgRating?: number | null;
   reviewCount?: number;
+  lastSeenAt?: string | null;
 }
 
 const TaskDetailPage = () => {
