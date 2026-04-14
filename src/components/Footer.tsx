@@ -29,7 +29,10 @@ export const Footer = () => {
               {t('footer.support')}
             </button>
           </div>
-          <p className="text-xs text-muted-foreground">© 2026 Hooppy production Ltd. {t('footer.rights')}</p>
+          <div className="text-xs text-muted-foreground text-center md:text-right space-y-0.5">
+            <p>© 2026 Hooppy production Ltd. {t('footer.rights')}</p>
+            <p>538074330 · Хайфа, Бреннер 20, 4 · <a href="mailto:get4you28@gmail.com" className="hover:text-foreground transition-colors">get4you28@gmail.com</a></p>
+          </div>
         </div>
       </div>
 
