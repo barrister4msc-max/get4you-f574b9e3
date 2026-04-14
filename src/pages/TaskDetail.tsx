@@ -47,6 +47,11 @@ const TaskDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
 
+  // Edit proposal state
+  const [editingProposalId, setEditingProposalId] = useState<string | null>(null);
+  const [editProposalPrice, setEditProposalPrice] = useState('');
+  const [editProposalComment, setEditProposalComment] = useState('');
+
   // Escrow state
   const [escrow, setEscrow] = useState<any>(null);
   const [completing, setCompleting] = useState(false);
@@ -74,6 +79,7 @@ const TaskDetailPage = () => {
   const [existingReview, setExistingReview] = useState<any>(null);
 
   const isOwner = user?.id === task?.user_id;
+  const isAssignedTasker = user?.id === task?.assigned_to;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
   const fetchTask = async () => {
@@ -263,13 +269,16 @@ const TaskDetailPage = () => {
   };
 
   const handleSubmitReview = async () => {
-    if (!id || !user || !task?.assigned_to || reviewRating === 0) return;
+    if (!id || !user || reviewRating === 0) return;
+    // Determine who is being reviewed
+    const revieweeId = isOwner ? task.assigned_to : task.user_id;
+    if (!revieweeId) return;
     setReviewSubmitting(true);
     try {
       const { data, error } = await supabase.from('reviews').insert({
         task_id: id,
         reviewer_id: user.id,
-        reviewee_id: task.assigned_to,
+        reviewee_id: revieweeId,
         rating: reviewRating,
         comment: reviewComment.trim() || null,
       }).select().single();
@@ -280,6 +289,35 @@ const TaskDetailPage = () => {
       toast.error(t('review.error'));
     } finally {
       setReviewSubmitting(false);
+    }
+  };
+
+  const handleEditProposal = (proposal: Proposal) => {
+    setEditingProposalId(proposal.id);
+    setEditProposalPrice(String(proposal.price));
+    setEditProposalComment(proposal.comment || '');
+  };
+
+  const handleSaveProposalEdit = async () => {
+    if (!editingProposalId || !editProposalPrice) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('proposals').update({
+        price: Number(editProposalPrice),
+        comment: editProposalComment.trim() || null,
+      }).eq('id', editingProposalId);
+      if (error) throw error;
+      setProposals(prev => prev.map(p =>
+        p.id === editingProposalId
+          ? { ...p, price: Number(editProposalPrice), comment: editProposalComment.trim() || null }
+          : p
+      ));
+      setEditingProposalId(null);
+      toast.success(t('proposal.updated'));
+    } catch {
+      toast.error(t('proposal.error'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -727,8 +765,59 @@ const TaskDetailPage = () => {
                       <p className="text-xs text-muted-foreground mt-2 bg-muted/50 rounded-lg p-2">{proposal.profile.bio}</p>
                     )}
 
-                    {proposal.comment && (
-                      <p className="text-sm text-muted-foreground mt-2">{proposal.comment}</p>
+                    {/* Editable proposal for own pending proposals */}
+                    {editingProposalId === proposal.id ? (
+                      <div className="mt-2 space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            value={editProposalPrice}
+                            onChange={e => setEditProposalPrice(e.target.value)}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <textarea
+                          value={editProposalComment}
+                          onChange={e => setEditProposalComment(e.target.value)}
+                          rows={2}
+                          placeholder={t('proposal.comment.placeholder')}
+                          className="w-full px-3 py-1.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSaveProposalEdit}
+                            disabled={submitting || !editProposalPrice}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                          >
+                            {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                            {t('proposal.editSave')}
+                          </button>
+                          <button
+                            onClick={() => setEditingProposalId(null)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary"
+                          >
+                            <X className="w-3 h-3" />
+                            {t('payment.cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {proposal.comment && (
+                          <p className="text-sm text-muted-foreground mt-2">{proposal.comment}</p>
+                        )}
+
+                        {/* Edit button for own pending proposals */}
+                        {proposal.user_id === user?.id && proposal.status === 'pending' && task.status === 'open' && (
+                          <button
+                            onClick={() => handleEditProposal(proposal)}
+                            className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            {t('proposal.edit')}
+                          </button>
+                        )}
+                      </>
                     )}
 
                     {/* Accept/Reject buttons for task owner */}
@@ -917,10 +1006,12 @@ const TaskDetailPage = () => {
                 </div>
               )}
 
-              {/* Review form after completion */}
-              {isOwner && task.status === 'completed' && task.assigned_to && !existingReview && (
+              {/* Review form after completion - for both owner and assigned tasker */}
+              {(isOwner || isAssignedTasker) && task.status === 'completed' && !existingReview && (
                 <div className="mt-4 p-4 rounded-xl border border-border bg-secondary/50 space-y-3">
-                  <p className="text-sm font-semibold">{t('review.leaveReview')}</p>
+                  <p className="text-sm font-semibold">
+                    {isOwner ? t('review.leaveReview') : t('review.leaveReviewClient')}
+                  </p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map(star => (
                       <button

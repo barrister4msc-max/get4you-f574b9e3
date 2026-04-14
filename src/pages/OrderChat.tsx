@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, ArrowLeft, User, MessageCircle } from 'lucide-react';
+import { Send, ArrowLeft, User, MessageCircle, Paperclip, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface OrderMessage {
@@ -11,6 +11,8 @@ interface OrderMessage {
   order_id: string;
   sender_id: string;
   content: string;
+  file_url?: string | null;
+  file_name?: string | null;
   created_at: string;
 }
 
@@ -26,7 +28,9 @@ const OrderChat = () => {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -114,23 +118,63 @@ const OrderChat = () => {
 
   useEffect(() => { scrollToBottom(); }, [messages]);
 
-  const handleSend = async () => {
-    if (!newMessage.trim() || !user || !orderId || sending) return;
+  const handleSend = async (fileUrl?: string, fileName?: string) => {
+    if ((!newMessage.trim() && !fileUrl) || !user || !orderId || sending) return;
     setSending(true);
-    const content = newMessage.trim();
+    const content = newMessage.trim() || (fileName || 'File');
     setNewMessage('');
 
-    const { error } = await supabase.from('order_messages').insert({
+    const insertData: Record<string, unknown> = {
       order_id: orderId,
       sender_id: user.id,
       content,
-    });
+    };
+    if (fileUrl) {
+      insertData.file_url = fileUrl;
+      insertData.file_name = fileName || 'file';
+    }
+
+    const { error } = await supabase.from('order_messages').insert(insertData as any);
 
     if (error) {
       toast.error(t('chat.sendError'));
       setNewMessage(content);
     }
     setSending(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !orderId) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File too large (max 10MB)');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/${orderId}/${Date.now()}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('order-chat-files')
+        .upload(path, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('order-chat-files')
+        .getPublicUrl(path);
+
+      await handleSend(urlData.publicUrl, file.name);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error(t('proposal.error'));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -143,6 +187,8 @@ const OrderChat = () => {
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(url);
 
   if (loading) {
     return (
@@ -204,7 +250,7 @@ const OrderChat = () => {
                 <MessageCircle className="w-8 h-8" style={{ color: '#128c7e' }} />
               </div>
               <p className="text-sm font-medium" style={{ color: '#667781' }}>
-                Начните диалог
+                {t('orderChat.startChat') || 'Начните диалог'}
               </p>
             </div>
           )}
@@ -228,11 +274,34 @@ const OrderChat = () => {
                       {senderNames[msg.sender_id] || 'User'}
                     </p>
                   )}
-                  <p className="whitespace-pre-wrap break-words leading-relaxed">
-                    {msg.content}
-                    {/* Invisible spacer for time */}
-                    <span className="invisible text-[11px] ml-3 inline-block w-[58px]">00:00</span>
-                  </p>
+                  
+                  {/* File/image attachment */}
+                  {msg.file_url && (
+                    isImageUrl(msg.file_url) ? (
+                      <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block mb-1">
+                        <img src={msg.file_url} alt={msg.file_name || ''} className="max-w-full rounded-lg max-h-60 object-cover" />
+                      </a>
+                    ) : (
+                      <a
+                        href={msg.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 mb-1 p-2 rounded-lg"
+                        style={{ background: isMine ? '#c8e6b5' : '#f0f0f0' }}
+                      >
+                        <FileText className="w-5 h-5 shrink-0" style={{ color: '#128c7e' }} />
+                        <span className="text-xs font-medium truncate">{msg.file_name || 'File'}</span>
+                      </a>
+                    )
+                  )}
+
+                  {/* Don't show content text if it's just the file name */}
+                  {(!msg.file_url || msg.content !== (msg.file_name || 'File')) && (
+                    <p className="whitespace-pre-wrap break-words leading-relaxed">
+                      {msg.content}
+                      <span className="invisible text-[11px] ml-3 inline-block w-[58px]">00:00</span>
+                    </p>
+                  )}
                   <span
                     className="absolute bottom-1 right-2 text-[11px]"
                     style={{ color: '#667781' }}
@@ -250,6 +319,27 @@ const OrderChat = () => {
       {/* Input bar */}
       <div className="sticky bottom-0 z-40" style={{ background: '#f0f0f0' }}>
         <div className="max-w-2xl mx-auto px-3 py-2 flex items-end gap-2">
+          {/* File upload button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 flex-shrink-0"
+            style={{ background: '#ffffff' }}
+            title={t('orderChat.sendFile')}
+          >
+            {uploading ? (
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#128c7e' }} />
+            ) : (
+              <Paperclip className="w-5 h-5" style={{ color: '#54656f' }} />
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -265,7 +355,7 @@ const OrderChat = () => {
             }}
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!newMessage.trim() || sending}
             className="w-[42px] h-[42px] rounded-full flex items-center justify-center transition-opacity disabled:opacity-40 flex-shrink-0"
             style={{ background: '#00a884' }}
