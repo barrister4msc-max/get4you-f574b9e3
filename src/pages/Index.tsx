@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -6,7 +6,8 @@ import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
   Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
 } from 'lucide-react';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
+import { toast } from 'sonner';
 import heroImage from '@/assets/hero-image.png';
 import heroImage2 from '@/assets/hero-image-2.jpg';
 
@@ -45,6 +46,22 @@ const stats = [
 const IndexPage = () => {
   const { t } = useLanguage();
   const { user, roles } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Handle OAuth errors landing on homepage
+  useEffect(() => {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace('#', '?'));
+    const errorDesc = params.get('error_description') || searchParams.get('error_description');
+    const error = params.get('error') || searchParams.get('error');
+    if (error || errorDesc) {
+      const msg = errorDesc || error || 'OAuth error';
+      toast.error(msg.includes('initial state')
+        ? 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.'
+        : msg);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [searchParams]);
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
