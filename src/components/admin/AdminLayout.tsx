@@ -21,6 +21,7 @@ export const AdminLayout = () => {
     { to: '/admin/reviews', icon: Star, label: t('admin.reviews') },
     { to: '/admin/complaints', icon: AlertTriangle, label: t('admin.complaints') },
     { to: '/admin/categories', icon: Grid3X3, label: t('admin.categories') },
+    { to: '/admin/disputes', icon: AlertTriangle, label: 'Disputes' },
     { to: '/admin/chat', icon: MessageSquare, label: t('admin.chat') },
     { to: '/admin/settings', icon: FolderOpen, label: t('admin.settings') },
   ];
