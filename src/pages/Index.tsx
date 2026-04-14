@@ -46,6 +46,22 @@ const stats = [
 const IndexPage = () => {
   const { t } = useLanguage();
   const { user, roles } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Handle OAuth errors landing on homepage
+  useEffect(() => {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace('#', '?'));
+    const errorDesc = params.get('error_description') || searchParams.get('error_description');
+    const error = params.get('error') || searchParams.get('error');
+    if (error || errorDesc) {
+      const msg = errorDesc || error || 'OAuth error';
+      toast.error(msg.includes('initial state')
+        ? 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.'
+        : msg);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [searchParams]);
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
