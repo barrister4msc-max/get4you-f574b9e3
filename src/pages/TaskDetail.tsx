@@ -165,12 +165,14 @@ const TaskDetailPage = () => {
 
       if (data) {
         const userIds = [...new Set(data.map(p => p.user_id))];
-        const [profilesRes, reviewsRes] = await Promise.all([
+        const [profilesRes, reviewsRes, lastSeenRes] = await Promise.all([
           supabase.rpc('get_public_profiles', { target_user_ids: userIds }),
           supabase.from('reviews').select('reviewee_id, rating').in('reviewee_id', userIds),
+          supabase.from('profiles').select('user_id, last_seen_at').in('user_id', userIds),
         ]);
 
         const profileMap = new Map(profilesRes.data?.map(p => [p.user_id, p]) || []);
+        const lastSeenMap = new Map(lastSeenRes.data?.map(p => [p.user_id, p.last_seen_at]) || []);
         
         // Calculate avg rating per user
         const ratingMap = new Map<string, { sum: number; count: number }>();
@@ -185,6 +187,7 @@ const TaskDetailPage = () => {
           profile: profileMap.get(p.user_id) || null,
           avgRating: ratingMap.has(p.user_id) ? ratingMap.get(p.user_id)!.sum / ratingMap.get(p.user_id)!.count : null,
           reviewCount: ratingMap.get(p.user_id)?.count || 0,
+          lastSeenAt: lastSeenMap.get(p.user_id) || null,
         }));
         setProposals(enriched);
       }
