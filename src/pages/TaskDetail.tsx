@@ -47,6 +47,11 @@ const TaskDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
 
+  // Edit proposal state
+  const [editingProposalId, setEditingProposalId] = useState<string | null>(null);
+  const [editProposalPrice, setEditProposalPrice] = useState('');
+  const [editProposalComment, setEditProposalComment] = useState('');
+
   // Escrow state
   const [escrow, setEscrow] = useState<any>(null);
   const [completing, setCompleting] = useState(false);
