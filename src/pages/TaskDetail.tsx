@@ -1047,7 +1047,53 @@ const TaskDetailPage = () => {
                     </button>
                   )}
 
-                  {escrow.status === 'released' && (
+                  {/* Dispute button */}
+                  {isOwner && escrow.status === 'held' && task.status === 'in_progress' && (
+                    <>
+                      {showDisputeForm ? (
+                        <div className="space-y-2 mt-2">
+                          <textarea
+                            value={disputeReason}
+                            onChange={e => setDisputeReason(e.target.value)}
+                            rows={3}
+                            placeholder={t('dispute.reasonPlaceholder')}
+                            className="w-full px-3 py-2 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-destructive/20 resize-none"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleSubmitDispute}
+                              disabled={disputeSubmitting || !disputeReason.trim()}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+                            >
+                              {disputeSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertTriangle className="w-3 h-3" />}
+                              {t('dispute.submit')}
+                            </button>
+                            <button
+                              onClick={() => { setShowDisputeForm(false); setDisputeReason(''); }}
+                              className="flex-1 py-2 rounded-xl text-xs font-medium border border-border text-muted-foreground hover:bg-secondary"
+                            >
+                              {t('payment.cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowDisputeForm(true)}
+                          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium border border-destructive/30 text-destructive hover:bg-destructive/5 transition-colors"
+                        >
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                          {t('dispute.openDispute')}
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {task.status === 'dispute' && (
+                    <div className="flex items-center gap-2 text-xs text-destructive font-medium">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      {t('dispute.inProgress')}
+                    </div>
+                  )}
                     <div className="flex items-center gap-2 text-xs text-primary font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       {t('escrow.paymentReleased')}
