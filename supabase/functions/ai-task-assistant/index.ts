@@ -125,6 +125,31 @@ You MUST respond using the provided tool/function.`,
       ];
       body.tool_choice = { type: "function", function: { name: "categorize_task" } };
       body.stream = false;
+    } else if (type === "voice_to_task") {
+      body.tools = [
+        {
+          type: "function",
+          function: {
+            name: "structure_task",
+            description: "Structure voice input into a task",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Clear concise task title" },
+                description: { type: "string", description: "Detailed task description" },
+                category: { type: "string", enum: ["cleaning", "moving", "repair", "digital", "consulting", "delivery", "beauty", "tutoring"] },
+                budget: { type: "number", description: "Suggested budget in USD" },
+                task_type: { type: "string", enum: ["onsite", "remote"] },
+                location: { type: "string", description: "Location if mentioned, empty string otherwise" },
+              },
+              required: ["title", "description", "category", "budget", "task_type", "location"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ];
+      body.tool_choice = { type: "function", function: { name: "structure_task" } };
+      body.stream = false;
     } else if (type === "translate_tasks") {
       body.tools = [
         {
