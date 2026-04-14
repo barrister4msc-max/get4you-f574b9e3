@@ -213,7 +213,7 @@ You MUST respond using the provided tool/function.`,
       });
     }
 
-    if (type === "categorize" || type === "translate_tasks") {
+    if (type === "categorize" || type === "translate_tasks" || type === "voice_to_task") {
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       if (toolCall) {
@@ -222,7 +222,7 @@ You MUST respond using the provided tool/function.`,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: type === "categorize" ? "No categorization result" : "No translation result" }), {
+      return new Response(JSON.stringify({ error: "No result from AI" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
