@@ -641,6 +641,63 @@ export type Database = {
           },
         ]
       }
+      payouts: {
+        Row: {
+          amount: number
+          commission: number
+          created_at: string
+          currency: string
+          escrow_id: string
+          id: string
+          net_amount: number
+          status: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          commission?: number
+          created_at?: string
+          currency?: string
+          escrow_id: string
+          id?: string
+          net_amount?: number
+          status?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          commission?: number
+          created_at?: string
+          currency?: string
+          escrow_id?: string
+          id?: string
+          net_amount?: number
+          status?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -919,6 +976,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_complete_stale_tasks: { Args: never; Returns: number }
       check_ai_rate_limit: {
         Args: {
           _function_name: string
@@ -997,7 +1055,13 @@ export type Database = {
     Enums: {
       app_role: "client" | "tasker" | "admin"
       proposal_status: "pending" | "accepted" | "rejected"
-      task_status: "draft" | "open" | "in_progress" | "completed" | "cancelled"
+      task_status:
+        | "draft"
+        | "open"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "dispute"
       task_type: "onsite" | "remote"
     }
     CompositeTypes: {
@@ -1128,7 +1192,14 @@ export const Constants = {
     Enums: {
       app_role: ["client", "tasker", "admin"],
       proposal_status: ["pending", "accepted", "rejected"],
-      task_status: ["draft", "open", "in_progress", "completed", "cancelled"],
+      task_status: [
+        "draft",
+        "open",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "dispute",
+      ],
       task_type: ["onsite", "remote"],
     },
   },
