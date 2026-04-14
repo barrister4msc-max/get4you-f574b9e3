@@ -765,8 +765,59 @@ const TaskDetailPage = () => {
                       <p className="text-xs text-muted-foreground mt-2 bg-muted/50 rounded-lg p-2">{proposal.profile.bio}</p>
                     )}
 
-                    {proposal.comment && (
-                      <p className="text-sm text-muted-foreground mt-2">{proposal.comment}</p>
+                    {/* Editable proposal for own pending proposals */}
+                    {editingProposalId === proposal.id ? (
+                      <div className="mt-2 space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="number"
+                            value={editProposalPrice}
+                            onChange={e => setEditProposalPrice(e.target.value)}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <textarea
+                          value={editProposalComment}
+                          onChange={e => setEditProposalComment(e.target.value)}
+                          rows={2}
+                          placeholder={t('proposal.comment.placeholder')}
+                          className="w-full px-3 py-1.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSaveProposalEdit}
+                            disabled={submitting || !editProposalPrice}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                          >
+                            {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                            {t('proposal.editSave')}
+                          </button>
+                          <button
+                            onClick={() => setEditingProposalId(null)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary"
+                          >
+                            <X className="w-3 h-3" />
+                            {t('payment.cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {proposal.comment && (
+                          <p className="text-sm text-muted-foreground mt-2">{proposal.comment}</p>
+                        )}
+
+                        {/* Edit button for own pending proposals */}
+                        {proposal.user_id === user?.id && proposal.status === 'pending' && task.status === 'open' && (
+                          <button
+                            onClick={() => handleEditProposal(proposal)}
+                            className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors"
+                          >
+                            <Pencil className="w-3 h-3" />
+                            {t('proposal.edit')}
+                          </button>
+                        )}
+                      </>
                     )}
 
                     {/* Accept/Reject buttons for task owner */}
