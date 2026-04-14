@@ -1699,8 +1699,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'הצ׳אט אינו זמין למשימה זו',
     'chat.backToTask': 'חזרה למשימה',
     'chat.empty': 'אין הודעות עדיין. התחל את השיחה!',
+    'chat.restricted': 'הצ׳אט זמין רק למשימות בביצוע',
 
-    // Order Chat
+    // מחלוקת
+    'dispute.openDispute': 'פתח מחלוקת',
+    'dispute.reasonPlaceholder': 'תאר את סיבת המחלוקת...',
+    'dispute.submit': 'שלח מחלוקת',
+    'dispute.submitted': 'המחלוקת נשלחה בהצלחה',
+    'dispute.error': 'שליחת המחלוקת נכשלה',
+    'dispute.inProgress': 'המחלוקת בבדיקה',
+
     'orderChat.title': 'צ׳אט הזמנה',
 
     // AI Limits
