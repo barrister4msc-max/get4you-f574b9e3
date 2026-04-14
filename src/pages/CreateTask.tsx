@@ -26,6 +26,7 @@ const CreateTaskPage = () => {
   const audioRecorder = useAudioRecorder();
   const [step, setStep] = useState(1);
   const [categorizing, setCategorizing] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
