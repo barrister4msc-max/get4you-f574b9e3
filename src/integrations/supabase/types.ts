@@ -1015,6 +1015,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      complete_task: { Args: { _task_id: string }; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1081,6 +1082,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      start_task: { Args: { _task_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "client" | "tasker" | "admin"
