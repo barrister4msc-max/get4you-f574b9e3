@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, ArrowLeft, User, Shield } from 'lucide-react';
+import { Send, ArrowLeft, User, Shield, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -150,6 +150,10 @@ const ChatPage = () => {
     }
   };
 
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   const canChat = isParticipant && !!task && (task.status === 'in_progress' || task.status === 'completed' || task.status === 'dispute');
 
   if (loading) {
@@ -173,14 +177,11 @@ const ChatPage = () => {
     );
   }
 
-  // Check if there are admin messages
-  const hasAdminMessages = messages.some(m => m.recipient_id !== null);
-
   return (
-    <div className="min-h-[80vh] flex flex-col">
+    <div className="min-h-[80vh] flex flex-col bg-muted/30">
       {/* Header */}
-      <div className="border-b border-border bg-card sticky top-16 z-40">
-        <div className="container max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-16 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <Link to={`/tasks/${taskId}`} className="text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -192,41 +193,62 @@ const ChatPage = () => {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{task.title}</p>
+            <p className="font-semibold text-sm truncate">{otherProfile?.display_name || 'Chat'}</p>
             <p className="text-xs text-muted-foreground truncate">{otherProfile?.display_name || 'Chat'}</p>
           </div>
+          {task?.status && (
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+              {t(`tasks.status.${task.status}`)}
+            </span>
+          )}
+        </div>
+        <div className="mx-auto max-w-2xl px-4 pb-2">
+          <p className="truncate text-xs text-muted-foreground">{task.title}</p>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="container max-w-2xl mx-auto px-4 py-4 space-y-3">
+        <div className="mx-auto max-w-2xl px-3 py-4 space-y-1">
           {messages.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-12">{t('chat.empty')}</p>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+                <MessageCircle className="h-8 w-8 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">{t('chat.empty')}</p>
+            </div>
           )}
           {messages.map((msg) => {
             const isMine = msg.sender_id === user?.id;
             const isAdminMsg = msg.recipient_id !== null && !isMine;
             const senderName = senderNames[msg.sender_id] || 'User';
             return (
-              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
-                  isMine
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
-                    : isAdminMsg
-                    ? 'bg-amber-50 border border-amber-200 text-foreground rounded-bl-md dark:bg-amber-900/20 dark:border-amber-800'
-                    : 'bg-card border border-border text-foreground rounded-bl-md'
-                }`}>
+              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1`}>
+                <div
+                  className={`relative max-w-[78%] px-3 py-2 text-sm shadow-sm ${
+                    isMine
+                      ? 'bg-primary text-primary-foreground'
+                      : isAdminMsg
+                      ? 'bg-accent text-accent-foreground border border-border'
+                      : 'bg-card text-foreground border border-border'
+                  }`}
+                  style={{
+                    borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  }}
+                >
                   {!isMine && (
-                    <p className="text-[10px] font-medium mb-1 opacity-70 flex items-center gap-1">
+                    <p className="mb-1 flex items-center gap-1 text-[10px] font-medium opacity-70">
                       {isAdminMsg && <Shield className="w-2.5 h-2.5" />}
                       {senderName}
                     </p>
                   )}
-                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                  <p className={`text-[10px] mt-1 ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <p className="whitespace-pre-wrap break-words leading-relaxed">
+                    {msg.content}
+                    <span className="invisible ml-3 inline-block w-[58px] text-[11px]">00:00</span>
                   </p>
+                  <span className={`absolute bottom-1 right-2 text-[11px] ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                    {formatTime(msg.created_at)}
+                  </span>
                 </div>
               </div>
             );
@@ -237,28 +259,28 @@ const ChatPage = () => {
 
       {/* Input */}
       {canChat ? (
-        <div className="border-t border-border bg-card sticky bottom-0">
-          <div className="container max-w-2xl mx-auto px-4 py-3 flex items-end gap-2">
+        <div className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+          <div className="mx-auto flex max-w-2xl items-end gap-2 px-3 py-2">
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('chat.placeholder')}
               rows={1}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="min-h-[42px] max-h-[100px] flex-1 resize-none rounded-3xl border border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
             <button
               onClick={handleSend}
               disabled={!newMessage.trim() || sending}
-              className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>
           </div>
         </div>
       ) : isParticipant && task && (
-        <div className="border-t border-border bg-card sticky bottom-0">
-          <div className="container max-w-2xl mx-auto px-4 py-3 text-center">
+        <div className="sticky bottom-0 border-t border-border bg-card">
+          <div className="mx-auto max-w-2xl px-4 py-3 text-center">
             <p className="text-xs text-muted-foreground">{t('chat.restricted')}</p>
           </div>
         </div>
