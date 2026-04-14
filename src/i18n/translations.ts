@@ -503,8 +503,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'Chat is not available for this task',
     'chat.backToTask': 'Back to task',
     'chat.empty': 'No messages yet. Start the conversation!',
+    'chat.restricted': 'Chat is available only for tasks in progress',
 
-    // Order Chat
+    // Dispute
+    'dispute.openDispute': 'Open Dispute',
+    'dispute.reasonPlaceholder': 'Describe the reason for the dispute...',
+    'dispute.submit': 'Submit Dispute',
+    'dispute.submitted': 'Dispute submitted successfully',
+    'dispute.error': 'Failed to submit dispute',
+    'dispute.inProgress': 'Dispute is being reviewed',
+
     'orderChat.title': 'Order Chat',
 
     // AI Limits
