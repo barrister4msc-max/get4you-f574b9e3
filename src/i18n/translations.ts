@@ -503,8 +503,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'Chat is not available for this task',
     'chat.backToTask': 'Back to task',
     'chat.empty': 'No messages yet. Start the conversation!',
+    'chat.restricted': 'Chat is available only for tasks in progress',
 
-    // Order Chat
+    // Dispute
+    'dispute.openDispute': 'Open Dispute',
+    'dispute.reasonPlaceholder': 'Describe the reason for the dispute...',
+    'dispute.submit': 'Submit Dispute',
+    'dispute.submitted': 'Dispute submitted successfully',
+    'dispute.error': 'Failed to submit dispute',
+    'dispute.inProgress': 'Dispute is being reviewed',
+
     'orderChat.title': 'Order Chat',
 
     // AI Limits
@@ -1093,8 +1101,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'Чат недоступен для этой задачи',
     'chat.backToTask': 'Вернуться к задаче',
     'chat.empty': 'Сообщений пока нет. Начните диалог!',
+    'chat.restricted': 'Чат доступен только для задач в работе',
 
-    // Order Chat
+    // Диспут
+    'dispute.openDispute': 'Открыть спор',
+    'dispute.reasonPlaceholder': 'Опишите причину спора...',
+    'dispute.submit': 'Отправить спор',
+    'dispute.submitted': 'Спор успешно отправлен',
+    'dispute.error': 'Не удалось отправить спор',
+    'dispute.inProgress': 'Спор на рассмотрении',
+
     'orderChat.title': 'Чат по заказу',
 
     // AI Limits
@@ -1683,8 +1699,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'הצ׳אט אינו זמין למשימה זו',
     'chat.backToTask': 'חזרה למשימה',
     'chat.empty': 'אין הודעות עדיין. התחל את השיחה!',
+    'chat.restricted': 'הצ׳אט זמין רק למשימות בביצוע',
 
-    // Order Chat
+    // מחלוקת
+    'dispute.openDispute': 'פתח מחלוקת',
+    'dispute.reasonPlaceholder': 'תאר את סיבת המחלוקת...',
+    'dispute.submit': 'שלח מחלוקת',
+    'dispute.submitted': 'המחלוקת נשלחה בהצלחה',
+    'dispute.error': 'שליחת המחלוקת נכשלה',
+    'dispute.inProgress': 'המחלוקת בבדיקה',
+
     'orderChat.title': 'צ׳אט הזמנה',
 
     // AI Limits
@@ -2273,8 +2297,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     'chat.unavailable': 'المحادثة غير متاحة لهذه المهمة',
     'chat.backToTask': 'العودة للمهمة',
     'chat.empty': 'لا توجد رسائل بعد. ابدأ المحادثة!',
+    'chat.restricted': 'المحادثة متاحة فقط للمهام قيد التنفيذ',
 
-    // Order Chat
+    // نزاع
+    'dispute.openDispute': 'فتح نزاع',
+    'dispute.reasonPlaceholder': 'صف سبب النزاع...',
+    'dispute.submit': 'إرسال النزاع',
+    'dispute.submitted': 'تم إرسال النزاع بنجاح',
+    'dispute.error': 'فشل في إرسال النزاع',
+    'dispute.inProgress': 'النزاع قيد المراجعة',
+
     'orderChat.title': 'محادثة الطلب',
 
     // AI Limits
