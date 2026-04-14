@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getCachedTranslation, setCachedTranslations, makeKey, isTranslatedCopyUsable } from '@/lib/translationCache';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -55,6 +55,57 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): 
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function normalizeSearchText(value: string | null | undefined): string {
+  return (value || '')
+    .toLocaleLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s+#.-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractCompetencyTerms(value: string | null | undefined): string[] {
+  if (!value) return [];
+
+  const phrases = value
+    .split(/[\n,;|/]+/)
+    .map((part) => normalizeSearchText(part))
+    .filter((part) => part.length >= 3);
+
+  const words = phrases.flatMap((part) =>
+    part
+      .split(/\s+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length >= 3),
+  );
+
+  return Array.from(new Set([...phrases, ...words]));
+}
+
+function getTaskRecommendationScore(task: TaskRow, competencyTerms: string[]): number {
+  if (competencyTerms.length === 0) return 0;
+
+  const searchableText = normalizeSearchText([
+    task.title,
+    task.description,
+    task.categories?.name_en,
+    task.categories?.name_ru,
+    task.categories?.name_he,
+  ].filter(Boolean).join(' '));
+
+  if (!searchableText) return 0;
+
+  const searchableWords = new Set(searchableText.split(' '));
+
+  return competencyTerms.reduce((score, term) => {
+    if (term.includes(' ') && searchableText.includes(term)) return score + 4;
+    if (searchableWords.has(term)) return score + 2;
+    if (searchableText.includes(term)) return score + 1;
+    return score;
+  }, 0);
 }
 
 const TaskCard = ({ task, i, currency, t, getCategoryName, showStatus, distanceKm, displayTitle, displayDescription }: any) => {
@@ -155,15 +206,9 @@ const TasksPage = () => {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
-  const [myProposalTaskIds, setMyProposalTaskIds] = useState<Set<string>>(new Set());
 
   const isTasker = roles.includes('tasker');
-
-  useEffect(() => {
-    if (profile?.city) {
-      setFilterCity(profile.city);
-    }
-  }, [profile?.city]);
+  const competencyTerms = useMemo(() => extractCompetencyTerms(isTasker ? profile?.bio : null), [isTasker, profile?.bio]);
 
   const requestGeolocation = () => {
     if (!navigator.geolocation) return;
@@ -188,28 +233,21 @@ const TasksPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const tasksPromise = supabase
-        .from('tasks')
-        .select('*, categories(name_en, name_ru, name_he)')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false });
-      const catsPromise = supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order');
-      const proposalsPromise = user
-        ? supabase.from('proposals').select('task_id').eq('user_id', user.id)
-        : null;
-
-      const [tasksRes, catsRes, proposalsRes] = await Promise.all([
-        tasksPromise, catsPromise, ...(proposalsPromise ? [proposalsPromise] : []),
+      const [tasksRes, catsRes] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('*, categories(name_en, name_ru, name_he)')
+          .eq('status', 'open')
+          .order('created_at', { ascending: false }),
+        supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order'),
       ]);
+
       setTasks((tasksRes.data as TaskRow[]) || []);
       setCategories(catsRes.data || []);
-      if (proposalsRes?.data) {
-        setMyProposalTaskIds(new Set(proposalsRes.data.map((p: any) => p.task_id)));
-      }
       setLoading(false);
     };
     fetchData();
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (!user || !isTasker) return;
@@ -337,8 +375,6 @@ const TasksPage = () => {
   };
 
   const filtered = tasks.filter((task) => {
-    // Hide tasks user already proposed on
-    if (myProposalTaskIds.size > 0 && myProposalTaskIds.has(task.id)) return false;
     if (filterCat && task.category_id !== filterCat) return false;
     if (search) {
       const displayedCopy = getDisplayedTaskCopy(task);
@@ -359,6 +395,16 @@ const TasksPage = () => {
     return true;
   });
 
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    const scoreDifference = getTaskRecommendationScore(b, competencyTerms) - getTaskRecommendationScore(a, competencyTerms);
+    if (scoreDifference !== 0) return scoreDifference;
+
+    const urgentDifference = Number(Boolean(b.is_urgent)) - Number(Boolean(a.is_urgent));
+    if (urgentDifference !== 0) return urgentDifference;
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   const activeFilters = [filterCat, filterCity, filterBudgetMin, filterBudgetMax, filterRadius].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -370,7 +416,7 @@ const TasksPage = () => {
     setSearch('');
   };
 
-  const displayTasks = tab === 'my' ? myTasks : filtered;
+  const displayTasks = tab === 'my' ? myTasks : sortedFiltered;
 
   return (
     <div className="py-8">
