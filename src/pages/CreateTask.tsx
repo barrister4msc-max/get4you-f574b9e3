@@ -138,6 +138,47 @@ const CreateTaskPage = () => {
     }
   };
 
+  const handleVoiceToTask = async () => {
+    if (!voice.transcript && !form.description) {
+      toast.error(t('task.voice.speakFirst') || 'Record your voice first');
+      return;
+    }
+    const text = voice.transcript || form.description;
+    if (!text.trim()) return;
+
+    setVoiceProcessing(true);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task-assistant`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          type: 'voice_to_task',
+          messages: [{ role: 'user', content: text }],
+        }),
+      });
+      if (!resp.ok) throw new Error('Failed');
+      const data = await resp.json();
+      update({
+        title: data.title || form.title,
+        description: data.description || form.description,
+        category: data.category || form.category,
+        budget: data.budget || form.budget,
+        taskType: data.task_type || form.taskType,
+        location: data.location || form.location,
+      });
+      toast.success(t('task.voice.taskCreated') || 'Task structured from voice!');
+      setStep(2); // Jump to details step to review
+    } catch {
+      toast.error(t('task.ai.error'));
+    } finally {
+      setVoiceProcessing(false);
+    }
+  };
+
   const [showMotivation, setShowMotivation] = useState(false);
 
   const handleSubmit = async () => {
