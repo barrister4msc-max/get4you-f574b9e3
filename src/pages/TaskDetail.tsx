@@ -269,13 +269,16 @@ const TaskDetailPage = () => {
   };
 
   const handleSubmitReview = async () => {
-    if (!id || !user || !task?.assigned_to || reviewRating === 0) return;
+    if (!id || !user || reviewRating === 0) return;
+    // Determine who is being reviewed
+    const revieweeId = isOwner ? task.assigned_to : task.user_id;
+    if (!revieweeId) return;
     setReviewSubmitting(true);
     try {
       const { data, error } = await supabase.from('reviews').insert({
         task_id: id,
         reviewer_id: user.id,
-        reviewee_id: task.assigned_to,
+        reviewee_id: revieweeId,
         rating: reviewRating,
         comment: reviewComment.trim() || null,
       }).select().single();
@@ -286,6 +289,35 @@ const TaskDetailPage = () => {
       toast.error(t('review.error'));
     } finally {
       setReviewSubmitting(false);
+    }
+  };
+
+  const handleEditProposal = (proposal: Proposal) => {
+    setEditingProposalId(proposal.id);
+    setEditProposalPrice(String(proposal.price));
+    setEditProposalComment(proposal.comment || '');
+  };
+
+  const handleSaveProposalEdit = async () => {
+    if (!editingProposalId || !editProposalPrice) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('proposals').update({
+        price: Number(editProposalPrice),
+        comment: editProposalComment.trim() || null,
+      }).eq('id', editingProposalId);
+      if (error) throw error;
+      setProposals(prev => prev.map(p =>
+        p.id === editingProposalId
+          ? { ...p, price: Number(editProposalPrice), comment: editProposalComment.trim() || null }
+          : p
+      ));
+      setEditingProposalId(null);
+      toast.success(t('proposal.updated'));
+    } catch {
+      toast.error(t('proposal.error'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
