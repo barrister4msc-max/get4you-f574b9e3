@@ -324,6 +324,12 @@ const TaskDetailPage = () => {
     }
   };
 
+  const handleEditProposal = (proposal: Proposal) => {
+    setEditingProposalId(proposal.id);
+    setEditProposalPrice(String(proposal.price));
+    setEditProposalComment(proposal.comment || '');
+  };
+
 
 
   const handleSaveProposalEdit = async () => {
