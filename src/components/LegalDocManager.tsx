@@ -34,6 +34,24 @@ const getDisplayNameFromStorage = (prefix: string, fileName: string) => {
   return fileName;
 };
 
+const createSafeStorageFileName = (prefix: string, originalName: string) => {
+  const extensionMatch = originalName.match(/\.([^.]+)$/);
+  const extension = extensionMatch ? `.${extensionMatch[1].toLowerCase()}` : '';
+  const baseName = extension ? originalName.slice(0, -extension.length) : originalName;
+
+  const safeBaseName = baseName
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+
+  const uniquePart = `${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+  const finalBaseName = safeBaseName || 'document';
+
+  return `${prefix}_${uniquePart}_${finalBaseName}${extension}`;
+};
+
 export const LegalDocManager = ({ prefix, title }: Props) => {
   const { t } = useLanguage();
   const { roles } = useAuth();
@@ -131,10 +149,11 @@ export const LegalDocManager = ({ prefix, title }: Props) => {
 
     setLoading(true);
 
-    const results = await Promise.all(
+    let uploadedCount = 0;
+
+    await Promise.all(
       Array.from(uploadFiles).map(async (file) => {
-        const ts = Date.now() + Math.random().toString(36).slice(2, 8);
-        const storedFileName = `${prefix}_${ts}_${file.name}`;
+        const storedFileName = createSafeStorageFileName(prefix, file.name);
         const storagePath = `legal/${storedFileName}`;
 
         const { error: uploadError } = await supabase.storage.from('portfolios').upload(storagePath, file, {
@@ -158,11 +177,14 @@ export const LegalDocManager = ({ prefix, title }: Props) => {
         if (dbError) {
           toast.error(`${file.name}: ${dbError.message}`);
           await supabase.storage.from('portfolios').remove([storagePath]);
+          return;
         }
+
+        uploadedCount += 1;
       }),
     );
 
-    if (results.some((result) => result === undefined)) {
+    if (uploadedCount > 0) {
       toast.success(t('legal.uploaded'));
     }
 
