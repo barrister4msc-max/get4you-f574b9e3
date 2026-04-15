@@ -154,8 +154,7 @@ const OrderChat = () => {
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/${orderId}/${Date.now()}.${ext}`;
+      const path = `${orderId}/${user.id}/${file.name}`;
       
       const { error: uploadError } = await supabase.storage
         .from('order-chat-files')
