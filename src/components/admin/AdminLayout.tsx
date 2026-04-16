@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Users, Wrench, Star,
-  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare
+  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';

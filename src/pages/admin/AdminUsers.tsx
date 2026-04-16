@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare, ShieldAlert } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare, ShieldAlert, Ban } from 'lucide-react';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Link } from 'react-router-dom';
 
@@ -17,8 +17,9 @@ type SortDir = 'asc' | 'desc';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, user: currentUser } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
+  const [bannedIds, setBannedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
@@ -27,11 +28,13 @@ export default function AdminUsers() {
   const load = async () => {
     const { data: profiles } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
     const { data: allRoles } = await supabase.from('user_roles').select('*');
+    const { data: bans } = await supabase.from('banned_users' as any).select('user_id');
     const merged = (profiles || []).map((p) => ({
       ...p,
       roles: (allRoles || []).filter((r) => r.user_id === p.user_id).map((r) => r.role),
     }));
     setUsers(merged);
+    setBannedIds(new Set((bans || []).map((b: any) => b.user_id)));
     setLoading(false);
   };
 
@@ -48,6 +51,25 @@ export default function AdminUsers() {
       await supabase.from('user_roles').insert({ user_id: userId, role: role as any });
     }
     toast.success(hasRole ? t('admin.roleRemoved').replace('{role}', role) : t('admin.roleAdded').replace('{role}', role));
+    load();
+  };
+
+  const toggleBan = async (userId: string, isBanned: boolean) => {
+    if (!isSuperAdmin) {
+      toast.error('Только super admin может блокировать пользователей');
+      return;
+    }
+    if (isBanned) {
+      await supabase.from('banned_users' as any).delete().eq('user_id', userId);
+      toast.success('Пользователь разблокирован');
+    } else {
+      await supabase.from('banned_users' as any).insert({ 
+        user_id: userId, 
+        banned_by: currentUser!.id,
+        reason: 'Blocked by super admin'
+      });
+      toast.success('Пользователь заблокирован');
+    }
     load();
   };
 
@@ -134,12 +156,14 @@ export default function AdminUsers() {
           <TableBody>
             {filtered.map((u) => {
               const isTargetSuperAdmin = u.roles.includes('super_admin');
+              const isBanned = bannedIds.has(u.user_id);
               return (
-                <TableRow key={u.id}>
+                <TableRow key={u.id} className={isBanned ? 'opacity-50 bg-destructive/5' : ''}>
                   <TableCell className="font-mono text-xs text-muted-foreground">{u.user_number || '—'}</TableCell>
                   <TableCell className="font-medium">
                     {u.display_name || '—'}
                     {isTargetSuperAdmin && <ShieldAlert className="inline w-3.5 h-3.5 ml-1 text-destructive" />}
+                    {isBanned && <Ban className="inline w-3.5 h-3.5 ml-1 text-destructive" />}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">{u.email || '—'}</TableCell>
                   <TableCell>{u.phone || '—'}</TableCell>
@@ -149,6 +173,7 @@ export default function AdminUsers() {
                       {u.roles.map((r: string) => (
                         <Badge key={r} variant={r === 'super_admin' ? 'destructive' : 'secondary'} className="text-xs">{r}</Badge>
                       ))}
+                      {isBanned && <Badge variant="destructive" className="text-xs">banned</Badge>}
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-xs">{format(new Date(u.created_at), 'dd.MM.yy')}</TableCell>
@@ -161,6 +186,17 @@ export default function AdminUsers() {
                             onClick={() => toggleRole(u.user_id, role, has)}>{role}</Button>
                         );
                       })}
+                      {isSuperAdmin && !isTargetSuperAdmin && (
+                        <Button
+                          variant={isBanned ? 'outline' : 'destructive'}
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => toggleBan(u.user_id, isBanned)}
+                        >
+                          <Ban className="w-3.5 h-3.5 mr-1" />
+                          {isBanned ? 'Unban' : 'Ban'}
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
                         <Link to={`/admin/chat?user=${u.user_id}`}>
                           <MessageSquare className="w-3.5 h-3.5" />
