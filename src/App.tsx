@@ -43,6 +43,7 @@ import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
 import AdminChat from "./pages/admin/AdminChat";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDisputes from "./pages/admin/AdminDisputes";
+import AdminAuditLog from "./pages/admin/AdminAuditLog";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => (
                   <Route path="chat" element={<AdminChat />} />
                   <Route path="disputes" element={<AdminDisputes />} />
                   <Route path="settings" element={<AdminSettings />} />
+                  <Route path="audit-log" element={<AdminAuditLog />} />
                   <Route path="esek-patur" element={<AdminEsekPatur />} />
                   <Route path="broadcast" element={<AdminBroadcast />} />
                   <Route path="employment" element={<AdminEmployment />} />
