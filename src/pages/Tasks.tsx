@@ -242,7 +242,7 @@ const TasksPage = () => {
         supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order'),
       ]);
 
-      setTasks((tasksRes.data as TaskRow[]) || []);
+      setTasks(((tasksRes.data as unknown) as TaskRow[]) || []);
       setCategories(catsRes.data || []);
       setLoading(false);
     };
