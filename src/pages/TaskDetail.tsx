@@ -90,11 +90,22 @@ const TaskDetailPage = () => {
 
   const fetchTask = async () => {
     if (!id) return;
-    const { data } = await supabase
+    // Try the full tasks table first (works for owner / assignee / admin).
+    let { data } = await supabase
       .from('tasks')
       .select('*, categories(name_en, name_ru, name_he)')
       .eq('id', id)
       .maybeSingle();
+
+    // Fallback to public view (open tasks visible to all, hides address/coords).
+    if (!data) {
+      const pub = await supabase
+        .from('tasks_public' as any)
+        .select('*, categories(name_en, name_ru, name_he)')
+        .eq('id', id)
+        .maybeSingle();
+      data = pub.data as any;
+    }
 
     if (data?.user_id) {
       const { data: profile } = await supabase.rpc('get_public_profile', { target_user_id: data.user_id });
