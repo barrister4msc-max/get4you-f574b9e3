@@ -20,6 +20,8 @@ interface AuthContextType {
   profile: Profile | null;
   roles: string[];
   loading: boolean;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
   signUp: (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both') => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -67,9 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRoles([]);
       }
       if (initialized) {
-        // Only set loading false on subsequent events; initial load is handled by getSession
       } else {
-        // INITIAL_SESSION event — mark initialized but let getSession handle loading
         initialized = true;
       }
     });
@@ -79,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id).finally(() => setLoading(false));
-        // Update last_seen_at
         supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('user_id', session.user.id).then(() => {});
       } else {
         setLoading(false);
@@ -89,6 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
+
+  const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+  const isSuperAdmin = roles.includes('super_admin');
 
   const signUp = async (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both') => {
     const { data, error } = await supabase.auth.signUp({
@@ -118,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, roles, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, roles, loading, isAdmin, isSuperAdmin, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
