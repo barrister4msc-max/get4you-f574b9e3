@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare, ShieldAlert } from 'lucide-react';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Link } from 'react-router-dom';
 
@@ -16,6 +17,7 @@ type SortDir = 'asc' | 'desc';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
+  const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -36,6 +38,10 @@ export default function AdminUsers() {
   useEffect(() => { load(); }, []);
 
   const toggleRole = async (userId: string, role: string, hasRole: boolean) => {
+    if (!isSuperAdmin) {
+      toast.error('Только super admin может изменять роли');
+      return;
+    }
     if (hasRole) {
       await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', role as any);
     } else {
@@ -126,39 +132,45 @@ export default function AdminUsers() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell className="font-mono text-xs text-muted-foreground">{u.user_number || '—'}</TableCell>
-                <TableCell className="font-medium">{u.display_name || '—'}</TableCell>
-                <TableCell className="text-muted-foreground text-xs">{u.email || '—'}</TableCell>
-                <TableCell>{u.phone || '—'}</TableCell>
-                <TableCell>{u.city || '—'}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1 flex-wrap">
-                    {u.roles.map((r: string) => (
-                      <Badge key={r} variant="secondary" className="text-xs">{r}</Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-xs">{format(new Date(u.created_at), 'dd.MM.yy')}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1 flex-wrap">
-                    {['client', 'tasker', 'admin'].map((role) => {
-                      const has = u.roles.includes(role);
-                      return (
-                        <Button key={role} variant={has ? 'default' : 'outline'} size="sm" className="text-xs h-7"
-                          onClick={() => toggleRole(u.user_id, role, has)}>{role}</Button>
-                      );
-                    })}
-                    <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
-                      <Link to={`/admin/chat?user=${u.user_id}`}>
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filtered.map((u) => {
+              const isTargetSuperAdmin = u.roles.includes('super_admin');
+              return (
+                <TableRow key={u.id}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{u.user_number || '—'}</TableCell>
+                  <TableCell className="font-medium">
+                    {u.display_name || '—'}
+                    {isTargetSuperAdmin && <ShieldAlert className="inline w-3.5 h-3.5 ml-1 text-destructive" />}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{u.email || '—'}</TableCell>
+                  <TableCell>{u.phone || '—'}</TableCell>
+                  <TableCell>{u.city || '—'}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1 flex-wrap">
+                      {u.roles.map((r: string) => (
+                        <Badge key={r} variant={r === 'super_admin' ? 'destructive' : 'secondary'} className="text-xs">{r}</Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">{format(new Date(u.created_at), 'dd.MM.yy')}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1 flex-wrap">
+                      {isSuperAdmin && !isTargetSuperAdmin && ['client', 'tasker', 'admin'].map((role) => {
+                        const has = u.roles.includes(role);
+                        return (
+                          <Button key={role} variant={has ? 'default' : 'outline'} size="sm" className="text-xs h-7"
+                            onClick={() => toggleRole(u.user_id, role, has)}>{role}</Button>
+                        );
+                      })}
+                      <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
+                        <Link to={`/admin/chat?user=${u.user_id}`}>
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

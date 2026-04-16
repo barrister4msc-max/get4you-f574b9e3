@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           function_name: string
@@ -1085,7 +1118,7 @@ export type Database = {
       start_task: { Args: { _task_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "client" | "tasker" | "admin"
+      app_role: "client" | "tasker" | "admin" | "super_admin"
       proposal_status: "pending" | "accepted" | "rejected"
       task_status:
         | "draft"
@@ -1222,7 +1255,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "tasker", "admin"],
+      app_role: ["client", "tasker", "admin", "super_admin"],
       proposal_status: ["pending", "accepted", "rejected"],
       task_status: [
         "draft",
