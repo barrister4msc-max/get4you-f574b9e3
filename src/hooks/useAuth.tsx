@@ -106,8 +106,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
+    if (data.user) {
+      const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: data.user.id });
+      if (banned) {
+        await supabase.auth.signOut();
+        return { error: 'Ваш аккаунт заблокирован администратором. Обратитесь в поддержку.' };
+      }
+    }
     return { error: null };
   };
 
