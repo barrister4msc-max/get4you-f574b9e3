@@ -74,7 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
+        if (banned) {
+          await supabase.auth.signOut();
+          setLoading(false);
+          initialized = true;
+          return;
+        }
+      }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
