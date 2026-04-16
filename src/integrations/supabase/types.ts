@@ -1085,7 +1085,7 @@ export type Database = {
       start_task: { Args: { _task_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "client" | "tasker" | "admin"
+      app_role: "client" | "tasker" | "admin" | "super_admin"
       proposal_status: "pending" | "accepted" | "rejected"
       task_status:
         | "draft"
@@ -1222,7 +1222,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "tasker", "admin"],
+      app_role: ["client", "tasker", "admin", "super_admin"],
       proposal_status: ["pending", "accepted", "rejected"],
       task_status: [
         "draft",
