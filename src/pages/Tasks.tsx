@@ -233,16 +233,16 @@ const TasksPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Public listing uses tasks_public (no precise address/coords for non-participants)
       const [tasksRes, catsRes] = await Promise.all([
         supabase
-          .from('tasks')
+          .from('tasks_public' as any)
           .select('*, categories(name_en, name_ru, name_he)')
-          .eq('status', 'open')
           .order('created_at', { ascending: false }),
         supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order'),
       ]);
 
-      setTasks((tasksRes.data as TaskRow[]) || []);
+      setTasks(((tasksRes.data as unknown) as TaskRow[]) || []);
       setCategories(catsRes.data || []);
       setLoading(false);
     };

@@ -194,6 +194,13 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_messages_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       complaints: {
@@ -233,6 +240,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "complaints_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -493,6 +507,13 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "escrow_transactions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       esek_patur_applications: {
@@ -628,6 +649,13 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       order_messages: {
@@ -726,6 +754,13 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payouts: {
@@ -781,6 +816,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -890,6 +932,13 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "proposals_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reviews: {
@@ -926,6 +975,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1060,7 +1116,92 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tasks_public: {
+        Row: {
+          address: string | null
+          assigned_to: string | null
+          budget_fixed: number | null
+          budget_max: number | null
+          budget_min: number | null
+          category_id: string | null
+          city: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          is_urgent: boolean | null
+          latitude: number | null
+          longitude: number | null
+          photos: string[] | null
+          radius_km: number | null
+          status: Database["public"]["Enums"]["task_status"] | null
+          task_type: Database["public"]["Enums"]["task_type"] | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+          voice_note_url: string | null
+        }
+        Insert: {
+          address?: never
+          assigned_to?: string | null
+          budget_fixed?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          category_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          is_urgent?: boolean | null
+          latitude?: never
+          longitude?: never
+          photos?: string[] | null
+          radius_km?: number | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          task_type?: Database["public"]["Enums"]["task_type"] | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          voice_note_url?: string | null
+        }
+        Update: {
+          address?: never
+          assigned_to?: string | null
+          budget_fixed?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          category_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          is_urgent?: boolean | null
+          latitude?: never
+          longitude?: never
+          photos?: string[] | null
+          radius_km?: number | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          task_type?: Database["public"]["Enums"]["task_type"] | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          voice_note_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_complete_stale_tasks: { Args: never; Returns: number }
