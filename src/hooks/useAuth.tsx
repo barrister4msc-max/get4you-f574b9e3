@@ -74,7 +74,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
+        if (banned) {
+          await supabase.auth.signOut();
+          setLoading(false);
+          initialized = true;
+          return;
+        }
+      }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -106,8 +115,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
+    if (data.user) {
+      const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: data.user.id });
+      if (banned) {
+        await supabase.auth.signOut();
+        return { error: 'Ваш аккаунт заблокирован администратором. Обратитесь в поддержку.' };
+      }
+    }
     return { error: null };
   };
 
