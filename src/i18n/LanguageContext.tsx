@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { translations, Locale } from './translations';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
+import { supabase } from '@/integrations/supabase/client';
 
 interface LanguageContextType {
   locale: Locale;
@@ -20,7 +21,13 @@ const isLocale = (value: string | null): value is Locale => {
   return value === 'en' || value === 'ru' || value === 'he' || value === 'ar';
 };
 
-const getInitialLocale = (): Locale => 'en';
+const getInitialLocale = (): Locale => {
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (isLocale(stored)) return stored;
+  } catch {}
+  return 'en';
+};
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
@@ -29,14 +36,37 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
+    // Persist to profile if logged in (fire & forget)
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id;
+      if (!uid) return;
+      supabase.from('profiles').update({ preferred_language: l }).eq('user_id', uid).then(() => {});
+    });
   }, []);
 
   useEffect(() => {
     document.documentElement.dir = (locale === 'he' || locale === 'ar') ? 'rtl' : 'ltr';
     document.documentElement.lang = locale;
     window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    setCurrency(locale === 'he' ? 'ILS' : 'USD');
   }, [locale]);
+
+  // Load preferred_language from profile on auth change (only if user hasn't explicitly chosen)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const uid = session?.user?.id;
+      if (!uid) return;
+      setTimeout(async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('preferred_language')
+          .eq('user_id', uid)
+          .maybeSingle();
+        const lang = data?.preferred_language;
+        if (isLocale(lang)) setLocaleState(lang);
+      }, 0);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const t = useCallback((key: string) => {
     return translations[locale]?.[key] || translations.en[key] || key;
