@@ -1421,6 +1421,39 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_tasks_for_tasker: {
+        Args: {
+          category_filter?: string
+          language_filter?: string
+          radius_km?: number
+          result_limit?: number
+          user_lat?: number
+          user_lng?: number
+        }
+        Returns: {
+          budget_fixed: number
+          budget_max: number
+          budget_min: number
+          category_id: string
+          category_name_en: string
+          category_name_he: string
+          category_name_ru: string
+          city: string
+          created_at: string
+          currency: string
+          description: string
+          distance_km: number
+          id: string
+          is_urgent: boolean
+          latitude: number
+          longitude: number
+          owner_language: string
+          status: Database["public"]["Enums"]["task_status"]
+          task_type: Database["public"]["Enums"]["task_type"]
+          title: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -1,25 +1,55 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Link } from 'react-router-dom';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Filter, Globe2, Tag } from 'lucide-react';
 
-interface NearbyOrder {
+interface NearbyTask {
   id: string;
-  user_id: string;
   title: string | null;
   description: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: string;
-  price: number | null;
+  category_id: string | null;
+  category_name_en: string | null;
+  category_name_ru: string | null;
+  category_name_he: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  budget_fixed: number | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  currency: string | null;
+  is_urgent: boolean | null;
   created_at: string;
-  distance: number;
+  user_id: string;
+  owner_language: string | null;
+  distance_km: number | null;
 }
 
-const RADIUS_OPTIONS = [5, 10, 25, 50] as const;
+interface CategoryRow {
+  id: string;
+  name_en: string;
+  name_ru: string | null;
+  name_he: string | null;
+}
+
+const RADIUS_OPTIONS = [5, 10, 25, 50, 100] as const;
 const STORAGE_KEY = 'nearby_orders_radius_km';
+const STORAGE_CAT = 'nearby_orders_category';
+const STORAGE_LANG = 'nearby_orders_lang';
+const LANGUAGES: { value: string; label: string }[] = [
+  { value: '', label: 'Любой' },
+  { value: 'ru', label: 'Русский' },
+  { value: 'en', label: 'English' },
+  { value: 'he', label: 'עברית' },
+  { value: 'ar', label: 'العربية' },
+];
+
+const readStored = (key: string, fallback: string): string => {
+  if (typeof window === 'undefined') return fallback;
+  return window.localStorage.getItem(key) ?? fallback;
+};
 
 const readStoredRadius = (fallback: number): number => {
   if (typeof window === 'undefined') return fallback;
@@ -29,57 +59,100 @@ const readStoredRadius = (fallback: number): number => {
 };
 
 export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: number }) => {
-  const { t, currency } = useLanguage();
+  const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const [radiusKm, setRadiusKm] = useState<number>(() => readStoredRadius(defaultRadiusKm));
+  const [categoryId, setCategoryId] = useState<string>(() => readStored(STORAGE_CAT, ''));
+  const [language, setLanguage] = useState<string>(() => readStored(STORAGE_LANG, ''));
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [orders, setOrders] = useState<NearbyOrder[]>([]);
+  const [geoDenied, setGeoDenied] = useState(false);
+  const [tasks, setTasks] = useState<NearbyTask[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get geolocation once
+  // Load categories once
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name_en, name_ru, name_he')
+        .order('sort_order', { ascending: true });
+      setCategories((data as CategoryRow[]) || []);
+    })();
+  }, []);
+
+  // Geolocation (optional — tasks without coords still show)
   useEffect(() => {
     if (!('geolocation' in navigator)) {
-      setError(t('nearby.noGeo') || 'Геолокация недоступна');
-      setLoading(false);
+      setGeoDenied(true);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {
-        setError(t('nearby.denied') || 'Разрешите доступ к геолокации');
-        setLoading(false);
-      },
+      () => setGeoDenied(true),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     );
-  }, [t]);
+  }, []);
 
-  // Re-fetch on coords or radius change
+  // Fetch tasks when filters change
   useEffect(() => {
-    if (!coords) return;
     let cancelled = false;
     setLoading(true);
     (async () => {
-      const { data, error } = await supabase.rpc('get_orders_nearby', {
-        user_lat: coords.lat,
-        user_lng: coords.lng,
-        radius_km: radiusKm,
+      const { data, error } = await supabase.rpc('get_tasks_for_tasker', {
+        user_lat: coords?.lat ?? null,
+        user_lng: coords?.lng ?? null,
+        radius_km: coords ? radiusKm : null,
+        category_filter: categoryId || null,
+        language_filter: language || null,
+        result_limit: 30,
       });
       if (cancelled) return;
       if (error) setError(error.message);
       else {
         setError(null);
-        setOrders(((data as NearbyOrder[]) || []).filter(o => o.distance <= radiusKm).slice(0, 10));
+        setTasks(((data as NearbyTask[]) || []));
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [coords, radiusKm]);
+  }, [coords, radiusKm, categoryId, language]);
 
   const handleRadiusChange = (value: number) => {
     setRadiusKm(value);
     try { window.localStorage.setItem(STORAGE_KEY, String(value)); } catch {}
   };
+  const handleCategoryChange = (value: string) => {
+    setCategoryId(value);
+    try { window.localStorage.setItem(STORAGE_CAT, value); } catch {}
+  };
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    try { window.localStorage.setItem(STORAGE_LANG, value); } catch {}
+  };
+
+  const catName = (c: CategoryRow) => {
+    if (locale === 'ru') return c.name_ru || c.name_en;
+    if (locale === 'he') return c.name_he || c.name_en;
+    return c.name_en;
+  };
+
+  const taskCatName = (task: NearbyTask) => {
+    if (locale === 'ru') return task.category_name_ru || task.category_name_en;
+    if (locale === 'he') return task.category_name_he || task.category_name_en;
+    return task.category_name_en;
+  };
+
+  const taskBudget = (task: NearbyTask): number => {
+    return Number(task.budget_fixed ?? task.budget_min ?? task.budget_max ?? 0);
+  };
+
+  const headerNote = useMemo(() => {
+    if (geoDenied) return t('nearby.geoDeniedHint') || 'Геолокация отключена — показываем все доступные';
+    if (!coords) return t('nearby.locating') || 'Определяем местоположение…';
+    return null;
+  }, [geoDenied, coords, t]);
 
   return (
     <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
@@ -94,8 +167,9 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
               key={r}
               type="button"
               onClick={() => handleRadiusChange(r)}
-              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
-                radiusKm === r ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              disabled={!coords}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 ${
+                radiusKm === r && coords ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {r} km
@@ -104,44 +178,97 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <div className="flex items-center gap-1.5 flex-1 min-w-[160px]">
+          <Tag className="w-4 h-4 text-muted-foreground shrink-0" />
+          <select
+            value={categoryId}
+            onChange={(e) => handleCategoryChange(e.target.value)}
+            className="w-full text-xs rounded-md border border-border bg-background px-2 py-1.5"
+          >
+            <option value="">{t('nearby.allCategories') || 'Все категории'}</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{catName(c)}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-1.5 flex-1 min-w-[140px]">
+          <Globe2 className="w-4 h-4 text-muted-foreground shrink-0" />
+          <select
+            value={language}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="w-full text-xs rounded-md border border-border bg-background px-2 py-1.5"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.value} value={l.value}>{l.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {headerNote && (
+        <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+          <Filter className="w-3 h-3" /> {headerNote}
+        </p>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
         <p className="text-sm text-muted-foreground py-3">{error}</p>
-      ) : orders.length === 0 ? (
+      ) : tasks.length === 0 ? (
         <p className="text-sm text-muted-foreground py-3">
-          {t('nearby.empty') || 'Поблизости пока нет заказов'}
+          {t('nearby.empty') || 'Подходящих задач не найдено'}
         </p>
       ) : (
         <div className="space-y-2">
-          {orders.map((o) => (
+          {tasks.map((task) => (
             <Link
-              key={o.id}
-              to="/tasks"
+              key={task.id}
+              to={`/tasks/${task.id}`}
               className="block p-3 rounded-xl border border-border bg-background hover:shadow-card-hover transition-all"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm truncate">
-                    {o.title || t('nearby.untitled') || 'Без названия'}
-                  </h3>
-                  {o.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{o.description}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm truncate">
+                      {task.title || t('nearby.untitled') || 'Без названия'}
+                    </h3>
+                    {task.is_urgent && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive">
+                        {t('tasks.urgent') || 'Срочно'}
+                      </span>
+                    )}
+                  </div>
+                  {task.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{task.description}</p>
                   )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-primary font-medium">
-                      {o.distance.toFixed(1)} km
-                    </span>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {task.category_name_en && (
+                      <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground">
+                        {taskCatName(task)}
+                      </span>
+                    )}
+                    {task.distance_km != null ? (
+                      <span className="text-xs text-primary font-medium">
+                        {task.distance_km.toFixed(1)} km{task.city ? ` · ${task.city}` : ''}
+                      </span>
+                    ) : task.city ? (
+                      <span className="text-xs text-muted-foreground">{task.city}</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{t('tasks.remote') || 'Без локации'}</span>
+                    )}
                     <span className="text-xs text-muted-foreground">
-                      {new Date(o.created_at).toLocaleDateString()}
+                      {new Date(task.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
-                {o.price != null && (
+                {taskBudget(task) > 0 && (
                   <div className="text-primary font-bold text-sm shrink-0">
-                    {formatPrice(Number(o.price), currency, 'ILS')}
+                    {formatPrice(taskBudget(task), currency, task.currency || 'ILS')}
                   </div>
                 )}
               </div>
