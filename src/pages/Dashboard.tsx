@@ -226,14 +226,14 @@ const DashboardPage = () => {
     { key: 'messages', label: t('chat.title') || 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
     { key: 'orders', label: t('orders.title') || 'Orders', icon: <ShoppingCart className="w-4 h-4" /> },
   ];
-  if (isTasker) {
+  if (showTaskerBlocks) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
     tabs.push({ key: 'myProposals', label: t('dashboard.tasker.myProposals'), icon: <Briefcase className="w-4 h-4" /> });
     tabs.push({ key: 'earnings', label: t('balance.title'), icon: <Wallet className="w-4 h-4" /> });
     tabs.push({ key: 'rating', label: t('dashboard.rating'), icon: <Star className="w-4 h-4" /> });
   }
 
-  const displayedTasks = isTasker && !isClient ? assignedTasks : myTasks;
+  const displayedTasks = showTaskerBlocks ? assignedTasks : myTasks;
 
   const handleWithdraw = () => {
     toast.success(t('balance.withdraw.success'));
