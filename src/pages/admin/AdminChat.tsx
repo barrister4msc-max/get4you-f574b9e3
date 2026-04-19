@@ -106,7 +106,9 @@ export default function AdminChat() {
     const { data: profiles } = allUserIds.size
       ? await supabase.rpc('get_public_profiles', { target_user_ids: [...allUserIds] })
       : { data: [] as any[] };
-    const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p.display_name]) ?? []);
+    const profileMap = new Map<string, string | null>(
+      (profiles ?? []).map((p: any) => [p.user_id as string, (p.display_name ?? null) as string | null])
+    );
 
     // Last messages per task conversation
     const { data: allMessages } = tasks?.length
