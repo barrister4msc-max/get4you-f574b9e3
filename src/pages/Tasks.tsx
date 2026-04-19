@@ -7,6 +7,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from 'lucide-react';
+import { NearbyOrders } from '@/components/NearbyOrders';
 
 interface TaskRow {
   id: string;
@@ -422,6 +423,8 @@ const TasksPage = () => {
     <div className="py-8">
       <div className="container">
         <h1 className="text-2xl font-bold mb-6">{t('tasks.title')}</h1>
+
+        {isTasker && <NearbyOrders defaultRadiusKm={10} />}
 
         {isTasker && (
           <div className="flex gap-2 mb-6">
