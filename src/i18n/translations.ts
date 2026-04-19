@@ -635,6 +635,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nearby.sortNearest': 'Nearest',
     'nearby.sortLeastProposals': 'Fewest proposals',
     'nearby.sortNewest': 'Newest first',
+    'settings.title': 'Settings',
+    'settings.subtitle': 'Language and currency',
+    'settings.language': 'Language',
+    'settings.currency': 'Currency',
   },
   ru: {
     'nav.home': 'Главная',
