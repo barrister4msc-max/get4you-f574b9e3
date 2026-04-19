@@ -10,7 +10,7 @@ import { Menu, User, LayoutDashboard, LogOut, Settings as SettingsIcon } from 'l
 import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
-  const { t, locale, setLocale } = useLanguage();
+  const { t, locale, currency } = useLanguage();
   const { user, profile, roles, signOut } = useAuth();
   const { activeRole, isClient, isTasker } = useActiveRole();
   const location = useLocation();
@@ -19,7 +19,6 @@ export const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const localeFlags = { en: '🇺🇸', ru: '🇷🇺', he: '🇮🇱', ar: '🇸🇦' } as const;
-  const localeLabels = { en: 'English', ru: 'Русский', he: 'עברית', ar: 'العربية' } as const;
 
   // Hide "Create task" when user is in tasker mode (or has only tasker role)
   const canCreateTask = !user || (isClient && activeRole === 'client') || (isClient && !isTasker);
