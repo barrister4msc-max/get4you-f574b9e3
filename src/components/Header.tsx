@@ -6,7 +6,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
 import { Sheet, SheetContent, SheetTitle } from './ui/sheet';
-import { Menu, User, LayoutDashboard, LogOut } from 'lucide-react';
+import { Menu, User, LayoutDashboard, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
@@ -17,11 +17,9 @@ export const Header = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileLangOpen, setMobileLangOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const localeFlags = { en: '🇺🇸', ru: '🇷🇺', he: '🇮🇱', ar: '🇸🇦' } as const;
   const localeLabels = { en: 'English', ru: 'Русский', he: 'עברית', ar: 'العربية' } as const;
-  const localeOrder = ['en', 'ru', 'he', 'ar'] as const;
 
   // Hide "Create task" when user is in tasker mode (or has only tasker role)
   const canCreateTask = !user || (isClient && activeRole === 'client') || (isClient && !isTasker);
@@ -194,39 +192,25 @@ export const Header = () => {
                 </div>
 
                  <div className="border-t border-border pt-4">
-                   <div className="flex items-center gap-2">
-                     <CurrencyToggle />
-                     <div className="relative flex-1">
-                       <button
-                         type="button"
-                         onClick={() => setMobileLangOpen((v) => !v)}
-                         className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 transition-colors"
-                       >
-                         <span className="flex items-center gap-2">
-                           <span>{localeFlags[locale]}</span>
-                           <span>{localeLabels[locale]}</span>
-                         </span>
-                         <span className="text-xs text-muted-foreground">▾</span>
-                       </button>
-                       {mobileLangOpen && (
-                         <div className="absolute z-50 mt-1 left-0 right-0 rounded-lg border border-border bg-card shadow-lg py-1">
-                           {localeOrder.map((l) => (
-                             <button
-                               key={l}
-                               type="button"
-                               onClick={() => { setLocale(l); setMobileLangOpen(false); }}
-                               className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-start transition-colors ${
-                                 locale === l ? 'text-primary font-semibold bg-primary/5' : 'text-foreground hover:bg-secondary'
-                               }`}
-                             >
-                               <span>{localeFlags[l]}</span>
-                               <span>{localeLabels[l]}</span>
-                             </button>
-                           ))}
-                         </div>
-                       )}
-                     </div>
-                   </div>
+                   <Link
+                     to="/settings"
+                     onClick={() => setMobileOpen(false)}
+                     className="flex items-center justify-between gap-3 w-full py-3 px-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-border hover:border-primary/30 transition-all"
+                   >
+                     <span className="flex items-center gap-3">
+                       <span className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                         <SettingsIcon className="w-4 h-4 text-primary" />
+                       </span>
+                       <span className="flex flex-col">
+                         <span className="text-sm font-semibold text-foreground">{t('settings.title') || 'Настройки'}</span>
+                         <span className="text-xs text-muted-foreground">{t('settings.subtitle') || 'Язык и валюта'}</span>
+                       </span>
+                     </span>
+                     <span className="flex items-center gap-1.5">
+                       <span className="text-xl leading-none">{localeFlags[locale]}</span>
+                       <span className="text-xs font-bold text-muted-foreground">{currency}</span>
+                     </span>
+                   </Link>
                  </div>
 
                 <div className="pt-4 space-y-2">
