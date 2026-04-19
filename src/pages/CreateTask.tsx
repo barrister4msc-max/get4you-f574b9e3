@@ -117,6 +117,7 @@ const CreateTaskPage = () => {
         },
         body: JSON.stringify({
           type: 'categorize',
+          userLocale: locale,
           messages: [{ role: 'user', content: `Task title: ${form.title}\nDescription: ${form.description}` }],
         }),
       });
@@ -157,6 +158,7 @@ const CreateTaskPage = () => {
         },
         body: JSON.stringify({
           type: 'voice_to_task',
+          userLocale: locale,
           messages: [{ role: 'user', content: text }],
         }),
       });
