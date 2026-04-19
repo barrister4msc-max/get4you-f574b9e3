@@ -47,7 +47,7 @@ const AdminEsekPatur = () => {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Application | null>(null);
 
-  const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+  const isAdmin = roles.includes('admin') || roles.includes('super_admin') || roles.includes('superadmin');
 
   useEffect(() => {
     if (!isAdmin) return;

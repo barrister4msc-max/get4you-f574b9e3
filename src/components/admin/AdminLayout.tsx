@@ -35,7 +35,7 @@ export const AdminLayout = () => {
     );
   }
 
-  if (!user || !(roles.includes('admin') || roles.includes('super_admin'))) {
+  if (!user || !(roles.includes('admin') || roles.includes('super_admin') || roles.includes('superadmin'))) {
     return <Navigate to="/" replace />;
   }
 

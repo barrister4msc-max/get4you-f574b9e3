@@ -30,7 +30,7 @@ const AdminBroadcast = () => {
       const { data: roles } = await supabase
         .from('user_roles')
         .select('user_id')
-        .eq('role', 'tasker');
+        .eq('role', 'executor');
 
       if (roles && roles.length > 0) {
         const userIds = roles.map(r => r.user_id);

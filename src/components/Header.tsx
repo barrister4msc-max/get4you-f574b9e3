@@ -17,7 +17,7 @@ export const Header = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
-  const isAdmin = user && (roles.includes('admin') || roles.includes('super_admin'));
+  const isAdmin = user && (roles.includes('admin') || roles.includes('super_admin') || roles.includes('superadmin'));
 
   // Close dropdown on outside click
   useEffect(() => {

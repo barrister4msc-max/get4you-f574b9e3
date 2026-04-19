@@ -155,7 +155,7 @@ export default function AdminUsers() {
           </TableHeader>
           <TableBody>
             {filtered.map((u) => {
-              const isTargetSuperAdmin = u.roles.includes('super_admin');
+              const isTargetSuperAdmin = u.roles.includes('super_admin') || u.roles.includes('superadmin');
               const isBanned = bannedIds.has(u.user_id);
               return (
                 <TableRow key={u.id} className={isBanned ? 'opacity-50 bg-destructive/5' : ''}>
@@ -171,7 +171,7 @@ export default function AdminUsers() {
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
                       {u.roles.map((r: string) => (
-                        <Badge key={r} variant={r === 'super_admin' ? 'destructive' : 'secondary'} className="text-xs">{r}</Badge>
+                        <Badge key={r} variant={(r === 'super_admin' || r === 'superadmin') ? 'destructive' : 'secondary'} className="text-xs">{r}</Badge>
                       ))}
                       {isBanned && <Badge variant="destructive" className="text-xs">banned</Badge>}
                     </div>

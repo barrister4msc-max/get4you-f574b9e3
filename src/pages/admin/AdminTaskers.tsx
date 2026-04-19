@@ -9,7 +9,7 @@ export default function AdminTaskers() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'tasker');
+      const { data: roles } = await supabase.from('user_roles').select('user_id').eq('role', 'executor');
       const taskerIds = (roles || []).map((r) => r.user_id);
       if (taskerIds.length === 0) { setLoading(false); return; }
 

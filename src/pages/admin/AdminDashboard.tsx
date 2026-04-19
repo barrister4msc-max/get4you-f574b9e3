@@ -17,7 +17,7 @@ export default function AdminDashboard() {
       const [tasksRes, todayRes, taskersRes, escrowRes] = await Promise.all([
         supabase.from('tasks').select('id', { count: 'exact', head: true }),
         supabase.from('tasks').select('id', { count: 'exact', head: true }).gte('created_at', today),
-        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'tasker'),
+        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'executor'),
         supabase.from('escrow_transactions').select('commission_amount').eq('status', 'released'),
       ]);
       const revenue = (escrowRes.data || []).reduce((sum, r) => sum + Number(r.commission_amount), 0);
