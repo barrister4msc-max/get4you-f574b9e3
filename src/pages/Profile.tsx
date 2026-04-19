@@ -208,15 +208,17 @@ const ProfilePage = () => {
                     key={r.value}
                     type="button"
                     onClick={() => toggleRole(r.value)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                    className={`flex-1 py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
                       isSaved
-                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        ? 'border-primary bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20'
                         : isSelected
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-border text-muted-foreground hover:border-primary/30'
                     }`}
                   >
-                    {(isSaved || isSelected) && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    {(isSaved || isSelected) && (
+                      <CheckCircle2 className={`w-4 h-4 ${isSaved ? 'text-white fill-primary' : 'text-primary'}`} />
+                    )}
                     {r.label}
                   </button>
                 );
