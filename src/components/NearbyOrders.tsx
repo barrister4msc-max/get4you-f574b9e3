@@ -238,7 +238,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                       {task.title || t('nearby.untitled') || 'Без названия'}
                     </h3>
                     {task.is_urgent && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-50 text-red-600">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive">
                         {t('tasks.urgent') || 'Срочно'}
                       </span>
                     )}
