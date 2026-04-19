@@ -11,6 +11,7 @@ import {
 import { NearbyOrders } from '@/components/NearbyOrders';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useActiveRole } from '@/contexts/ActiveRoleContext';
 
 interface ProposalRow {
   id: string; task_id: string; price: number; currency: string | null;
@@ -38,8 +39,6 @@ interface OrderRow {
 }
 
 type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages' | 'orders';
-type ActiveRole = 'client' | 'tasker';
-const ACTIVE_ROLE_KEY = 'dashboard_active_role';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
@@ -69,25 +68,8 @@ const DashboardPage = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // В БД роли называются `client` и `executor`. В коде также поддерживаем устаревший `tasker`.
-  const isClient = roles.includes('client');
-  const isTasker = roles.includes('executor') || roles.includes('tasker');
-  const hasBothRoles = isClient && isTasker;
-  const defaultRole: ActiveRole = isTasker && !isClient ? 'tasker' : 'client';
-  const [activeRole, setActiveRole] = useState<ActiveRole>(() => {
-    if (typeof window === 'undefined') return defaultRole;
-    const stored = window.localStorage.getItem(ACTIVE_ROLE_KEY) as ActiveRole | null;
-    if (stored === 'client' || stored === 'tasker') return stored;
-    return defaultRole;
-  });
-  // Sync if user only has one role
-  useEffect(() => {
-    if (!hasBothRoles) setActiveRole(defaultRole);
-  }, [hasBothRoles, defaultRole]);
-  const switchRole = (r: ActiveRole) => {
-    setActiveRole(r);
-    try { window.localStorage.setItem(ACTIVE_ROLE_KEY, r); } catch {}
-  };
+  const { activeRole, setActiveRole, isClient, isTasker, hasBothRoles } = useActiveRole();
+  const switchRole = (r: 'client' | 'tasker') => setActiveRole(r);
   const showTaskerBlocks = isTasker && activeRole === 'tasker';
   const showClientBlocks = isClient && activeRole === 'client';
 

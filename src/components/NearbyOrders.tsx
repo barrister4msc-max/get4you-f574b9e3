@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Link } from 'react-router-dom';
-import { MapPin, Loader2, Filter, Globe2, Tag } from 'lucide-react';
+import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2 } from 'lucide-react';
 
 interface NearbyTask {
   id: string;
@@ -60,6 +61,7 @@ const readStoredRadius = (fallback: number): number => {
 
 export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: number }) => {
   const { t, currency, locale } = useLanguage();
+  const { user } = useAuth();
   const formatPrice = useFormatPrice();
   const [radiusKm, setRadiusKm] = useState<number>(() => readStoredRadius(defaultRadiusKm));
   const [categoryId, setCategoryId] = useState<string>(() => readStored(STORAGE_CAT, ''));
@@ -68,6 +70,8 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const [geoDenied, setGeoDenied] = useState(false);
   const [tasks, setTasks] = useState<NearbyTask[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({});
+  const [myProposalIds, setMyProposalIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,15 +113,42 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         result_limit: 30,
       });
       if (cancelled) return;
-      if (error) setError(error.message);
-      else {
+      if (error) {
+        setError(error.message);
+        setTasks([]);
+        setProposalCounts({});
+        setMyProposalIds(new Set());
+      } else {
         setError(null);
-        setTasks(((data as NearbyTask[]) || []));
+        const list = (data as NearbyTask[]) || [];
+        setTasks(list);
+
+        // Load proposal counts + my proposals for this batch
+        const taskIds = list.map((tsk) => tsk.id);
+        if (taskIds.length > 0) {
+          const { data: propsData } = await supabase
+            .from('proposals')
+            .select('task_id, user_id')
+            .in('task_id', taskIds);
+          if (!cancelled) {
+            const counts: Record<string, number> = {};
+            const mine = new Set<string>();
+            (propsData || []).forEach((p: any) => {
+              counts[p.task_id] = (counts[p.task_id] || 0) + 1;
+              if (user && p.user_id === user.id) mine.add(p.task_id);
+            });
+            setProposalCounts(counts);
+            setMyProposalIds(mine);
+          }
+        } else {
+          setProposalCounts({});
+          setMyProposalIds(new Set());
+        }
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [coords, radiusKm, categoryId, language]);
+  }, [coords, radiusKm, categoryId, language, user?.id]);
 
   const handleRadiusChange = (value: number) => {
     setRadiusKm(value);
@@ -242,6 +273,12 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                         {t('tasks.urgent') || 'Срочно'}
                       </span>
                     )}
+                    {myProposalIds.has(task.id) && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {t('nearby.alreadyApplied') || 'Уже откликался'}
+                      </span>
+                    )}
                   </div>
                   {task.description && (
                     <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{task.description}</p>
@@ -263,6 +300,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                     )}
                     <span className="text-xs text-muted-foreground">
                       {new Date(task.created_at).toLocaleDateString()}
+                    </span>
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                      <Users className="w-3 h-3" />
+                      {proposalCounts[task.id] || 0} {t('nearby.proposalsShort') || 'откл.'}
                     </span>
                   </div>
                 </div>
