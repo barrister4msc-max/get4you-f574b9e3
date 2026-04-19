@@ -8,6 +8,7 @@ import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight,
   Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare, ShoppingCart,
 } from 'lucide-react';
+import { NearbyOrders } from '@/components/NearbyOrders';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -280,6 +281,7 @@ const DashboardPage = () => {
         {/* MY TASKS */}
         {tab === 'myTasks' && (
           <div className="space-y-3">
+            {isTasker && <NearbyOrders radiusKm={10} />}
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold">{t('dashboard.client.myTasks')}</h2>
               {isClient && (
