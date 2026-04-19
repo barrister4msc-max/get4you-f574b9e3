@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 const ProfilePage = () => {
   const { t } = useLanguage();
   const { user, profile, roles, signOut, refreshProfile } = useAuth();
-  const { activeRole, setActiveRole, hasBothRoles, isClient, isTasker: hasTaskerRole } = useActiveRole();
+  const { activeRole, setActiveRole, hasBothRoles, isClient, isTasker } = useActiveRole();
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
@@ -32,8 +32,6 @@ const ProfilePage = () => {
   const [form, setForm] = useState({
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
   });
-
-  const isTasker = roles.includes('tasker');
 
   useEffect(() => {
     if (profile) {
