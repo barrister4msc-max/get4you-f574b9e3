@@ -734,6 +734,8 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          lat: number | null
+          lng: number | null
           payment_url: string | null
           proposal_id: string | null
           status: string
@@ -748,6 +750,8 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           payment_url?: string | null
           proposal_id?: string | null
           status?: string
@@ -762,6 +766,8 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           payment_url?: string | null
           proposal_id?: string | null
           status?: string
