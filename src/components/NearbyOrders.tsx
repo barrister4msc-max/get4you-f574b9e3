@@ -299,7 +299,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         </p>
       ) : (
         <div className="space-y-2">
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
