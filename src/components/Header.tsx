@@ -10,7 +10,7 @@ import { Menu, User, LayoutDashboard, LogOut } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
-  const { t } = useLanguage();
+  const { t, locale, setLocale } = useLanguage();
   const { user, profile, roles, signOut } = useAuth();
   const { activeRole, isClient, isTasker } = useActiveRole();
   const location = useLocation();
@@ -18,6 +18,8 @@ export const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const nextLocale = locale === 'en' ? 'ru' : locale === 'ru' ? 'he' : locale === 'he' ? 'ar' : 'en';
+  const localeLabels = { en: 'English', ru: 'Русский', he: 'עברית', ar: 'العربية' } as const;
 
   // Hide "Create task" when user is in tasker mode (or has only tasker role)
   const canCreateTask = !user || (isClient && activeRole === 'client') || (isClient && !isTasker);
@@ -189,13 +191,18 @@ export const Header = () => {
                   ))}
                 </div>
 
-                <div className="border-t border-border pt-4">
-                  <div className="flex items-center gap-2">
-                    <CurrencyToggle />
-                    <LanguageSwitcher />
-                    <NotificationBell />
-                  </div>
-                </div>
+                 <div className="border-t border-border pt-4">
+                   <div className="flex items-center gap-2">
+                     <CurrencyToggle />
+                     <button
+                       type="button"
+                       onClick={() => setLocale(nextLocale)}
+                       className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                     >
+                       {localeLabels[locale]}
+                     </button>
+                   </div>
+                 </div>
 
                 <div className="pt-4 space-y-2">
                   {user ? (
