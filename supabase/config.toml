@@ -15,3 +15,5 @@ project_id = "emkiekjlxmtnzrgzfdep"
     verify_jwt = false
   [functions.allpay-webhook]
     verify_jwt = false
+  [functions.ai-task-assistant]
+    verify_jwt = false

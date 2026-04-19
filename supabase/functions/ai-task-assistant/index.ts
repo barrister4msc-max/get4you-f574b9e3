@@ -13,6 +13,9 @@ serve(async (req) => {
 
   try {
     const { messages = [], type, tasks = [], targetLocale, userLocale } = await req.json();
+
+    // Skip rate limiting for translation requests — they are background UI operations
+    const skipRateLimit = type === "translate_tasks";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -21,7 +24,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (authHeader) {
+    if (authHeader && !skipRateLimit) {
       const token = authHeader.replace("Bearer ", "");
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       const { data: { user } } = await supabase.auth.getUser(token);
