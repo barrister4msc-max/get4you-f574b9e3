@@ -62,7 +62,7 @@ export const TaskAIAssistant = ({ onApplySuggestion, context }: Props) => {
     await streamChat({
       functionName: 'ai-task-assistant',
       messages: [{ role: 'user', content: attachedImage ? `[User attached a photo]\n${contextMsg}` : contextMsg }],
-      extraBody: { type: 'assist' },
+      extraBody: { type: 'assist', userLocale: locale },
       onDelta: updateAssistant,
       onDone: () => setLoading(false),
       onError: (err) => {

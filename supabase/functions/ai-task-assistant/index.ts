@@ -12,7 +12,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages = [], type, tasks = [], targetLocale } = await req.json();
+    const { messages = [], type, tasks = [], targetLocale, userLocale } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -46,11 +46,21 @@ serve(async (req) => {
       }
     }
 
+    const localeNames: Record<string, string> = {
+      en: 'English',
+      ru: 'Russian (Русский)',
+      he: 'Hebrew (עברית)',
+      ar: 'Arabic (العربية)',
+    };
+    const uiLang = (typeof userLocale === 'string' && localeNames[userLocale]) ? userLocale : 'en';
+    const uiLangName = localeNames[uiLang];
+    const langDirective = `IMPORTANT: The user interface language is ${uiLangName} (code: ${uiLang}). You MUST write ALL output text fields (title, description, location, improved_title, and any free-form text) in ${uiLangName}, regardless of the language of the user's input. Translate the user's message into ${uiLangName} for the structured fields. The "category" enum value stays in English.`;
+
     const systemPrompts: Record<string, string> = {
       assist: `You are a helpful task creation assistant for a task marketplace platform called TaskFlow. 
 Help users describe their tasks clearly and in detail. Ask clarifying questions if the description is vague.
 Suggest improvements to make the task more attractive to taskers.
-Keep responses concise (2-3 sentences max). Respond in the same language the user writes in (English, Russian, Hebrew, or Arabic).
+Keep responses concise (2-3 sentences max). Always respond in ${uiLangName} (the user's chosen UI language), regardless of the language of the user input.
 Available categories: cleaning, moving, repair, digital, consulting, delivery, beauty, tutoring.`,
 
       categorize: `You are a task categorization AI for a marketplace platform. 
@@ -59,19 +69,22 @@ Given a task description, you must determine:
 2. Suggested budget range in USD (min and max)
 3. Whether the task is onsite or remote
 4. Suggested urgency: flexible, soon, or urgent
+5. An improved title written in ${uiLangName}.
 
+${langDirective}
 You MUST respond using the provided tool/function.`,
 
       voice_to_task: `You are a task structuring AI for a marketplace platform.
 Given a voice transcription from a user, extract and structure it into a task with:
-1. A clear, concise title
-2. A detailed description
+1. A clear, concise title in ${uiLangName}
+2. A detailed description in ${uiLangName}
 3. The best category from: cleaning, moving, repair, digital, consulting, delivery, beauty, tutoring
 4. Suggested budget in USD
 5. Whether the task is onsite or remote
-6. Location if mentioned
+6. Location if mentioned (in ${uiLangName})
 
 Clean up speech artifacts, filler words, and make the text professional.
+${langDirective}
 You MUST respond using the provided tool/function.`,
 
       translate_tasks: `You translate marketplace task listings.

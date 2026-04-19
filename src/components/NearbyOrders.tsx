@@ -4,7 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Link } from 'react-router-dom';
-import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2 } from 'lucide-react';
+import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2, ArrowDownUp } from 'lucide-react';
 
 interface NearbyTask {
   id: string;
@@ -39,6 +39,8 @@ const RADIUS_OPTIONS = [5, 10, 25, 50, 100] as const;
 const STORAGE_KEY = 'nearby_orders_radius_km';
 const STORAGE_CAT = 'nearby_orders_category';
 const STORAGE_LANG = 'nearby_orders_lang';
+const STORAGE_SORT = 'nearby_orders_sort';
+type SortMode = 'nearest' | 'least_proposals' | 'newest';
 const LANGUAGES: { value: string; label: string }[] = [
   { value: '', label: 'Любой' },
   { value: 'ru', label: 'Русский' },
@@ -66,6 +68,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const [radiusKm, setRadiusKm] = useState<number>(() => readStoredRadius(defaultRadiusKm));
   const [categoryId, setCategoryId] = useState<string>(() => readStored(STORAGE_CAT, ''));
   const [language, setLanguage] = useState<string>(() => readStored(STORAGE_LANG, ''));
+  const [sortMode, setSortMode] = useState<SortMode>(() => {
+    const v = readStored(STORAGE_SORT, 'nearest');
+    return (v === 'nearest' || v === 'least_proposals' || v === 'newest') ? v : 'nearest';
+  });
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDenied, setGeoDenied] = useState(false);
   const [tasks, setTasks] = useState<NearbyTask[]>([]);
@@ -162,6 +168,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     setLanguage(value);
     try { window.localStorage.setItem(STORAGE_LANG, value); } catch {}
   };
+  const handleSortChange = (value: SortMode) => {
+    setSortMode(value);
+    try { window.localStorage.setItem(STORAGE_SORT, value); } catch {}
+  };
 
   const catName = (c: CategoryRow) => {
     if (locale === 'ru') return c.name_ru || c.name_en;
@@ -184,6 +194,26 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     if (!coords) return t('nearby.locating') || 'Определяем местоположение…';
     return null;
   }, [geoDenied, coords, t]);
+
+  const sortedTasks = useMemo(() => {
+    const arr = [...tasks];
+    if (sortMode === 'least_proposals') {
+      arr.sort((a, b) => {
+        const ca = proposalCounts[a.id] || 0;
+        const cb = proposalCounts[b.id] || 0;
+        if (ca !== cb) return ca - cb;
+        // tie-breaker: nearest first if available, else newest
+        const da = a.distance_km ?? Number.POSITIVE_INFINITY;
+        const db = b.distance_km ?? Number.POSITIVE_INFINITY;
+        if (da !== db) return da - db;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else if (sortMode === 'newest') {
+      arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    // 'nearest' = keep RPC default order (already nearest-first)
+    return arr;
+  }, [tasks, proposalCounts, sortMode]);
 
   return (
     <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
@@ -236,6 +266,19 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
             ))}
           </select>
         </div>
+        <div className="flex items-center gap-1.5 flex-1 min-w-[170px]">
+          <ArrowDownUp className="w-4 h-4 text-muted-foreground shrink-0" />
+          <select
+            value={sortMode}
+            onChange={(e) => handleSortChange(e.target.value as SortMode)}
+            className="w-full text-xs rounded-md border border-border bg-background px-2 py-1.5"
+            title={t('nearby.sortHint') || 'Сортировка'}
+          >
+            <option value="nearest">{t('nearby.sortNearest') || 'Ближайшие'}</option>
+            <option value="least_proposals">{t('nearby.sortLeastProposals') || 'Меньше откликов'}</option>
+            <option value="newest">{t('nearby.sortNewest') || 'Самые новые'}</option>
+          </select>
+        </div>
       </div>
 
       {headerNote && (
@@ -256,7 +299,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         </p>
       ) : (
         <div className="space-y-2">
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
