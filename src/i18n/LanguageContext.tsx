@@ -20,11 +20,7 @@ const isLocale = (value: string | null): value is Locale => {
   return value === 'en' || value === 'ru' || value === 'he' || value === 'ar';
 };
 
-const getInitialLocale = (): Locale => {
-  if (typeof window === 'undefined') return 'en';
-  const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-  return isLocale(storedLocale) ? storedLocale : 'en';
-};
+const getInitialLocale = (): Locale => 'en';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
