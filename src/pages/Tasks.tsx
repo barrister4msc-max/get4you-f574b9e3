@@ -7,6 +7,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from 'lucide-react';
+import { NearbyOrders } from '@/components/NearbyOrders';
 
 interface TaskRow {
   id: string;
