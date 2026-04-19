@@ -287,6 +287,36 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          recipient_id: string
+          sender_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          recipient_id: string
+          sender_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          recipient_id?: string
+          sender_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -832,17 +862,30 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           city: string | null
+          completed_orders_count: number | null
           created_at: string
           display_name: string | null
           email: string | null
+          full_name: string | null
           id: string
+          is_verified: boolean | null
+          language: string | null
+          languages: string[] | null
           last_seen_at: string | null
           latitude: number | null
+          location: string | null
           longitude: number | null
+          max_price: number | null
+          min_price: number | null
           payment_method: string | null
           phone: string | null
           preferred_currency: string | null
           preferred_language: string | null
+          profile_embedding: string | null
+          rating: number | null
+          response_time_avg: number | null
+          skills: string[] | null
+          tariff_priority: number | null
           updated_at: string
           user_id: string
           user_number: number
@@ -851,17 +894,30 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          completed_orders_count?: number | null
           created_at?: string
           display_name?: string | null
           email?: string | null
+          full_name?: string | null
           id?: string
+          is_verified?: boolean | null
+          language?: string | null
+          languages?: string[] | null
           last_seen_at?: string | null
           latitude?: number | null
+          location?: string | null
           longitude?: number | null
+          max_price?: number | null
+          min_price?: number | null
           payment_method?: string | null
           phone?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          profile_embedding?: string | null
+          rating?: number | null
+          response_time_avg?: number | null
+          skills?: string[] | null
+          tariff_priority?: number | null
           updated_at?: string
           user_id: string
           user_number?: number
@@ -870,17 +926,30 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
+          completed_orders_count?: number | null
           created_at?: string
           display_name?: string | null
           email?: string | null
+          full_name?: string | null
           id?: string
+          is_verified?: boolean | null
+          language?: string | null
+          languages?: string[] | null
           last_seen_at?: string | null
           latitude?: number | null
+          location?: string | null
           longitude?: number | null
+          max_price?: number | null
+          min_price?: number | null
           payment_method?: string | null
           phone?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          profile_embedding?: string | null
+          rating?: number | null
+          response_time_avg?: number | null
+          skills?: string[] | null
+          tariff_priority?: number | null
           updated_at?: string
           user_id?: string
           user_number?: number
@@ -1116,6 +1185,57 @@ export type Database = {
       }
     }
     Views: {
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          completed_orders_count: number | null
+          full_name: string | null
+          id: string | null
+          is_verified: boolean | null
+          language: string | null
+          languages: string[] | null
+          max_price: number | null
+          min_price: number | null
+          rating: number | null
+          response_time_avg: number | null
+          skills: string[] | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          city?: never
+          completed_orders_count?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          language?: string | null
+          languages?: string[] | null
+          max_price?: number | null
+          min_price?: number | null
+          rating?: number | null
+          response_time_avg?: number | null
+          skills?: string[] | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          city?: never
+          completed_orders_count?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          language?: string | null
+          languages?: string[] | null
+          max_price?: number | null
+          min_price?: number | null
+          rating?: number | null
+          response_time_avg?: number | null
+          skills?: string[] | null
+        }
+        Relationships: []
+      }
       tasks_public: {
         Row: {
           address: string | null
@@ -1222,6 +1342,29 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      find_executors_by_language: {
+        Args: { target_language: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          languages: string[]
+          min_price: number
+          rating: number
+        }[]
+      }
+      get_conversations: {
+        Args: never
+        Returns: {
+          last_message: string
+          last_message_time: string
+          other_user_avatar: string
+          other_user_id: string
+          other_user_name: string
+          unread_count: number
+        }[]
+      }
+      get_my_role: { Args: never; Returns: string }
       get_public_profile: {
         Args: { target_user_id: string }
         Returns: {
@@ -1248,22 +1391,17 @@ export type Database = {
           user_id: string
         }[]
       }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
       is_order_participant: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
       }
+      is_superadmin: { Args: never; Returns: boolean }
       is_task_participant: {
         Args: { _task_id: string; _user_id: string }
         Returns: boolean
       }
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
+      is_valid_languages: { Args: { langs: string[] }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1272,6 +1410,17 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      nearby_profiles: {
+        Args: { lat: number; lng: number; max_distance_km?: number }
+        Returns: {
+          avatar_url: string
+          city: string
+          distance_km: number
+          full_name: string
+          id: string
+          rating: number
+        }[]
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
@@ -1284,7 +1433,7 @@ export type Database = {
       start_task: { Args: { _task_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "client" | "tasker" | "admin" | "super_admin"
+      app_role: "client" | "executor" | "admin" | "superadmin"
       proposal_status: "pending" | "accepted" | "rejected"
       task_status:
         | "draft"
@@ -1421,7 +1570,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "tasker", "admin", "super_admin"],
+      app_role: ["client", "executor", "admin", "superadmin"],
       proposal_status: ["pending", "accepted", "rejected"],
       task_status: [
         "draft",
