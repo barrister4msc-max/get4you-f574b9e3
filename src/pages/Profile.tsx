@@ -100,7 +100,11 @@ const ProfilePage = () => {
     if (value === 'cash_or_check' && hasEmploymentAgreement === false) setShowEmploymentDialog(true);
   };
 
-  const selectRole = (role: string) => { setSelectedRoles([role]); };
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
+    );
+  };
 
   const handleSaveRoles = async () => {
     if (!user) return;
@@ -244,15 +248,27 @@ const ProfilePage = () => {
           <div>
             <label className="block text-sm font-medium mb-2">{t('profile.roles')}</label>
             <div className="flex gap-2">
-              {roleOptions.map((r) => (
-                <button key={r.value} type="button" onClick={() => selectRole(r.value)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
-                    selectedRoles.includes(r.value) ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/30'
-                  }`}>
-                  {selectedRoles.includes(r.value) && <CheckCircle2 className="w-3 h-3 inline me-1" />}
-                  {r.label}
-                </button>
-              ))}
+              {roleOptions.map((r) => {
+                const isSaved = roles.includes(r.value);
+                const isSelected = selectedRoles.includes(r.value);
+                return (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => toggleRole(r.value)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                      isSaved
+                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        : isSelected
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/30'
+                    }`}
+                  >
+                    {(isSaved || isSelected) && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    {r.label}
+                  </button>
+                );
+              })}
             </div>
             {rolesChanged && (
               <button onClick={handleSaveRoles} disabled={savingRoles}
