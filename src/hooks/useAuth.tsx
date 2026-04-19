@@ -57,45 +57,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, fetchProfile]);
 
   useEffect(() => {
-    let initialized = false;
+    let cancelled = false;
+    let settled = false;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const finishLoading = () => {
+      if (!settled) {
+        settled = true;
+        setLoading(false);
+      }
+    };
+
+    // Safety net: never get stuck on white screen (iOS Safari / Apple OAuth race)
+    const safetyTimer = window.setTimeout(finishLoading, 4000);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => fetchProfile(session.user.id), 0);
+        // Defer to avoid deadlocks inside the auth callback
+        setTimeout(() => {
+          if (!cancelled) fetchProfile(session.user.id);
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
       }
-      if (initialized) {
-      } else {
-        initialized = true;
-      }
+      finishLoading();
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
-        if (banned) {
-          await supabase.auth.signOut();
-          setLoading(false);
-          initialized = true;
-          return;
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        if (cancelled) return;
+        if (session?.user) {
+          try {
+            const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
+            if (banned) {
+              await supabase.auth.signOut();
+              finishLoading();
+              return;
+            }
+          } catch (e) {
+            // Ignore ban-check failure; don't block login
+            console.warn('[auth] is_user_banned check failed', e);
+          }
         }
-      }
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false));
-        supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('user_id', session.user.id).then(() => {});
-      } else {
-        setLoading(false);
-      }
-      initialized = true;
-    });
+        setSession(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id).finally(finishLoading);
+          supabase
+            .from('profiles')
+            .update({ last_seen_at: new Date().toISOString() })
+            .eq('user_id', session.user.id)
+            .then(() => {});
+        } else {
+          finishLoading();
+        }
+      })
+      .catch((e) => {
+        console.error('[auth] getSession failed', e);
+        finishLoading();
+      });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(safetyTimer);
+      subscription.unsubscribe();
+    };
   }, [fetchProfile]);
 
   const isSuperAdmin = roles.includes('super_admin') || roles.includes('superadmin');
