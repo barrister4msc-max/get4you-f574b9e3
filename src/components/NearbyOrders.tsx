@@ -113,15 +113,42 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         result_limit: 30,
       });
       if (cancelled) return;
-      if (error) setError(error.message);
-      else {
+      if (error) {
+        setError(error.message);
+        setTasks([]);
+        setProposalCounts({});
+        setMyProposalIds(new Set());
+      } else {
         setError(null);
-        setTasks(((data as NearbyTask[]) || []));
+        const list = (data as NearbyTask[]) || [];
+        setTasks(list);
+
+        // Load proposal counts + my proposals for this batch
+        const taskIds = list.map((tsk) => tsk.id);
+        if (taskIds.length > 0) {
+          const { data: propsData } = await supabase
+            .from('proposals')
+            .select('task_id, user_id')
+            .in('task_id', taskIds);
+          if (!cancelled) {
+            const counts: Record<string, number> = {};
+            const mine = new Set<string>();
+            (propsData || []).forEach((p: any) => {
+              counts[p.task_id] = (counts[p.task_id] || 0) + 1;
+              if (user && p.user_id === user.id) mine.add(p.task_id);
+            });
+            setProposalCounts(counts);
+            setMyProposalIds(mine);
+          }
+        } else {
+          setProposalCounts({});
+          setMyProposalIds(new Set());
+        }
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [coords, radiusKm, categoryId, language]);
+  }, [coords, radiusKm, categoryId, language, user?.id]);
 
   const handleRadiusChange = (value: number) => {
     setRadiusKm(value);
