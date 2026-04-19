@@ -70,6 +70,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Safety net: never get stuck on white screen (iOS Safari / Apple OAuth race)
     const safetyTimer = window.setTimeout(finishLoading, 4000);
 
+    // Recover session from URL hash if OAuth implicit flow landed here (Apple/Google).
+    const recoverFromHash = async () => {
+      try {
+        const hash = window.location.hash;
+        if (!hash || hash.length < 2) return false;
+        const params = new URLSearchParams(hash.replace('#', '?'));
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token });
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          return true;
+        }
+      } catch (e) {
+        console.error('[auth] hash recovery failed', e);
+      }
+      return false;
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (cancelled) return;
       setSession(session);
@@ -86,39 +105,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       finishLoading();
     });
 
-    supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
-        if (cancelled) return;
-        if (session?.user) {
-          try {
-            const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
-            if (banned) {
-              await supabase.auth.signOut();
-              finishLoading();
-              return;
+    recoverFromHash().then(() => {
+      supabase.auth.getSession()
+        .then(async ({ data: { session } }) => {
+          if (cancelled) return;
+          if (session?.user) {
+            try {
+              const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
+              if (banned) {
+                await supabase.auth.signOut();
+                finishLoading();
+                return;
+              }
+            } catch (e) {
+              // Ignore ban-check failure; don't block login
+              console.warn('[auth] is_user_banned check failed', e);
             }
-          } catch (e) {
-            // Ignore ban-check failure; don't block login
-            console.warn('[auth] is_user_banned check failed', e);
           }
-        }
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id).finally(finishLoading);
-          supabase
-            .from('profiles')
-            .update({ last_seen_at: new Date().toISOString() })
-            .eq('user_id', session.user.id)
-            .then(() => {});
-        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            fetchProfile(session.user.id).finally(finishLoading);
+            supabase
+              .from('profiles')
+              .update({ last_seen_at: new Date().toISOString() })
+              .eq('user_id', session.user.id)
+              .then(() => {});
+          } else {
+            finishLoading();
+          }
+        })
+        .catch((e) => {
+          console.error('[auth] getSession failed', e);
           finishLoading();
-        }
-      })
-      .catch((e) => {
-        console.error('[auth] getSession failed', e);
-        finishLoading();
-      });
+        });
+    });
 
     return () => {
       cancelled = true;
