@@ -195,6 +195,26 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     return null;
   }, [geoDenied, coords, t]);
 
+  const sortedTasks = useMemo(() => {
+    const arr = [...tasks];
+    if (sortMode === 'least_proposals') {
+      arr.sort((a, b) => {
+        const ca = proposalCounts[a.id] || 0;
+        const cb = proposalCounts[b.id] || 0;
+        if (ca !== cb) return ca - cb;
+        // tie-breaker: nearest first if available, else newest
+        const da = a.distance_km ?? Number.POSITIVE_INFINITY;
+        const db = b.distance_km ?? Number.POSITIVE_INFINITY;
+        if (da !== db) return da - db;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    } else if (sortMode === 'newest') {
+      arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    // 'nearest' = keep RPC default order (already nearest-first)
+    return arr;
+  }, [tasks, proposalCounts, sortMode]);
+
   return (
     <div className="mb-6 p-4 rounded-2xl border border-border bg-card">
       <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
@@ -244,6 +264,19 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
             {LANGUAGES.map((l) => (
               <option key={l.value} value={l.value}>{l.label}</option>
             ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-1.5 flex-1 min-w-[170px]">
+          <ArrowDownUp className="w-4 h-4 text-muted-foreground shrink-0" />
+          <select
+            value={sortMode}
+            onChange={(e) => handleSortChange(e.target.value as SortMode)}
+            className="w-full text-xs rounded-md border border-border bg-background px-2 py-1.5"
+            title={t('nearby.sortHint') || 'Сортировка'}
+          >
+            <option value="nearest">{t('nearby.sortNearest') || 'Ближайшие'}</option>
+            <option value="least_proposals">{t('nearby.sortLeastProposals') || 'Меньше откликов'}</option>
+            <option value="newest">{t('nearby.sortNewest') || 'Самые новые'}</option>
           </select>
         </div>
       </div>
