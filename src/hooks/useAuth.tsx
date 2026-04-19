@@ -98,8 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const isAdmin = roles.includes('admin') || roles.includes('super_admin');
-  const isSuperAdmin = roles.includes('super_admin');
+  const isSuperAdmin = roles.includes('super_admin') || roles.includes('superadmin');
+  const isAdmin = isSuperAdmin || roles.includes('admin');
 
   const signUp = async (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both') => {
     const { data, error } = await supabase.auth.signUp({

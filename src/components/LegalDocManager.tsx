@@ -60,7 +60,7 @@ export const LegalDocManager = ({ prefix, title }: Props) => {
   const [renamingFile, setRenamingFile] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
 
-  const isAdmin = roles.includes('admin') || roles.includes('super_admin');
+  const isAdmin = roles.includes('admin') || roles.includes('super_admin') || roles.includes('superadmin');
 
   const fetchDocumentRows = useCallback(async () => {
     const { data, error } = await supabase
