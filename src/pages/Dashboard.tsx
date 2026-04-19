@@ -69,8 +69,27 @@ const DashboardPage = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // В БД роли называются `client` и `executor`. В коде также поддерживаем устаревший `tasker`.
   const isClient = roles.includes('client');
-  const isTasker = roles.includes('tasker');
+  const isTasker = roles.includes('executor') || roles.includes('tasker');
+  const hasBothRoles = isClient && isTasker;
+  const defaultRole: ActiveRole = isTasker && !isClient ? 'tasker' : 'client';
+  const [activeRole, setActiveRole] = useState<ActiveRole>(() => {
+    if (typeof window === 'undefined') return defaultRole;
+    const stored = window.localStorage.getItem(ACTIVE_ROLE_KEY) as ActiveRole | null;
+    if (stored === 'client' || stored === 'tasker') return stored;
+    return defaultRole;
+  });
+  // Sync if user only has one role
+  useEffect(() => {
+    if (!hasBothRoles) setActiveRole(defaultRole);
+  }, [hasBothRoles, defaultRole]);
+  const switchRole = (r: ActiveRole) => {
+    setActiveRole(r);
+    try { window.localStorage.setItem(ACTIVE_ROLE_KEY, r); } catch {}
+  };
+  const showTaskerBlocks = isTasker && activeRole === 'tasker';
+  const showClientBlocks = isClient && activeRole === 'client';
 
   useEffect(() => {
     if (!user) return;
