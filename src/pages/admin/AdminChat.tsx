@@ -5,24 +5,27 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Search, MessageSquare, User, Wrench } from 'lucide-react';
+import { Send, Search, MessageSquare, User, Wrench, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+type ConvoKind = 'task' | 'direct';
+
 interface Conversation {
   key: string;
-  task_id: string;
+  kind: ConvoKind;
+  task_id: string | null;
   task_title: string;
   participant_id: string;
   participant_name: string | null;
-  participant_role: 'client' | 'tasker';
+  participant_role: 'client' | 'tasker' | 'user';
   last_message: string | null;
   last_message_at: string | null;
 }
 
 interface Message {
   id: string;
-  task_id: string;
+  task_id?: string | null;
   sender_id: string;
   recipient_id: string | null;
   content: string;
@@ -32,7 +35,7 @@ interface Message {
 export default function AdminChat() {
   const { user } = useAuth();
   const { t, dir } = useLanguage();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const filterUserId = searchParams.get('user');
   const preselectedTask = searchParams.get('task');
 
@@ -48,49 +51,74 @@ export default function AdminChat() {
   const selectedConvo = conversations.find(c => c.key === selectedKey) ?? null;
 
   const loadConversations = useCallback(async () => {
+    setLoading(true);
+
+    // ----- Task-based conversations -----
     const { data: tasks } = await supabase
       .from('tasks')
       .select('id, title, user_id, assigned_to, status')
       .order('created_at', { ascending: false })
       .limit(200);
 
-    if (!tasks?.length) { setConversations([]); setLoading(false); return; }
+    const { data: proposals } = tasks?.length
+      ? await supabase
+          .from('proposals')
+          .select('task_id, user_id')
+          .in('task_id', tasks.map(t => t.id))
+      : { data: [] as any[] };
 
-    // Get proposals to find taskers who responded
-    const { data: proposals } = await supabase
-      .from('proposals')
-      .select('task_id, user_id')
-      .in('task_id', tasks.map(t => t.id));
-
-    // Build tasker map per task: assigned_to + all proposers
     const taskTaskersMap = new Map<string, Set<string>>();
-    for (const task of tasks) {
+    for (const task of tasks ?? []) {
       const taskers = new Set<string>();
       if (task.assigned_to) taskers.add(task.assigned_to);
       taskTaskersMap.set(task.id, taskers);
     }
     for (const p of (proposals ?? [])) {
       const set = taskTaskersMap.get(p.task_id);
-      if (set && p.user_id !== tasks.find(t => t.id === p.task_id)?.user_id) {
-        set.add(p.user_id);
-      }
+      const ownerId = tasks?.find(t => t.id === p.task_id)?.user_id;
+      if (set && p.user_id !== ownerId) set.add(p.user_id);
     }
 
     const allUserIds = new Set<string>();
-    tasks.forEach(t => { allUserIds.add(t.user_id); });
+    (tasks ?? []).forEach(t => { allUserIds.add(t.user_id); });
     taskTaskersMap.forEach(set => set.forEach(id => allUserIds.add(id)));
 
-    const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: [...allUserIds] });
-    const profileMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
+    // ----- Direct messages (admin <-> user) -----
+    const { data: directRows } = await supabase
+      .from('direct_messages')
+      .select('id, sender_id, recipient_id, content, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
 
-    const { data: allMessages } = await supabase
-      .from('chat_messages')
-      .select('task_id, content, created_at, sender_id, recipient_id')
-      .in('task_id', tasks.map(t => t.id))
-      .order('created_at', { ascending: false });
+    const directLastByUser = new Map<string, { content: string; created_at: string }>();
+    for (const m of directRows ?? []) {
+      const otherId = m.sender_id === user?.id ? m.recipient_id : m.sender_id;
+      if (!otherId) continue;
+      allUserIds.add(otherId);
+      if (!directLastByUser.has(otherId)) {
+        directLastByUser.set(otherId, { content: m.content, created_at: m.created_at });
+      }
+    }
+
+    // Always include filterUserId so admin can start a fresh thread
+    if (filterUserId) allUserIds.add(filterUserId);
+
+    const { data: profiles } = allUserIds.size
+      ? await supabase.rpc('get_public_profiles', { target_user_ids: [...allUserIds] })
+      : { data: [] as any[] };
+    const profileMap = new Map(profiles?.map((p: any) => [p.user_id, p.display_name]) ?? []);
+
+    // Last messages per task conversation
+    const { data: allMessages } = tasks?.length
+      ? await supabase
+          .from('chat_messages')
+          .select('task_id, content, created_at, sender_id, recipient_id')
+          .in('task_id', tasks.map(t => t.id))
+          .order('created_at', { ascending: false })
+      : { data: [] as any[] };
 
     const lastMsgMap = new Map<string, { content: string; created_at: string }>();
-    allMessages?.forEach(m => {
+    allMessages?.forEach((m: any) => {
       const participantId = m.recipient_id ?? m.sender_id;
       const key = `${m.task_id}__${participantId}`;
       if (!lastMsgMap.has(key)) lastMsgMap.set(key, { content: m.content, created_at: m.created_at });
@@ -98,12 +126,30 @@ export default function AdminChat() {
 
     const convos: Conversation[] = [];
 
-    for (const task of tasks) {
-      // Client conversation
-      const clientKey = `${task.id}__${task.user_id}`;
-      const clientLastMsg = lastMsgMap.get(clientKey);
+    // Direct conversations (one per user we've spoken to, or the requested user)
+    const directUserIds = new Set<string>(directLastByUser.keys());
+    if (filterUserId) directUserIds.add(filterUserId);
+    for (const uid of directUserIds) {
+      const last = directLastByUser.get(uid);
+      convos.push({
+        key: `direct__${uid}`,
+        kind: 'direct',
+        task_id: null,
+        task_title: t('admin.directMessage') || 'Личное сообщение',
+        participant_id: uid,
+        participant_name: profileMap.get(uid) ?? null,
+        participant_role: 'user',
+        last_message: last?.content ?? null,
+        last_message_at: last?.created_at ?? null,
+      });
+    }
+
+    for (const task of tasks ?? []) {
+      const clientKey = `task__${task.id}__${task.user_id}`;
+      const clientLastMsg = lastMsgMap.get(`${task.id}__${task.user_id}`);
       convos.push({
         key: clientKey,
+        kind: 'task',
         task_id: task.id,
         task_title: task.title,
         participant_id: task.user_id,
@@ -113,13 +159,13 @@ export default function AdminChat() {
         last_message_at: clientLastMsg?.created_at ?? null,
       });
 
-      // Tasker conversations (assigned + proposers)
       const taskers = taskTaskersMap.get(task.id) ?? new Set();
       for (const taskerId of taskers) {
-        const taskerKey = `${task.id}__${taskerId}`;
-        const taskerLastMsg = lastMsgMap.get(taskerKey);
+        const taskerKey = `task__${task.id}__${taskerId}`;
+        const taskerLastMsg = lastMsgMap.get(`${task.id}__${taskerId}`);
         convos.push({
           key: taskerKey,
+          kind: 'task',
           task_id: task.id,
           task_title: task.title,
           participant_id: taskerId,
@@ -140,40 +186,55 @@ export default function AdminChat() {
 
     setConversations(convos);
 
-    if (preselectedTask && !selectedKey) {
-      const match = convos.find(c => c.task_id === preselectedTask);
-      if (match) setSelectedKey(match.key);
-    }
-    if (filterUserId && !selectedKey) {
-      const match = convos.find(c => c.participant_id === filterUserId);
-      if (match) setSelectedKey(match.key);
-    }
+    // Auto-select: prefer direct convo with the requested user
+    setSelectedKey(prev => {
+      if (prev) return prev;
+      if (filterUserId) {
+        const direct = convos.find(c => c.kind === 'direct' && c.participant_id === filterUserId);
+        if (direct) return direct.key;
+      }
+      if (preselectedTask) {
+        const m = convos.find(c => c.task_id === preselectedTask);
+        if (m) return m.key;
+      }
+      return null;
+    });
 
     setLoading(false);
-  }, [preselectedTask, filterUserId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [preselectedTask, filterUserId, user?.id, t]);
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
-  const loadMessages = useCallback(async (taskId: string, participantId: string) => {
-    const { data } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('task_id', taskId)
-      .order('created_at', { ascending: true });
-
-    const filtered = (data as Message[] ?? []).filter(m =>
-      m.recipient_id === participantId || m.sender_id === participantId
-    );
-    setMessages(filtered);
-  }, []);
+  const loadMessages = useCallback(async (convo: Conversation) => {
+    if (convo.kind === 'task' && convo.task_id) {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('task_id', convo.task_id)
+        .order('created_at', { ascending: true });
+      const filtered = (data as Message[] ?? []).filter(m =>
+        m.recipient_id === convo.participant_id || m.sender_id === convo.participant_id
+      );
+      setMessages(filtered);
+    } else {
+      // direct
+      const { data } = await supabase
+        .from('direct_messages')
+        .select('id, sender_id, recipient_id, content, created_at')
+        .or(`and(sender_id.eq.${user?.id},recipient_id.eq.${convo.participant_id}),and(sender_id.eq.${convo.participant_id},recipient_id.eq.${user?.id})`)
+        .order('created_at', { ascending: true });
+      setMessages((data as Message[]) ?? []);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!selectedConvo) return;
-    loadMessages(selectedConvo.task_id, selectedConvo.participant_id);
+    loadMessages(selectedConvo);
 
-    const channel = supabase
-      .channel(`admin-chat-${selectedConvo.key}`)
-      .on('postgres_changes', {
+    const channel = supabase.channel(`admin-chat-${selectedConvo.key}`);
+
+    if (selectedConvo.kind === 'task' && selectedConvo.task_id) {
+      channel.on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'chat_messages',
@@ -183,11 +244,24 @@ export default function AdminChat() {
         if (msg.recipient_id === selectedConvo.participant_id || msg.sender_id === selectedConvo.participant_id) {
           setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
         }
-      })
-      .subscribe();
-
+      });
+    } else {
+      channel.on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+      }, (payload) => {
+        const msg = payload.new as Message;
+        const involves = (msg.sender_id === user?.id && msg.recipient_id === selectedConvo.participant_id) ||
+                         (msg.sender_id === selectedConvo.participant_id && msg.recipient_id === user?.id);
+        if (involves) {
+          setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
+        }
+      });
+    }
+    channel.subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [selectedConvo?.key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedConvo?.key, loadMessages, user?.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -199,26 +273,45 @@ export default function AdminChat() {
     const content = newMessage.trim();
     setNewMessage('');
 
-    const { error, data: inserted } = await supabase.from('chat_messages').insert({
-      task_id: selectedConvo.task_id,
-      sender_id: user.id,
-      recipient_id: selectedConvo.participant_id,
-      content,
-    }).select('id').single();
+    let errorMsg: any = null;
+    let insertedId: string | undefined;
 
-    if (error) {
-      toast.error(t('chat.sendError'));
+    if (selectedConvo.kind === 'task' && selectedConvo.task_id) {
+      const { error, data } = await supabase.from('chat_messages').insert({
+        task_id: selectedConvo.task_id,
+        sender_id: user.id,
+        recipient_id: selectedConvo.participant_id,
+        content,
+      }).select('id').single();
+      errorMsg = error;
+      insertedId = data?.id;
+    } else {
+      const { error, data } = await supabase.from('direct_messages').insert({
+        sender_id: user.id,
+        recipient_id: selectedConvo.participant_id,
+        content,
+      }).select('id').single();
+      errorMsg = error;
+      insertedId = data?.id;
+    }
+
+    if (errorMsg) {
+      console.error('Send error:', errorMsg);
+      toast.error(t('chat.sendError') || 'Ошибка отправки');
       setNewMessage(content);
     } else {
+      // Email notification
       const { data: profileData } = await supabase
-        .from('profiles').select('email').eq('user_id', selectedConvo.participant_id).single();
+        .from('profiles').select('email').eq('user_id', selectedConvo.participant_id).maybeSingle();
       if (profileData?.email) {
-        const taskUrl = `${window.location.origin}/tasks/${selectedConvo.task_id}`;
+        const taskUrl = selectedConvo.task_id
+          ? `${window.location.origin}/tasks/${selectedConvo.task_id}`
+          : `${window.location.origin}/dashboard`;
         supabase.functions.invoke('send-transactional-email', {
           body: {
             templateName: 'admin-message',
             recipientEmail: profileData.email,
-            idempotencyKey: `admin-msg-${inserted?.id}-${selectedConvo.participant_id}`,
+            idempotencyKey: `admin-msg-${insertedId}-${selectedConvo.participant_id}`,
             templateData: {
               taskTitle: selectedConvo.task_title,
               messagePreview: content.length > 200 ? content.slice(0, 200) + '...' : content,
@@ -255,7 +348,14 @@ export default function AdminChat() {
 
   return (
     <div dir={dir}>
-      <h1 className="text-2xl font-bold text-foreground mb-4">{t('admin.chat')}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-foreground">{t('admin.chat')}</h1>
+        {filterUserId && (
+          <Button variant="outline" size="sm" onClick={() => { setSelectedKey(null); setSearchParams({}); }}>
+            {t('common.clearFilter') || 'Сбросить фильтр'}
+          </Button>
+        )}
+      </div>
       <div className="flex border border-border rounded-lg bg-card overflow-hidden" style={{ height: 'calc(100vh - 14rem)' }}>
         <div className={cn("w-80 border-e border-border flex flex-col shrink-0", selectedKey && "hidden md:flex")}>
           <div className="p-3 border-b border-border">
@@ -277,22 +377,29 @@ export default function AdminChat() {
                   selectedKey === c.key && "bg-primary/5"
                 )}
               >
-                <p className="font-medium text-sm text-foreground truncate">{c.task_title}</p>
+                <p className="font-medium text-sm text-foreground truncate flex items-center gap-1.5">
+                  {c.kind === 'direct' && <Mail className="w-3 h-3 text-primary shrink-0" />}
+                  {c.task_title}
+                </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {c.participant_role === 'client'
                     ? <User className="w-3 h-3 text-blue-500 shrink-0" />
-                    : <Wrench className="w-3 h-3 text-orange-500 shrink-0" />
+                    : c.participant_role === 'tasker'
+                      ? <Wrench className="w-3 h-3 text-orange-500 shrink-0" />
+                      : <User className="w-3 h-3 text-muted-foreground shrink-0" />
                   }
                   <span className="text-xs text-muted-foreground truncate">
-                    {c.participant_name ?? (c.participant_role === 'client' ? t('admin.client') : t('admin.performer'))}
+                    {c.participant_name ?? (c.participant_role === 'client' ? t('admin.client') : c.participant_role === 'tasker' ? t('admin.performer') : 'User')}
                   </span>
                   <span className={cn(
                     "text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0",
-                    c.participant_role === 'client'
-                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                      : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                    c.kind === 'direct'
+                      ? "bg-primary/10 text-primary"
+                      : c.participant_role === 'client'
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                        : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
                   )}>
-                    {c.participant_role === 'client' ? t('admin.client') : t('admin.performer')}
+                    {c.kind === 'direct' ? 'DM' : c.participant_role === 'client' ? t('admin.client') : t('admin.performer')}
                   </span>
                 </div>
                 {c.last_message && (
@@ -316,14 +423,19 @@ export default function AdminChat() {
               <div className="px-4 py-3 border-b border-border flex items-center gap-3">
                 <button className="md:hidden text-muted-foreground" onClick={() => setSelectedKey(null)}>←</button>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm truncate">{selectedConvo?.task_title}</p>
+                  <p className="font-semibold text-sm truncate flex items-center gap-1.5">
+                    {selectedConvo?.kind === 'direct' && <Mail className="w-3.5 h-3.5 text-primary" />}
+                    {selectedConvo?.task_title}
+                  </p>
                   <div className="flex items-center gap-1.5">
                     {selectedConvo?.participant_role === 'client'
                       ? <User className="w-3 h-3 text-blue-500" />
-                      : <Wrench className="w-3 h-3 text-orange-500" />
+                      : selectedConvo?.participant_role === 'tasker'
+                        ? <Wrench className="w-3 h-3 text-orange-500" />
+                        : <User className="w-3 h-3 text-muted-foreground" />
                     }
                     <p className="text-xs text-muted-foreground">
-                      {selectedConvo?.participant_name ?? (selectedConvo?.participant_role === 'client' ? t('admin.client') : t('admin.performer'))}
+                      {selectedConvo?.participant_name ?? 'User'}
                     </p>
                   </div>
                 </div>
@@ -345,7 +457,7 @@ export default function AdminChat() {
                       )}>
                         {!isMine && (
                           <p className="text-[10px] font-medium mb-1 opacity-70">
-                            {selectedConvo?.participant_name ?? (selectedConvo?.participant_role === 'client' ? t('admin.client') : t('admin.performer'))}
+                            {selectedConvo?.participant_name ?? 'User'}
                           </p>
                         )}
                         <p className="whitespace-pre-wrap break-words">{msg.content}</p>
