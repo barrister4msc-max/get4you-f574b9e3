@@ -208,7 +208,7 @@ const TasksPage = () => {
   const [geoLoading, setGeoLoading] = useState(false);
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
 
-  const isTasker = roles.includes('tasker');
+  const isTasker = roles.includes('executor') || roles.includes('tasker');
   const competencyTerms = useMemo(() => extractCompetencyTerms(isTasker ? profile?.bio : null), [isTasker, profile?.bio]);
 
   const requestGeolocation = () => {
