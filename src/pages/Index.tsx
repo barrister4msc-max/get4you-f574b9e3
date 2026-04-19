@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   Sparkles, ArrowRight, CheckCircle2, Shield, Star,
