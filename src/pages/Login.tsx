@@ -137,20 +137,23 @@ const LoginPage = () => {
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     setSocialLoading(provider);
     try {
+      const returnTo = searchParams.get('returnTo') || '/dashboard';
+      window.sessionStorage.setItem('oauth_return_to', returnTo);
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (result.error) {
         toast.error(String(result.error));
+        window.sessionStorage.removeItem('oauth_return_to');
         setSocialLoading(null);
         return;
       }
       if (result.redirected) {
         return;
       }
-      const returnTo = searchParams.get('returnTo');
-      navigate(returnTo || '/');
+      navigate(returnTo);
     } catch (err: any) {
+      window.sessionStorage.removeItem('oauth_return_to');
       toast.error(err?.message || 'OAuth error');
       setSocialLoading(null);
     }
