@@ -38,6 +38,8 @@ interface OrderRow {
 }
 
 type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages' | 'orders';
+type ActiveRole = 'client' | 'tasker';
+const ACTIVE_ROLE_KEY = 'dashboard_active_role';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
