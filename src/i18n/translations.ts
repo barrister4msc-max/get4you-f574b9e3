@@ -625,6 +625,12 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Task assigned tasker
     'task.assignedTasker': 'Assigned Tasker',
+
+    // Nearby orders
+    'nearby.sortHint': 'Sort by',
+    'nearby.sortNearest': 'Nearest',
+    'nearby.sortLeastProposals': 'Fewest proposals',
+    'nearby.sortNewest': 'Newest first',
   },
   ru: {
     'nav.home': 'Главная',
@@ -1226,6 +1232,12 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Task assigned tasker
     'task.assignedTasker': 'Назначенный исполнитель',
+
+    // Nearby orders
+    'nearby.sortHint': 'Сортировка',
+    'nearby.sortNearest': 'Ближайшие',
+    'nearby.sortLeastProposals': 'Меньше откликов',
+    'nearby.sortNewest': 'Самые новые',
   },
   he: {
     'nav.home': 'ראשי',
@@ -1827,6 +1839,12 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Task assigned tasker
     'task.assignedTasker': 'נותן שירות מוקצה',
+
+    // Nearby orders
+    'nearby.sortHint': 'מיון לפי',
+    'nearby.sortNearest': 'הקרובים ביותר',
+    'nearby.sortLeastProposals': 'הצעות מעטות',
+    'nearby.sortNewest': 'החדשים ביותר',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -2428,5 +2446,11 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Task assigned tasker
     'task.assignedTasker': 'مقدم الخدمة المعين',
+
+    // Nearby orders
+    'nearby.sortHint': 'الترتيب',
+    'nearby.sortNearest': 'الأقرب',
+    'nearby.sortLeastProposals': 'أقل العروض',
+    'nearby.sortNewest': 'الأحدث',
   },
 };
