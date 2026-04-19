@@ -168,6 +168,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     setLanguage(value);
     try { window.localStorage.setItem(STORAGE_LANG, value); } catch {}
   };
+  const handleSortChange = (value: SortMode) => {
+    setSortMode(value);
+    try { window.localStorage.setItem(STORAGE_SORT, value); } catch {}
+  };
 
   const catName = (c: CategoryRow) => {
     if (locale === 'ru') return c.name_ru || c.name_en;
