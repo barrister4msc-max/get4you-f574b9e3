@@ -4,7 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Link } from 'react-router-dom';
-import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2 } from 'lucide-react';
+import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2, ArrowDownUp } from 'lucide-react';
 
 interface NearbyTask {
   id: string;
@@ -39,6 +39,8 @@ const RADIUS_OPTIONS = [5, 10, 25, 50, 100] as const;
 const STORAGE_KEY = 'nearby_orders_radius_km';
 const STORAGE_CAT = 'nearby_orders_category';
 const STORAGE_LANG = 'nearby_orders_lang';
+const STORAGE_SORT = 'nearby_orders_sort';
+type SortMode = 'nearest' | 'least_proposals' | 'newest';
 const LANGUAGES: { value: string; label: string }[] = [
   { value: '', label: 'Любой' },
   { value: 'ru', label: 'Русский' },
@@ -66,6 +68,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const [radiusKm, setRadiusKm] = useState<number>(() => readStoredRadius(defaultRadiusKm));
   const [categoryId, setCategoryId] = useState<string>(() => readStored(STORAGE_CAT, ''));
   const [language, setLanguage] = useState<string>(() => readStored(STORAGE_LANG, ''));
+  const [sortMode, setSortMode] = useState<SortMode>(() => {
+    const v = readStored(STORAGE_SORT, 'nearest');
+    return (v === 'nearest' || v === 'least_proposals' || v === 'newest') ? v : 'nearest';
+  });
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDenied, setGeoDenied] = useState(false);
   const [tasks, setTasks] = useState<NearbyTask[]>([]);
