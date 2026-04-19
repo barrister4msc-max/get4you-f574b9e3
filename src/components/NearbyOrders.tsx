@@ -69,8 +69,8 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const [categoryId, setCategoryId] = useState<string>(() => readStored(STORAGE_CAT, ''));
   const [language, setLanguage] = useState<string>(() => readStored(STORAGE_LANG, ''));
   const [sortMode, setSortMode] = useState<SortMode>(() => {
-    const v = readStored(STORAGE_SORT, 'nearest');
-    return (v === 'nearest' || v === 'least_proposals' || v === 'newest') ? v : 'nearest';
+    const v = readStored(STORAGE_SORT, 'least_proposals');
+    return (v === 'nearest' || v === 'least_proposals' || v === 'newest') ? v : 'least_proposals';
   });
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoDenied, setGeoDenied] = useState(false);

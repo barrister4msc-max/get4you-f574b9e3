@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2 } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button';
 const ProfilePage = () => {
   const { t } = useLanguage();
   const { user, profile, roles, signOut, refreshProfile } = useAuth();
+  const { activeRole, setActiveRole, hasBothRoles, isClient, isTasker: hasTaskerRole } = useActiveRole();
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
@@ -183,10 +185,59 @@ const ProfilePage = () => {
 
         {/* Dashboard link */}
         <Link to="/dashboard"
-          className="flex items-center justify-center gap-2 w-full mb-6 py-3 rounded-xl font-semibold text-sm bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
+          className="flex items-center justify-center gap-2 w-full mb-4 py-3 rounded-xl font-semibold text-sm bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
           <LayoutDashboard className="w-4 h-4 text-primary" />
           {t('nav.dashboard')}
         </Link>
+
+        {/* Active role indicator */}
+        {(isClient || hasTaskerRole) && (
+          <div className="mb-6 p-3 rounded-xl border border-border bg-card">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {t('profile.activeRole') || 'Активная роль'}
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary">
+                {activeRole === 'tasker' ? <Briefcase className="w-3 h-3" /> : <ShoppingBag className="w-3 h-3" />}
+                {activeRole === 'tasker'
+                  ? (t('profile.role.tasker') || 'Исполнитель')
+                  : (t('profile.role.client') || 'Заказчик')}
+              </span>
+            </div>
+            {hasBothRoles ? (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveRole('client')}
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    activeRole === 'client'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  {t('profile.role.client') || 'Заказчик'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveRole('tasker')}
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    activeRole === 'tasker'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  {t('profile.role.tasker') || 'Исполнитель'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {t('profile.activeRole.singleHint') || 'Чтобы переключаться между ролями, добавьте вторую ниже.'}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4">
           {/* Roles */}
