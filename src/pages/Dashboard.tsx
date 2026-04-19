@@ -237,11 +237,16 @@ const DashboardPage = () => {
             <h1 className="text-xl font-bold truncate">{profile?.display_name || t('nav.dashboard')}</h1>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
             {avgRating && (
-              <div className="flex items-center gap-1 mt-0.5">
+              <button
+                type="button"
+                onClick={() => setTab('rating')}
+                className="flex items-center gap-1 mt-0.5 hover:opacity-80 transition-opacity"
+                title={t('dashboard.rating')}
+              >
                 <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 <span className="text-sm font-semibold">{avgRating}</span>
                 <span className="text-xs text-muted-foreground">({reviews.length})</span>
-              </div>
+              </button>
             )}
           </div>
           <Link to="/profile" className="text-xs text-primary font-medium hover:underline shrink-0">
@@ -291,18 +296,30 @@ const DashboardPage = () => {
 
         {/* Stats summary */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="p-3 rounded-2xl border border-border bg-card text-center">
+          <button
+            type="button"
+            onClick={() => setTab('myTasks')}
+            className="p-3 rounded-2xl border border-border bg-card text-center hover:border-primary hover:shadow-card-hover transition-all"
+          >
             <p className="text-xl font-bold text-primary">{displayedTasks.length}</p>
             <p className="text-xs text-muted-foreground">{t('dashboard.client.myTasks')}</p>
-          </div>
-          <div className="p-3 rounded-2xl border border-border bg-card text-center">
+          </button>
+          <button
+            type="button"
+            onClick={() => showTaskerBlocks ? setTab('myProposals') : setTab('myTasks')}
+            className="p-3 rounded-2xl border border-border bg-card text-center hover:border-primary hover:shadow-card-hover transition-all"
+          >
             <p className="text-xl font-bold text-primary">{myProposals.length}</p>
             <p className="text-xs text-muted-foreground">{t('dashboard.tasker.myProposals')}</p>
-          </div>
-          <div className="p-3 rounded-2xl border border-border bg-card text-center">
+          </button>
+          <button
+            type="button"
+            onClick={() => showTaskerBlocks ? setTab('rating') : setTab('myTasks')}
+            className="p-3 rounded-2xl border border-border bg-card text-center hover:border-primary hover:shadow-card-hover transition-all"
+          >
             <p className="text-xl font-bold text-primary">{avgRating || '—'}</p>
             <p className="text-xs text-muted-foreground">{t('dashboard.rating')}</p>
-          </div>
+          </button>
         </div>
 
         {/* Tabs */}
