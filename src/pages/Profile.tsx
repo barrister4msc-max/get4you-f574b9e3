@@ -33,8 +33,6 @@ const ProfilePage = () => {
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
   });
 
-  const isTasker = roles.includes('tasker');
-
   useEffect(() => {
     if (profile) {
       setForm({
