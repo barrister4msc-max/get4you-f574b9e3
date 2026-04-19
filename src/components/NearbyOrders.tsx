@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Link } from 'react-router-dom';
-import { MapPin, Loader2, Filter, Globe2, Tag } from 'lucide-react';
+import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2 } from 'lucide-react';
 
 interface NearbyTask {
   id: string;
@@ -60,6 +61,7 @@ const readStoredRadius = (fallback: number): number => {
 
 export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: number }) => {
   const { t, currency, locale } = useLanguage();
+  const { user } = useAuth();
   const formatPrice = useFormatPrice();
   const [radiusKm, setRadiusKm] = useState<number>(() => readStoredRadius(defaultRadiusKm));
   const [categoryId, setCategoryId] = useState<string>(() => readStored(STORAGE_CAT, ''));
@@ -68,6 +70,8 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const [geoDenied, setGeoDenied] = useState(false);
   const [tasks, setTasks] = useState<NearbyTask[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({});
+  const [myProposalIds, setMyProposalIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
