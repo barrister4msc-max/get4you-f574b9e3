@@ -281,6 +281,7 @@ const DashboardPage = () => {
         {/* MY TASKS */}
         {tab === 'myTasks' && (
           <div className="space-y-3">
+            {isTasker && <NearbyOrders radiusKm={10} />}
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold">{t('dashboard.client.myTasks')}</h2>
               {isClient && (
