@@ -56,25 +56,12 @@ const IndexPage = () => {
     const params = new URLSearchParams(hash.replace('#', '?'));
     const errorDesc = params.get('error_description') || searchParams.get('error_description');
     const error = params.get('error') || searchParams.get('error');
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-
     if (error || errorDesc) {
       const msg = errorDesc || error || 'OAuth error';
       toast.error(msg.includes('initial state')
         ? 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.'
         : msg);
       window.history.replaceState(null, '', window.location.pathname);
-      return;
-    }
-
-    // Apple/Google OAuth implicit flow: tokens in URL hash. Recover session manually.
-    if (accessToken && refreshToken) {
-      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-        .catch((e) => console.error('[oauth] setSession from hash failed', e))
-        .finally(() => {
-          window.history.replaceState(null, '', window.location.pathname);
-        });
     }
   }, [searchParams]);
   const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
