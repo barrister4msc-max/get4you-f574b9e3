@@ -108,13 +108,24 @@ const ProfilePage = () => {
     if (!user) return;
     if (selectedRoles.length === 0) { toast.error(t('profile.roles.needOne')); return; }
     setSavingRoles(true);
-    const toAdd = selectedRoles.filter(r => !roles.includes(r));
-    const toRemove = roles.filter(r => !selectedRoles.includes(r));
-    for (const role of toRemove) await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role as any);
-    for (const role of toAdd) await supabase.from('user_roles').insert({ user_id: user.id, role: role as any });
-    toast.success(t('profile.roles.updated'));
-    await refreshProfile();
-    setSavingRoles(false);
+    try {
+      const toAdd = selectedRoles.filter(r => !roles.includes(r));
+      const toRemove = roles.filter(r => !selectedRoles.includes(r) && (r === 'client' || r === 'executor'));
+      for (const role of toRemove) {
+        const { error } = await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role as any);
+        if (error) throw error;
+      }
+      for (const role of toAdd) {
+        const { error } = await supabase.from('user_roles').insert({ user_id: user.id, role: role as any });
+        if (error) throw error;
+      }
+      await refreshProfile();
+      toast.success(t('profile.roles.updated'));
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update roles');
+    } finally {
+      setSavingRoles(false);
+    }
   };
 
   const handleSave = async () => {
