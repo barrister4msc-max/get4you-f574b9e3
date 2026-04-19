@@ -1391,6 +1391,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin_or_superadmin: { Args: { _user_id: string }; Returns: boolean }
       is_order_participant: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
