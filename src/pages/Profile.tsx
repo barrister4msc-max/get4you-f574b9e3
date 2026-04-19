@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2 } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
