@@ -733,13 +733,16 @@ export type Database = {
           amount: number
           created_at: string
           currency: string
+          description: string | null
           id: string
           lat: number | null
           lng: number | null
           payment_url: string | null
+          price: number | null
           proposal_id: string | null
           status: string
           task_id: string | null
+          title: string | null
           updated_at: string
           user_id: string
         }
@@ -749,15 +752,18 @@ export type Database = {
           amount: number
           created_at?: string
           currency?: string
+          description?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
           payment_url?: string | null
+          price?: number | null
           proposal_id?: string | null
           status?: string
           task_id?: string | null
+          title?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           allpay_order_id?: string
@@ -765,13 +771,16 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string
+          description?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
           payment_url?: string | null
+          price?: number | null
           proposal_id?: string | null
           status?: string
           task_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1371,6 +1380,21 @@ export type Database = {
         }[]
       }
       get_my_role: { Args: never; Returns: string }
+      get_orders_nearby: {
+        Args: { radius_km?: number; user_lat: number; user_lng: number }
+        Returns: {
+          created_at: string
+          description: string
+          distance: number
+          id: string
+          lat: number
+          lng: number
+          price: number
+          status: string
+          title: string
+          user_id: string
+        }[]
+      }
       get_public_profile: {
         Args: { target_user_id: string }
         Returns: {
