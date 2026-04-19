@@ -627,6 +627,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'task.assignedTasker': 'Assigned Tasker',
 
     // Nearby orders
+    'nearby.title': 'Nearby orders',
+    'nearby.allCategories': 'All categories',
+    'nearby.empty': 'No matching tasks found',
+    'nearby.untitled': 'Untitled',
     'nearby.sortHint': 'Sort by',
     'nearby.sortNearest': 'Nearest',
     'nearby.sortLeastProposals': 'Fewest proposals',
@@ -1234,6 +1238,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'task.assignedTasker': 'Назначенный исполнитель',
 
     // Nearby orders
+    'nearby.title': 'Заказы рядом',
+    'nearby.allCategories': 'Все категории',
+    'nearby.empty': 'Подходящих задач не найдено',
+    'nearby.untitled': 'Без названия',
     'nearby.sortHint': 'Сортировка',
     'nearby.sortNearest': 'Ближайшие',
     'nearby.sortLeastProposals': 'Меньше откликов',
@@ -1841,6 +1849,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'task.assignedTasker': 'נותן שירות מוקצה',
 
     // Nearby orders
+    'nearby.title': 'הזמנות בקרבת מקום',
+    'nearby.allCategories': 'כל הקטגוריות',
+    'nearby.empty': 'לא נמצאו משימות מתאימות',
+    'nearby.untitled': 'ללא שם',
     'nearby.sortHint': 'מיון לפי',
     'nearby.sortNearest': 'הקרובים ביותר',
     'nearby.sortLeastProposals': 'הצעות מעטות',
@@ -2448,6 +2460,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'task.assignedTasker': 'مقدم الخدمة المعين',
 
     // Nearby orders
+    'nearby.title': 'الطلبات القريبة',
+    'nearby.allCategories': 'جميع الفئات',
+    'nearby.empty': 'لم يتم العثور على مهام مناسبة',
+    'nearby.untitled': 'بدون عنوان',
     'nearby.sortHint': 'الترتيب',
     'nearby.sortNearest': 'الأقرب',
     'nearby.sortLeastProposals': 'أقل العروض',
