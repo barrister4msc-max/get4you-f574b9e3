@@ -20,14 +20,11 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // Rate limiting
-      const authHeader = req.headers.get("authorization");
-      if (skipRateLimit) {
-        // no-op: translations are not user-initiated content generation
-      } else
+    const authHeader = req.headers.get("authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    if (authHeader) {
+    if (authHeader && !skipRateLimit) {
       const token = authHeader.replace("Bearer ", "");
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
       const { data: { user } } = await supabase.auth.getUser(token);
