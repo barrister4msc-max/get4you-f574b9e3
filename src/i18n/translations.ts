@@ -1250,6 +1250,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nearby.sortNearest': 'Ближайшие',
     'nearby.sortLeastProposals': 'Меньше откликов',
     'nearby.sortNewest': 'Самые новые',
+    'settings.title': 'Настройки',
+    'settings.subtitle': 'Язык и валюта',
+    'settings.language': 'Язык',
+    'settings.currency': 'Валюта',
   },
   he: {
     'nav.home': 'ראשי',
@@ -1861,6 +1865,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nearby.sortNearest': 'הקרובים ביותר',
     'nearby.sortLeastProposals': 'הצעות מעטות',
     'nearby.sortNewest': 'החדשים ביותר',
+    'settings.title': 'הגדרות',
+    'settings.subtitle': 'שפה ומטבע',
+    'settings.language': 'שפה',
+    'settings.currency': 'מטבע',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -2472,5 +2480,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'nearby.sortNearest': 'الأقرب',
     'nearby.sortLeastProposals': 'أقل العروض',
     'nearby.sortNewest': 'الأحدث',
+    'settings.title': 'الإعدادات',
+    'settings.subtitle': 'اللغة والعملة',
+    'settings.language': 'اللغة',
+    'settings.currency': 'العملة',
   },
 };
