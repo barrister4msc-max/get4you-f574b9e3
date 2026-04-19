@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
@@ -10,13 +11,15 @@ import { useState, useRef, useEffect } from 'react';
 export const Header = () => {
   const { t } = useLanguage();
   const { user, profile, roles, signOut } = useAuth();
+  const { activeRole, isClient, isTasker } = useActiveRole();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
+  // Hide "Create task" when user is in tasker mode (or has only tasker role)
+  const canCreateTask = !user || (isClient && activeRole === 'client') || (isClient && !isTasker);
   const isAdmin = user && (roles.includes('admin') || roles.includes('super_admin') || roles.includes('superadmin'));
 
   // Close dropdown on outside click
@@ -39,7 +42,7 @@ export const Header = () => {
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/tasks', label: t('nav.tasks') },
-    ...(!isTaskerOnly ? [{ to: '/create-task', label: t('nav.create') }] : []),
+    ...(canCreateTask ? [{ to: '/create-task', label: t('nav.create') }] : []),
     { to: '/how-it-works', label: t('nav.howItWorks') },
     { to: '/for-taskers', label: t('nav.forTaskers') },
     ...(isAdmin ? [{ to: '/admin', label: t('nav.admin') }] : []),
