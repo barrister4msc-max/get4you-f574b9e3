@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 const ProfilePage = () => {
   const { t } = useLanguage();
   const { user, profile, roles, signOut, refreshProfile } = useAuth();
+  const { activeRole, setActiveRole, hasBothRoles, isClient, isTasker: hasTaskerRole } = useActiveRole();
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
