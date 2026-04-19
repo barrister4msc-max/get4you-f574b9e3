@@ -5,7 +5,8 @@ import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { CurrencyToggle } from './CurrencyToggle';
 import { NotificationBell } from './NotificationBell';
-import { Menu, X, User, LayoutDashboard, LogOut, MessageSquare } from 'lucide-react';
+import { Sheet, SheetContent, SheetTitle } from './ui/sheet';
+import { Menu, User, LayoutDashboard, LogOut } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export const Header = () => {
@@ -32,6 +33,10 @@ export const Header = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -148,62 +153,86 @@ export const Header = () => {
           )}
         </div>
 
-        {/* Mobile menu button */}
-        <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <button
+            type="button"
+            aria-label="Open navigation menu"
+            className="md:hidden p-2"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-card px-4 pb-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setMobileOpen(false)}
-              className="block py-3 text-sm font-medium text-foreground border-b border-border/50"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <div className="flex items-center gap-2 pt-3">
-            <CurrencyToggle />
-            <LanguageSwitcher />
-            <NotificationBell />
-          </div>
-          <div className="pt-3 space-y-2">
-            {user ? (
-              <>
-                <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg hover:bg-secondary transition-colors">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+          <SheetContent side="right" className="md:hidden w-[86vw] max-w-sm border-border bg-card px-0">
+            <SheetTitle className="sr-only">Mobile navigation</SheetTitle>
+            <div className="flex h-full flex-col pt-8">
+              <div className="border-b border-border px-4 pb-4">
+                <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(152, 55%, 42%), hsl(45, 95%, 55%))' }}>
+                    <span className="text-primary-foreground font-bold text-sm">T</span>
+                  </div>
+                  <span className="font-bold text-lg text-gradient-emerald">TaskFlow</span>
+                </Link>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 pb-6">
+                <div className="space-y-1 py-4">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setMobileOpen(false)}
+                      className="block rounded-lg px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="border-t border-border pt-4">
+                  <div className="flex items-center gap-2">
+                    <CurrencyToggle />
+                    <LanguageSwitcher />
+                    <NotificationBell />
+                  </div>
+                </div>
+
+                <div className="pt-4 space-y-2">
+                  {user ? (
+                    <>
+                      <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg hover:bg-secondary transition-colors">
+                        {profile?.avatar_url ? (
+                          <img src={profile.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                        ) : (
+                          <User className="w-4 h-4" />
+                        )}
+                        {t('nav.profile')}
+                      </Link>
+                      <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg hover:bg-secondary transition-colors">
+                        <LayoutDashboard className="w-4 h-4" />
+                        {t('nav.dashboard')}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => { setMobileOpen(false); void handleLogout(); }}
+                        className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg text-destructive hover:bg-secondary transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        {t('nav.logout')}
+                      </button>
+                    </>
                   ) : (
-                    <User className="w-4 h-4" />
+                    <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
+                      <User className="w-4 h-4" />
+                      {t('nav.account')}
+                    </Link>
                   )}
-                  {t('nav.profile')}
-                </Link>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg hover:bg-secondary transition-colors">
-                  <LayoutDashboard className="w-4 h-4" />
-                  {t('nav.dashboard')}
-                </Link>
-                <button
-                  onClick={() => { setMobileOpen(false); handleLogout(); }}
-                  className="flex items-center gap-2 w-full py-2.5 px-4 text-sm font-medium rounded-lg text-destructive hover:bg-secondary transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  {t('nav.logout')}
-                </button>
-              </>
-            ) : (
-              <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold rounded-lg bg-accent text-accent-foreground">
-                <User className="w-4 h-4" />
-                {t('nav.account')}
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
+                </div>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </header>
   );
 };
