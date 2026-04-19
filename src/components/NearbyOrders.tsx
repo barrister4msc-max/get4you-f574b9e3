@@ -273,6 +273,12 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                         {t('tasks.urgent') || 'Срочно'}
                       </span>
                     )}
+                    {myProposalIds.has(task.id) && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                        <CheckCircle2 className="w-3 h-3" />
+                        {t('nearby.alreadyApplied') || 'Уже откликался'}
+                      </span>
+                    )}
                   </div>
                   {task.description && (
                     <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{task.description}</p>
@@ -294,6 +300,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                     )}
                     <span className="text-xs text-muted-foreground">
                       {new Date(task.created_at).toLocaleDateString()}
+                    </span>
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                      <Users className="w-3 h-3" />
+                      {proposalCounts[task.id] || 0} {t('nearby.proposalsShort') || 'откл.'}
                     </span>
                   </div>
                 </div>
