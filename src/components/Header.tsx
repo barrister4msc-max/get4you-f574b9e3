@@ -17,9 +17,11 @@ export const Header = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileLangOpen, setMobileLangOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const nextLocale = locale === 'en' ? 'ru' : locale === 'ru' ? 'he' : locale === 'he' ? 'ar' : 'en';
+  const localeFlags = { en: '🇺🇸', ru: '🇷🇺', he: '🇮🇱', ar: '🇸🇦' } as const;
   const localeLabels = { en: 'English', ru: 'Русский', he: 'עברית', ar: 'العربية' } as const;
+  const localeOrder = ['en', 'ru', 'he', 'ar'] as const;
 
   // Hide "Create task" when user is in tasker mode (or has only tasker role)
   const canCreateTask = !user || (isClient && activeRole === 'client') || (isClient && !isTasker);
@@ -194,13 +196,36 @@ export const Header = () => {
                  <div className="border-t border-border pt-4">
                    <div className="flex items-center gap-2">
                      <CurrencyToggle />
-                     <button
-                       type="button"
-                       onClick={() => setLocale(nextLocale)}
-                       className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
-                     >
-                       {localeLabels[locale]}
-                     </button>
+                     <div className="relative flex-1">
+                       <button
+                         type="button"
+                         onClick={() => setMobileLangOpen((v) => !v)}
+                         className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-secondary/80 transition-colors"
+                       >
+                         <span className="flex items-center gap-2">
+                           <span>{localeFlags[locale]}</span>
+                           <span>{localeLabels[locale]}</span>
+                         </span>
+                         <span className="text-xs text-muted-foreground">▾</span>
+                       </button>
+                       {mobileLangOpen && (
+                         <div className="absolute z-50 mt-1 left-0 right-0 rounded-lg border border-border bg-card shadow-lg py-1">
+                           {localeOrder.map((l) => (
+                             <button
+                               key={l}
+                               type="button"
+                               onClick={() => { setLocale(l); setMobileLangOpen(false); }}
+                               className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-start transition-colors ${
+                                 locale === l ? 'text-primary font-semibold bg-primary/5' : 'text-foreground hover:bg-secondary'
+                               }`}
+                             >
+                               <span>{localeFlags[l]}</span>
+                               <span>{localeLabels[l]}</span>
+                             </button>
+                           ))}
+                         </div>
+                       )}
+                     </div>
                    </div>
                  </div>
 
