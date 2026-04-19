@@ -135,7 +135,7 @@ const ProfilePage = () => {
 
   const roleOptions = [
     { value: 'client', label: t('auth.role.client') },
-    { value: 'tasker', label: t('auth.role.tasker') },
+    { value: 'executor', label: t('auth.role.tasker') },
   ];
   const paymentOptions = [
     { value: 'cash_or_check', label: `${t('profile.payment.cash')} / ${t('profile.payment.check')}`, icon: Banknote },
