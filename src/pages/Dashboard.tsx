@@ -38,6 +38,8 @@ interface OrderRow {
 }
 
 type Tab = 'myTasks' | 'findTasks' | 'myProposals' | 'earnings' | 'rating' | 'messages' | 'orders';
+type ActiveRole = 'client' | 'tasker';
+const ACTIVE_ROLE_KEY = 'dashboard_active_role';
 
 const statusBadge = (status: string) => {
   const c: Record<string, string> = {
@@ -67,8 +69,27 @@ const DashboardPage = () => {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // В БД роли называются `client` и `executor`. В коде также поддерживаем устаревший `tasker`.
   const isClient = roles.includes('client');
-  const isTasker = roles.includes('tasker');
+  const isTasker = roles.includes('executor') || roles.includes('tasker');
+  const hasBothRoles = isClient && isTasker;
+  const defaultRole: ActiveRole = isTasker && !isClient ? 'tasker' : 'client';
+  const [activeRole, setActiveRole] = useState<ActiveRole>(() => {
+    if (typeof window === 'undefined') return defaultRole;
+    const stored = window.localStorage.getItem(ACTIVE_ROLE_KEY) as ActiveRole | null;
+    if (stored === 'client' || stored === 'tasker') return stored;
+    return defaultRole;
+  });
+  // Sync if user only has one role
+  useEffect(() => {
+    if (!hasBothRoles) setActiveRole(defaultRole);
+  }, [hasBothRoles, defaultRole]);
+  const switchRole = (r: ActiveRole) => {
+    setActiveRole(r);
+    try { window.localStorage.setItem(ACTIVE_ROLE_KEY, r); } catch {}
+  };
+  const showTaskerBlocks = isTasker && activeRole === 'tasker';
+  const showClientBlocks = isClient && activeRole === 'client';
 
   useEffect(() => {
     if (!user) return;
@@ -205,14 +226,14 @@ const DashboardPage = () => {
     { key: 'messages', label: t('chat.title') || 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
     { key: 'orders', label: t('orders.title') || 'Orders', icon: <ShoppingCart className="w-4 h-4" /> },
   ];
-  if (isTasker) {
+  if (showTaskerBlocks) {
     tabs.push({ key: 'findTasks', label: t('dashboard.tasker.findTasks'), icon: <Search className="w-4 h-4" /> });
     tabs.push({ key: 'myProposals', label: t('dashboard.tasker.myProposals'), icon: <Briefcase className="w-4 h-4" /> });
     tabs.push({ key: 'earnings', label: t('balance.title'), icon: <Wallet className="w-4 h-4" /> });
     tabs.push({ key: 'rating', label: t('dashboard.rating'), icon: <Star className="w-4 h-4" /> });
   }
 
-  const displayedTasks = isTasker && !isClient ? assignedTasks : myTasks;
+  const displayedTasks = showTaskerBlocks ? assignedTasks : myTasks;
 
   const handleWithdraw = () => {
     toast.success(t('balance.withdraw.success'));
@@ -245,6 +266,46 @@ const DashboardPage = () => {
             {t('nav.profile')} →
           </Link>
         </div>
+
+        {/* Role indicator / switcher */}
+        {isTasker || isClient ? (
+          <div className="mb-5 p-3 rounded-2xl border border-border bg-card">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs text-muted-foreground">Активная роль:</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                  {activeRole === 'tasker' ? (
+                    <><Briefcase className="w-3.5 h-3.5" /> Исполнитель</>
+                  ) : (
+                    <><ClipboardList className="w-3.5 h-3.5" /> Заказчик</>
+                  )}
+                </span>
+              </div>
+              {hasBothRoles && (
+                <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+                  <button
+                    type="button"
+                    onClick={() => switchRole('client')}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                      activeRole === 'client' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Заказчик
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchRole('tasker')}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                      activeRole === 'tasker' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Исполнитель
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
 
         {/* Stats summary */}
         <div className="grid grid-cols-3 gap-3 mb-6">
@@ -281,7 +342,7 @@ const DashboardPage = () => {
         {/* MY TASKS */}
         {tab === 'myTasks' && (
           <div className="space-y-3">
-            {isTasker && <NearbyOrders defaultRadiusKm={10} />}
+            {showTaskerBlocks && <NearbyOrders defaultRadiusKm={10} />}
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold">{t('dashboard.client.myTasks')}</h2>
               {isClient && (
