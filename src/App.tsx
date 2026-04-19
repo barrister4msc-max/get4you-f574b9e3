@@ -35,6 +35,7 @@ import AdminBroadcast from "./pages/AdminBroadcast";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import OrderChat from "./pages/OrderChat";
+import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/payment-cancel" element={<PaymentCancel />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/settings" element={<Settings />} />
 
                 {/* Admin panel with sidebar */}
                 <Route path="/admin" element={<AdminLayout />}>
