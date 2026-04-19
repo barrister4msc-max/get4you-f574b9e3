@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -51,6 +52,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
+        <ActiveRoleProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -101,6 +103,7 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
+        </ActiveRoleProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
