@@ -267,6 +267,46 @@ const DashboardPage = () => {
           </Link>
         </div>
 
+        {/* Role indicator / switcher */}
+        {isTasker || isClient ? (
+          <div className="mb-5 p-3 rounded-2xl border border-border bg-card">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs text-muted-foreground">Активная роль:</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                  {activeRole === 'tasker' ? (
+                    <><Briefcase className="w-3.5 h-3.5" /> Исполнитель</>
+                  ) : (
+                    <><ClipboardList className="w-3.5 h-3.5" /> Заказчик</>
+                  )}
+                </span>
+              </div>
+              {hasBothRoles && (
+                <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+                  <button
+                    type="button"
+                    onClick={() => switchRole('client')}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                      activeRole === 'client' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Заказчик
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => switchRole('tasker')}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                      activeRole === 'tasker' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Исполнитель
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+
         {/* Stats summary */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="p-3 rounded-2xl border border-border bg-card text-center">
