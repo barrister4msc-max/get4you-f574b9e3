@@ -179,11 +179,19 @@ export default function AdminUsers() {
                   <TableCell className="text-muted-foreground text-xs">{format(new Date(u.created_at), 'dd.MM.yy')}</TableCell>
                   <TableCell>
                     <div className="flex gap-1 flex-wrap">
-                      {isSuperAdmin && !isTargetSuperAdmin && ['client', 'tasker', 'admin'].map((role) => {
+                      {isSuperAdmin && !isTargetSuperAdmin && ['client', 'executor'].map((role) => {
                         const has = u.roles.includes(role);
                         return (
-                          <Button key={role} variant={has ? 'default' : 'outline'} size="sm" className="text-xs h-7"
-                            onClick={() => toggleRole(u.user_id, role, has)}>{role}</Button>
+                          <Button
+                            key={role}
+                            variant={has ? 'default' : 'outline'}
+                            size="sm"
+                            className="text-xs h-7"
+                            onClick={() => toggleRole(u.user_id, role, has)}
+                          >
+                            {has && <span className="mr-1">✓</span>}
+                            {role}
+                          </Button>
                         );
                       })}
                       {isSuperAdmin && !isTargetSuperAdmin && (
