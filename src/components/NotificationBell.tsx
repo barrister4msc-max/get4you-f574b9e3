@@ -43,9 +43,9 @@ export const NotificationBell = () => {
 
     fetchNotifications();
 
-    // Realtime subscription
+    // Realtime subscription — unique channel name per instance to avoid collisions
     const channel = supabase
-      .channel('user-notifications')
+      .channel(`user-notifications-${user.id}-${Math.random().toString(36).slice(2, 8)}`)
       .on(
         'postgres_changes',
         {
