@@ -45,7 +45,11 @@ const ProfilePage = () => {
     }
   }, [profile]);
 
-  useEffect(() => { setSelectedRoles(roles); }, [roles]);
+  // Sync local selection with saved roles whenever they change (initial load + after refresh)
+  useEffect(() => {
+    const saved = roles.filter((r) => r === 'client' || r === 'executor');
+    setSelectedRoles(saved);
+  }, [roles]);
 
   useEffect(() => {
     if (!user) return;
