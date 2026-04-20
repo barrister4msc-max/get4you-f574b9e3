@@ -45,13 +45,22 @@ export default function AdminUsers() {
       toast.error('Только super admin может изменять роли');
       return;
     }
+    // Optimistic update so the highlight changes instantly
+    setUsers((prev) => prev.map((u) => {
+      if (u.user_id !== userId) return u;
+      const nextRoles = hasRole
+        ? u.roles.filter((r: string) => r !== role)
+        : [...u.roles, role];
+      return { ...u, roles: nextRoles };
+    }));
     if (hasRole) {
-      await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', role as any);
+      const { error } = await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', role as any);
+      if (error) { toast.error(error.message); load(); return; }
     } else {
-      await supabase.from('user_roles').insert({ user_id: userId, role: role as any });
+      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: role as any });
+      if (error) { toast.error(error.message); load(); return; }
     }
     toast.success(hasRole ? t('admin.roleRemoved').replace('{role}', role) : t('admin.roleAdded').replace('{role}', role));
-    load();
   };
 
   const toggleBan = async (userId: string, isBanned: boolean) => {
@@ -181,6 +190,7 @@ export default function AdminUsers() {
                     <div className="flex gap-1 flex-wrap">
                       {isSuperAdmin && !isTargetSuperAdmin && ['client', 'executor'].map((role) => {
                         const has = u.roles.includes(role);
+                        const label = role === 'client' ? t('admin.client') : t('admin.performer');
                         return (
                           <Button
                             key={role}
@@ -190,7 +200,7 @@ export default function AdminUsers() {
                             onClick={() => toggleRole(u.user_id, role, has)}
                           >
                             {has && <span className="mr-1">✓</span>}
-                            {role}
+                            {label}
                           </Button>
                         );
                       })}
