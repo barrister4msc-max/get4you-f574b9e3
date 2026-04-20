@@ -181,6 +181,7 @@ export default function AdminUsers() {
                     <div className="flex gap-1 flex-wrap">
                       {isSuperAdmin && !isTargetSuperAdmin && ['client', 'executor'].map((role) => {
                         const has = u.roles.includes(role);
+                        const label = role === 'client' ? t('admin.client') : t('admin.performer');
                         return (
                           <Button
                             key={role}
@@ -190,7 +191,7 @@ export default function AdminUsers() {
                             onClick={() => toggleRole(u.user_id, role, has)}
                           >
                             {has && <span className="mr-1">✓</span>}
-                            {role}
+                            {label}
                           </Button>
                         );
                       })}
