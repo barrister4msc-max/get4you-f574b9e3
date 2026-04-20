@@ -294,6 +294,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'notifications.title': 'Notifications',
     'notifications.markAllRead': 'Mark all read',
     'notifications.empty': 'No notifications yet',
+    'messages.title': 'Messages',
+    'messages.empty': 'No messages from admin yet',
 
     // Motivation screen
     'motivation.readyTitle': 'Your task is almost live!',
@@ -916,6 +918,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'notifications.title': 'Уведомления',
     'notifications.markAllRead': 'Прочитать все',
     'notifications.empty': 'Уведомлений пока нет',
+    'messages.title': 'Сообщения',
+    'messages.empty': 'У вас пока нет сообщений от администратора',
 
     'motivation.readyTitle': 'Ваша задача почти опубликована!',
     'motivation.taskers': '7 исполнителей готовы откликнуться',
@@ -1531,6 +1535,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'notifications.title': 'התראות',
     'notifications.markAllRead': 'סמן הכל כנקרא',
     'notifications.empty': 'אין התראות עדיין',
+    'messages.title': 'הודעות',
+    'messages.empty': 'אין הודעות ממנהל עדיין',
 
     'motivation.readyTitle': '!המשימה שלך כמעט מוכנה',
     'motivation.taskers': '7 מבצעים מוכנים להגיב',
@@ -2146,6 +2152,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'notifications.title': 'الإشعارات',
     'notifications.markAllRead': 'تحديد الكل كمقروء',
     'notifications.empty': 'لا توجد إشعارات بعد',
+    'messages.title': 'الرسائل',
+    'messages.empty': 'لا توجد رسائل من المسؤول بعد',
 
     'motivation.readyTitle': 'مهمتك على وشك النشر!',
     'motivation.taskers': '7 منفذين جاهزون للاستجابة',

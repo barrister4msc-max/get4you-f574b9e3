@@ -103,7 +103,13 @@ export const NotificationBell = () => {
             notifications.map(n => (
               <Link
                 key={n.id}
-                to={n.task_id ? (n.type === 'new_message' ? `/chat/${n.task_id}` : `/tasks/${n.task_id}`) : '#'}
+                to={
+                  n.type === 'admin_dm' || n.type === 'direct_message'
+                    ? '/messages'
+                    : n.task_id
+                      ? (n.type === 'new_message' ? `/chat/${n.task_id}` : `/tasks/${n.task_id}`)
+                      : '#'
+                }
                 onClick={() => setOpen(false)}
                 className={`block px-3 py-2.5 border-b border-border last:border-0 hover:bg-secondary/50 transition-colors ${
                   !n.is_read ? 'bg-primary/5' : ''
