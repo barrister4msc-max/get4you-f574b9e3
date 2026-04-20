@@ -99,9 +99,11 @@ const ProfilePage = () => {
   };
 
   const toggleRole = (role: string) => {
-    setSelectedRoles((prev) =>
-      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
-    );
+    // Single-select: only one of client/executor at a time
+    setSelectedRoles((prev) => {
+      const preserved = prev.filter((r) => r !== 'client' && r !== 'executor');
+      return [...preserved, role];
+    });
   };
 
   const handleSaveRoles = async () => {

@@ -155,14 +155,17 @@ export const Header = () => {
         </div>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <button
-            type="button"
-            aria-label="Open navigation menu"
-            className="md:hidden p-2"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+          <div className="md:hidden flex items-center gap-1">
+            <NotificationBell />
+            <button
+              type="button"
+              aria-label="Open navigation menu"
+              className="p-2"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
 
           <SheetContent side="right" className="md:hidden w-[86vw] max-w-sm border-border bg-card px-0">
             <SheetTitle className="sr-only">Mobile navigation</SheetTitle>
