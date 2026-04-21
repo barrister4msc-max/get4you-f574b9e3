@@ -1,18 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-/**
- * Allpay Webhook Handler
- *
- * Called by Allpay when a payment status changes.
- * - Verifies SHA-256 signature using ALLPAY_API_KEY
- * - Updates the order status to "paid" (status=1) or "failed"
- * - Always returns HTTP 200 (Allpay requirement)
- */
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-async function getApiSignatureAsync(
-  params: Record<string, unknown>,
-  apiKey: string
-): Promise<string> {
+/**
+ * Allpay SHA256 signature validation helper.
+ * Same algorithm as in create-payment:
+ * - sort top-level keys alphabetically
+ * - ignore "sign"
+ * - collect non-empty string values
+ * - for arrays of objects: sort item keys and collect non-empty string values
+ * - join with ":" and append ":" + apiKey
+ * - sha256 hex
+ */
+async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: string): Promise<string> {
   const sortedKeys = Object.keys(params).sort();
   const chunks: string[] = [];
 
@@ -26,27 +29,18 @@ async function getApiSignatureAsync(
           const itemKeys = Object.keys(item as Record<string, unknown>).sort();
           for (const name of itemKeys) {
             const val = (item as Record<string, unknown>)[name];
-            const strVal = val != null ? String(val).trim() : "";
-            if (strVal !== "") {
-              chunks.push(strVal);
+            if (typeof val === "string" && val.trim() !== "") {
+              chunks.push(val);
             }
           }
         }
       }
-    } else {
-      const strVal = value != null ? String(value).trim() : "";
-      if (strVal !== "") {
-        chunks.push(strVal);
-      }
+    } else if (typeof value === "string" && value.trim() !== "") {
+      chunks.push(value);
     }
   }
 
   const signatureString = chunks.join(":") + ":" + apiKey;
-
-  console.log("[SIGN] Sorted keys:", sortedKeys.filter(k => k !== "sign").join(", "));
-  console.log("[SIGN] Chunks:", JSON.stringify(chunks));
-  console.log("[SIGN] Signature string (key redacted):", chunks.join(":") + ":[KEY]");
-
   const encoder = new TextEncoder();
   const data = encoder.encode(signatureString);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -54,254 +48,410 @@ async function getApiSignatureAsync(
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function normalizePayloadValue(value: FormDataEntryValue | string | null) {
+  if (value == null) return null;
+  if (typeof value === "string") return value;
+  return String(value);
+}
+
+async function parseIncomingPayload(req: Request): Promise<Record<string, unknown>> {
+  const contentType = req.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return await req.json();
+  }
+
+  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+    const formData = await req.formData();
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of formData.entries()) {
+      result[key] = normalizePayloadValue(value);
+    }
+    return result;
+  }
+
+  // fallback: try text -> urlencoded parser
+  const raw = await req.text();
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const params = new URLSearchParams(raw);
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of params.entries()) {
+      result[key] = value;
+    }
+    return result;
+  }
+}
+
+/**
+ * Interpret Allpay status.
+ * Adjust if your provider sends other exact values,
+ * but these cover the common success/failure patterns.
+ */
+function isSuccessfulPayment(payload: Record<string, unknown>): boolean {
+  const status = String(payload.status || payload.payment_status || payload.pay_status || "")
+    .trim()
+    .toLowerCase();
+
+  const result = String(payload.result || "")
+    .trim()
+    .toLowerCase();
+  const errorCode = String(payload.error_code || "")
+    .trim()
+    .toLowerCase();
+  const success = String(payload.success || payload.is_paid || "")
+    .trim()
+    .toLowerCase();
+
+  if (["paid", "success", "successful", "completed", "approved"].includes(status)) return true;
+  if (["success", "ok", "paid"].includes(result)) return true;
+  if (["true", "1", "yes"].includes(success)) return true;
+
+  // If provider explicitly says no error and paid status absent, keep false by default
+  if (errorCode && errorCode !== "0") return false;
+
+  return false;
+}
+
+function isFailedPayment(payload: Record<string, unknown>): boolean {
+  const status = String(payload.status || payload.payment_status || payload.pay_status || "")
+    .trim()
+    .toLowerCase();
+
+  const result = String(payload.result || "")
+    .trim()
+    .toLowerCase();
+  const errorCode = String(payload.error_code || "")
+    .trim()
+    .toLowerCase();
+
+  if (["failed", "error", "cancelled", "canceled", "declined"].includes(status)) return true;
+  if (["failed", "error", "cancelled", "canceled"].includes(result)) return true;
+  if (errorCode && errorCode !== "0") return true;
+
+  return false;
+}
+
 Deno.serve(async (req) => {
-  console.log(`[WEBHOOK] ${req.method} from ${req.headers.get("x-forwarded-for") || "unknown"}`);
-  console.log(`[WEBHOOK] Content-Type: ${req.headers.get("content-type")}`);
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   if (req.method !== "POST") {
-    return new Response("OK", { status: 200 });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
-    // ── 1. Load API key ──
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const allpayApiKey = Deno.env.get("ALLPAY_API_KEY");
-    if (!allpayApiKey) {
-      console.error("[WEBHOOK] ALLPAY_API_KEY not configured!");
-      return new Response("OK", { status: 200 });
+
+    if (!supabaseUrl || !serviceRoleKey || !allpayApiKey) {
+      return new Response(JSON.stringify({ error: "Server configuration missing" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // ── 2. Parse webhook body ──
-    let postData: Record<string, unknown>;
-    const contentType = req.headers.get("content-type") || "";
+    const serviceClient = createClient(supabaseUrl, serviceRoleKey);
 
-    if (contentType.includes("application/json")) {
-      postData = await req.json();
-      console.log("[WEBHOOK] Parsed as JSON");
-    } else if (contentType.includes("application/x-www-form-urlencoded")) {
-      const formData = await req.formData();
-      postData = {};
-      formData.forEach((value, key) => {
-        postData[key] = String(value);
+    // ======================================================
+    // 1. PARSE PAYLOAD
+    // ======================================================
+    const payload = await parseIncomingPayload(req);
+    console.log("[ALLPAY-WEBHOOK] payload:", JSON.stringify(payload));
+
+    const incomingSign = String(payload.sign || "").trim();
+    const incomingOrderId = String(payload.order_id || payload.orderId || payload.invoice_id || "").trim();
+
+    if (!incomingOrderId) {
+      return new Response(JSON.stringify({ error: "Missing order_id in webhook payload" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      console.log("[WEBHOOK] Parsed as form-urlencoded");
-    } else {
-      const text = await req.text();
-      console.log("[WEBHOOK] Raw body:", text.substring(0, 500));
-      try {
-        postData = JSON.parse(text);
-      } catch {
-        const params = new URLSearchParams(text);
-        postData = {};
-        params.forEach((value, key) => {
-          postData[key] = value;
+    }
+
+    // ======================================================
+    // 2. VALIDATE SIGNATURE
+    // ======================================================
+    if (!incomingSign) {
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const expectedSign = await getApiSignatureAsync(payload, allpayApiKey);
+
+    if (expectedSign !== incomingSign) {
+      console.error("[ALLPAY-WEBHOOK] Invalid signature", {
+        expectedSign,
+        incomingSign,
+      });
+
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ======================================================
+    // 3. LOAD ORDER
+    // ======================================================
+    const { data: order, error: orderError } = await serviceClient
+      .from("orders")
+      .select("*")
+      .eq("allpay_order_id", incomingOrderId)
+      .maybeSingle();
+
+    if (orderError) {
+      console.error("[ALLPAY-WEBHOOK] Order lookup error:", orderError);
+      return new Response(JSON.stringify({ error: "Order lookup failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!order) {
+      return new Response(JSON.stringify({ error: "Order not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ======================================================
+    // 4. DETERMINE PAYMENT OUTCOME
+    // ======================================================
+    const paid = isSuccessfulPayment(payload);
+    const failed = isFailedPayment(payload);
+
+    let nextOrderStatus = order.status;
+
+    if (paid) nextOrderStatus = "paid";
+    else if (failed) nextOrderStatus = "failed";
+    else nextOrderStatus = order.status || "pending";
+
+    // save raw payload either way
+    const { error: updateOrderError } = await serviceClient
+      .from("orders")
+      .update({
+        status: nextOrderStatus,
+        allpay_response: payload,
+      })
+      .eq("id", order.id);
+
+    if (updateOrderError) {
+      console.error("[ALLPAY-WEBHOOK] Order update error:", updateOrderError);
+      return new Response(JSON.stringify({ error: "Failed to update order" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // If not paid, stop here safely
+    if (!paid) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          order_id: incomingOrderId,
+          status: nextOrderStatus,
+          message: "Webhook processed (not paid state)",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // ======================================================
+    // 5. LOAD TASK + PROPOSAL
+    // ======================================================
+    const { data: proposal, error: proposalError } = await serviceClient
+      .from("proposals")
+      .select("*")
+      .eq("id", order.proposal_id)
+      .maybeSingle();
+
+    if (proposalError || !proposal) {
+      console.error("[ALLPAY-WEBHOOK] Proposal load error:", proposalError);
+      return new Response(JSON.stringify({ error: "Proposal not found for paid order" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: task, error: taskError } = await serviceClient
+      .from("tasks")
+      .select("*")
+      .eq("id", order.task_id)
+      .maybeSingle();
+
+    if (taskError || !task) {
+      console.error("[ALLPAY-WEBHOOK] Task load error:", taskError);
+      return new Response(JSON.stringify({ error: "Task not found for paid order" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ======================================================
+    // 6. ACCEPT SELECTED PROPOSAL
+    // ======================================================
+    if (proposal.status !== "accepted") {
+      const { error: acceptProposalError } = await serviceClient
+        .from("proposals")
+        .update({ status: "accepted" })
+        .eq("id", proposal.id);
+
+      if (acceptProposalError) {
+        console.error("[ALLPAY-WEBHOOK] Proposal accept error:", acceptProposalError);
+        return new Response(JSON.stringify({ error: "Failed to accept proposal" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
 
-    console.log("[WEBHOOK] Full payload:", JSON.stringify(postData));
+    // ======================================================
+    // 7. REJECT OTHER PENDING PROPOSALS
+    // ======================================================
+    const { error: rejectOthersError } = await serviceClient
+      .from("proposals")
+      .update({ status: "rejected" })
+      .eq("task_id", task.id)
+      .neq("id", proposal.id)
+      .eq("status", "pending");
 
-    // ── 3. Extract fields ──
-    const receivedSign = String(postData.sign || "");
-    const orderId = String(postData.order_id || "");
-    const status = postData.status;
-
-    console.log("[WEBHOOK] order_id:", orderId);
-    console.log("[WEBHOOK] status:", String(status));
-    console.log("[WEBHOOK] received sign:", receivedSign);
-
-    if (!orderId) {
-      console.error("[WEBHOOK] No order_id in payload");
-      return new Response("OK", { status: 200 });
+    if (rejectOthersError) {
+      console.error("[ALLPAY-WEBHOOK] Reject others error:", rejectOthersError);
+      return new Response(JSON.stringify({ error: "Failed to reject other proposals" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // ── 4. Verify signature (strict) ──
-    const calculatedSign = await getApiSignatureAsync(postData, allpayApiKey);
+    // ======================================================
+    // 8. UPDATE TASK
+    // ======================================================
+    const { error: taskUpdateError } = await serviceClient
+      .from("tasks")
+      .update({
+        status: "in_progress",
+        assigned_to: proposal.user_id,
+      })
+      .eq("id", task.id);
 
-    console.log("[WEBHOOK] Calculated sign:", calculatedSign);
-    console.log("[WEBHOOK] Match:", receivedSign === calculatedSign);
-
-    if (receivedSign !== calculatedSign) {
-      console.error(`[WEBHOOK] SIGNATURE MISMATCH for ${orderId}. Expected: ${calculatedSign}, Got: ${receivedSign}`);
-      return new Response("OK", { status: 200 });
+    if (taskUpdateError) {
+      console.error("[ALLPAY-WEBHOOK] Task update error:", taskUpdateError);
+      return new Response(JSON.stringify({ error: "Failed to update task" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    console.log(`[WEBHOOK] ✅ Signature verified for ${orderId}`);
-
-    // ── 5. Update order in database ──
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Allpay status mapping
-    const statusStr = String(status).toLowerCase().trim();
-    const successStatuses = ["1", "success", "approved"];
-    const failureStatuses = ["0", "failed", "declined"];
-
-    let newStatus: string;
-    if (successStatuses.includes(statusStr)) {
-      newStatus = "paid";
-    } else if (failureStatuses.includes(statusStr)) {
-      newStatus = "failed";
-    } else {
-      console.warn(`[WEBHOOK] ⚠️ UNKNOWN status "${status}" for order ${orderId} — ignoring`);
-      return new Response("OK", { status: 200 });
-    }
-
-    console.log("[WEBHOOK] Raw status value:", status, "| Type:", typeof status);
-    console.log("[WEBHOOK] Normalized:", statusStr, "| → newStatus:", newStatus);
-
-    // Check if order exists
-    const { data: existingOrder, error: fetchError } = await serviceClient
-      .from("orders")
-      .select("id, status, allpay_order_id, amount, currency, proposal_id, task_id, user_id")
-      .eq("allpay_order_id", orderId)
+    // ======================================================
+    // 9. CREATE ESCROW IF NOT EXISTS (IDEMPOTENT)
+    // ======================================================
+    const { data: existingEscrow, error: existingEscrowError } = await serviceClient
+      .from("escrow_transactions")
+      .select("id")
+      .eq("task_id", task.id)
+      .eq("proposal_id", proposal.id)
       .maybeSingle();
 
-    if (fetchError) {
-      console.error("[WEBHOOK] DB fetch error:", JSON.stringify(fetchError));
-      return new Response("OK", { status: 200 });
+    if (existingEscrowError) {
+      console.error("[ALLPAY-WEBHOOK] Escrow lookup error:", existingEscrowError);
+      return new Response(JSON.stringify({ error: "Failed to check escrow" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    if (!existingOrder) {
-      console.error(`[WEBHOOK] Order "${orderId}" NOT FOUND in orders table`);
-      return new Response("OK", { status: 200 });
-    }
+    if (!existingEscrow) {
+      const commissionRate = 0.15;
+      const orderAmount = Number(order.amount);
+      const commissionAmount = Math.round(orderAmount * commissionRate * 100) / 100;
+      const netAmount = Math.round((orderAmount - commissionAmount) * 100) / 100;
 
-    console.log("[WEBHOOK] Found order:", JSON.stringify(existingOrder));
+      const { error: escrowInsertError } = await serviceClient.from("escrow_transactions").insert({
+        task_id: task.id,
+        proposal_id: proposal.id,
+        client_id: order.user_id,
+        tasker_id: proposal.user_id,
+        amount: orderAmount,
+        currency: order.currency || proposal.currency || task.currency || "ILS",
+        commission_rate: commissionRate,
+        commission_amount: commissionAmount,
+        net_amount: netAmount,
+        status: "held",
+      });
 
-    // ── Security: skip if already paid (duplicate webhook) ──
-    if (existingOrder.status === "paid") {
-      console.log(`[WEBHOOK] Order ${orderId} already paid — ignoring duplicate webhook`);
-      return new Response("OK", { status: 200 });
-    }
-
-    // ── Security: validate amount matches ──
-    const webhookAmount = postData.amount != null ? Number(postData.amount) : null;
-    if (webhookAmount != null && existingOrder.amount != null) {
-      const dbAmount = Number(existingOrder.amount);
-      if (Math.abs(webhookAmount - dbAmount) > 0.01) {
-        console.error(`[WEBHOOK] AMOUNT MISMATCH for ${orderId}. DB: ${dbAmount}, Webhook: ${webhookAmount}`);
-        return new Response("OK", { status: 200 });
-      }
-      console.log(`[WEBHOOK] Amount verified: ${webhookAmount}`);
-    } else {
-      console.log("[WEBHOOK] Amount not in webhook payload — skipping amount check");
-    }
-
-    // Update the order
-    const { data: updateResult, error: updateError } = await serviceClient
-      .from("orders")
-      .update({
-        status: newStatus,
-        allpay_response: postData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("allpay_order_id", orderId)
-      .neq("status", "paid")  // extra guard against race conditions
-      .select("id, status");
-
-    if (updateError) {
-      console.error("[WEBHOOK] DB update error:", JSON.stringify(updateError));
-    } else if (!updateResult?.length) {
-      console.log(`[WEBHOOK] No rows updated for ${orderId} — likely already paid (race condition)`);
-    } else {
-      console.log(`[WEBHOOK] ✅ Order ${orderId} → ${newStatus}. Result:`, JSON.stringify(updateResult));
-
-      // ── Notify tasker on successful payment ──
-      if (newStatus === "paid" && existingOrder.proposal_id) {
-        try {
-          // Get proposal to find tasker_id, and task for title
-          const { data: proposal } = await serviceClient
-            .from("proposals")
-            .select("user_id, task_id")
-            .eq("id", existingOrder.proposal_id)
-            .single();
-
-          if (proposal) {
-            const { data: task } = await serviceClient
-              .from("tasks")
-              .select("title")
-              .eq("id", proposal.task_id)
-              .single();
-
-            await serviceClient.from("notifications").insert({
-              user_id: proposal.user_id,
-              type: "payment_received",
-              title: `Payment received for "${task?.title || "task"}"`,
-              message: `Client paid ${existingOrder.amount} ${existingOrder.currency}. You can start working!`,
-              task_id: proposal.task_id,
-              proposal_id: existingOrder.proposal_id,
-            });
-            console.log(`[WEBHOOK] ✅ Notification sent to tasker ${proposal.user_id}`);
-
-            // Send transactional email to tasker
-            const { data: taskerProfile } = await serviceClient
-              .from("profiles")
-              .select("email, display_name")
-              .eq("user_id", proposal.user_id)
-              .single();
-
-            if (taskerProfile?.email) {
-              await serviceClient.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "payment-received",
-                  recipientEmail: taskerProfile.email,
-                  idempotencyKey: `payment-received-${existingOrder.id}`,
-                  templateData: {
-                    taskerName: taskerProfile.display_name || undefined,
-                    taskTitle: task?.title || undefined,
-                    amount: String(existingOrder.amount),
-                    currency: existingOrder.currency || "USD",
-                  },
-                },
-              });
-              console.log(`[WEBHOOK] ✅ Payment email sent to ${taskerProfile.email}`);
-            }
-          }
-        } catch (notifErr) {
-          console.error("[WEBHOOK] Failed to send tasker notification:", notifErr);
-        }
-      }
-
-      // ── Send receipt email to client ──
-      if (newStatus === "paid" && existingOrder.user_id) {
-        try {
-          const { data: clientProfile } = await serviceClient
-            .from("profiles")
-            .select("email, display_name")
-            .eq("user_id", existingOrder.user_id)
-            .single();
-
-          if (clientProfile?.email) {
-            const { data: task } = existingOrder.task_id
-              ? await serviceClient.from("tasks").select("title").eq("id", existingOrder.task_id).single()
-              : { data: null };
-
-            await serviceClient.functions.invoke("send-transactional-email", {
-              body: {
-                templateName: "payment-receipt",
-                recipientEmail: clientProfile.email,
-                idempotencyKey: `payment-receipt-${existingOrder.id}`,
-                templateData: {
-                  clientName: clientProfile.display_name || undefined,
-                  taskTitle: task?.title || undefined,
-                  amount: String(existingOrder.amount),
-                  currency: existingOrder.currency || "USD",
-                  orderId: existingOrder.allpay_order_id,
-                },
-              },
-            });
-            console.log(`[WEBHOOK] ✅ Receipt email sent to client ${clientProfile.email}`);
-          }
-        } catch (receiptErr) {
-          console.error("[WEBHOOK] Failed to send client receipt:", receiptErr);
-        }
+      if (escrowInsertError) {
+        console.error("[ALLPAY-WEBHOOK] Escrow insert error:", escrowInsertError);
+        return new Response(JSON.stringify({ error: "Failed to create escrow" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
-    return new Response("OK", { status: 200 });
+    // ======================================================
+    // 10. OPTIONAL: fire-and-forget WhatsApp
+    // If this fails, do NOT fail webhook processing
+    // ======================================================
+    try {
+      const projectRef = supabaseUrl.replace("https://", "").split(".")[0];
+      const whatsappUrl = `https://${projectRef}.supabase.co/functions/v1/send-whatsapp`;
+
+      await fetch(whatsappUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // function may rely on internal checks; if needed adapt later
+          apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") ?? ""}`,
+        },
+        body: JSON.stringify({
+          type: "tasker_hired",
+          user_id: proposal.user_id,
+          task_id: task.id,
+        }),
+      });
+    } catch (whatsappError) {
+      console.error("[ALLPAY-WEBHOOK] WhatsApp send failed:", whatsappError);
+    }
+
+    // ======================================================
+    // 11. SUCCESS
+    // ======================================================
+    return new Response(
+      JSON.stringify({
+        success: true,
+        order_id: incomingOrderId,
+        order_status: "paid",
+        task_id: task.id,
+        proposal_id: proposal.id,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (err) {
-    console.error("[WEBHOOK] Unhandled error:", err);
-    return new Response("OK", { status: 200 });
+    console.error("[ALLPAY-WEBHOOK] Unexpected error:", err);
+    return new Response(
+      JSON.stringify({
+        error: err instanceof Error ? err.message : "Internal server error",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });
