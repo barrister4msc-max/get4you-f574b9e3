@@ -588,109 +588,38 @@ return;
     }
   };
 
-  const handleUpdateProposal = async (proposalId: string, status: 'accepted' | 'rejected') => {
-    setUpdating(proposalId);
-    try {
-      const { error } = await supabase
-        .from('proposals')
-        .update({ status })
-        .eq('id', proposalId);
+const handleUpdateProposal = async (
+  proposalId: string,
+  status: "accepted" | "rejected"
+) => {
+  setUpdating(proposalId);
 
-      if (error) throw error;
+  try {
+    const { error } = await supabase
+      .from("proposals")
+      .update({ status })
+      .eq("id", proposalId);
 
-      if (status === 'accepted') {
-        const proposal = proposals.find(p => p.id === proposalId);
+    if (error) throw error;
 
-        if (!proposal || !user || !id) {
-          throw new Error('proposal_not_found');
-        }
+    setProposals((prev) =>
+      prev.map((p) => {
+        if (p.id === proposalId) return { ...p, status };
+        return p;
+      })
+    );
 
-        const { error: taskUpdateError } = await supabase
-          .from('tasks')
-          .update({ status: 'in_progress', assigned_to: proposal.user_id })
-          .eq('id', id);
-
-        if (taskUpdateError) throw taskUpdateError;
-
-        setTask((prev: any) => ({ ...prev, status: 'in_progress', assigned_to: proposal.user_id }));
-
-        // Check for existing escrow to prevent duplicates
-        const { data: existingEscrow } = await supabase
-          .from('escrow_transactions')
-          .select('id')
-          .eq('task_id', id)
-          .eq('proposal_id', proposalId)
-          .maybeSingle();
-
-        if (!existingEscrow) {
-          // Check tasker's payment method for cash option
-          const { data: taskerProfile } = await supabase
-            .from('profiles')
-            .select('payment_method')
-            .eq('user_id', proposal.user_id)
-            .maybeSingle();
-
-          const isCashPayment = taskerProfile?.payment_method === 'cash';
-          const commissionRate = 0.12;
-          const escrowAmount = isCashPayment ? Math.round(proposal.price * commissionRate * 100) / 100 : proposal.price;
-          const commissionAmount = Math.round(proposal.price * commissionRate * 100) / 100;
-          const netAmount = isCashPayment ? 0 : proposal.price - commissionAmount;
-
-          const { data: escrowData, error: escrowError } = await supabase
-            .from('escrow_transactions')
-            .insert({
-              task_id: id,
-              proposal_id: proposalId,
-              client_id: user.id,
-              tasker_id: proposal.user_id,
-              amount: escrowAmount,
-              currency: proposal.currency || currency,
-              commission_rate: commissionRate,
-              commission_amount: commissionAmount,
-              net_amount: netAmount,
-              status: 'held',
-            })
-            .select()
-            .single();
-
-          if (escrowError) throw escrowError;
-          if (escrowData) setEscrow(escrowData);
-        }
-
-        const otherPending = proposals.filter(p => p.id !== proposalId && p.status === 'pending');
-        for (const p of otherPending) {
-          const { error: rejectError } = await supabase
-            .from('proposals')
-            .update({ status: 'rejected' })
-            .eq('id', p.id);
-          if (rejectError) throw rejectError;
-        }
-
-        supabase.functions.invoke('send-whatsapp', {
-          body: {
-            type: 'tasker_hired',
-            user_id: proposal.user_id,
-            task_id: id,
-          },
-        }).catch(console.error);
-
-        toast.success(t('proposal.accepted'));
-      } else {
-        toast.success(t('proposal.rejected'));
-      }
-
-      setProposals(prev =>
-        prev.map(p => {
-          if (p.id === proposalId) return { ...p, status };
-          if (status === 'accepted' && p.status === 'pending') return { ...p, status: 'rejected' as const };
-          return p;
-        })
-      );
-    } catch {
-      toast.error(t('proposal.error'));
-      throw new Error('proposal_update_failed');
-    } finally {
-      setUpdating(null);
+    toast.success(
+      status === "accepted" ? t("proposal.accepted") : t("proposal.rejected")
+    );
+  } catch (error) {
+    console.error("Failed to update proposal:", error);
+    toast.error(t("proposal.error"));
+    throw new Error("proposal_update_failed");
+  } finally {
+    setUpdating(null);
+  }
+};
     }
   };
 
