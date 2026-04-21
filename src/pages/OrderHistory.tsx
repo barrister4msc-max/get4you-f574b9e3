@@ -47,7 +47,7 @@ const OrderHistoryPage = () => {
   const { user } = useAuth();
   const { t, currency } = useLanguage();
   const formatPrice = useFormatPrice();
-  const { rates } = useExchangeRates();
+  const rates = useExchangeRates();
   const navigate = useNavigate();
 
   const [rows, setRows] = useState<HistoryRow[]>([]);
