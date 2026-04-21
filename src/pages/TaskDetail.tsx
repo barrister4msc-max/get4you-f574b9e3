@@ -443,61 +443,38 @@ const TaskDetailPage = () => {
   };
 
 
-  const handleSubmitProposal = async () => {
-    if (!user || !id || !price) return;
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.from('proposals').insert({
-        task_id: id,
-        user_id: user.id,
-        price: Number(price),
-        comment: comment.trim() || null,
-        currency,
-      }).select().single();
+  const handleUpdateProposal = async (
+  proposalId: string,
+  status: "accepted" | "rejected"
+) => {
+  setUpdating(proposalId);
 
-      if (error) throw error;
+  try {
+    const { error } = await supabase
+      .from("proposals")
+      .update({ status })
+      .eq("id", proposalId);
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, avatar_url, bio, city, phone')
-        .eq('user_id', user.id)
-        .maybeSingle();
+    if (error) throw error;
 
-      setProposals(prev => [{
-        ...data,
-        status: data.status as 'pending' | 'accepted' | 'rejected',
-        profile,
-        avgRating: null,
-        reviewCount: 0,
-      }, ...prev]);
-      setShowForm(false);
-      setPrice('');
-      setComment('');
-        toast.success(t('proposal.sent'));
+    setProposals((prev) =>
+      prev.map((p) => {
+        if (p.id === proposalId) return { ...p, status };
+        return p;
+      })
+    );
 
-        // Send WhatsApp to task owner about new proposal
-        if (task?.user_id) {
-          const { data: ownerProf } = await supabase
-            .from('profiles')
-            .select('phone')
-            .eq('user_id', task.user_id)
-            .maybeSingle();
-          if (ownerProf?.phone) {
-            const { data: session } = await supabase.auth.getSession();
-            supabase.functions.invoke('send-whatsapp', {
-              body: {
-                type: 'new_proposal',
-                phone: ownerProf.phone,
-                task_id: id,
-              },
-            }).catch(console.error);
-          }
-        }
-    } catch {
-      toast.error(t('proposal.error'));
-    } finally {
-      setSubmitting(false);
-    }
+    toast.success(
+      status === "accepted" ? t("proposal.accepted") : t("proposal.rejected")
+    );
+  } catch (error) {
+    console.error("Failed to update proposal:", error);
+    toast.error(t("proposal.error"));
+    throw new Error("proposal_update_failed");
+  } finally {
+    setUpdating(null);
+  }
+};
   };
 
  const handleAcceptClick = (proposalId: string) => {
