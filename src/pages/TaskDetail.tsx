@@ -500,12 +500,11 @@ const TaskDetailPage = () => {
     }
   };
 
-  /const handleAcceptClick = (proposalId: string) => {
-  const proposal = proposals.find(p => p.id === proposalId);
+ const handleAcceptClick = (proposalId: string) => {
+  const proposal = proposals.find((p) => p.id === proposalId);
 
   if (!proposal) return;
 
-  // ✅ защита на фронте
   const canPay =
     (proposal.status === "pending" || proposal.status === "accepted") &&
     task?.status === "open";
@@ -519,43 +518,54 @@ const TaskDetailPage = () => {
   setShowPaymentDialog(true);
 };
   };
+const handlePaymentConfirm = async () => {
+  if (!pendingAcceptProposalId || !id) return;
 
-  const handlePaymentConfirm = async () => {
-    if (!pendingAcceptProposalId || !id) return;
-    setPaymentProcessing(true);
-    try {
-      const proposal = proposals.find(p => p.id === pendingAcceptProposalId);
-      if (!proposal) throw new Error('Proposal not found');
+  setPaymentProcessing(true);
 
-      const baseUrl = window.location.origin;
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          task_id: id,
-          proposal_id: pendingAcceptProposalId,
-          amount: proposal.price,
-          currency: proposal.currency || currency || 'ILS',
-          item_name: task?.title || 'Task payment',
-          success_url: `${baseUrl}/payment-success`,
-          cancel_url: `${baseUrl}/payment-cancel`,
-          lang: locale === 'ru' ? 'RU' : locale === 'he' ? 'HE' : 'EN',
-        },
+  try {
+    const proposal = proposals.find((p) => p.id === pendingAcceptProposalId);
+    if (!proposal) throw new Error("Proposal not found");
+
+    const baseUrl = window.location.origin;
+
+    const { data, error } = await supabase.functions.invoke("create-payment", {
+      body: {
+        task_id: id,
+        proposal_id: pendingAcceptProposalId,
+        currency: proposal.currency || currency || "ILS",
+        success_url: `${baseUrl}/payment-success`,
+        cancel_url: `${baseUrl}/payment-cancel`,
+        lang: locale === "ru" ? "RU" : locale === "he" ? "HE" : "EN",
+      },
+    });
+
+    if (error) throw error;
+
+    if (data?.payment_url) {
+      setPendingAcceptProposalId(null);
+      setShowPaymentDialog(false);
+      window.location.href = data.payment_url;
+      return;
+    }
+
+    throw new Error(data?.error || "No payment URL returned");
+  } catch (err: any) {
+    console.error("Payment error:", err);
+    toast.error(err.message || t("payment.error"));
+  } finally {
+    setPaymentProcessing(false);
+  }
+};
       });
 
       if (error) throw error;
 
       if (data?.payment_url) {
-        await handleUpdateProposal(pendingAcceptProposalId, 'accepted');
-        setPendingAcceptProposalId(null);
-        setShowPaymentDialog(false);
-        window.location.href = data.payment_url;
-      } else {
-        throw new Error(data?.error || 'No payment URL returned');
-      }
-    } catch (err: any) {
-      console.error('Payment error:', err);
-      toast.error(err.message || t('payment.error'));
-    } finally {
-      setPaymentProcessing(false);
+    setPendingAcceptProposalId(null);
+setShowPaymentDialog(false);
+window.location.href = data.payment_url;
+return;
     }
   };
 
