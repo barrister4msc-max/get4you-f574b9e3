@@ -491,9 +491,6 @@ const handleAcceptClick = (proposalId: string) => {
 };
 
 const handlePaymentConfirm = async () => {
-  ...
-};
-
   if (!pendingAcceptProposalId || !id) return;
 
   setPaymentProcessing(true);
@@ -522,26 +519,6 @@ const handlePaymentConfirm = async () => {
       setShowPaymentDialog(false);
       window.location.href = data.payment_url;
       return;
-    } else {
-      throw new Error(data?.error || "No payment URL returned");
-    }
-  } catch (err: any) {
-    console.error("Payment error:", err);
-    toast.error(err.message || t("payment.error"));
-  } finally {
-    setPaymentProcessing(false);
-  }
-};
-};
-    });
-
-    if (error) throw error;
-
-    if (data?.payment_url) {
-      setPendingAcceptProposalId(null);
-      setShowPaymentDialog(false);
-      window.location.href = data.payment_url;
-      return;
     }
 
     throw new Error(data?.error || "No payment URL returned");
@@ -552,53 +529,6 @@ const handlePaymentConfirm = async () => {
     setPaymentProcessing(false);
   }
 };
-      });
-
-      if (error) throw error;
-
-      if (data?.payment_url) {
-    setPendingAcceptProposalId(null);
-setShowPaymentDialog(false);
-window.location.href = data.payment_url;
-return;
-    }
-  };
-
-const handleUpdateProposal = async (
-  proposalId: string,
-  status: "accepted" | "rejected"
-) => {
-  setUpdating(proposalId);
-
-  try {
-    const { error } = await supabase
-      .from("proposals")
-      .update({ status })
-      .eq("id", proposalId);
-
-    if (error) throw error;
-
-    setProposals((prev) =>
-      prev.map((p) => {
-        if (p.id === proposalId) return { ...p, status };
-        return p;
-      })
-    );
-
-    toast.success(
-      status === "accepted" ? t("proposal.accepted") : t("proposal.rejected")
-    );
-  } catch (error) {
-    console.error("Failed to update proposal:", error);
-    toast.error(t("proposal.error"));
-    throw new Error("proposal_update_failed");
-  } finally {
-    setUpdating(null);
-  }
-};
-};
-    }
-  };
 
   if (loading) {
     return (
