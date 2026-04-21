@@ -819,6 +819,12 @@ const TaskDetailPage = () => {
                                 {proposal.avgRating.toFixed(1)} ({proposal.reviewCount})
                               </span>
                             )}
+                            {(proposal.completedOrders ?? 0) > 0 && (
+                              <span className="inline-flex items-center gap-0.5 text-primary font-medium">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {proposal.completedOrders} {t('proposal.completedShort') || 'выполнено'}
+                              </span>
+                            )}
                             <span>{new Date(proposal.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
