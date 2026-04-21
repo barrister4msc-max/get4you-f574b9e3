@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getCachedTranslation, setCachedTranslations, makeKey, isTranslatedCopyUsable } from '@/lib/translationCache';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -192,6 +192,7 @@ const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 const TasksPage = () => {
   const { t, currency, locale } = useLanguage();
   const { user, roles, profile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
   const [filterCity, setFilterCity] = useState('');
@@ -209,7 +210,13 @@ const TasksPage = () => {
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
 
   const isTasker = roles.includes('executor') || roles.includes('tasker');
-  const competencyTerms = useMemo(() => extractCompetencyTerms(isTasker ? profile?.bio : null), [isTasker, profile?.bio]);
+  const competencyTerms = useMemo(() => {
+    if (!isTasker) return [];
+    const skills = (profile as any)?.skills as string[] | null | undefined;
+    const skillTerms = (skills || []).flatMap((s) => extractCompetencyTerms(s));
+    const bioTerms = extractCompetencyTerms(profile?.bio);
+    return Array.from(new Set([...skillTerms, ...bioTerms]));
+  }, [isTasker, profile?.bio, (profile as any)?.skills]);
 
   const requestGeolocation = () => {
     if (!navigator.geolocation) return;
@@ -249,6 +256,32 @@ const TasksPage = () => {
     };
     fetchData();
   }, []);
+
+  // Map URL ?category=<slug|id> → filterCat (UUID)
+  useEffect(() => {
+    const param = searchParams.get('category');
+    if (!param || categories.length === 0) return;
+    // exact id match
+    const byId = categories.find((c) => c.id === param);
+    if (byId) { setFilterCat(byId.id); return; }
+    // slug match against name_en (lowercased, partial)
+    const slug = param.toLowerCase();
+    const slugAliases: Record<string, string[]> = {
+      cleaning: ['cleaning'],
+      moving: ['moving'],
+      repair: ['repairs', 'repair'],
+      digital: ['design', 'tech help', 'digital'],
+      consulting: ['psychology', 'consulting'],
+      delivery: ['delivery'],
+      beauty: ['beauty'],
+      tutoring: ['tutoring'],
+    };
+    const candidates = slugAliases[slug] || [slug];
+    const match = categories.find((c) =>
+      candidates.some((cand) => c.name_en.toLowerCase().includes(cand))
+    );
+    if (match) setFilterCat(match.id);
+  }, [searchParams, categories]);
 
   useEffect(() => {
     if (!user || !isTasker) return;
