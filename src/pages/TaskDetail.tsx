@@ -547,6 +547,25 @@ const handlePaymentConfirm = async () => {
       setShowPaymentDialog(false);
       window.location.href = data.payment_url;
       return;
+    } else {
+      throw new Error(data?.error || "No payment URL returned");
+    }
+  } catch (err: any) {
+    console.error("Payment error:", err);
+    toast.error(err.message || t("payment.error"));
+  } finally {
+    setPaymentProcessing(false);
+  }
+};
+    });
+
+    if (error) throw error;
+
+    if (data?.payment_url) {
+      setPendingAcceptProposalId(null);
+      setShowPaymentDialog(false);
+      window.location.href = data.payment_url;
+      return;
     }
 
     throw new Error(data?.error || "No payment URL returned");
