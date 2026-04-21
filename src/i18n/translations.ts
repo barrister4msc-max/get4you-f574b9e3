@@ -660,9 +660,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     'history.filter.90d': 'Last 90 days',
     'history.taskerHistory': 'Recent completed orders',
     'history.viewMore': 'View all',
-    'escrow.status.held': 'Held',
-    'escrow.status.released': 'Released',
-    'escrow.status.refunded': 'Refunded',
   },
   ru: {
     'nav.home': 'Главная',
@@ -1298,9 +1295,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     'history.filter.90d': 'Последние 90 дней',
     'history.taskerHistory': 'Недавние выполненные заказы',
     'history.viewMore': 'Смотреть все',
-    'escrow.status.held': 'В депозите',
-    'escrow.status.released': 'Выплачено',
-    'escrow.status.refunded': 'Возвращено',
   },
   he: {
     'nav.home': 'ראשי',
@@ -1936,9 +1930,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     'history.filter.90d': '90 ימים אחרונים',
     'history.taskerHistory': 'הזמנות אחרונות שהושלמו',
     'history.viewMore': 'הצג הכל',
-    'escrow.status.held': 'מוחזק בנאמנות',
-    'escrow.status.released': 'שוחרר',
-    'escrow.status.refunded': 'הוחזר',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -2574,8 +2565,5 @@ export const translations: Record<Locale, Record<string, string>> = {
     'history.filter.90d': 'آخر 90 يوم',
     'history.taskerHistory': 'طلبات مكتملة حديثة',
     'history.viewMore': 'عرض الكل',
-    'escrow.status.held': 'محجوز',
-    'escrow.status.released': 'تم الدفع',
-    'escrow.status.refunded': 'تم الاسترداد',
   },
 };
