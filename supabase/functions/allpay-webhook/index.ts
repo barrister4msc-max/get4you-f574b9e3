@@ -234,6 +234,11 @@ Deno.serve(async (req) => {
     if (paid) nextOrderStatus = "paid";
     else if (failed) nextOrderStatus = "failed";
     else nextOrderStatus = order.status || "pending";
+    const providerStatus =
+      String(payload.status || payload.payment_status || payload.pay_status || nextOrderStatus || "").trim() || null;
+
+    const providerPaymentId =
+      String(payload.payment_id || payload.transaction_id || payload.txn_id || "").trim() || null;
 
     // save raw payload either way
     const { error: updateOrderError } = await serviceClient
@@ -241,6 +246,10 @@ Deno.serve(async (req) => {
       .update({
         status: nextOrderStatus,
         allpay_response: payload,
+        provider: "allpay",
+        provider_order_id: incomingOrderId,
+        provider_status: providerStatus,
+        provider_payment_id: providerPaymentId,
       })
       .eq("id", order.id);
 
