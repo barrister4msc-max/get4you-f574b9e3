@@ -105,12 +105,18 @@ export default function Messages() {
     setSending(true);
     const content = draft.trim();
     setDraft('');
-    const { error } = await supabase.from('direct_messages').insert({
-      sender_id: user.id, recipient_id: selectedId, content,
-    });
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .insert({ sender_id: user.id, recipient_id: selectedId, content })
+      .select('id, sender_id, recipient_id, content, created_at')
+      .single();
     if (error) {
-      toast.error(t('chat.sendError') || 'Send failed');
+      console.error('DM send error:', error);
+      toast.error(`${t('chat.sendError') || 'Send failed'}: ${error.message}`);
       setDraft(content);
+    } else if (data) {
+      // Optimistic local append in case realtime delivery is delayed
+      setMessages((prev) => prev.some((x) => x.id === data.id) ? prev : [...prev, data as DM]);
     }
     setSending(false);
   };
