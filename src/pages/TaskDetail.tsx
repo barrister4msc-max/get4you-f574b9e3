@@ -500,10 +500,24 @@ const TaskDetailPage = () => {
     }
   };
 
-  // When accepting, show payment dialog first
-  const handleAcceptClick = (proposalId: string) => {
-    setPendingAcceptProposalId(proposalId);
-    setShowPaymentDialog(true);
+  /const handleAcceptClick = (proposalId: string) => {
+  const proposal = proposals.find(p => p.id === proposalId);
+
+  if (!proposal) return;
+
+  // ✅ защита на фронте
+  const canPay =
+    (proposal.status === "pending" || proposal.status === "accepted") &&
+    task?.status === "open";
+
+  if (!canPay) {
+    toast.error("Нельзя оплатить этот отклик");
+    return;
+  }
+
+  setPendingAcceptProposalId(proposalId);
+  setShowPaymentDialog(true);
+};
   };
 
   const handlePaymentConfirm = async () => {
