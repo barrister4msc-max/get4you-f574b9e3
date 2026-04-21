@@ -151,6 +151,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'Rejected',
     'proposal.count': 'proposals',
     'proposal.none': 'No proposals yet',
+    'proposal.completedShort': 'completed',
 
     // Auth
     'auth.login': 'Log In',
@@ -786,6 +787,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'Отклонено',
     'proposal.count': 'предложений',
     'proposal.none': 'Пока нет предложений',
+    'proposal.completedShort': 'выполнено',
 
     'auth.login': 'Войти',
     'auth.signup': 'Регистрация',
@@ -1404,6 +1406,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'נדחה',
     'proposal.count': 'הצעות',
     'proposal.none': 'אין הצעות עדיין',
+    'proposal.completedShort': 'הושלמו',
 
     'auth.login': 'התחברות',
     'auth.signup': 'הרשמה',
@@ -2022,6 +2025,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'مرفوض',
     'proposal.count': 'عروض',
     'proposal.none': 'لا توجد عروض بعد',
+    'proposal.completedShort': 'مكتمل',
 
     'auth.login': 'تسجيل الدخول',
     'auth.signup': 'إنشاء حساب',
