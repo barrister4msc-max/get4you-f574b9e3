@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations, makeKey } from '@/lib/translationCache';
 import {
   User, Search, ClipboardList, DollarSign, Briefcase, Star, Plus, ArrowRight,
-  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare, ShoppingCart,
+  Wallet, ArrowDownToLine, Clock, CheckCircle2, MessageSquare, ShoppingCart, History,
 } from 'lucide-react';
 import { NearbyOrders } from '@/components/NearbyOrders';
 import { Link, useNavigate } from 'react-router-dom';
@@ -549,6 +549,14 @@ const DashboardPage = () => {
                 <ArrowDownToLine className="w-4 h-4" />
                 {t('balance.withdraw')} → {t('balance.withdraw.bank')}
               </button>
+              <Link
+                to="/dashboard/history"
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-colors text-sm"
+                data-testid="open-order-history"
+              >
+                <History className="w-4 h-4" />
+                {t('history.openFull')}
+              </Link>
             </div>
 
             {/* Transaction History */}

@@ -14,6 +14,35 @@ import {
   Pencil, Save, X,
 } from 'lucide-react';
 
+function TaskerRecentHistory({ taskerId }: { taskerId: string }) {
+  const [items, setItems] = useState<Array<{ task_title: string | null; released_at: string | null }>>([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc('get_tasker_public_history' as never, {
+        _tasker_id: taskerId, _limit: 5,
+      } as never);
+      if (cancelled) return;
+      setItems((data as any[]) || []);
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [taskerId]);
+  if (!loaded) return <p className="text-xs text-muted-foreground mt-2">…</p>;
+  if (items.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1 text-xs text-muted-foreground bg-muted/40 rounded-lg p-2">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-center justify-between gap-2">
+          <span className="truncate">✓ {it.task_title || '—'}</span>
+          {it.released_at && <span className="text-[10px] shrink-0">{new Date(it.released_at).toLocaleDateString()}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 interface Proposal {
   id: string;
   user_id: string;
@@ -840,6 +869,16 @@ const TaskDetailPage = () => {
                     {/* Expanded tasker info for task owner */}
                     {isOwner && proposal.profile?.bio && (
                       <p className="text-xs text-muted-foreground mt-2 bg-muted/50 rounded-lg p-2">{proposal.profile.bio}</p>
+                    )}
+
+                    {/* Tasker recent completed orders for task owner */}
+                    {isOwner && (proposal.completedOrders ?? 0) > 0 && (
+                      <details className="mt-2 group" data-testid={`tasker-history-${proposal.id}`}>
+                        <summary className="cursor-pointer text-xs font-medium text-primary hover:underline">
+                          {t('history.taskerHistory')} ({proposal.completedOrders})
+                        </summary>
+                        <TaskerRecentHistory taskerId={proposal.user_id} />
+                      </details>
                     )}
 
                     {/* Editable proposal for own pending proposals */}

@@ -1805,6 +1805,68 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_recommended_tasks: {
+        Args: {
+          _radius_km?: number
+          _result_limit?: number
+          _user_id: string
+          _user_lat?: number
+          _user_lng?: number
+        }
+        Returns: {
+          budget_fixed: number
+          budget_max: number
+          budget_min: number
+          category_id: string
+          category_name_en: string
+          category_name_he: string
+          category_name_ru: string
+          city: string
+          created_at: string
+          currency: string
+          description: string
+          distance_km: number
+          id: string
+          is_urgent: boolean
+          latitude: number
+          longitude: number
+          photos: string[]
+          score: number
+          status: Database["public"]["Enums"]["task_status"]
+          task_type: Database["public"]["Enums"]["task_type"]
+          title: string
+          user_id: string
+        }[]
+      }
+      get_tasker_order_history: {
+        Args: { _user_id: string }
+        Returns: {
+          amount: number
+          client_id: string
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          currency: string
+          escrow_id: string
+          held_at: string
+          net_amount: number
+          refunded_at: string
+          released_at: string
+          status: string
+          task_id: string
+          task_title: string
+        }[]
+      }
+      get_tasker_public_history: {
+        Args: { _limit?: number; _tasker_id: string }
+        Returns: {
+          category_name_en: string
+          category_name_he: string
+          category_name_ru: string
+          released_at: string
+          task_title: string
+        }[]
+      }
       get_tasks_for_tasker: {
         Args: {
           category_filter?: string

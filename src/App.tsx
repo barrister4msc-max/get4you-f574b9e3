@@ -37,6 +37,7 @@ import PaymentCancel from "./pages/PaymentCancel";
 import OrderChat from "./pages/OrderChat";
 import Settings from "./pages/Settings";
 import Messages from "./pages/Messages";
+import OrderHistory from "./pages/OrderHistory";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -77,6 +78,7 @@ const App = () => (
                 <Route path="/signup" element={<Login />} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/dashboard/history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
                 <Route path="/chat/:taskId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/order-chat/:orderId" element={<ProtectedRoute><OrderChat /></ProtectedRoute>} />
                 <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
