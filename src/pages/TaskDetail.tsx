@@ -842,6 +842,16 @@ const TaskDetailPage = () => {
                       <p className="text-xs text-muted-foreground mt-2 bg-muted/50 rounded-lg p-2">{proposal.profile.bio}</p>
                     )}
 
+                    {/* Tasker recent completed orders for task owner */}
+                    {isOwner && (proposal.completedOrders ?? 0) > 0 && (
+                      <details className="mt-2 group" data-testid={`tasker-history-${proposal.id}`}>
+                        <summary className="cursor-pointer text-xs font-medium text-primary hover:underline">
+                          {t('history.taskerHistory')} ({proposal.completedOrders})
+                        </summary>
+                        <TaskerRecentHistory taskerId={proposal.user_id} />
+                      </details>
+                    )}
+
                     {/* Editable proposal for own pending proposals */}
                     {editingProposalId === proposal.id ? (
                       <div className="mt-2 space-y-2">
