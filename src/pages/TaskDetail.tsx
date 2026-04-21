@@ -377,6 +377,38 @@ const TaskDetailPage = () => {
     setEditProposalComment(proposal.comment || '');
   };
 
+  const handleSubmitProposal = async () => {
+    if (!id || !user || !price) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('proposals').insert({
+        task_id: id,
+        user_id: user.id,
+        price: Number(price),
+        comment: comment.trim() || null,
+        currency: task?.currency || currency || 'ILS',
+        status: 'pending',
+      });
+      if (error) throw error;
+      toast.success(t('proposal.submitted'));
+      setShowForm(false);
+      setPrice('');
+      setComment('');
+      // Reload proposals
+      const { data } = await supabase
+        .from('proposals')
+        .select('*')
+        .eq('task_id', id)
+        .order('created_at', { ascending: false });
+      if (data) setProposals(data as any);
+    } catch (err: any) {
+      console.error('submit proposal error:', err);
+      toast.error(t('proposal.error'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
 
   const handleSaveProposalEdit = async () => {
