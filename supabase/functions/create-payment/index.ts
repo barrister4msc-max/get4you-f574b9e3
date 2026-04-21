@@ -190,7 +190,52 @@ Deno.serve(async (req) => {
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
 
     const safeItemName = task.title ? `Task: ${task.title}` : `Task payment #${task.id}`;
+    // ======================================================
+    // BLOCK DUPLICATE ORDERS
+    // ======================================================
+    const { data: existingPaidOrder } = await serviceClient
+      .from("orders")
+      .select("id, status, allpay_order_id")
+      .eq("task_id", task.id)
+      .eq("proposal_id", proposal.id)
+      .eq("status", "paid")
+      .maybeSingle();
 
+    if (existingPaidOrder) {
+      return new Response(
+        JSON.stringify({
+          error: "This proposal has already been paid",
+          order_id: existingPaidOrder.id,
+        }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const { data: existingPendingOrder } = await serviceClient
+      .from("orders")
+      .select("id, status, payment_url, allpay_order_id")
+      .eq("task_id", task.id)
+      .eq("proposal_id", proposal.id)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (existingPendingOrder?.payment_url) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          order_id: existingPendingOrder.allpay_order_id || existingPendingOrder.id,
+          payment_url: existingPendingOrder.payment_url,
+          reused: true,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
     // ======================================================
     // 6. LOAD ALLPAY CREDENTIALS
     // ======================================================

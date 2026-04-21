@@ -476,9 +476,9 @@ const TaskDetailPage = () => {
   }
 };
   };
-
 const handleAcceptClick = (proposalId: string) => {
   const proposal = proposals.find((p) => p.id === proposalId);
+
   if (!proposal) return;
 
   const canPay =
@@ -494,20 +494,10 @@ const handleAcceptClick = (proposalId: string) => {
   setShowPaymentDialog(true);
 };
 
-  const canPay =
-    (proposal.status === "pending" || proposal.status === "accepted") &&
-    task?.status === "open";
-
-  if (!canPay) {
-    toast.error("Нельзя оплатить этот отклик");
-    return;
-  }
-
-  setPendingAcceptProposalId(proposalId);
-  setShowPaymentDialog(true);
-};
-  };
 const handlePaymentConfirm = async () => {
+  ...
+};
+
   if (!pendingAcceptProposalId || !id) return;
 
   setPaymentProcessing(true);
