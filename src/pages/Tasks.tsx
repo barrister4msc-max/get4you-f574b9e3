@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getCachedTranslation, setCachedTranslations, makeKey, isTranslatedCopyUsable } from '@/lib/translationCache';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -86,8 +86,16 @@ function extractCompetencyTerms(value: string | null | undefined): string[] {
   return Array.from(new Set([...phrases, ...words]));
 }
 
-function getTaskRecommendationScore(task: TaskRow, competencyTerms: string[]): number {
-  if (competencyTerms.length === 0) return 0;
+function getTaskRecommendationScore(
+  task: TaskRow,
+  competencyTerms: string[],
+  preferredCategoryIds?: Set<string>,
+): number {
+  let score = 0;
+  if (preferredCategoryIds && task.category_id && preferredCategoryIds.has(task.category_id)) {
+    score += 10; // strong boost for matching categories
+  }
+  if (competencyTerms.length === 0) return score;
 
   const searchableText = normalizeSearchText([
     task.title,
@@ -101,12 +109,12 @@ function getTaskRecommendationScore(task: TaskRow, competencyTerms: string[]): n
 
   const searchableWords = new Set(searchableText.split(' '));
 
-  return competencyTerms.reduce((score, term) => {
-    if (term.includes(' ') && searchableText.includes(term)) return score + 4;
-    if (searchableWords.has(term)) return score + 2;
-    if (searchableText.includes(term)) return score + 1;
-    return score;
-  }, 0);
+  return competencyTerms.reduce((acc, term) => {
+    if (term.includes(' ') && searchableText.includes(term)) return acc + 4;
+    if (searchableWords.has(term)) return acc + 2;
+    if (searchableText.includes(term)) return acc + 1;
+    return acc;
+  }, score);
 }
 
 const TaskCard = ({ task, i, currency, t, getCategoryName, showStatus, distanceKm, displayTitle, displayDescription }: any) => {
@@ -192,6 +200,7 @@ const RADIUS_OPTIONS = [5, 10, 25, 50, 100];
 const TasksPage = () => {
   const { t, currency, locale } = useLanguage();
   const { user, roles, profile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
   const [filterCity, setFilterCity] = useState('');
@@ -209,7 +218,35 @@ const TasksPage = () => {
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
 
   const isTasker = roles.includes('executor') || roles.includes('tasker');
-  const competencyTerms = useMemo(() => extractCompetencyTerms(isTasker ? profile?.bio : null), [isTasker, profile?.bio]);
+  const competencyTerms = useMemo(() => {
+    if (!isTasker) return [];
+    const skills = (profile as any)?.skills as string[] | null | undefined;
+    const skillTerms = (skills || []).flatMap((s) => extractCompetencyTerms(s));
+    const bioTerms = extractCompetencyTerms(profile?.bio);
+    return Array.from(new Set([...skillTerms, ...bioTerms]));
+  }, [isTasker, profile?.bio, (profile as any)?.skills]);
+  const [preferredCategoryIds, setPreferredCategoryIds] = useState<Set<string>>(new Set());
+
+  // Build the tasker's preferred categories from history (assigned + proposed tasks)
+  useEffect(() => {
+    if (!user || !isTasker) { setPreferredCategoryIds(new Set()); return; }
+    let cancelled = false;
+    (async () => {
+      const [assignedRes, proposalsRes] = await Promise.all([
+        supabase.from('tasks').select('category_id').eq('assigned_to', user.id),
+        supabase.from('proposals').select('task_id').eq('user_id', user.id),
+      ]);
+      const ids = new Set<string>();
+      (assignedRes.data || []).forEach((r: any) => r.category_id && ids.add(r.category_id));
+      const taskIds = (proposalsRes.data || []).map((r: any) => r.task_id);
+      if (taskIds.length) {
+        const { data: catTasks } = await supabase.from('tasks').select('category_id').in('id', taskIds);
+        (catTasks || []).forEach((r: any) => r.category_id && ids.add(r.category_id));
+      }
+      if (!cancelled) setPreferredCategoryIds(ids);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isTasker]);
 
   const requestGeolocation = () => {
     if (!navigator.geolocation) return;
@@ -249,6 +286,32 @@ const TasksPage = () => {
     };
     fetchData();
   }, []);
+
+  // Map URL ?category=<slug|id> → filterCat (UUID)
+  useEffect(() => {
+    const param = searchParams.get('category');
+    if (!param || categories.length === 0) return;
+    // exact id match
+    const byId = categories.find((c) => c.id === param);
+    if (byId) { setFilterCat(byId.id); return; }
+    // slug match against name_en (lowercased, partial)
+    const slug = param.toLowerCase();
+    const slugAliases: Record<string, string[]> = {
+      cleaning: ['cleaning'],
+      moving: ['moving'],
+      repair: ['repairs', 'repair'],
+      digital: ['design', 'tech help', 'digital'],
+      consulting: ['psychology', 'consulting'],
+      delivery: ['delivery'],
+      beauty: ['beauty'],
+      tutoring: ['tutoring'],
+    };
+    const candidates = slugAliases[slug] || [slug];
+    const match = categories.find((c) =>
+      candidates.some((cand) => c.name_en.toLowerCase().includes(cand))
+    );
+    if (match) setFilterCat(match.id);
+  }, [searchParams, categories]);
 
   useEffect(() => {
     if (!user || !isTasker) return;
@@ -397,7 +460,9 @@ const TasksPage = () => {
   });
 
   const sortedFiltered = [...filtered].sort((a, b) => {
-    const scoreDifference = getTaskRecommendationScore(b, competencyTerms) - getTaskRecommendationScore(a, competencyTerms);
+    const scoreDifference =
+      getTaskRecommendationScore(b, competencyTerms, preferredCategoryIds) -
+      getTaskRecommendationScore(a, competencyTerms, preferredCategoryIds);
     if (scoreDifference !== 0) return scoreDifference;
 
     const urgentDifference = Number(Boolean(b.is_urgent)) - Number(Boolean(a.is_urgent));

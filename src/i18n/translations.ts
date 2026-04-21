@@ -151,6 +151,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'Rejected',
     'proposal.count': 'proposals',
     'proposal.none': 'No proposals yet',
+    'proposal.completedShort': 'completed',
 
     // Auth
     'auth.login': 'Log In',
@@ -608,6 +609,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.performer': 'Performer',
     'admin.status': 'Status',
     'admin.price': 'Price',
+    'admin.commission': 'Commission',
     'admin.date': 'Date',
     'admin.actions': 'Actions',
     'admin.noOrders': 'No orders',
@@ -785,6 +787,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'Отклонено',
     'proposal.count': 'предложений',
     'proposal.none': 'Пока нет предложений',
+    'proposal.completedShort': 'выполнено',
 
     'auth.login': 'Войти',
     'auth.signup': 'Регистрация',
@@ -1225,6 +1228,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.performer': 'Исполнитель',
     'admin.status': 'Статус',
     'admin.price': 'Цена',
+    'admin.commission': 'Комиссия',
     'admin.date': 'Дата',
     'admin.actions': 'Действия',
     'admin.noOrders': 'Нет заказов',
@@ -1402,6 +1406,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'נדחה',
     'proposal.count': 'הצעות',
     'proposal.none': 'אין הצעות עדיין',
+    'proposal.completedShort': 'הושלמו',
 
     'auth.login': 'התחברות',
     'auth.signup': 'הרשמה',
@@ -1842,6 +1847,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.performer': 'נותן שירות',
     'admin.status': 'סטטוס',
     'admin.price': 'מחיר',
+    'admin.commission': 'עמלה',
     'admin.date': 'תאריך',
     'admin.actions': 'פעולות',
     'admin.noOrders': 'אין הזמנות',
@@ -2019,6 +2025,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.status.rejected': 'مرفوض',
     'proposal.count': 'عروض',
     'proposal.none': 'لا توجد عروض بعد',
+    'proposal.completedShort': 'مكتمل',
 
     'auth.login': 'تسجيل الدخول',
     'auth.signup': 'إنشاء حساب',
@@ -2459,6 +2466,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'admin.performer': 'مقدم الخدمة',
     'admin.status': 'الحالة',
     'admin.price': 'السعر',
+    'admin.commission': 'العمولة',
     'admin.date': 'التاريخ',
     'admin.actions': 'الإجراءات',
     'admin.noOrders': 'لا توجد طلبات',

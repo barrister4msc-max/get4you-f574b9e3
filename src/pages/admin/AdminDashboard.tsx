@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     { title: t('admin.totalOrders'), value: stats.tasks, icon: ClipboardList, color: 'text-primary', link: '/admin/orders' },
     { title: t('admin.newToday'), value: stats.todayTasks, icon: ClipboardList, color: 'text-accent-foreground', link: '/admin/orders' },
     { title: t('admin.taskersCount'), value: stats.activeTaskers, icon: Wrench, color: 'text-primary', link: '/admin/taskers' },
-    { title: t('admin.revenue'), value: `₪ ${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-primary', link: '/admin/orders' },
+    { title: t('admin.revenue'), value: `₪ ${stats.revenue.toLocaleString()}`, icon: DollarSign, color: 'text-primary', link: '/admin/orders?status=completed' },
   ];
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
