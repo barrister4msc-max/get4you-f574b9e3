@@ -317,6 +317,89 @@ export type Database = {
         }
         Relationships: []
       }
+      disputes: {
+        Row: {
+          against_user: string | null
+          assignment_id: string
+          created_at: string
+          details: string | null
+          escrow_id: string | null
+          id: string
+          opened_by: string
+          reason: string
+          resolution_note: string | null
+          resolution_type: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          against_user?: string | null
+          assignment_id: string
+          created_at?: string
+          details?: string | null
+          escrow_id?: string | null
+          id?: string
+          opened_by: string
+          reason: string
+          resolution_note?: string | null
+          resolution_type?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          against_user?: string | null
+          assignment_id?: string
+          created_at?: string
+          details?: string | null
+          escrow_id?: string | null
+          id?: string
+          opened_by?: string
+          reason?: string
+          resolution_note?: string | null
+          resolution_type?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -470,16 +553,25 @@ export type Database = {
       escrow_transactions: {
         Row: {
           amount: number
+          assignment_id: string | null
           client_id: string
           commission_amount: number
           commission_rate: number
           created_at: string
           currency: string
           held_at: string
+          hold_mode: string
           id: string
           net_amount: number
+          payment_confirmed_at: string | null
           proposal_id: string
+          provider: string
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          provider_status: string | null
+          refund_mode: string | null
           refunded_at: string | null
+          release_mode: string | null
           released_at: string | null
           status: string
           task_id: string
@@ -488,16 +580,25 @@ export type Database = {
         }
         Insert: {
           amount: number
+          assignment_id?: string | null
           client_id: string
           commission_amount?: number
           commission_rate?: number
           created_at?: string
           currency?: string
           held_at?: string
+          hold_mode?: string
           id?: string
           net_amount?: number
+          payment_confirmed_at?: string | null
           proposal_id: string
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          provider_status?: string | null
+          refund_mode?: string | null
           refunded_at?: string | null
+          release_mode?: string | null
           released_at?: string | null
           status?: string
           task_id: string
@@ -506,16 +607,25 @@ export type Database = {
         }
         Update: {
           amount?: number
+          assignment_id?: string | null
           client_id?: string
           commission_amount?: number
           commission_rate?: number
           created_at?: string
           currency?: string
           held_at?: string
+          hold_mode?: string
           id?: string
           net_amount?: number
+          payment_confirmed_at?: string | null
           proposal_id?: string
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          provider_status?: string | null
+          refund_mode?: string | null
           refunded_at?: string | null
+          release_mode?: string | null
           released_at?: string | null
           status?: string
           task_id?: string
@@ -523,6 +633,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "escrow_transactions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "escrow_transactions_proposal_id_fkey"
             columns: ["proposal_id"]
@@ -770,6 +887,7 @@ export type Database = {
           allpay_order_id: string
           allpay_response: Json | null
           amount: number
+          assignment_id: string | null
           created_at: string
           currency: string
           description: string | null
@@ -779,6 +897,10 @@ export type Database = {
           payment_url: string | null
           price: number | null
           proposal_id: string | null
+          provider: string | null
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          provider_status: string | null
           status: string
           task_id: string | null
           title: string | null
@@ -789,6 +911,7 @@ export type Database = {
           allpay_order_id: string
           allpay_response?: Json | null
           amount: number
+          assignment_id?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -798,6 +921,10 @@ export type Database = {
           payment_url?: string | null
           price?: number | null
           proposal_id?: string | null
+          provider?: string | null
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          provider_status?: string | null
           status?: string
           task_id?: string | null
           title?: string | null
@@ -808,6 +935,7 @@ export type Database = {
           allpay_order_id?: string
           allpay_response?: Json | null
           amount?: number
+          assignment_id?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -817,6 +945,10 @@ export type Database = {
           payment_url?: string | null
           price?: number | null
           proposal_id?: string | null
+          provider?: string | null
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          provider_status?: string | null
           status?: string
           task_id?: string | null
           title?: string | null
@@ -824,6 +956,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_proposal_id_fkey"
             columns: ["proposal_id"]
@@ -850,6 +989,7 @@ export type Database = {
       payouts: {
         Row: {
           amount: number
+          assignment_id: string | null
           commission: number
           created_at: string
           currency: string
@@ -863,6 +1003,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          assignment_id?: string | null
           commission?: number
           created_at?: string
           currency?: string
@@ -876,6 +1017,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          assignment_id?: string | null
           commission?: number
           created_at?: string
           currency?: string
@@ -888,6 +1030,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payouts_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payouts_escrow_id_fkey"
             columns: ["escrow_id"]
@@ -1177,6 +1326,100 @@ export type Database = {
           reason?: string
         }
         Relationships: []
+      }
+      task_assignments: {
+        Row: {
+          agreed_price: number
+          cancelled_at: string | null
+          client_id: string
+          commission_amount: number
+          commission_rate: number
+          completed_at: string | null
+          completion_requested_at: string | null
+          created_at: string
+          currency: string
+          disputed_at: string | null
+          funded_at: string | null
+          id: string
+          net_amount: number
+          proposal_id: string
+          resolved_at: string | null
+          selected_at: string
+          started_at: string | null
+          status: string
+          task_id: string
+          tasker_id: string
+          updated_at: string
+        }
+        Insert: {
+          agreed_price: number
+          cancelled_at?: string | null
+          client_id: string
+          commission_amount?: number
+          commission_rate?: number
+          completed_at?: string | null
+          completion_requested_at?: string | null
+          created_at?: string
+          currency?: string
+          disputed_at?: string | null
+          funded_at?: string | null
+          id?: string
+          net_amount?: number
+          proposal_id: string
+          resolved_at?: string | null
+          selected_at?: string
+          started_at?: string | null
+          status?: string
+          task_id: string
+          tasker_id: string
+          updated_at?: string
+        }
+        Update: {
+          agreed_price?: number
+          cancelled_at?: string | null
+          client_id?: string
+          commission_amount?: number
+          commission_rate?: number
+          completed_at?: string | null
+          completion_requested_at?: string | null
+          created_at?: string
+          currency?: string
+          disputed_at?: string | null
+          funded_at?: string | null
+          id?: string
+          net_amount?: number
+          proposal_id?: string
+          resolved_at?: string | null
+          selected_at?: string
+          started_at?: string | null
+          status?: string
+          task_id?: string
+          tasker_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignments_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_assignments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_assignments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -1592,6 +1835,14 @@ export type Database = {
             }
             Returns: string
           }
+      admin_resolve_dispute_refund: {
+        Args: { p_dispute_id: string }
+        Returns: undefined
+      }
+      admin_resolve_dispute_release: {
+        Args: { p_dispute_id: string }
+        Returns: undefined
+      }
       auto_complete_stale_tasks: { Args: never; Returns: number }
       check_ai_rate_limit: {
         Args: {
@@ -1602,6 +1853,10 @@ export type Database = {
         Returns: boolean
       }
       complete_task: { Args: { _task_id: string }; Returns: undefined }
+      create_order_for_assignment: {
+        Args: { p_assignment_id: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1908,11 +2163,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { p_user_id: string }; Returns: boolean }
       is_admin_or_superadmin: { Args: { _user_id: string }; Returns: boolean }
       is_order_participant: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
       }
+      is_super_admin: { Args: { p_user_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       is_task_participant: {
         Args: { _task_id: string; _user_id: string }
@@ -1921,6 +2178,10 @@ export type Database = {
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
       is_valid_languages: { Args: { langs: string[] }; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_assignment_funded: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1940,6 +2201,10 @@ export type Database = {
           id: string
           rating: number
         }[]
+      }
+      open_dispute: {
+        Args: { p_assignment_id: string; p_details?: string; p_reason: string }
+        Returns: string
       }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -1989,6 +2254,11 @@ export type Database = {
           read_ct: number
         }[]
       }
+      release_escrow: { Args: { p_assignment_id: string }; Returns: undefined }
+      request_completion: {
+        Args: { p_assignment_id: string }
+        Returns: undefined
+      }
       search_nearby: {
         Args: { lat: number; lng: number; radius_meters: number }
         Returns: {
@@ -1996,6 +2266,7 @@ export type Database = {
           id: number
         }[]
       }
+      select_proposal: { Args: { p_proposal_id: string }; Returns: string }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -2591,7 +2862,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "client" | "executor" | "admin" | "superadmin"
+      app_role: "client" | "executor" | "admin" | "superadmin" | "super_admin"
       proposal_status: "pending" | "accepted" | "rejected"
       task_status:
         | "draft"
@@ -2736,7 +3007,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "executor", "admin", "superadmin"],
+      app_role: ["client", "executor", "admin", "superadmin", "super_admin"],
       proposal_status: ["pending", "accepted", "rejected"],
       task_status: [
         "draft",
