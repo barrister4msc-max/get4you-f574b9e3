@@ -86,8 +86,16 @@ function extractCompetencyTerms(value: string | null | undefined): string[] {
   return Array.from(new Set([...phrases, ...words]));
 }
 
-function getTaskRecommendationScore(task: TaskRow, competencyTerms: string[]): number {
-  if (competencyTerms.length === 0) return 0;
+function getTaskRecommendationScore(
+  task: TaskRow,
+  competencyTerms: string[],
+  preferredCategoryIds?: Set<string>,
+): number {
+  let score = 0;
+  if (preferredCategoryIds && task.category_id && preferredCategoryIds.has(task.category_id)) {
+    score += 10; // strong boost for matching categories
+  }
+  if (competencyTerms.length === 0) return score;
 
   const searchableText = normalizeSearchText([
     task.title,
@@ -101,12 +109,12 @@ function getTaskRecommendationScore(task: TaskRow, competencyTerms: string[]): n
 
   const searchableWords = new Set(searchableText.split(' '));
 
-  return competencyTerms.reduce((score, term) => {
+  return competencyTerms.reduce((acc, term) => {
     if (term.includes(' ') && searchableText.includes(term)) return score + 4;
     if (searchableWords.has(term)) return score + 2;
     if (searchableText.includes(term)) return score + 1;
-    return score;
-  }, 0);
+    return acc;
+  }, score);
 }
 
 const TaskCard = ({ task, i, currency, t, getCategoryName, showStatus, distanceKm, displayTitle, displayDescription }: any) => {
