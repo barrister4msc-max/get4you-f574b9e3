@@ -472,8 +472,6 @@ const handleUpdateProposal = async (
     setUpdating(null);
   }
 };
-};
-  };
 const handleAcceptClick = (proposalId: string) => {
   const proposal = proposals.find((p) => p.id === proposalId);
 
