@@ -7,5 +7,8 @@ import '@fontsource/plus-jakarta-sans/700.css';
 import '@fontsource/plus-jakarta-sans/800.css';
 import App from "./App.tsx";
 import "./index.css";
+import { installRequestLogger } from "./lib/requestLogger";
+
+installRequestLogger();
 
 createRoot(document.getElementById("root")!).render(<App />);
