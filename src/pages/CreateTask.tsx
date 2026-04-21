@@ -265,7 +265,12 @@ const CreateTaskPage = () => {
       navigate('/tasks');
     } catch (err: unknown) {
       console.error('Submit error:', err);
-      toast.error(t('task.publish.error') || 'Failed to publish task');
+      const message = err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+          ? (err as { message: string }).message
+          : null;
+      toast.error(message || t('task.publish.error') || 'Failed to publish task');
     } finally {
       setSubmitting(false);
     }
