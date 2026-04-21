@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { AdminRequestsDebug } from './AdminRequestsDebug';
 
 export const AdminLayout = () => {
   const { user, roles, loading } = useAuth();
@@ -73,6 +74,7 @@ export const AdminLayout = () => {
       <main className="flex-1 p-6 overflow-auto bg-background">
         <Outlet />
       </main>
+      <AdminRequestsDebug />
     </div>
   );
 };
