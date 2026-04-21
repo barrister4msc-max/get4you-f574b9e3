@@ -549,6 +549,14 @@ const DashboardPage = () => {
                 <ArrowDownToLine className="w-4 h-4" />
                 {t('balance.withdraw')} → {t('balance.withdraw.bank')}
               </button>
+              <Link
+                to="/dashboard/history"
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold border border-border text-foreground hover:bg-secondary transition-colors text-sm"
+                data-testid="open-order-history"
+              >
+                <History className="w-4 h-4" />
+                {t('history.openFull')}
+              </Link>
             </div>
 
             {/* Transaction History */}
