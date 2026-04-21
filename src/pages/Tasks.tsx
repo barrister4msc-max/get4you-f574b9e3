@@ -110,9 +110,9 @@ function getTaskRecommendationScore(
   const searchableWords = new Set(searchableText.split(' '));
 
   return competencyTerms.reduce((acc, term) => {
-    if (term.includes(' ') && searchableText.includes(term)) return score + 4;
-    if (searchableWords.has(term)) return score + 2;
-    if (searchableText.includes(term)) return score + 1;
+    if (term.includes(' ') && searchableText.includes(term)) return acc + 4;
+    if (searchableWords.has(term)) return acc + 2;
+    if (searchableText.includes(term)) return acc + 1;
     return acc;
   }, score);
 }
@@ -225,6 +225,28 @@ const TasksPage = () => {
     const bioTerms = extractCompetencyTerms(profile?.bio);
     return Array.from(new Set([...skillTerms, ...bioTerms]));
   }, [isTasker, profile?.bio, (profile as any)?.skills]);
+  const [preferredCategoryIds, setPreferredCategoryIds] = useState<Set<string>>(new Set());
+
+  // Build the tasker's preferred categories from history (assigned + proposed tasks)
+  useEffect(() => {
+    if (!user || !isTasker) { setPreferredCategoryIds(new Set()); return; }
+    let cancelled = false;
+    (async () => {
+      const [assignedRes, proposalsRes] = await Promise.all([
+        supabase.from('tasks').select('category_id').eq('assigned_to', user.id),
+        supabase.from('proposals').select('task_id').eq('user_id', user.id),
+      ]);
+      const ids = new Set<string>();
+      (assignedRes.data || []).forEach((r: any) => r.category_id && ids.add(r.category_id));
+      const taskIds = (proposalsRes.data || []).map((r: any) => r.task_id);
+      if (taskIds.length) {
+        const { data: catTasks } = await supabase.from('tasks').select('category_id').in('id', taskIds);
+        (catTasks || []).forEach((r: any) => r.category_id && ids.add(r.category_id));
+      }
+      if (!cancelled) setPreferredCategoryIds(ids);
+    })();
+    return () => { cancelled = true; };
+  }, [user, isTasker]);
 
   const requestGeolocation = () => {
     if (!navigator.geolocation) return;
@@ -438,7 +460,9 @@ const TasksPage = () => {
   });
 
   const sortedFiltered = [...filtered].sort((a, b) => {
-    const scoreDifference = getTaskRecommendationScore(b, competencyTerms) - getTaskRecommendationScore(a, competencyTerms);
+    const scoreDifference =
+      getTaskRecommendationScore(b, competencyTerms, preferredCategoryIds) -
+      getTaskRecommendationScore(a, competencyTerms, preferredCategoryIds);
     if (scoreDifference !== 0) return scoreDifference;
 
     const urgentDifference = Number(Boolean(b.is_urgent)) - Number(Boolean(a.is_urgent));
