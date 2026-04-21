@@ -266,6 +266,25 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
+    } // ======================================================
+    // 4.1 CLEANUP DUPLICATE PENDING ORDERS
+    // Cancel old pending orders for same task/proposal
+    // now that this order is confirmed paid
+    // ======================================================
+    const { error: cancelDuplicateOrdersError } = await serviceClient
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("task_id", order.task_id)
+      .eq("proposal_id", order.proposal_id)
+      .eq("status", "pending")
+      .neq("id", order.id);
+
+    if (cancelDuplicateOrdersError) {
+      console.error("[ALLPAY-WEBHOOK] Failed to cancel duplicate pending orders:", cancelDuplicateOrdersError);
+      return new Response(JSON.stringify({ error: "Failed to cancel duplicate pending orders" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ======================================================
