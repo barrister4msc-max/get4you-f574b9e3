@@ -443,7 +443,7 @@ const TaskDetailPage = () => {
   };
 
 
-  const handleUpdateProposal = async (
+const handleUpdateProposal = async (
   proposalId: string,
   status: "accepted" | "rejected"
 ) => {
@@ -458,10 +458,7 @@ const TaskDetailPage = () => {
     if (error) throw error;
 
     setProposals((prev) =>
-      prev.map((p) => {
-        if (p.id === proposalId) return { ...p, status };
-        return p;
-      })
+      prev.map((p) => (p.id === proposalId ? { ...p, status } : p))
     );
 
     toast.success(
@@ -474,6 +471,7 @@ const TaskDetailPage = () => {
   } finally {
     setUpdating(null);
   }
+};
 };
   };
 const handleAcceptClick = (proposalId: string) => {
