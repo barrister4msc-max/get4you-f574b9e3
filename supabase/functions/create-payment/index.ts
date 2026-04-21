@@ -5,12 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * Generate Allpay SHA256 signature.
- * Algorithm: sort all param keys alphabetically, collect non-empty string values
- * (for arrays — iterate items, sort their keys, collect values),
- * join with ":", append ":" + apiKey, then SHA-256 hex.
- */
 async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: string): Promise<string> {
   const sortedKeys = Object.keys(params).sort();
   const chunks: string[] = [];
@@ -31,10 +25,8 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
           }
         }
       }
-    } else {
-      if (typeof value === "string" && value.trim() !== "") {
-        chunks.push(value);
-      }
+    } else if (typeof value === "string" && value.trim() !== "") {
+      chunks.push(value);
     }
   }
 
@@ -52,6 +44,13 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ======================================================
     // 1. AUTH
     // ======================================================
@@ -63,31 +62,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !supabaseServiceKey || !anonKey) {
+      return new Response(JSON.stringify({ error: "Supabase environment is not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userError } = await userClient.auth.getUser();
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (userError || !userData?.user) {
+    const {
+      data: { user },
+      error: userError,
+    } = await userClient.auth.getUser();
+
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = userData.user.id;
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    const userId = user.id;
 
     // ======================================================
     // 2. INPUT
+    // IMPORTANT: do NOT trust amount/item_name from client
     // ======================================================
     const body = await req.json();
-    const { task_id, proposal_id, success_url, cancel_url, lang, currency: requestedCurrency } = body;
+    const {
+      task_id,
+      proposal_id,
+      success_url,
+      cancel_url,
+      lang,
+      currency: requestedCurrency,
+      assignment_id, // optional for future use
+    } = body ?? {};
 
     if (!proposal_id) {
       return new Response(JSON.stringify({ error: "proposal_id is required" }), {
@@ -97,7 +116,7 @@ Deno.serve(async (req) => {
     }
 
     // ======================================================
-    // 3. LOAD PROPOSAL FROM DB (SOURCE OF TRUTH FOR PRICE)
+    // 3. LOAD PROPOSAL (SOURCE OF TRUTH FOR PRICE)
     // ======================================================
     const { data: proposal, error: proposalError } = await serviceClient
       .from("proposals")
@@ -112,8 +131,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Optional extra validation
-    if (proposal.status && !["pending", "selected"].includes(proposal.status)) {
+    if (proposal.status && !["pending", "selected"].includes(String(proposal.status))) {
       return new Response(JSON.stringify({ error: "Proposal is not payable" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -152,15 +170,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Optional task status guard
-    if (task.status && !["open", "awaiting_payment", "draft"].includes(task.status)) {
+    // Optional: guard task status
+    if (task.status && !["draft", "open", "awaiting_payment"].includes(String(task.status))) {
       console.log("[CREATE-PAYMENT] Task status warning:", task.status);
     }
 
     // ======================================================
-    // 5. SAFE SERVER-SIDE VALUES
+    // 5. SERVER-SIDE SAFE VALUES
     // ======================================================
     const safeAmount = Number(proposal.price);
+
     if (!Number.isFinite(safeAmount) || safeAmount <= 0) {
       return new Response(JSON.stringify({ error: "Invalid proposal price" }), {
         status: 400,
@@ -175,8 +194,8 @@ Deno.serve(async (req) => {
     // ======================================================
     // 6. LOAD ALLPAY CREDENTIALS
     // ======================================================
-    const allpayLogin = Deno.env.get("ALLPAY_LOGIN")!;
-    const allpayApiKey = Deno.env.get("ALLPAY_API_KEY")!;
+    const allpayLogin = Deno.env.get("ALLPAY_LOGIN");
+    const allpayApiKey = Deno.env.get("ALLPAY_API_KEY");
 
     if (!allpayLogin || !allpayApiKey) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
@@ -186,19 +205,24 @@ Deno.serve(async (req) => {
     }
 
     // ======================================================
-    // 7. GENERATE ORDER ID
+    // 7. GENERATE INTERNAL ORDER ID
+    // IMPORTANT: this is the value we bind to our DB record
     // ======================================================
     const orderId = crypto.randomUUID();
 
     // ======================================================
-    // 8. WEBHOOK URL
+    // 8. BUILD WEBHOOK URL
     // ======================================================
     const projectRef = supabaseUrl.replace("https://", "").split(".")[0];
     const webhookUrl = `https://${projectRef}.supabase.co/functions/v1/allpay-webhook`;
 
-    console.log("Webhook URL:", webhookUrl);
-    console.log("Order ID:", orderId);
-    console.log("Safe amount:", safeAmount, "Currency:", safeCurrency);
+    console.log("[CREATE-PAYMENT] userId:", userId);
+    console.log("[CREATE-PAYMENT] taskId:", task.id);
+    console.log("[CREATE-PAYMENT] proposalId:", proposal.id);
+    console.log("[CREATE-PAYMENT] assignmentId:", assignment_id ?? null);
+    console.log("[CREATE-PAYMENT] orderId:", orderId);
+    console.log("[CREATE-PAYMENT] safeAmount:", safeAmount);
+    console.log("[CREATE-PAYMENT] safeCurrency:", safeCurrency);
 
     // ======================================================
     // 9. BUILD ALLPAY REQUEST
@@ -216,7 +240,7 @@ Deno.serve(async (req) => {
       ],
       currency: safeCurrency,
       webhook_url: webhookUrl,
-      expire: String(Math.floor(Date.now() / 1000) + 3600),
+      expire: String(Math.floor(Date.now() / 1000) + 3600), // 1 hour
     };
 
     if (lang) allpayRequest.lang = String(lang);
@@ -234,12 +258,12 @@ Deno.serve(async (req) => {
     console.log("[CREATE-PAYMENT] cancel_url:", cancel_url || "(not set)");
 
     // ======================================================
-    // 10. SIGN REQUEST
+    // 10. GENERATE SIGNATURE
     // ======================================================
     const sign = await getApiSignatureAsync(allpayRequest, allpayApiKey);
     allpayRequest.sign = sign;
 
-    console.log("Allpay request (without sign):", JSON.stringify({ ...allpayRequest, sign: "[REDACTED]" }));
+    console.log("[CREATE-PAYMENT] Allpay request:", JSON.stringify({ ...allpayRequest, sign: "[REDACTED]" }));
 
     // ======================================================
     // 11. CALL ALLPAY
@@ -251,37 +275,54 @@ Deno.serve(async (req) => {
     });
 
     const allpayData = await allpayResponse.json();
-    console.log("Allpay response:", JSON.stringify(allpayData));
+    console.log("[CREATE-PAYMENT] Allpay response:", JSON.stringify(allpayData));
 
     // ======================================================
     // 12. SAVE ORDER IN DB
-    // IMPORTANT: use safeAmount, not client amount
+    // IMPORTANT: use server-side safeAmount, not client amount
+    // orders table remains backward-compatible
     // ======================================================
-    const { data: insertResult, error: insertError } = await serviceClient
+    const insertPayload: Record<string, unknown> = {
+      user_id: userId,
+      task_id: task.id,
+      proposal_id: proposal.id,
+      amount: safeAmount,
+      currency: safeCurrency,
+      allpay_order_id: orderId,
+      status: "pending",
+      payment_url: allpayData.payment_url || null,
+      allpay_response: allpayData,
+      title: safeItemName,
+      provider: "allpay",
+      provider_order_id: orderId,
+      provider_status: allpayData?.status || null,
+    };
+
+    // Optional future compatibility if column already exists
+    if (assignment_id) {
+      insertPayload.assignment_id = assignment_id;
+    }
+
+    const { data: insertedOrder, error: insertError } = await serviceClient
       .from("orders")
-      .insert({
-        user_id: userId,
-        task_id: task.id,
-        proposal_id: proposal.id,
-        amount: safeAmount,
-        currency: safeCurrency,
-        allpay_order_id: orderId,
-        status: "pending",
-        payment_url: allpayData.payment_url || null,
-        allpay_response: allpayData,
-        title: safeItemName,
-      })
+      .insert(insertPayload)
       .select("id, allpay_order_id")
       .single();
 
-    console.log("[CREATE-PAYMENT] DB insert result:", JSON.stringify(insertResult));
+    console.log("[CREATE-PAYMENT] DB insert result:", JSON.stringify(insertedOrder));
 
     if (insertError) {
-      console.error("Insert error:", insertError);
-      return new Response(JSON.stringify({ error: "Failed to create order" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("[CREATE-PAYMENT] Insert error:", insertError);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to create order",
+          details: insertError.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // ======================================================
@@ -306,8 +347,9 @@ Deno.serve(async (req) => {
     // ======================================================
     return new Response(
       JSON.stringify({
+        success: true,
         order_id: orderId,
-        payment_url: allpayData.payment_url,
+        payment_url: allpayData.payment_url || null,
         amount: safeAmount,
         currency: safeCurrency,
       }),
@@ -317,7 +359,7 @@ Deno.serve(async (req) => {
       },
     );
   } catch (err) {
-    console.error("create-payment error:", err);
+    console.error("[CREATE-PAYMENT] Unexpected error:", err);
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Internal server error",
