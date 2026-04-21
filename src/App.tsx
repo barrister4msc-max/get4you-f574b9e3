@@ -57,60 +57,123 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <ActiveRoleProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/tasks/:id" element={<TaskDetail />} />
-                <Route path="/create-task" element={<CreateTask />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="/for-taskers" element={<ForTaskers />} />
-                <Route path="/esek-patur" element={<ProtectedRoute><EsekPatur /></ProtectedRoute>} />
-                <Route path="/contractor-agreement" element={<ProtectedRoute><ContractorAgreement /></ProtectedRoute>} />
-                <Route path="/employment-agreement" element={<ProtectedRoute><EmploymentAgreement /></ProtectedRoute>} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/signup" element={<Login />} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/dashboard/history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
-                <Route path="/chat/:taskId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-                <Route path="/order-chat/:orderId" element={<ProtectedRoute><OrderChat /></ProtectedRoute>} />
-                <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-                <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="/payment-cancel" element={<PaymentCancel />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/settings" element={<Settings />} />
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/tasks/:id" element={<TaskDetail />} />
+                  <Route path="/create-task" element={<CreateTask />} />
+                  <Route path="/how-it-works" element={<HowItWorks />} />
+                  <Route path="/for-taskers" element={<ForTaskers />} />
+                  <Route
+                    path="/esek-patur"
+                    element={
+                      <ProtectedRoute>
+                        <EsekPatur />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/contractor-agreement"
+                    element={
+                      <ProtectedRoute>
+                        <ContractorAgreement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/employment-agreement"
+                    element={
+                      <ProtectedRoute>
+                        <EmploymentAgreement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/history"
+                    element={
+                      <ProtectedRoute>
+                        <OrderHistory />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/chat/:taskId"
+                    element={
+                      <ProtectedRoute>
+                        <Chat />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/order-chat/:orderId"
+                    element={
+                      <ProtectedRoute>
+                        <OrderChat />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/messages"
+                    element={
+                      <ProtectedRoute>
+                        <Messages />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/payment-success" element={<PaymentSuccess />} />
+                  <Route path="/payment-cancel" element={<PaymentCancel />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/settings" element={<Settings />} />
 
-                {/* Admin panel with sidebar */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="taskers" element={<AdminTaskers />} />
-                  <Route path="reviews" element={<AdminReviews />} />
-                  <Route path="complaints" element={<AdminComplaints />} />
-                  <Route path="categories" element={<AdminCategoriesPage />} />
-                  <Route path="chat" element={<AdminChat />} />
-                  <Route path="disputes" element={<AdminDisputes />} />
-                  <Route path="settings" element={<AdminSettings />} />
-                  <Route path="audit-log" element={<AdminAuditLog />} />
-                  <Route path="esek-patur" element={<AdminEsekPatur />} />
-                  <Route path="broadcast" element={<AdminBroadcast />} />
-                  <Route path="employment" element={<AdminEmployment />} />
+                  {/* Admin panel with sidebar */}
+                  <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="orders" element={<AdminOrders />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="taskers" element={<AdminTaskers />} />
+                    <Route path="reviews" element={<AdminReviews />} />
+                    <Route path="complaints" element={<AdminComplaints />} />
+                    <Route path="categories" element={<AdminCategoriesPage />} />
+                    <Route path="chat" element={<AdminChat />} />
+                    <Route path="disputes" element={<AdminDisputes />} />
+                    <Route path="settings" element={<AdminSettings />} />
+                    <Route path="audit-log" element={<AdminAuditLog />} />
+                    <Route path="esek-patur" element={<AdminEsekPatur />} />
+                    <Route path="broadcast" element={<AdminBroadcast />} />
+                    <Route path="employment" element={<AdminEmployment />} />
+                  </Route>
                 </Route>
-              </Route>
-              <Route path="/unsubscribe" element={<Unsubscribe />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
         </ActiveRoleProvider>
       </AuthProvider>
     </LanguageProvider>
