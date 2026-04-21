@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,11 +14,14 @@ import { format } from 'date-fns';
 import { exportToCsv } from '@/lib/exportCsv';
 
 export default function AdminOrders() {
-  const { t } = useLanguage();
+  const { t, currency } = useLanguage();
+  const formatPrice = useFormatPrice();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
+  const [escrowMap, setEscrowMap] = useState<Record<string, { net: number; commission: number; total: number }>>({});
 
   const load = async () => {
     const { data } = await supabase
@@ -30,10 +35,38 @@ export default function AdminOrders() {
     const nameMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.display_name]));
 
     setTasks((data || []).map(t => ({ ...t, ownerName: nameMap[t.user_id] || '—', performerName: t.assigned_to ? (nameMap[t.assigned_to] || '—') : '—' })));
+
+    const taskIds = (data || []).map(t => t.id);
+    if (taskIds.length) {
+      const { data: escrows } = await supabase
+        .from('escrow_transactions')
+        .select('task_id, amount, commission_amount, net_amount, currency, status')
+        .in('task_id', taskIds);
+      const map: Record<string, { net: number; commission: number; total: number; currency: string }> = {};
+      (escrows || []).forEach((e: any) => {
+        map[e.task_id] = {
+          net: Number(e.net_amount),
+          commission: Number(e.commission_amount),
+          total: Number(e.amount),
+          currency: e.currency,
+        };
+      });
+      setEscrowMap(map as any);
+    }
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const s = searchParams.get('status');
+    if (s) setStatusFilter(s);
+  }, [searchParams]);
+
+  const onStatusChange = (v: string) => {
+    setStatusFilter(v);
+    if (v === 'all') searchParams.delete('status'); else searchParams.set('status', v);
+    setSearchParams(searchParams, { replace: true });
+  };
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from('tasks').update({ status } as any).eq('id', id);
@@ -80,7 +113,7 @@ export default function AdminOrders() {
             className="ps-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={onStatusChange}>
           <SelectTrigger className="w-[160px]">
             <SelectValue />
           </SelectTrigger>
@@ -102,6 +135,7 @@ export default function AdminOrders() {
               <TableHead>{t('admin.performer')}</TableHead>
               <TableHead>{t('admin.status')}</TableHead>
               <TableHead>{t('admin.price')}</TableHead>
+              {statusFilter === 'completed' && <TableHead>{t('admin.commission') || 'Комиссия'}</TableHead>}
               <TableHead>{t('admin.date')}</TableHead>
               <TableHead>{t('admin.actions')}</TableHead>
             </TableRow>
@@ -124,7 +158,24 @@ export default function AdminOrders() {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>{t.budget_fixed ?? `${t.budget_min || 0}–${t.budget_max || 0}`} {t.currency}</TableCell>
+                <TableCell>
+                  {(() => {
+                    const e = (escrowMap as any)[t.id];
+                    if (e) return formatPrice(e.total, currency, e.currency || t.currency);
+                    const amount = t.budget_fixed ?? t.budget_min ?? 0;
+                    return formatPrice(Number(amount) || 0, currency, t.currency);
+                  })()}
+                </TableCell>
+                {statusFilter === 'completed' && (
+                  <TableCell className="text-xs">
+                    {(() => {
+                      const e = (escrowMap as any)[t.id];
+                      if (!e) return '—';
+                      const pct = e.total > 0 ? Math.round((e.commission / e.total) * 100) : 0;
+                      return <span className="text-primary font-semibold">{formatPrice(e.commission, currency, e.currency || t.currency)} ({pct}%)</span>;
+                    })()}
+                  </TableCell>
+                )}
                 <TableCell className="text-muted-foreground text-xs">{format(new Date(t.created_at), 'dd.MM.yy')}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
@@ -136,7 +187,7 @@ export default function AdminOrders() {
               </TableRow>
             ))}
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{t('admin.noOrders')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={statusFilter === 'completed' ? 8 : 7} className="text-center text-muted-foreground py-8">{t('admin.noOrders')}</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
