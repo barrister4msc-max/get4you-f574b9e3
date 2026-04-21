@@ -478,9 +478,9 @@ const TaskDetailPage = () => {
   };
 
  const handleAcceptClick = (proposalId: string) => {
-  const proposal = proposals.find((p) => p.id === proposalId);
-
-  if (!proposal) return;
+  setPendingAcceptProposalId(proposalId);
+  setShowPaymentDialog(true);
+};
 
   const canPay =
     (proposal.status === "pending" || proposal.status === "accepted") &&
