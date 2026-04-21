@@ -20,19 +20,14 @@ export async function streamChat({
   try {
     const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`;
 
+    // 👉 ВАЖНО: берём JWT пользователя
     const {
       data: { session },
-      error: sessionError,
+      error,
     } = await supabase.auth.getSession();
 
-    if (sessionError) {
-      onError?.(sessionError.message || "Failed to get session");
-      onDone();
-      return;
-    }
-
-    if (!session?.access_token) {
-      onError?.("Authentication required");
+    if (error || !session?.access_token) {
+      onError?.("User not authenticated");
       onDone();
       return;
     }
@@ -41,6 +36,7 @@ export async function streamChat({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        // 👉 ВОТ ГЛАВНОЕ ИЗМЕНЕНИЕ
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ messages, ...extraBody }),
@@ -96,26 +92,8 @@ export async function streamChat({
     }
 
     onDone();
-  } catch (error) {
-    onError?.(error instanceof Error ? error.message : "Unknown error");
+  } catch (err) {
+    onError?.(err instanceof Error ? err.message : "Unknown error");
     onDone();
   }
 }
-import { supabase } from "@/integrations/supabase/client";
-
-const {
-  data: { session },
-} = await supabase.auth.getSession();
-
-if (!session?.access_token) {
-  throw new Error("Authentication required");
-}
-
-const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task-assistant`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session.access_token}`,
-  },
-  body: JSON.stringify(payload),
-});
