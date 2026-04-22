@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { LocationFallback } from "@/components/LocationFallback";
 import { useAuth } from "@/hooks/useAuth";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -35,7 +36,19 @@ const DRAFT_KEY = "task_draft";
 const categories = ["cleaning", "moving", "repair", "digital", "consulting", "delivery", "beauty", "tutoring"];
 
 const CreateTaskPage = () => {
-  const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
+  const {
+    latitude,
+    longitude,
+    loading: geoLoading,
+    error: geoError,
+    getCurrentLocation,
+    permission: geoPermission,
+    source: geoSource,
+    label: geoLabel,
+    searchAddress,
+    setManualLocation,
+    clearLocation,
+  } = useGeolocation();
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user } = useAuth();
