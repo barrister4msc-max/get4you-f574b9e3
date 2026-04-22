@@ -1070,6 +1070,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           full_name: string | null
+          geo_point: unknown
           id: string
           is_verified: boolean | null
           language: string | null
@@ -1103,6 +1104,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           full_name?: string | null
+          geo_point?: unknown
           id?: string
           is_verified?: boolean | null
           language?: string | null
@@ -1136,6 +1138,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           full_name?: string | null
+          geo_point?: unknown
           id?: string
           is_verified?: boolean | null
           language?: string | null
@@ -1434,9 +1437,11 @@ export type Database = {
           currency: string | null
           description: string | null
           due_date: string | null
+          geo_point: unknown
           id: string
           is_urgent: boolean | null
           latitude: number | null
+          location: unknown
           longitude: number | null
           photos: string[] | null
           radius_km: number | null
@@ -1459,9 +1464,11 @@ export type Database = {
           currency?: string | null
           description?: string | null
           due_date?: string | null
+          geo_point?: unknown
           id?: string
           is_urgent?: boolean | null
           latitude?: number | null
+          location?: unknown
           longitude?: number | null
           photos?: string[] | null
           radius_km?: number | null
@@ -1484,9 +1491,11 @@ export type Database = {
           currency?: string | null
           description?: string | null
           due_date?: string | null
+          geo_point?: unknown
           id?: string
           is_urgent?: boolean | null
           latitude?: number | null
+          location?: unknown
           longitude?: number | null
           photos?: string[] | null
           radius_km?: number | null
@@ -2019,6 +2028,20 @@ export type Database = {
         }[]
       }
       get_my_role: { Args: never; Returns: string }
+      get_nearby_tasks: {
+        Args: { p_lat: number; p_lng: number; p_radius_km?: number }
+        Returns: {
+          budget_fixed: number
+          currency: string
+          description: string
+          distance_meters: number
+          id: string
+          latitude: number
+          longitude: number
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+        }[]
+      }
       get_orders_nearby: {
         Args: { radius_km?: number; user_lat: number; user_lng: number }
         Returns: {
