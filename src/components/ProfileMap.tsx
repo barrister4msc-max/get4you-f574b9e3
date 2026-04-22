@@ -37,7 +37,18 @@ type TaskMarker = {
 
 export const ProfileMap = () => {
   const { user } = useAuth();
-  const { position, permissionState, requestPermission, manual, clearManualLocation } = useGeolocation();
+  const {
+    latitude,
+    longitude,
+    error,
+    permission,
+    source,
+    label,
+    loading: geoLoading,
+    searchAddress,
+    setManualLocation,
+    clearLocation,
+  } = useGeolocation();
   const [tasks, setTasks] = useState<TaskMarker[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,12 +82,12 @@ export const ProfileMap = () => {
   }, [user]);
 
   const center = useMemo<[number, number]>(() => {
-    if (position) return [position.lat, position.lng];
+    if (latitude != null && longitude != null) return [latitude, longitude];
     if (tasks.length > 0) return [tasks[0].latitude, tasks[0].longitude];
     return [32.0853, 34.7818]; // Tel Aviv default
-  }, [position, tasks]);
+  }, [latitude, longitude, tasks]);
 
-  const hasLocation = !!position;
+  const hasLocation = latitude != null && longitude != null;
 
   return (
     <div className="space-y-3">
@@ -87,10 +98,14 @@ export const ProfileMap = () => {
 
       {!hasLocation && (
         <LocationFallback
-          permissionState={permissionState}
-          onRetry={requestPermission}
-          manual={manual}
-          onClearManual={clearManualLocation}
+          error={error}
+          permission={permission}
+          source={source}
+          label={label}
+          loading={geoLoading}
+          onSearchAddress={searchAddress}
+          onPickCity={(lat, lng, name) => setManualLocation(lat, lng, name)}
+          onClear={clearLocation}
         />
       )}
 
@@ -107,16 +122,16 @@ export const ProfileMap = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {position && (
+          {hasLocation && (
             <>
-              <Marker position={[position.lat, position.lng]} icon={meIcon}>
+              <Marker position={[latitude!, longitude!]} icon={meIcon}>
                 <Popup>
                   <strong>Вы здесь</strong>
-                  {manual && <div className="text-xs">Указано вручную</div>}
+                  {source === 'manual' && <div className="text-xs">Указано вручную{label ? `: ${label}` : ''}</div>}
                 </Popup>
               </Marker>
               <Circle
-                center={[position.lat, position.lng]}
+                center={[latitude!, longitude!]}
                 radius={3000}
                 pathOptions={{ color: 'hsl(var(--primary))', fillOpacity: 0.08 }}
               />
