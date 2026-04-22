@@ -58,25 +58,6 @@ const stats = [
 ];
 
 const IndexPage = () => {
-  const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
-const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
-
-const loadNearbyTasks = async () => {
-  if (!latitude || !longitude) return;
-
-  const { data, error } = await supabase.rpc('get_nearby_tasks', {
-    p_lat: latitude,
-    p_lng: longitude,
-    p_radius_km: 20,
-  });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  setNearbyTasks(data || []);
-};
   const { t } = useLanguage();
   const { user, roles } = useAuth();
   const [searchParams] = useSearchParams();
