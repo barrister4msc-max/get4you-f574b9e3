@@ -111,6 +111,7 @@ const DashboardPage = () => {
   const [radiusKm, setRadiusKm] = useState(20);
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
   const [searchedNearby, setSearchedNearby] = useState(false);
+  const [loadingNearby, setLoadingNearby] = useState(false);
   const loadNearbyTasks = async () => {
     if (!latitude || !longitude) return;
 
@@ -202,6 +203,15 @@ const DashboardPage = () => {
       useEffect(() => {
         setNearbyTasks([]);
         setSearchedNearby(false);
+      }, [latitude, longitude, radiusKm]);
+      useEffect(() => {
+        if (!latitude || !longitude) return;
+
+        const timeout = setTimeout(() => {
+          loadNearbyTasks();
+        }, 500); // debounce чтобы не дергать API слишком часто
+
+        return () => clearTimeout(timeout);
       }, [latitude, longitude, radiusKm]);
       // Fetch chat tasks - tasks where user has messages
       const { data: chatMsgs } = await supabase
@@ -620,6 +630,7 @@ const DashboardPage = () => {
                   Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
                 </p>
               )}
+              {loadingNearby && <p className="text-center text-sm text-muted-foreground mt-3">Ищем задачи рядом...</p>}
             </div>
 
             {nearbyTasks.length > 0 && (
