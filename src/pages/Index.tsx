@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useGeolocation } from "@/hooks/useGeolocation";
-import { supabase } from "@/integrations/supabase/client";
 import { motion, useScroll, useTransform } from "framer-motion";
 import {
   Sparkles,
@@ -22,7 +20,7 @@ import {
   Heart,
   GraduationCap,
 } from "lucide-react";
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-image.png";
 import heroImage2 from "@/assets/hero-image-2.jpg";
@@ -60,25 +58,6 @@ const stats = [
 ];
 
 const IndexPage = () => {
-  const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
-const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
-
-const loadNearbyTasks = async () => {
-  if (!latitude || !longitude) return;
-
-  const { data, error } = await supabase.rpc('get_nearby_tasks', {
-    p_lat: latitude,
-    p_lng: longitude,
-    p_radius_km: 20,
-  });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  setNearbyTasks(data || []);
-};
   const { t } = useLanguage();
   const { user, roles } = useAuth();
   const [searchParams] = useSearchParams();
@@ -125,35 +104,6 @@ const loadNearbyTasks = async () => {
 
   return (
     <div>
-      return (
-  <div>
-
-    <div style={{ padding: 20, textAlign: 'center', borderBottom: '1px solid #ddd' }}>
-      <h2>Nearby Tasks</h2>
-
-      <button onClick={getCurrentLocation}>
-        {geoLoading ? 'Loading...' : '📍 Find Me'}
-      </button>
-
-      <button onClick={loadNearbyTasks} disabled={!latitude} style={{ marginLeft: 10 }}>
-        Load Nearby
-      </button>
-
-      {latitude && (
-        <div style={{ marginTop: 5 }}>
-          {latitude.toFixed(5)}, {longitude?.toFixed(5)}
-        </div>
-      )}
-
-      <div style={{ marginTop: 10 }}>
-        {nearbyTasks.map(task => (
-          <div key={task.id} style={{ border: '1px solid #ccc', margin: 5, padding: 10 }}>
-            <b>{task.title}</b>
-            <div>{Math.round(task.distance_meters)} м</div>
-          </div>
-        ))}
-      </div>
-    </div>
       <section className="py-8 border-b border-border bg-card/40">
         <div className="container max-w-4xl mx-auto">
           <div className="flex flex-col items-center gap-3 text-center">
