@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
 import { ProfileMap } from "@/components/ProfileMap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 
@@ -255,6 +255,18 @@ useEffect(() => {
 useEffect(() => {
   if (!latitude || !longitude) return;
 
+  const timeout = setTimeout(() => {
+    loadNearbyTasks();
+  }, 500);
+
+  return () => clearTimeout(timeout);
+}, [latitude, longitude, radiusKm]);
+
+// Pre-seed translations from localStorage cache
+useEffect(() => {
+  const allTitles: { id: string; title: string }[] = [];
+  ...
+}, [locale, myTasks, assignedTasks, myProposals, allEscrow]);
 
   // Pre-seed translations from localStorage cache
   useEffect(() => {
