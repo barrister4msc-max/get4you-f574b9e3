@@ -1,77 +1,164 @@
-import { Link, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '@/i18n/LanguageContext';
-import { useAuth } from '@/hooks/useAuth';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { Link, useSearchParams } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import { supabase } from "@/integrations/supabase/client";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
-  Sparkles, ArrowRight, CheckCircle2, Shield, Star,
-  Home, Truck, Wrench, Monitor, MessageCircle, Package, Heart, GraduationCap,
-} from 'lucide-react';
-import { useRef, useMemo, useEffect } from 'react';
-import { toast } from 'sonner';
-import heroImage from '@/assets/hero-image.png';
-import heroImage2 from '@/assets/hero-image-2.jpg';
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  Shield,
+  Star,
+  Home,
+  Truck,
+  Wrench,
+  Monitor,
+  MessageCircle,
+  Package,
+  Heart,
+  GraduationCap,
+} from "lucide-react";
+import { useRef, useMemo, useEffect, useState } from "react";
+import { toast } from "sonner";
+import heroImage from "@/assets/hero-image.png";
+import heroImage2 from "@/assets/hero-image-2.jpg";
 
 const sparklePositions = [
-  { top: '15%', left: '42%', delay: 0, size: 4 },
-  { top: '25%', left: '55%', delay: 0.8, size: 3 },
-  { top: '20%', left: '38%', delay: 1.5, size: 5 },
-  { top: '35%', left: '60%', delay: 0.3, size: 3 },
-  { top: '40%', left: '45%', delay: 2.1, size: 4 },
-  { top: '30%', left: '50%', delay: 1.2, size: 3 },
-  { top: '50%', left: '48%', delay: 0.6, size: 5 },
-  { top: '55%', left: '53%', delay: 1.8, size: 3 },
-  { top: '18%', left: '58%', delay: 2.5, size: 4 },
-  { top: '45%', left: '40%', delay: 0.4, size: 3 },
-  { top: '60%', left: '52%', delay: 1.0, size: 4 },
-  { top: '22%', left: '48%', delay: 2.8, size: 5 },
+  { top: "15%", left: "42%", delay: 0, size: 4 },
+  { top: "25%", left: "55%", delay: 0.8, size: 3 },
+  { top: "20%", left: "38%", delay: 1.5, size: 5 },
+  { top: "35%", left: "60%", delay: 0.3, size: 3 },
+  { top: "40%", left: "45%", delay: 2.1, size: 4 },
+  { top: "30%", left: "50%", delay: 1.2, size: 3 },
+  { top: "50%", left: "48%", delay: 0.6, size: 5 },
+  { top: "55%", left: "53%", delay: 1.8, size: 3 },
+  { top: "18%", left: "58%", delay: 2.5, size: 4 },
+  { top: "45%", left: "40%", delay: 0.4, size: 3 },
+  { top: "60%", left: "52%", delay: 1.0, size: 4 },
+  { top: "22%", left: "48%", delay: 2.8, size: 5 },
 ];
 
 const categoryIcons = [
-  { key: 'cleaning', icon: Sparkles },
-  { key: 'moving', icon: Truck },
-  { key: 'repair', icon: Wrench },
-  { key: 'digital', icon: Monitor },
-  { key: 'consulting', icon: MessageCircle },
-  { key: 'delivery', icon: Package },
-  { key: 'beauty', icon: Heart },
-  { key: 'tutoring', icon: GraduationCap },
+  { key: "cleaning", icon: Sparkles },
+  { key: "moving", icon: Truck },
+  { key: "repair", icon: Wrench },
+  { key: "digital", icon: Monitor },
+  { key: "consulting", icon: MessageCircle },
+  { key: "delivery", icon: Package },
+  { key: "beauty", icon: Heart },
+  { key: "tutoring", icon: GraduationCap },
 ];
 
 const stats = [
-  { key: 'hero.tasksCompleted', value: '12,400+' },
-  { key: 'hero.verifiedPros', value: '3,200+' },
-  { key: 'hero.satisfaction', value: '98%' },
+  { key: "hero.tasksCompleted", value: "12,400+" },
+  { key: "hero.verifiedPros", value: "3,200+" },
+  { key: "hero.satisfaction", value: "98%" },
 ];
 
 const IndexPage = () => {
   const { t } = useLanguage();
   const { user, roles } = useAuth();
   const [searchParams] = useSearchParams();
+  const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
+  const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
 
+  const loadNearbyTasks = async () => {
+    if (!latitude || !longitude) return;
+
+    const { data, error } = await supabase.rpc("get_nearby_tasks", {
+      p_lat: latitude,
+      p_lng: longitude,
+      p_radius_km: 20,
+    });
+
+    if (error) {
+      console.error("Nearby tasks error:", error);
+      return;
+    }
+
+    setNearbyTasks(data || []);
+  };
   // Handle OAuth callback / errors landing on homepage
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash || hash.length < 2) return;
-    const params = new URLSearchParams(hash.replace('#', '?'));
-    const errorDesc = params.get('error_description') || searchParams.get('error_description');
-    const error = params.get('error') || searchParams.get('error');
+    const params = new URLSearchParams(hash.replace("#", "?"));
+    const errorDesc = params.get("error_description") || searchParams.get("error_description");
+    const error = params.get("error") || searchParams.get("error");
     if (error || errorDesc) {
-      const msg = errorDesc || error || 'OAuth error';
-      toast.error(msg.includes('initial state')
-        ? 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.'
-        : msg);
-      window.history.replaceState(null, '', window.location.pathname);
+      const msg = errorDesc || error || "OAuth error";
+      toast.error(
+        msg.includes("initial state")
+          ? "Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров."
+          : msg,
+      );
+      window.history.replaceState(null, "", window.location.pathname);
     }
   }, [searchParams]);
-  const isTaskerOnly = user && roles.length > 0 && roles.every(r => r === 'tasker');
+  const isTaskerOnly = user && roles.length > 0 && roles.every((r) => r === "tasker");
   const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const imgY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
   return (
     <div>
+      <section className="py-8 border-b border-border bg-card/40">
+        <div className="container max-w-4xl mx-auto">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <h2 className="text-2xl font-bold">Задачи рядом</h2>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button onClick={getCurrentLocation} className="px-4 py-2 bg-primary text-white rounded-lg">
+                {geoLoading ? "Определяем..." : "📍 Найти меня"}
+              </button>
+
+              <button
+                onClick={loadNearbyTasks}
+                disabled={!latitude || !longitude}
+                className="px-4 py-2 border rounded-lg disabled:opacity-50"
+              >
+                Найти задачи рядом
+              </button>
+            </div>
+
+            {geoError && <p className="text-sm text-red-600">{geoError}</p>}
+
+            {latitude && longitude && (
+              <p className="text-xs text-muted-foreground">
+                Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
+              </p>
+            )}
+
+            <div className="w-full mt-4 space-y-3">
+              {nearbyTasks.map((task) => (
+                <Link
+                  key={task.id}
+                  to={`/tasks/${task.id}`}
+                  className="block p-4 border rounded-xl hover:shadow-md transition"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="text-left">
+                      <div className="font-semibold">{task.title}</div>
+                      {task.description && <div className="text-sm text-muted-foreground mt-1">{task.description}</div>}
+                      <div className="text-xs text-muted-foreground mt-2">📍 {Math.round(task.distance_meters)} м</div>
+                    </div>
+
+                    <div className="shrink-0 font-semibold">
+                      {task.budget_fixed ?? "—"} {task.currency ?? ""}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
-      <section ref={heroRef} className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,35%,72%)] via-[hsl(200,28%,68%)] to-[hsl(40,20%,70%)]">
+      <section
+        ref={heroRef}
+        className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,35%,72%)] via-[hsl(200,28%,68%)] to-[hsl(40,20%,70%)]"
+      >
         {/* Phoenix watermark */}
         <motion.div
           className="absolute inset-0 flex items-center justify-start md:pl-32"
@@ -84,7 +171,7 @@ const IndexPage = () => {
           transition={{
             duration: 6,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: "easeInOut",
           }}
         >
           <img
@@ -93,7 +180,10 @@ const IndexPage = () => {
             width={1024}
             height={1024}
             className="h-[85%] w-auto max-w-none object-contain opacity-30"
-            style={{ mask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)', WebkitMask: 'radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)' }}
+            style={{
+              mask: "radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)",
+              WebkitMask: "radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)",
+            }}
           />
         </motion.div>
         {/* Sparkles */}
@@ -104,7 +194,7 @@ const IndexPage = () => {
               className="absolute rounded-full bg-[hsl(42,80%,65%)]"
               style={{ top: s.top, left: s.left, width: s.size, height: s.size }}
               animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
-              transition={{ duration: 2.5, repeat: Infinity, delay: s.delay, ease: 'easeInOut' }}
+              transition={{ duration: 2.5, repeat: Infinity, delay: s.delay, ease: "easeInOut" }}
             />
           ))}
         </div>
@@ -120,19 +210,16 @@ const IndexPage = () => {
               className="flex-1 max-w-2xl"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
-                {t('hero.title')}{' '}
-                <span className="text-gradient-emerald">{t('hero.titleAccent')}</span>
+                {t("hero.title")} <span className="text-gradient-emerald">{t("hero.titleAccent")}</span>
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-                {t('hero.subtitle')}
-              </p>
+              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">{t("hero.subtitle")}</p>
               <div className="mt-8 flex flex-wrap gap-4">
                 {!isTaskerOnly && (
                   <Link
                     to="/create-task"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                   >
-                    {t('hero.cta')}
+                    {t("hero.cta")}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 )}
@@ -140,7 +227,7 @@ const IndexPage = () => {
                   to="/tasks"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
                 >
-                  {t('hero.browse')}
+                  {t("hero.browse")}
                 </Link>
               </div>
 
@@ -173,7 +260,7 @@ const IndexPage = () => {
       {/* Categories */}
       <section className="py-16 md:py-20">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center">{t('cat.title')}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center">{t("cat.title")}</h2>
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
             {categoryIcons.map((cat, i) => {
               const Icon = cat.icon;
@@ -204,7 +291,7 @@ const IndexPage = () => {
       {/* How it works */}
       <section className="py-16 md:py-20 bg-warm-surface">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center">{t('how.title')}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center">{t("how.title")}</h2>
           <div className="mt-12 grid md:grid-cols-5 gap-6">
             {[1, 2, 3, 4, 5].map((step, i) => (
               <motion.div
@@ -231,15 +318,13 @@ const IndexPage = () => {
         <div className="container">
           <div className="max-w-2xl mx-auto text-center">
             <Shield className="w-12 h-12 text-primary mx-auto" />
-            <h2 className="mt-4 text-2xl md:text-3xl font-bold">{t('escrow.title')}</h2>
-            <p className="mt-4 text-muted-foreground leading-relaxed">
-              {t('escrow.desc')}
-            </p>
+            <h2 className="mt-4 text-2xl md:text-3xl font-bold">{t("escrow.title")}</h2>
+            <p className="mt-4 text-muted-foreground leading-relaxed">{t("escrow.desc")}</p>
             <div className="mt-8 flex justify-center gap-8">
               {[
-                 { icon: CheckCircle2, text: t('escrow.verified') },
-                 { icon: Shield, text: t('escrow.secure') },
-                 { icon: Star, text: t('escrow.rated') },
+                { icon: CheckCircle2, text: t("escrow.verified") },
+                { icon: Shield, text: t("escrow.secure") },
+                { icon: Star, text: t("escrow.rated") },
               ].map((item) => (
                 <div key={item.text} className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <item.icon className="w-5 h-5 text-primary" />
