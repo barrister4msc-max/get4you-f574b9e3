@@ -13,6 +13,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { ProfileMap } from '@/components/ProfileMap';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -307,6 +308,10 @@ const ProfilePage = () => {
             <LogOut className="w-4 h-4" />
             {t('nav.logout')}
           </button>
+        </div>
+
+        <div className="mt-8">
+          <ProfileMap />
         </div>
 
         <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>
