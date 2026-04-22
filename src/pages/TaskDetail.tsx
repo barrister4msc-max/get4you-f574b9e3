@@ -381,13 +381,15 @@ const TaskDetailPage = () => {
     if (!id || !user || !price) return;
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('proposals').insert({
-        task_id: id,
-        user_id: user.id,
-        price: Number(price),
-        comment: comment.trim() || null,
-        currency: task?.currency || currency || 'ILS',
-        status: 'pending',
+      // Idempotent RPC: returns existing active proposal id if user already
+      // submitted one, otherwise creates a new proposal. Safe against double-clicks
+      // and race conditions thanks to advisory lock + unique partial index.
+      const { error } = await supabase.rpc('submit_proposal', {
+        p_task_id: id,
+        p_price: Number(price),
+        p_currency: task?.currency || currency || 'ILS',
+        p_comment: comment.trim() || null,
+        p_portfolio_urls: null,
       });
       if (error) throw error;
       toast.success(t('proposal.submitted'));

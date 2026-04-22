@@ -2872,6 +2872,16 @@ export type Database = {
         Returns: unknown
       }
       start_task: { Args: { _task_id: string }; Returns: undefined }
+      submit_proposal: {
+        Args: {
+          p_comment?: string
+          p_currency?: string
+          p_portfolio_urls?: string[]
+          p_price: number
+          p_task_id: string
+        }
+        Returns: string
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       updategeometrysrid: {
         Args: {
