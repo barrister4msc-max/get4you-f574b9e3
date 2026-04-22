@@ -110,7 +110,7 @@ const DashboardPage = () => {
 
   const [radiusKm, setRadiusKm] = useState(20);
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
-
+  const [searchedNearby, setSearchedNearby] = useState(false);
   const loadNearbyTasks = async () => {
     if (!latitude || !longitude) return;
 
@@ -654,12 +654,13 @@ const DashboardPage = () => {
                 ))}
               </div>
             )}
+
+            {searchedNearby && latitude && longitude && nearbyTasks.length === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-6">В выбранном радиусе задач не найдено</div>
+            )}
           </div>
         )}
 
-        {latitude && longitude && nearbyTasks.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground py-6">В выбранном радиусе задач не найдено</div>
-        )}
         {/* MY PROPOSALS */}
         {/* MY PROPOSALS */}
         {tab === "myProposals" && (
