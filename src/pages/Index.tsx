@@ -104,35 +104,6 @@ const IndexPage = () => {
 
   return (
     <div>
-      return (
-  <div>
-
-    <div style={{ padding: 20, textAlign: 'center', borderBottom: '1px solid #ddd' }}>
-      <h2>Nearby Tasks</h2>
-
-      <button onClick={getCurrentLocation}>
-        {geoLoading ? 'Loading...' : '📍 Find Me'}
-      </button>
-
-      <button onClick={loadNearbyTasks} disabled={!latitude} style={{ marginLeft: 10 }}>
-        Load Nearby
-      </button>
-
-      {latitude && (
-        <div style={{ marginTop: 5 }}>
-          {latitude.toFixed(5)}, {longitude?.toFixed(5)}
-        </div>
-      )}
-
-      <div style={{ marginTop: 10 }}>
-        {nearbyTasks.map(task => (
-          <div key={task.id} style={{ border: '1px solid #ccc', margin: 5, padding: 10 }}>
-            <b>{task.title}</b>
-            <div>{Math.round(task.distance_meters)} м</div>
-          </div>
-        ))}
-      </div>
-    </div>
       <section className="py-8 border-b border-border bg-card/40">
         <div className="container max-w-4xl mx-auto">
           <div className="flex flex-col items-center gap-3 text-center">
