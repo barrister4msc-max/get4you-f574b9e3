@@ -26,6 +26,18 @@ const meIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
+const makeDot = (color: string) =>
+  L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+
+const ownerIcon = makeDot('hsl(142 71% 45%)'); // green
+const assigneeIcon = makeDot('hsl(38 92% 50%)'); // amber
+const otherIcon = makeDot('hsl(217 91% 60%)'); // blue
+
 type TaskMarker = {
   id: string;
   title: string;
