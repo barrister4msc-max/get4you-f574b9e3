@@ -385,11 +385,11 @@ const TaskDetailPage = () => {
       // submitted one, otherwise creates a new proposal. Safe against double-clicks
       // and race conditions thanks to advisory lock + unique partial index.
       const { error } = await supabase.rpc('submit_proposal', {
-        p_task_id: id,
-        p_price: Number(price),
-        p_currency: task?.currency || currency || 'ILS',
-        p_comment: comment.trim() || null,
-        p_portfolio_urls: null,
+        _task_id: id,
+        _price: Number(price),
+        _currency: task?.currency || currency || 'ILS',
+        _comment: comment.trim() || null,
+        _portfolio_urls: null,
       });
       if (error) throw error;
       toast.success(t('proposal.submitted'));
