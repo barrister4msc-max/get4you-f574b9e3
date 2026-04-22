@@ -512,9 +512,25 @@ const CreateTaskPage = () => {
                   </button>
                 </div>
 
-                {geoError && <p className="text-xs text-red-600 mt-1">{geoError}</p>}
+                <LocationFallback
+                  error={geoError}
+                  permission={geoPermission}
+                  source={geoSource}
+                  label={geoLabel}
+                  loading={geoLoading}
+                  onSearchAddress={async (q) => {
+                    const r = await searchAddress(q);
+                    if (r) update({ location: r.label });
+                    return r;
+                  }}
+                  onPickCity={(lat, lng, name) => {
+                    setManualLocation(lat, lng, name);
+                    update({ location: name });
+                  }}
+                  onClear={clearLocation}
+                />
 
-                {latitude && longitude && (
+                {latitude && longitude && geoSource !== "manual" && (
                   <p className="text-xs text-muted-foreground mt-1">
                     📍 {latitude.toFixed(5)}, {longitude.toFixed(5)}
                   </p>
