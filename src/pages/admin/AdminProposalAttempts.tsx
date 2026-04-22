@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -155,9 +155,8 @@ export default function AdminProposalAttempts() {
               {filtered.map((r) => {
                 const isOpen = expanded === r.id;
                 return (
-                  <>
+                  <Fragment key={r.id}>
                     <TableRow
-                      key={r.id}
                       onClick={() => setExpanded(isOpen ? null : r.id)}
                       className="cursor-pointer"
                     >
@@ -223,7 +222,7 @@ export default function AdminProposalAttempts() {
                       </TableCell>
                     </TableRow>
                     {isOpen && (
-                      <TableRow key={r.id + '-details'}>
+                      <TableRow>
                         <TableCell colSpan={7} className="bg-muted/30">
                           <pre className="text-[11px] whitespace-pre-wrap break-all p-2">
                             {JSON.stringify(
@@ -248,7 +247,7 @@ export default function AdminProposalAttempts() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </TableBody>
