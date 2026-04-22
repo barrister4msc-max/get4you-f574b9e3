@@ -8,17 +8,6 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { LocationFallback } from '@/components/LocationFallback';
 import { MapPin } from 'lucide-react';
 
-// Leaflet's default marker icons break under bundlers; rebuild via CDN.
-const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
 const meIcon = L.divIcon({
   className: '',
   html: `<div style="width:18px;height:18px;border-radius:9999px;background:hsl(var(--primary));border:3px solid hsl(var(--background));box-shadow:0 0 0 2px hsl(var(--primary)/0.4);"></div>`,
@@ -26,13 +15,25 @@ const meIcon = L.divIcon({
   iconAnchor: [9, 9],
 });
 
+const makeDot = (color: string) =>
+  L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+
+const ownerIcon = makeDot('hsl(142 71% 45%)'); // green
+const assigneeIcon = makeDot('hsl(38 92% 50%)'); // amber
+const otherIcon = makeDot('hsl(217 91% 60%)'); // blue
+
 type TaskMarker = {
   id: string;
   title: string;
   latitude: number;
   longitude: number;
   status: string | null;
-  role: 'owner' | 'assignee';
+  role: 'owner' | 'assignee' | 'other';
 };
 
 export const ProfileMap = () => {
@@ -57,13 +58,13 @@ export const ProfileMap = () => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      // Fetch all public tasks with coordinates (uses tasks_public view — RLS-safe)
       const { data } = await supabase
-        .from('tasks')
+        .from('tasks_public')
         .select('id,title,latitude,longitude,status,user_id,assigned_to')
-        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
         .not('latitude', 'is', null)
         .not('longitude', 'is', null)
-        .limit(200);
+        .limit(500);
       if (cancelled) return;
       const mapped: TaskMarker[] = (data || []).map((t: any) => ({
         id: t.id,
@@ -71,7 +72,12 @@ export const ProfileMap = () => {
         latitude: Number(t.latitude),
         longitude: Number(t.longitude),
         status: t.status,
-        role: t.user_id === user.id ? 'owner' : 'assignee',
+        role:
+          t.user_id === user.id
+            ? 'owner'
+            : t.assigned_to === user.id
+            ? 'assignee'
+            : 'other',
       }));
       setTasks(mapped);
       setLoading(false);
@@ -139,12 +145,20 @@ export const ProfileMap = () => {
           )}
 
           {tasks.map((t) => (
-            <Marker key={t.id} position={[t.latitude, t.longitude]} icon={defaultIcon}>
+            <Marker
+              key={t.id}
+              position={[t.latitude, t.longitude]}
+              icon={t.role === 'owner' ? ownerIcon : t.role === 'assignee' ? assigneeIcon : otherIcon}
+            >
               <Popup>
                 <div className="space-y-1">
                   <strong>{t.title}</strong>
                   <div className="text-xs">
-                    {t.role === 'owner' ? 'Моя задача (заказчик)' : 'Я исполнитель'}
+                    {t.role === 'owner'
+                      ? 'Моя задача (заказчик)'
+                      : t.role === 'assignee'
+                      ? 'Я исполнитель'
+                      : 'Задача на платформе'}
                   </div>
                   {t.status && <div className="text-xs text-muted-foreground">Статус: {t.status}</div>}
                   <a
@@ -162,10 +176,22 @@ export const ProfileMap = () => {
         </MapContainer>
       </div>
 
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: 'hsl(142 71% 45%)' }} />
+          Мои задачи
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: 'hsl(38 92% 50%)' }} />
+          Я исполнитель
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-3 h-3 rounded-full" style={{ background: 'hsl(217 91% 60%)' }} />
+          Другие задачи
+        </span>
+      </div>
       <p className="text-xs text-muted-foreground">
-        {loading
-          ? 'Загрузка задач...'
-          : `На карте показано ${tasks.length} задач, в которых вы заказчик или исполнитель.`}
+        {loading ? 'Загрузка задач...' : `На карте показано ${tasks.length} задач.`}
       </p>
     </div>
   );
