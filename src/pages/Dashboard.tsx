@@ -112,24 +112,27 @@ const DashboardPage = () => {
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
   const [searchedNearby, setSearchedNearby] = useState(false);
   const [loadingNearby, setLoadingNearby] = useState(false);
-  const loadNearbyTasks = async () => {
-    if (!latitude || !longitude) return;
+const loadNearbyTasks = async () => {
+  if (!latitude || !longitude) return;
 
-    setSearchedNearby(true);
+  setLoadingNearby(true);
+  setSearchedNearby(true);
 
-    const { data, error } = await supabase.rpc("get_nearby_tasks", {
-      p_lat: latitude,
-      p_lng: longitude,
-      p_radius_km: radiusKm,
-    });
+  const { data, error } = await supabase.rpc("get_nearby_tasks", {
+    p_lat: latitude,
+    p_lng: longitude,
+    p_radius_km: radiusKm,
+  });
 
-    if (error) {
-      console.error("Nearby tasks error:", error);
-      return;
-    }
+  if (error) {
+    console.error("Nearby tasks error:", error);
+    setLoadingNearby(false);
+    return;
+  }
 
-    setNearbyTasks(data || []);
-  };
+  setNearbyTasks(data || []);
+  setLoadingNearby(false);
+};
 
   const [tab, setTab] = useState<Tab>("myTasks");
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
@@ -200,19 +203,9 @@ const DashboardPage = () => {
       setReviews(
         (reviewsRes.data as any[])?.map((r) => ({ ...r, task: Array.isArray(r.tasks) ? r.tasks[0] : r.tasks })) || [],
       );
-      useEffect(() => {
-        setNearbyTasks([]);
-        setSearchedNearby(false);
-      }, [latitude, longitude, radiusKm]);
-      useEffect(() => {
-        if (!latitude || !longitude) return;
+     
 
-        const timeout = setTimeout(() => {
-          loadNearbyTasks();
-        }, 500); // debounce чтобы не дергать API слишком часто
-
-        return () => clearTimeout(timeout);
-      }, [latitude, longitude, radiusKm]);
+        
       // Fetch chat tasks - tasks where user has messages
       const { data: chatMsgs } = await supabase
         .from("chat_messages")
@@ -254,6 +247,14 @@ const DashboardPage = () => {
     };
     fetchAll();
   }, [user]);
+useEffect(() => {
+  setNearbyTasks([]);
+  setSearchedNearby(false);
+}, [latitude, longitude, radiusKm]);
+
+useEffect(() => {
+  if (!latitude || !longitude) return;
+
 
   // Pre-seed translations from localStorage cache
   useEffect(() => {
