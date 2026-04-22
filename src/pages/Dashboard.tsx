@@ -92,7 +92,19 @@ const DashboardPage = () => {
   const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
-  const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
+  const {
+    latitude,
+    longitude,
+    loading: geoLoading,
+    error: geoError,
+    getCurrentLocation,
+    permission: geoPermission,
+    source: geoSource,
+    label: geoLabel,
+    searchAddress,
+    setManualLocation,
+    clearLocation,
+  } = useGeolocation();
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
 
   const loadNearbyTasks = async () => {
@@ -574,9 +586,18 @@ const DashboardPage = () => {
                 </Link>
               </div>
 
-              {geoError && <p className="text-sm text-red-600 mt-3">{geoError}</p>}
+              <LocationFallback
+                error={geoError}
+                permission={geoPermission}
+                source={geoSource}
+                label={geoLabel}
+                loading={geoLoading}
+                onSearchAddress={searchAddress}
+                onPickCity={(lat, lng, name) => setManualLocation(lat, lng, name)}
+                onClear={clearLocation}
+              />
 
-              {latitude && longitude && (
+              {latitude && longitude && geoSource !== "manual" && (
                 <p className="text-xs text-muted-foreground mt-3">
                   Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
                 </p>
