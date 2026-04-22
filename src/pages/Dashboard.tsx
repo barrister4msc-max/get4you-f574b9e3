@@ -4,6 +4,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { LocationFallback } from "@/components/LocationFallback";
 import { getCachedTranslation, setCachedTranslations, makeKey } from "@/lib/translationCache";
 import {
   User,
