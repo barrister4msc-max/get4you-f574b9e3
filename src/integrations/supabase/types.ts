@@ -2904,6 +2904,8 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "dispute"
+        | "awaiting_payment"
+        | "completion_requested"
       task_type: "onsite" | "remote"
     }
     CompositeTypes: {
@@ -3049,6 +3051,8 @@ export const Constants = {
         "completed",
         "cancelled",
         "dispute",
+        "awaiting_payment",
+        "completion_requested",
       ],
       task_type: ["onsite", "remote"],
     },
