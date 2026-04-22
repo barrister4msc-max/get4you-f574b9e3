@@ -1165,6 +1165,51 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_attempts: {
+        Row: {
+          context: Json | null
+          created_at: string
+          currency: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          price: number | null
+          proposal_id: string | null
+          success: boolean
+          task_id: string | null
+          user_id: string | null
+          user_roles: string[] | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          price?: number | null
+          proposal_id?: string | null
+          success: boolean
+          task_id?: string | null
+          user_id?: string | null
+          user_roles?: string[] | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          price?: number | null
+          proposal_id?: string | null
+          success?: boolean
+          task_id?: string | null
+          user_id?: string | null
+          user_roles?: string[] | null
+        }
+        Relationships: []
+      }
       proposals: {
         Row: {
           comment: string | null
@@ -2874,11 +2919,11 @@ export type Database = {
       start_task: { Args: { _task_id: string }; Returns: undefined }
       submit_proposal: {
         Args: {
-          p_comment?: string
-          p_currency?: string
-          p_portfolio_urls?: string[]
-          p_price: number
-          p_task_id: string
+          _comment?: string
+          _currency?: string
+          _portfolio_urls?: string[]
+          _price: number
+          _task_id: string
         }
         Returns: string
       }
