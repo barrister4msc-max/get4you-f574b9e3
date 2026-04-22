@@ -104,57 +104,6 @@ const IndexPage = () => {
 
   return (
     <div>
-      <section className="py-8 border-b border-border bg-card/40">
-        <div className="container max-w-4xl mx-auto">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <h2 className="text-2xl font-bold">Задачи рядом</h2>
-
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <button onClick={getCurrentLocation} className="px-4 py-2 bg-primary text-white rounded-lg">
-                {geoLoading ? "Определяем..." : "📍 Найти меня"}
-              </button>
-
-              <button
-                onClick={loadNearbyTasks}
-                disabled={!latitude || !longitude}
-                className="px-4 py-2 border rounded-lg disabled:opacity-50"
-              >
-                Найти задачи рядом
-              </button>
-            </div>
-
-            {geoError && <p className="text-sm text-red-600">{geoError}</p>}
-
-            {latitude && longitude && (
-              <p className="text-xs text-muted-foreground">
-                Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
-              </p>
-            )}
-
-            <div className="w-full mt-4 space-y-3">
-              {nearbyTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  to={`/tasks/${task.id}`}
-                  className="block p-4 border rounded-xl hover:shadow-md transition"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="text-left">
-                      <div className="font-semibold">{task.title}</div>
-                      {task.description && <div className="text-sm text-muted-foreground mt-1">{task.description}</div>}
-                      <div className="text-xs text-muted-foreground mt-2">📍 {Math.round(task.distance_meters)} м</div>
-                    </div>
-
-                    <div className="shrink-0 font-semibold">
-                      {task.budget_fixed ?? "—"} {task.currency ?? ""}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section
         ref={heroRef}
@@ -230,6 +179,64 @@ const IndexPage = () => {
                 >
                   {t("hero.browse")}
                 </Link>
+              </div>
+
+              {/* Nearby tasks block */}
+              <div className="mt-10 p-5 rounded-2xl bg-card/70 backdrop-blur border border-border">
+                <h2 className="text-xl font-bold text-foreground">Задачи рядом</h2>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={getCurrentLocation}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium"
+                  >
+                    {geoLoading ? "Определяем..." : "📍 Найти меня"}
+                  </button>
+
+                  <button
+                    onClick={loadNearbyTasks}
+                    disabled={!latitude || !longitude}
+                    className="px-4 py-2 border border-border rounded-lg disabled:opacity-50 text-foreground"
+                  >
+                    Найти задачи рядом
+                  </button>
+                </div>
+
+                {geoError && <p className="mt-2 text-sm text-destructive">{geoError}</p>}
+
+                {latitude && longitude && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
+                  </p>
+                )}
+
+                {nearbyTasks.length > 0 && (
+                  <div className="w-full mt-4 space-y-3">
+                    {nearbyTasks.map((task) => (
+                      <Link
+                        key={task.id}
+                        to={`/tasks/${task.id}`}
+                        className="block p-4 border border-border rounded-xl hover:shadow-md transition bg-background"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-left">
+                            <div className="font-semibold text-foreground">{task.title}</div>
+                            {task.description && (
+                              <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
+                            )}
+                            <div className="text-xs text-muted-foreground mt-2">
+                              📍 {Math.round(task.distance_meters)} м
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 font-semibold text-foreground">
+                            {task.budget_fixed ?? "—"} {task.currency ?? ""}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="mt-12 grid grid-cols-3 gap-6">
