@@ -199,7 +199,10 @@ const DashboardPage = () => {
       setReviews(
         (reviewsRes.data as any[])?.map((r) => ({ ...r, task: Array.isArray(r.tasks) ? r.tasks[0] : r.tasks })) || [],
       );
-
+      useEffect(() => {
+        setNearbyTasks([]);
+        setSearchedNearby(false);
+      }, [latitude, longitude, radiusKm]);
       // Fetch chat tasks - tasks where user has messages
       const { data: chatMsgs } = await supabase
         .from("chat_messages")
