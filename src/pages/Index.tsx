@@ -19,6 +19,8 @@ import {
   Package,
   Heart,
   GraduationCap,
+  MapPin,
+  Search,
 } from "lucide-react";
 import { useRef, useMemo, useEffect } from "react";
 import { toast } from "sonner";
