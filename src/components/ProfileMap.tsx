@@ -8,17 +8,6 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { LocationFallback } from '@/components/LocationFallback';
 import { MapPin } from 'lucide-react';
 
-// Leaflet's default marker icons break under bundlers; rebuild via CDN.
-const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
 const meIcon = L.divIcon({
   className: '',
   html: `<div style="width:18px;height:18px;border-radius:9999px;background:hsl(var(--primary));border:3px solid hsl(var(--background));box-shadow:0 0 0 2px hsl(var(--primary)/0.4);"></div>`,
