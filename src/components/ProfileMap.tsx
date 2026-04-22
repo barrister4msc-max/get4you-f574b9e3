@@ -32,7 +32,7 @@ type TaskMarker = {
   latitude: number;
   longitude: number;
   status: string | null;
-  role: 'owner' | 'assignee';
+  role: 'owner' | 'assignee' | 'other';
 };
 
 export const ProfileMap = () => {
@@ -57,13 +57,13 @@ export const ProfileMap = () => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      // Fetch all public tasks with coordinates (uses tasks_public view — RLS-safe)
       const { data } = await supabase
-        .from('tasks')
+        .from('tasks_public')
         .select('id,title,latitude,longitude,status,user_id,assigned_to')
-        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
         .not('latitude', 'is', null)
         .not('longitude', 'is', null)
-        .limit(200);
+        .limit(500);
       if (cancelled) return;
       const mapped: TaskMarker[] = (data || []).map((t: any) => ({
         id: t.id,
@@ -71,7 +71,12 @@ export const ProfileMap = () => {
         latitude: Number(t.latitude),
         longitude: Number(t.longitude),
         status: t.status,
-        role: t.user_id === user.id ? 'owner' : 'assignee',
+        role:
+          t.user_id === user.id
+            ? 'owner'
+            : t.assigned_to === user.id
+            ? 'assignee'
+            : 'other',
       }));
       setTasks(mapped);
       setLoading(false);
