@@ -184,54 +184,69 @@ const IndexPage = () => {
               </div>
 
               {/* Nearby tasks block */}
-              <div className="mt-10 p-5 rounded-2xl bg-card/70 backdrop-blur border border-border">
-                <h2 className="text-xl font-bold text-foreground">Задачи рядом</h2>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="mt-10 p-6 rounded-2xl bg-card/80 backdrop-blur-md border border-border/60 shadow-card"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground">Задачи рядом</h2>
+                </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-4 flex flex-wrap items-center gap-3">
                   <button
                     onClick={getCurrentLocation}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                   >
-                    {geoLoading ? "Определяем..." : "📍 Найти меня"}
+                    <MapPin className="w-4 h-4" />
+                    {geoLoading ? "Определяем..." : "Найти меня"}
                   </button>
 
                   <button
                     onClick={loadNearbyTasks}
                     disabled={!latitude || !longitude}
-                    className="px-4 py-2 border border-border rounded-lg disabled:opacity-50 text-foreground"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
+                    <Search className="w-4 h-4" />
                     Найти задачи рядом
                   </button>
                 </div>
 
-                {geoError && <p className="mt-2 text-sm text-destructive">{geoError}</p>}
+                {geoError && <p className="mt-3 text-sm text-destructive">{geoError}</p>}
 
                 {latitude && longitude && (
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-3 text-xs text-muted-foreground">
                     Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
                   </p>
                 )}
 
                 {nearbyTasks.length > 0 && (
-                  <div className="w-full mt-4 space-y-3">
+                  <div className="w-full mt-5 space-y-3">
                     {nearbyTasks.map((task) => (
                       <Link
                         key={task.id}
                         to={`/tasks/${task.id}`}
-                        className="block p-4 border border-border rounded-xl hover:shadow-md transition bg-background"
+                        className="block p-4 rounded-xl bg-background border border-border shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-left">
-                            <div className="font-semibold text-foreground">{task.title}</div>
+                          <div className="text-left min-w-0">
+                            <div className="font-semibold text-foreground truncate">{task.title}</div>
                             {task.description && (
-                              <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
+                              <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {task.description}
+                              </div>
                             )}
-                            <div className="text-xs text-muted-foreground mt-2">
-                              📍 {Math.round(task.distance_meters)} м
+                            <div className="inline-flex items-center gap-1 text-xs text-muted-foreground mt-2">
+                              <MapPin className="w-3 h-3" />
+                              {Math.round(task.distance_meters)} м
                             </div>
                           </div>
 
-                          <div className="shrink-0 font-semibold text-foreground">
+                          <div className="shrink-0 font-bold text-foreground">
                             {task.budget_fixed ?? "—"} {task.currency ?? ""}
                           </div>
                         </div>
@@ -239,7 +254,7 @@ const IndexPage = () => {
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
 
               <div className="mt-12 grid grid-cols-3 gap-6">
                 {stats.map((s) => (
