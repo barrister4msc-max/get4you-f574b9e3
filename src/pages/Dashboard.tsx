@@ -92,7 +92,6 @@ const DashboardPage = () => {
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
-  const navigate = useNavigate();
 
   const {
     latitude,
@@ -112,27 +111,27 @@ const DashboardPage = () => {
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
   const [searchedNearby, setSearchedNearby] = useState(false);
   const [loadingNearby, setLoadingNearby] = useState(false);
-const loadNearbyTasks = async () => {
-  if (!latitude || !longitude) return;
+  const loadNearbyTasks = async () => {
+    if (!latitude || !longitude) return;
 
-  setLoadingNearby(true);
-  setSearchedNearby(true);
+    setLoadingNearby(true);
+    setSearchedNearby(true);
+    setNearbyTasks([]);
+    const { data, error } = await supabase.rpc("get_nearby_tasks", {
+      p_lat: latitude,
+      p_lng: longitude,
+      p_radius_km: radiusKm,
+    });
 
-  const { data, error } = await supabase.rpc("get_nearby_tasks", {
-    p_lat: latitude,
-    p_lng: longitude,
-    p_radius_km: radiusKm,
-  });
+    if (error) {
+      console.error("Nearby tasks error:", error);
+      setLoadingNearby(false);
+      return;
+    }
 
-  if (error) {
-    console.error("Nearby tasks error:", error);
+    setNearbyTasks(data || []);
     setLoadingNearby(false);
-    return;
-  }
-
-  setNearbyTasks(data || []);
-  setLoadingNearby(false);
-};
+  };
 
   const [tab, setTab] = useState<Tab>("myTasks");
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
@@ -203,9 +202,7 @@ const loadNearbyTasks = async () => {
       setReviews(
         (reviewsRes.data as any[])?.map((r) => ({ ...r, task: Array.isArray(r.tasks) ? r.tasks[0] : r.tasks })) || [],
       );
-     
 
-        
       // Fetch chat tasks - tasks where user has messages
       const { data: chatMsgs } = await supabase
         .from("chat_messages")
@@ -247,28 +244,22 @@ const loadNearbyTasks = async () => {
     };
     fetchAll();
   }, [user]);
-useEffect(() => {
-  setNearbyTasks([]);
-  setSearchedNearby(false);
-}, [latitude, longitude, radiusKm]);
 
-useEffect(() => {
-  if (!latitude || !longitude) return;
+  useEffect(() => {
+    setNearbyTasks([]);
+    setSearchedNearby(false);
+  }, [latitude, longitude, radiusKm]);
 
-  const timeout = setTimeout(() => {
-    loadNearbyTasks();
-  }, 500);
+  useEffect(() => {
+    if (!latitude || !longitude) return;
 
-  return () => clearTimeout(timeout);
-}, [latitude, longitude, radiusKm]);
+    const timeout = setTimeout(() => {
+      loadNearbyTasks();
+    }, 500);
 
-// Pre-seed translations from localStorage cache
-useEffect(() => {
-  const allTitles: { id: string; title: string }[] = [];
-  ...
-}, [locale, myTasks, assignedTasks, myProposals, allEscrow]);
+    return () => clearTimeout(timeout);
+  }, [latitude, longitude, radiusKm]);
 
-  // Pre-seed translations from localStorage cache
   useEffect(() => {
     const allTitles: { id: string; title: string }[] = [];
     const addUnique = (id: string, title: string) => {
