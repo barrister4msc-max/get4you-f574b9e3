@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useGeolocation } from "@/hooks/useGeolocation";
-import { supabase } from "@/integrations/supabase/client";
 import { motion, useScroll, useTransform } from "framer-motion";
 import {
   Sparkles,
@@ -22,7 +20,7 @@ import {
   Heart,
   GraduationCap,
 } from "lucide-react";
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-image.png";
 import heroImage2 from "@/assets/hero-image-2.jpg";
