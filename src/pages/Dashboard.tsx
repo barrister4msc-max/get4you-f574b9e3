@@ -93,25 +93,7 @@ const DashboardPage = () => {
   const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
   const navigate = useNavigate();
-  const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
-  const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
 
-  const loadNearbyTasks = async () => {
-    if (!latitude || !longitude) return;
-
-    const { data, error } = await supabase.rpc("get_nearby_tasks", {
-      p_lat: latitude,
-      p_lng: longitude,
-      p_radius_km: 20,
-    });
-
-    if (error) {
-      console.error("Nearby tasks error:", error);
-      return;
-    }
-
-    setNearbyTasks(data || []);
-  };
   const {
     latitude,
     longitude,
@@ -125,15 +107,19 @@ const DashboardPage = () => {
     setManualLocation,
     clearLocation,
   } = useGeolocation();
+
+  const [radiusKm, setRadiusKm] = useState(20);
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
 
   const loadNearbyTasks = async () => {
     if (!latitude || !longitude) return;
 
+    setSearchedNearby(true);
+
     const { data, error } = await supabase.rpc("get_nearby_tasks", {
       p_lat: latitude,
       p_lng: longitude,
-      p_radius_km: 20,
+      p_radius_km: radiusKm,
     });
 
     if (error) {
@@ -143,6 +129,7 @@ const DashboardPage = () => {
 
     setNearbyTasks(data || []);
   };
+
   const [tab, setTab] = useState<Tab>("myTasks");
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
@@ -476,10 +463,6 @@ const DashboardPage = () => {
             <button
               key={tb.key}
               onClick={() => {
-                if (tb.key === "findTasks") {
-                  navigate("/tasks");
-                  return;
-                }
                 setTab(tb.key);
               }}
               className={`flex items-center gap-1.5 flex-1 min-w-0 py-2 px-2 rounded-lg text-xs font-semibold transition-all justify-center ${
@@ -591,6 +574,17 @@ const DashboardPage = () => {
                   {geoLoading ? "Определяем..." : "Найти меня"}
                 </button>
 
+                <select
+                  value={radiusKm}
+                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  className="px-3 py-2 border rounded-lg"
+                >
+                  <option value={5}>5 км</option>
+                  <option value={10}>10 км</option>
+                  <option value={20}>20 км</option>
+                  <option value={50}>50 км</option>
+                </select>
+
                 <button
                   onClick={loadNearbyTasks}
                   disabled={!latitude || !longitude}
@@ -663,6 +657,10 @@ const DashboardPage = () => {
           </div>
         )}
 
+        {latitude && longitude && nearbyTasks.length === 0 && (
+          <div className="text-center text-sm text-muted-foreground py-6">В выбранном радиусе задач не найдено</div>
+        )}
+        {/* MY PROPOSALS */}
         {/* MY PROPOSALS */}
         {tab === "myProposals" && (
           <div className="space-y-3">
