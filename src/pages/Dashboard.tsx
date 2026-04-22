@@ -24,6 +24,7 @@ import {
   History,
 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
+import { ProfileMap } from "@/components/ProfileMap";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
@@ -475,6 +476,7 @@ const DashboardPage = () => {
         {/* MY TASKS */}
         {tab === "myTasks" && (
           <div className="space-y-3">
+            <ProfileMap />
             {showTaskerBlocks && <NearbyOrders defaultRadiusKm={10} />}
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold">{t("dashboard.client.myTasks")}</h2>
