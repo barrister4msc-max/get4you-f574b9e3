@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -60,6 +60,7 @@ interface Proposal {
 
 const TaskDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user } = useAuth();
@@ -921,7 +922,25 @@ const handlePaymentConfirm = async () => {
               {!isOwner && task.status === 'open' && (
                 <>
                   {!user ? (
-                    <p className="text-xs text-muted-foreground mt-4 text-center">{t('proposal.login')}</p>
+                    <button
+                      onClick={() =>
+                        navigate(`/login?tab=signup&returnTo=${encodeURIComponent(`/tasks/${id}`)}`)
+                      }
+                      className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                    >
+                      {t('tasks.respond')}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  ) : !user.email_confirmed_at ? (
+                    <button
+                      onClick={() =>
+                        navigate(`/login?returnTo=${encodeURIComponent(`/tasks/${id}`)}`)
+                      }
+                      className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+                    >
+                      {t('tasks.respond')}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   ) : hasProposed ? (
                     <p className="text-xs text-primary mt-4 text-center font-medium">{t('proposal.already')}</p>
                   ) : (
