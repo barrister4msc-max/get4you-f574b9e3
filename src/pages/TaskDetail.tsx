@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations } from '@/lib/translationCache';
+import { trackEvent, extractProposalErrorCode } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -406,7 +407,15 @@ const TaskDetailPage = () => {
       if (data) setProposals(data as any);
     } catch (err: any) {
       console.error('submit proposal error:', err);
-      toast.error(t('proposal.error'));
+      const code = extractProposalErrorCode(err);
+      const i18nKey = code ? `proposal.error.${code}` : 'proposal.error';
+      toast.error(t(i18nKey));
+      // Server already logs proposal_rejected; we still emit a client-side
+      // event so funnel covers fatal/network errors too.
+      void trackEvent('proposal_rejected', {
+        taskId: id,
+        metadata: { reason: code || 'CLIENT_ERROR', source: 'client' },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -923,9 +932,13 @@ const handlePaymentConfirm = async () => {
                 <>
                   {!user ? (
                     <button
-                      onClick={() =>
-                        navigate(`/login?tab=signup&returnTo=${encodeURIComponent(`/tasks/${id}`)}`)
-                      }
+                      onClick={() => {
+                        void trackEvent('respond_clicked', {
+                          taskId: id,
+                          metadata: { state: 'guest' },
+                        });
+                        navigate(`/login?tab=signup&returnTo=${encodeURIComponent(`/tasks/${id}`)}`);
+                      }}
                       className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                     >
                       {t('tasks.respond')}
@@ -933,9 +946,13 @@ const handlePaymentConfirm = async () => {
                     </button>
                   ) : !user.email_confirmed_at ? (
                     <button
-                      onClick={() =>
-                        navigate(`/login?returnTo=${encodeURIComponent(`/tasks/${id}`)}`)
-                      }
+                      onClick={() => {
+                        void trackEvent('respond_clicked', {
+                          taskId: id,
+                          metadata: { state: 'unverified' },
+                        });
+                        navigate(`/login?returnTo=${encodeURIComponent(`/tasks/${id}`)}`);
+                      }}
                       className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                     >
                       {t('tasks.respond')}
@@ -987,7 +1004,13 @@ const handlePaymentConfirm = async () => {
                           </motion.div>
                         ) : (
                           <button
-                            onClick={() => setShowForm(true)}
+                            onClick={() => {
+                              void trackEvent('respond_clicked', {
+                                taskId: id,
+                                metadata: { state: 'authenticated' },
+                              });
+                              setShowForm(true);
+                            }}
                             className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                           >
                             {t('tasks.respond')}

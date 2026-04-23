@@ -68,6 +68,36 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          task_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          task_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_by: string
@@ -2102,6 +2132,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_proposal_funnel: {
+        Args: { _since?: string }
+        Returns: {
+          event_count: number
+          event_name: string
+          unique_users: number
+        }[]
+      }
       get_public_profile: {
         Args: { target_user_id: string }
         Returns: {
@@ -2928,6 +2966,15 @@ export type Database = {
           _portfolio_urls?: string[]
           _price: number
           _task_id: string
+        }
+        Returns: string
+      }
+      track_event: {
+        Args: {
+          _event_name: string
+          _metadata?: Json
+          _session_id?: string
+          _task_id?: string
         }
         Returns: string
       }
