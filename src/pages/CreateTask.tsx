@@ -736,6 +736,57 @@ const CreateTaskPage = () => {
           )}
         </div>
 
+        {/* Geolocation confirmation modal */}
+        <AnimatePresence>
+          {geoPrompt.open && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+              onClick={() => setGeoPrompt({ open: false, address: null })}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-card rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
+                  <MapPin className="w-7 h-7 text-primary" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground">{t("task.geo.detectedTitle")}</h2>
+                <p className="text-sm text-muted-foreground">{t("task.geo.detectedDesc")}</p>
+                {geoPrompt.address && (
+                  <div className="bg-secondary rounded-xl p-3 text-sm text-foreground text-start">
+                    {geoPrompt.address}
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (geoPrompt.address) update({ location: geoPrompt.address });
+                      setGeoPrompt({ open: false, address: null });
+                    }}
+                    className="w-full py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+                  >
+                    {t("task.geo.useIt")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGeoPrompt({ open: false, address: null })}
+                    className="w-full py-2.5 rounded-xl font-medium border border-border text-foreground hover:bg-secondary transition-colors"
+                  >
+                    {t("task.geo.skip")}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Motivational pre-login modal */}
         <AnimatePresence>
           {showMotivation && (
