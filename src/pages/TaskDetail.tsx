@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations } from '@/lib/translationCache';
+import { trackEvent, extractProposalErrorCode } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
