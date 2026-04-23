@@ -407,7 +407,15 @@ const TaskDetailPage = () => {
       if (data) setProposals(data as any);
     } catch (err: any) {
       console.error('submit proposal error:', err);
-      toast.error(t('proposal.error'));
+      const code = extractProposalErrorCode(err);
+      const i18nKey = code ? `proposal.error.${code}` : 'proposal.error';
+      toast.error(t(i18nKey));
+      // Server already logs proposal_rejected; we still emit a client-side
+      // event so funnel covers fatal/network errors too.
+      void trackEvent('proposal_rejected', {
+        taskId: id,
+        metadata: { reason: code || 'CLIENT_ERROR', source: 'client' },
+      });
     } finally {
       setSubmitting(false);
     }
