@@ -65,15 +65,17 @@ const IndexPage = () => {
   const [searchParams] = useSearchParams();
   const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [pendingNearby, setPendingNearby] = useState(false);
 
-  const loadNearbyTasks = async () => {
-    if (!latitude || !longitude) return;
-
+  const loadNearbyTasks = async (lat: number, lng: number) => {
+    setNearbyLoading(true);
     const { data, error } = await supabase.rpc("get_nearby_tasks", {
-      p_lat: latitude,
-      p_lng: longitude,
+      p_lat: lat,
+      p_lng: lng,
       p_radius_km: 20,
     });
+    setNearbyLoading(false);
 
     if (error) {
       console.error("Nearby tasks error:", error);
@@ -82,6 +84,22 @@ const IndexPage = () => {
 
     setNearbyTasks(data || []);
   };
+
+  const handleFindNearby = () => {
+    if (latitude && longitude) {
+      loadNearbyTasks(latitude, longitude);
+    } else {
+      setPendingNearby(true);
+      getCurrentLocation();
+    }
+  };
+
+  useEffect(() => {
+    if (pendingNearby && latitude && longitude) {
+      setPendingNearby(false);
+      loadNearbyTasks(latitude, longitude);
+    }
+  }, [pendingNearby, latitude, longitude]);
   // Handle OAuth callback / errors landing on homepage
   useEffect(() => {
     const hash = window.location.hash;
