@@ -302,6 +302,36 @@ const TasksPage = () => {
     fetchData();
   }, []);
 
+  // When we have user coords, hydrate task rows with coords from get_nearby_tasks RPC
+  // (tasks_public hides precise lat/lng for privacy, so distance sort needs this enrichment)
+  useEffect(() => {
+    if (!userCoords) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('get_nearby_tasks', {
+        p_lat: userCoords.lat,
+        p_lng: userCoords.lng,
+        p_radius_km: 500,
+      });
+      if (cancelled || error || !data) return;
+      const coordMap = new Map<string, { lat: number; lng: number }>();
+      (data as any[]).forEach((r) => {
+        if (r.latitude != null && r.longitude != null) {
+          coordMap.set(r.id, { lat: r.latitude, lng: r.longitude });
+        }
+      });
+      setTasks((prev) =>
+        prev.map((t) => {
+          const c = coordMap.get(t.id);
+          return c ? { ...t, latitude: c.lat, longitude: c.lng } : t;
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userCoords?.lat, userCoords?.lng]);
+
   // Map URL ?category=<slug|id> → filterCat (UUID)
   useEffect(() => {
     const param = searchParams.get('category');
