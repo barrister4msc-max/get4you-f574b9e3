@@ -212,35 +212,25 @@ const IndexPage = () => {
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                     <MapPin className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">Задачи рядом</h2>
+                  <h2 className="text-xl font-bold text-foreground">{t("nearby.heroTitle")}</h2>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-3">
+                <div className="mt-4">
                   <button
-                    onClick={getCurrentLocation}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    {geoLoading ? "Определяем..." : "Найти меня"}
-                  </button>
-
-                  <button
-                    onClick={loadNearbyTasks}
-                    disabled={!latitude || !longitude}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleFindNearby}
+                    disabled={geoLoading || nearbyLoading}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <Search className="w-4 h-4" />
-                    Найти задачи рядом
+                    {geoLoading
+                      ? t("nearby.locating")
+                      : nearbyLoading
+                        ? t("nearby.searching")
+                        : t("nearby.heroCta")}
                   </button>
                 </div>
 
                 {geoError && <p className="mt-3 text-sm text-destructive">{geoError}</p>}
-
-                {latitude && longitude && (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
-                  </p>
-                )}
 
                 {nearbyTasks.length > 0 && (
                   <div className="w-full mt-5 space-y-3">
@@ -260,7 +250,7 @@ const IndexPage = () => {
                             )}
                             <div className="inline-flex items-center gap-1 text-xs text-muted-foreground mt-2">
                               <MapPin className="w-3 h-3" />
-                              {Math.round(task.distance_meters)} м
+                              {Math.round(task.distance_meters)} {t("nearby.distanceMeters")}
                             </div>
                           </div>
 
