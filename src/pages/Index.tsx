@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { supabase } from "@/integrations/supabase/client";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,9 +18,8 @@ import {
   Heart,
   GraduationCap,
   MapPin,
-  Search,
 } from "lucide-react";
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-image.png";
 import heroImage2 from "@/assets/hero-image-2.jpg";
