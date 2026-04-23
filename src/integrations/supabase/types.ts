@@ -2322,6 +2322,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      refresh_profile_rating: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       release_escrow: { Args: { p_assignment_id: string }; Returns: undefined }
       request_completion: {
         Args: { p_assignment_id: string }
