@@ -216,6 +216,7 @@ const TasksPage = () => {
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
+  const [nearbyDistances, setNearbyDistances] = useState<Record<string, number>>({});
 
   const isTasker = roles.includes('executor') || roles.includes('tasker');
   const competencyTerms = useMemo(() => {
@@ -262,27 +263,32 @@ const TasksPage = () => {
     );
   };
 
+  const nearbyLatParam = searchParams.get('lat');
+  const nearbyLngParam = searchParams.get('lng');
+  const nearbyLat = nearbyLatParam ? Number(nearbyLatParam) : NaN;
+  const nearbyLng = nearbyLngParam ? Number(nearbyLngParam) : NaN;
+  const hasNearbyQueryCoords = searchParams.get('nearby') === '1' && !Number.isNaN(nearbyLat) && !Number.isNaN(nearbyLng);
+
   useEffect(() => {
+    if (hasNearbyQueryCoords) return;
     const p = profile as any;
-    if (p?.latitude && p?.longitude) {
+    if (p?.latitude != null && p?.longitude != null) {
       setUserCoords({ lat: p.latitude, lng: p.longitude });
     }
-  }, [(profile as any)?.latitude, (profile as any)?.longitude]);
+  }, [hasNearbyQueryCoords, (profile as any)?.latitude, (profile as any)?.longitude]);
 
   // Handle ?nearby=1&lat=&lng= from homepage CTA — sort by distance ascending
   const [sortByDistance, setSortByDistance] = useState(false);
   useEffect(() => {
     if (searchParams.get('nearby') !== '1') return;
     setSortByDistance(true);
-    const lat = parseFloat(searchParams.get('lat') || '');
-    const lng = parseFloat(searchParams.get('lng') || '');
-    if (!isNaN(lat) && !isNaN(lng)) {
-      setUserCoords({ lat, lng });
+    if (hasNearbyQueryCoords) {
+      setUserCoords({ lat: nearbyLat, lng: nearbyLng });
     } else if (!userCoords && navigator.geolocation) {
       requestGeolocation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, hasNearbyQueryCoords, nearbyLat, nearbyLng]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -308,6 +314,7 @@ const TasksPage = () => {
     if (!userCoords) return;
     let cancelled = false;
     (async () => {
+      setNearbyDistances({});
       const { data, error } = await supabase.rpc('get_nearby_tasks', {
         p_lat: userCoords.lat,
         p_lng: userCoords.lng,
@@ -315,11 +322,16 @@ const TasksPage = () => {
       });
       if (cancelled || error || !data) return;
       const coordMap = new Map<string, { lat: number; lng: number }>();
+      const distanceMap: Record<string, number> = {};
       (data as any[]).forEach((r) => {
         if (r.latitude != null && r.longitude != null) {
           coordMap.set(r.id, { lat: r.latitude, lng: r.longitude });
         }
+        if (typeof r.distance_meters === 'number') {
+          distanceMap[r.id] = r.distance_meters / 1000;
+        }
       });
+      setNearbyDistances(distanceMap);
       setTasks((prev) =>
         prev.map((t) => {
           const c = coordMap.get(t.id);
@@ -479,7 +491,8 @@ const TasksPage = () => {
   }, [locale, tasksForCurrentTab, translatedTasks]);
 
   const getTaskDistance = (task: TaskRow): number | null => {
-    if (!userCoords || !task.latitude || !task.longitude) return null;
+    if (typeof nearbyDistances[task.id] === 'number') return nearbyDistances[task.id];
+    if (!userCoords || task.latitude == null || task.longitude == null) return null;
     return getDistanceKm(userCoords.lat, userCoords.lng, task.latitude, task.longitude);
   };
 
@@ -498,7 +511,7 @@ const TasksPage = () => {
     if (filterBudgetMax && budget > Number(filterBudgetMax)) return false;
     if (filterRadius && userCoords) {
       const dist = getTaskDistance(task);
-      if (dist === null) return true;
+      if (dist === null) return false;
       if (dist > Number(filterRadius)) return false;
     }
     return true;
