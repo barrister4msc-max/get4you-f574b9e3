@@ -48,6 +48,7 @@ const CreateTaskPage = () => {
     searchAddress,
     setManualLocation,
     clearLocation,
+    reverseGeocode,
   } = useGeolocation();
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
