@@ -157,7 +157,6 @@ const loadNearbyTasks = async () => {
     setLoadingNearby(false);
   }
 };
-  };
 
   const [tab, setTab] = useState<Tab>("myTasks");
   const [myTasks, setMyTasks] = useState<MyTaskRow[]>([]);
