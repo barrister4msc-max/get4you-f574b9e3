@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -60,6 +60,7 @@ interface Proposal {
 
 const TaskDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user } = useAuth();
