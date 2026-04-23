@@ -198,6 +198,22 @@ export function useGeolocation() {
     [setManualLocation]
   );
 
+  /** Reverse-geocode lat/lng to a human-readable address using Nominatim. */
+  const reverseGeocode = useCallback(
+    async (lat: number, lng: number, lang?: string): Promise<string | null> => {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=${lang || "en"}`;
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!res.ok) return null;
+        const data = (await res.json()) as { display_name?: string };
+        return data?.display_name ?? null;
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
   const clearLocation = useCallback(() => {
     saveStored(null);
     setState((prev) => ({
@@ -215,6 +231,7 @@ export function useGeolocation() {
     getCurrentLocation,
     setManualLocation,
     searchAddress,
+    reverseGeocode,
     clearLocation,
   };
 }
