@@ -549,6 +549,12 @@ const CreateTaskPage = () => {
                     {geoLoading ? "Определяем..." : "📍 Моя геолокация"}
                   </button>
                 </div>
+                {geoLoading && !form.location && (
+                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {t("task.geo.detecting")}
+                  </p>
+                )}
 
                 <LocationFallback
                   error={geoError}
