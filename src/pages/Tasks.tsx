@@ -269,6 +269,21 @@ const TasksPage = () => {
     }
   }, [(profile as any)?.latitude, (profile as any)?.longitude]);
 
+  // Handle ?nearby=1&lat=&lng= from homepage CTA — sort by distance ascending
+  const [sortByDistance, setSortByDistance] = useState(false);
+  useEffect(() => {
+    if (searchParams.get('nearby') !== '1') return;
+    setSortByDistance(true);
+    const lat = parseFloat(searchParams.get('lat') || '');
+    const lng = parseFloat(searchParams.get('lng') || '');
+    if (!isNaN(lat) && !isNaN(lng)) {
+      setUserCoords({ lat, lng });
+    } else if (!userCoords && navigator.geolocation) {
+      requestGeolocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   useEffect(() => {
     const fetchData = async () => {
       // Public listing uses tasks_public (no precise address/coords for non-participants)
