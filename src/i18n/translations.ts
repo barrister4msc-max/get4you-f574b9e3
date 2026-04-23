@@ -630,8 +630,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Task assigned tasker
     'task.assignedTasker': 'Assigned Tasker',
 
-    // Nearby orders
-    'nearby.title': 'Nearby orders',
+    // Nearby tasks
+    'nearby.title': 'Nearby tasks',
     'nearby.allCategories': 'All categories',
     'nearby.empty': 'No matching tasks found',
     'nearby.untitled': 'Untitled',
@@ -1274,8 +1274,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Task assigned tasker
     'task.assignedTasker': 'Назначенный исполнитель',
 
-    // Nearby orders
-    'nearby.title': 'Заказы рядом',
+    // Nearby tasks
+    'nearby.title': 'Задачи рядом',
     'nearby.allCategories': 'Все категории',
     'nearby.empty': 'Подходящих задач не найдено',
     'nearby.untitled': 'Без названия',
@@ -1917,8 +1917,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Task assigned tasker
     'task.assignedTasker': 'נותן שירות מוקצה',
 
-    // Nearby orders
-    'nearby.title': 'הזמנות בקרבת מקום',
+    // Nearby tasks
+    'nearby.title': 'משימות בקרבת מקום',
     'nearby.allCategories': 'כל הקטגוריות',
     'nearby.empty': 'לא נמצאו משימות מתאימות',
     'nearby.untitled': 'ללא שם',
@@ -2560,8 +2560,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Task assigned tasker
     'task.assignedTasker': 'مقدم الخدمة المعين',
 
-    // Nearby orders
-    'nearby.title': 'الطلبات القريبة',
+    // Nearby tasks
+    'nearby.title': 'المهام القريبة',
     'nearby.allCategories': 'جميع الفئات',
     'nearby.empty': 'لم يتم العثور على مهام مناسبة',
     'nearby.untitled': 'بدون عنوان',
