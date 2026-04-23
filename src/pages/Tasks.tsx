@@ -475,6 +475,13 @@ const TasksPage = () => {
   });
 
   const sortedFiltered = [...filtered].sort((a, b) => {
+    if (sortByDistance && userCoords) {
+      const da = getTaskDistance(a);
+      const db = getTaskDistance(b);
+      if (da != null && db != null) return da - db;
+      if (da != null) return -1;
+      if (db != null) return 1;
+    }
     const scoreDifference =
       getTaskRecommendationScore(b, competencyTerms, preferredCategoryIds) -
       getTaskRecommendationScore(a, competencyTerms, preferredCategoryIds);
