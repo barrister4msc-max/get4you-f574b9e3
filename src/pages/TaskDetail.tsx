@@ -1004,7 +1004,13 @@ const handlePaymentConfirm = async () => {
                           </motion.div>
                         ) : (
                           <button
-                            onClick={() => setShowForm(true)}
+                            onClick={() => {
+                              void trackEvent('respond_clicked', {
+                                taskId: id,
+                                metadata: { state: 'authenticated' },
+                              });
+                              setShowForm(true);
+                            }}
                             className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                           >
                             {t('tasks.respond')}
