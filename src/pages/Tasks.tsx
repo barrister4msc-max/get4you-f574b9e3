@@ -554,7 +554,7 @@ const TasksPage = () => {
       <div className="container">
         <h1 className="text-2xl font-bold mb-6">{t('tasks.title')}</h1>
 
-        {isTasker && <NearbyOrders defaultRadiusKm={10} />}
+        <NearbyOrders defaultRadiusKm={10} />
 
         {isTasker && (
           <div className="flex gap-2 mb-6">
