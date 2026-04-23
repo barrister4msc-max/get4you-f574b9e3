@@ -677,13 +677,6 @@ const loadNearbyTasks = async () => {
   </div>
 )}
 
-            {searchedNearby && latitude && longitude && nearbyTasks.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-6">В выбранном радиусе задач не найдено</div>
-            )}
-          </div>
-        )}
-
-        {/* MY PROPOSALS */}
         {/* MY PROPOSALS */}
         {tab === "myProposals" && (
           <div className="space-y-3">
