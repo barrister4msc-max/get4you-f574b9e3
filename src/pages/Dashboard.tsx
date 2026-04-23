@@ -111,15 +111,36 @@ const DashboardPage = () => {
   const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
   const [searchedNearby, setSearchedNearby] = useState(false);
   const [loadingNearby, setLoadingNearby] = useState(false);
-  const loadNearbyTasks = async () => {
-    if (!latitude || !longitude) return;
-
+const loadNearbyTasks = async () => {
+  try {
     setLoadingNearby(true);
     setSearchedNearby(true);
     setNearbyTasks([]);
+
+    let lat = latitude;
+    let lng = longitude;
+
+    if (!lat || !lng) {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        });
+      });
+
+      lat = position.coords.latitude;
+      lng = position.coords.longitude;
+    }
+
+    if (!lat || !lng) {
+      setLoadingNearby(false);
+      return;
+    }
+
     const { data, error } = await supabase.rpc("get_nearby_tasks", {
-      p_lat: latitude,
-      p_lng: longitude,
+      p_lat: lat,
+      p_lng: lng,
       p_radius_km: radiusKm,
     });
 
@@ -131,6 +152,11 @@ const DashboardPage = () => {
 
     setNearbyTasks(data || []);
     setLoadingNearby(false);
+  } catch (error) {
+    console.error("Geolocation error:", error);
+    setLoadingNearby(false);
+  }
+};
   };
 
   const [tab, setTab] = useState<Tab>("myTasks");
@@ -245,20 +271,7 @@ const DashboardPage = () => {
     fetchAll();
   }, [user]);
 
-  useEffect(() => {
-    setNearbyTasks([]);
-    setSearchedNearby(false);
-  }, [latitude, longitude, radiusKm]);
 
-  useEffect(() => {
-    if (!latitude || !longitude) return;
-
-    const timeout = setTimeout(() => {
-      loadNearbyTasks();
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [latitude, longitude, radiusKm]);
 
   useEffect(() => {
     const allTitles: { id: string; title: string }[] = [];
@@ -576,102 +589,94 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* FIND TASKS */}
-        {tab === "findTasks" && (
-          <div className="space-y-4">
-            <div className="text-center py-4">
-              <Search className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground mb-4">{t("dashboard.tasker.findTasks")}</p>
+{/* FIND TASKS */}
+{tab === "findTasks" && (
+  <div className="space-y-4">
+    <div className="text-center py-4">
+      <Search className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3" />
+      <p className="text-sm text-muted-foreground mb-4">{t("dashboard.tasker.findTasks")}</p>
 
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <button
-                  onClick={getCurrentLocation}
-                  className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-                >
-                  {geoLoading ? "Определяем..." : "Найти меня"}
-                </button>
+      <div className="flex flex-col sm:flex-row gap-2 justify-center">
+        <select
+          value={radiusKm}
+          onChange={(e) => setRadiusKm(Number(e.target.value))}
+          className="px-3 py-2 border rounded-lg"
+        >
+          <option value={5}>5 км</option>
+          <option value={10}>10 км</option>
+          <option value={20}>20 км</option>
+          <option value={50}>50 км</option>
+        </select>
 
-                <select
-                  value={radiusKm}
-                  onChange={(e) => setRadiusKm(Number(e.target.value))}
-                  className="px-3 py-2 border rounded-lg"
-                >
-                  <option value={5}>5 км</option>
-                  <option value={10}>10 км</option>
-                  <option value={20}>20 км</option>
-                  <option value={50}>50 км</option>
-                </select>
+        <button
+          onClick={loadNearbyTasks}
+          className="inline-flex items-center justify-center gap-2 border border-border px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-secondary transition-colors"
+        >
+          Найти задачи рядом
+        </button>
 
-                <button
-                  onClick={loadNearbyTasks}
-                  disabled={!latitude || !longitude}
-                  className="inline-flex items-center justify-center gap-2 border border-border px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-secondary transition-colors disabled:opacity-50"
-                >
-                  Найти задачи рядом
-                </button>
+        <Link
+          to="/tasks"
+          className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+        >
+          Все задачи <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
 
-                <Link
-                  to="/tasks"
-                  className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-                >
-                  Все задачи <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
+      {loadingNearby && (
+        <p className="text-center text-sm text-muted-foreground mt-3">
+          Ищем задачи рядом...
+        </p>
+      )}
+    </div>
 
-              <LocationFallback
-                error={geoError}
-                permission={geoPermission}
-                source={geoSource}
-                label={geoLabel}
-                loading={geoLoading}
-                onSearchAddress={searchAddress}
-                onPickCity={(lat, lng, name) => setManualLocation(lat, lng, name)}
-                onClear={clearLocation}
-              />
+    {nearbyTasks.length > 0 && (
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Задачи рядом</h3>
 
-              {latitude && longitude && geoSource !== "manual" && (
-                <p className="text-xs text-muted-foreground mt-3">
-                  Координаты: {latitude.toFixed(5)}, {longitude.toFixed(5)}
-                </p>
-              )}
-              {loadingNearby && <p className="text-center text-sm text-muted-foreground mt-3">Ищем задачи рядом...</p>}
-            </div>
+        {nearbyTasks.map((task) => (
+          <Link
+            key={task.id}
+            to={`/tasks/${task.id}`}
+            className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm truncate">{task.title}</h3>
+                {task.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {task.description}
+                  </p>
+                )}
 
-            {nearbyTasks.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground">Задачи рядом</h3>
-
-                {nearbyTasks.map((task) => (
-                  <Link
-                    key={task.id}
-                    to={`/tasks/${task.id}`}
-                    className="block p-4 rounded-xl border border-border bg-card hover:shadow-card-hover transition-all"
+                <div className="flex items-center gap-2 mt-2">
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(task.status || "open")}`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm truncate">{task.title}</h3>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                        )}
-
-                        <div className="flex items-center gap-2 mt-2">
-                          <span
-                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(task.status || "open")}`}
-                          >
-                            {t(`tasks.status.${task.status || "open"}`)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">{Math.round(task.distance_meters)} м</span>
-                        </div>
-                      </div>
-
-                      <div className="text-primary font-bold text-sm shrink-0">
-                        {formatPrice(task.budget_fixed || 0, currency, task.currency)}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    {t(`tasks.status.${task.status || "open"}`)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {Math.round(task.distance_meters)} м
+                  </span>
+                </div>
               </div>
-            )}
+
+              <div className="text-primary font-bold text-sm shrink-0">
+                {formatPrice(task.budget_fixed || 0, currency, task.currency)}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    )}
+
+    {searchedNearby && !loadingNearby && nearbyTasks.length === 0 && (
+      <div className="text-center text-sm text-muted-foreground py-6">
+        В выбранном радиусе задач не найдено
+      </div>
+    )}
+  </div>
+)}
 
             {searchedNearby && latitude && longitude && nearbyTasks.length === 0 && (
               <div className="text-center text-sm text-muted-foreground py-6">В выбранном радиусе задач не найдено</div>
