@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { supabase } from "@/integrations/supabase/client";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -20,9 +18,8 @@ import {
   Heart,
   GraduationCap,
   MapPin,
-  Search,
 } from "lucide-react";
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-image.png";
 import heroImage2 from "@/assets/hero-image-2.jpg";
@@ -63,31 +60,17 @@ const IndexPage = () => {
   const { t } = useLanguage();
   const { user, roles } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
-  const [nearbyTasks, setNearbyTasks] = useState<any[]>([]);
-  const [nearbyLoading, setNearbyLoading] = useState(false);
   const [pendingNearby, setPendingNearby] = useState(false);
 
-  const loadNearbyTasks = async (lat: number, lng: number) => {
-    setNearbyLoading(true);
-    const { data, error } = await supabase.rpc("get_nearby_tasks", {
-      p_lat: lat,
-      p_lng: lng,
-      p_radius_km: 20,
-    });
-    setNearbyLoading(false);
-
-    if (error) {
-      console.error("Nearby tasks error:", error);
-      return;
-    }
-
-    setNearbyTasks(data || []);
+  const goToNearbyTasks = (lat: number, lng: number) => {
+    navigate(`/tasks?nearby=1&lat=${lat}&lng=${lng}`);
   };
 
   const handleFindNearby = () => {
     if (latitude && longitude) {
-      loadNearbyTasks(latitude, longitude);
+      goToNearbyTasks(latitude, longitude);
     } else {
       setPendingNearby(true);
       getCurrentLocation();
@@ -97,7 +80,7 @@ const IndexPage = () => {
   useEffect(() => {
     if (pendingNearby && latitude && longitude) {
       setPendingNearby(false);
-      loadNearbyTasks(latitude, longitude);
+      goToNearbyTasks(latitude, longitude);
     }
   }, [pendingNearby, latitude, longitude]);
   // Handle OAuth callback / errors landing on homepage
@@ -201,50 +184,15 @@ const IndexPage = () => {
                 </Link>
                 <button
                   onClick={handleFindNearby}
-                  disabled={geoLoading || nearbyLoading}
+                  disabled={geoLoading || pendingNearby}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <MapPin className="w-4 h-4" />
-                  {geoLoading
-                    ? t("nearby.locating")
-                    : nearbyLoading
-                      ? t("nearby.searching")
-                      : t("nearby.heroCta")}
+                  {geoLoading || pendingNearby ? t("nearby.locating") : t("nearby.heroCta")}
                 </button>
               </div>
 
               {geoError && <p className="mt-4 text-sm text-destructive">{geoError}</p>}
-
-              {nearbyTasks.length > 0 && (
-                <div className="mt-6 space-y-3">
-                  {nearbyTasks.map((task) => (
-                    <Link
-                      key={task.id}
-                      to={`/tasks/${task.id}`}
-                      className="block p-4 rounded-xl bg-card/80 backdrop-blur-md border border-border/60 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-left min-w-0">
-                          <div className="font-semibold text-foreground truncate">{task.title}</div>
-                          {task.description && (
-                            <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {task.description}
-                            </div>
-                          )}
-                          <div className="inline-flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                            <MapPin className="w-3 h-3" />
-                            {Math.round(task.distance_meters)} {t("nearby.distanceMeters")}
-                          </div>
-                        </div>
-
-                        <div className="shrink-0 font-bold text-foreground">
-                          {task.budget_fixed ?? "—"} {task.currency ?? ""}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
 
               <div className="mt-12 grid grid-cols-3 gap-6">
                 {stats.map((s) => (
