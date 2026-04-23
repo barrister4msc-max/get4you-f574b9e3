@@ -221,6 +221,43 @@ const CreateTaskPage = () => {
 
   const [showMotivation, setShowMotivation] = useState(false);
 
+  const [geoPrompt, setGeoPrompt] = useState<{ open: boolean; address: string | null }>({
+    open: false,
+    address: null,
+  });
+  const [geoAutoTried, setGeoAutoTried] = useState(false);
+
+  // On entering step 2 (address step) — auto-detect location once and ask the user
+  useEffect(() => {
+    if (step !== 2) return;
+    if (geoAutoTried) return;
+    if (form.taskType === "remote") return;
+    if (form.location.trim()) return;
+    setGeoAutoTried(true);
+    getCurrentLocation();
+  }, [step, geoAutoTried, form.taskType, form.location, getCurrentLocation]);
+
+  // When coords arrive from auto-detect, reverse-geocode and show prompt
+  useEffect(() => {
+    if (!geoAutoTried) return;
+    if (geoPrompt.open) return;
+    if (form.location.trim()) return;
+    if (geoSource !== "gps") return;
+    if (latitude == null || longitude == null) return;
+    let cancelled = false;
+    (async () => {
+      const address = await reverseGeocode(latitude, longitude, locale);
+      if (cancelled) return;
+      setGeoPrompt({
+        open: true,
+        address: address ?? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [geoAutoTried, latitude, longitude, geoSource, geoPrompt.open, form.location, reverseGeocode, locale]);
+
   const handleSubmit = async () => {
     if (!user) {
       setShowMotivation(true);
