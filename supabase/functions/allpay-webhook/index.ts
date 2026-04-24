@@ -21,24 +21,7 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
 
   for (const key of sortedKeys) {
     if (key === "sign") continue;
-    let value = params[key];
-
-    // Allpay may serialize array fields (e.g. "items") as JSON strings
-    // when sending form-encoded webhooks. Try to parse them back to arrays
-    // so the signature matches the one computed on Allpay side.
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-        try {
-          const parsed = JSON.parse(trimmed);
-          if (Array.isArray(parsed)) {
-            value = parsed;
-          }
-        } catch {
-          // keep as string
-        }
-      }
-    }
+    const value = params[key];
 
     if (Array.isArray(value)) {
       for (const item of value) {
@@ -46,18 +29,14 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
           const itemKeys = Object.keys(item as Record<string, unknown>).sort();
           for (const name of itemKeys) {
             const val = (item as Record<string, unknown>)[name];
-            const strVal = val == null ? "" : String(val);
-            if (strVal.trim() !== "") {
-              chunks.push(strVal);
+            if (typeof val === "string" && val.trim() !== "") {
+              chunks.push(val);
             }
           }
         }
       }
-    } else if (value != null) {
-      const strVal = String(value);
-      if (strVal.trim() !== "") {
-        chunks.push(strVal);
-      }
+    } else if (typeof value === "string" && value.trim() !== "") {
+      chunks.push(value);
     }
   }
 
@@ -208,16 +187,6 @@ Deno.serve(async (req) => {
     // 2. VALIDATE SIGNATURE
     // ======================================================
     if (!incomingSign) {
-      console.error("[ALLPAY-WEBHOOK] Missing signature for order:", incomingOrderId);
-      await serviceClient.from("app_events").insert({
-        event_type: "payment.webhook_signature_missing",
-        entity_type: "order",
-        metadata: {
-          provider: "allpay",
-          allpay_order_id: incomingOrderId,
-          payload_keys: Object.keys(payload),
-        },
-      });
       return new Response(JSON.stringify({ error: "Missing signature" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -230,34 +199,6 @@ Deno.serve(async (req) => {
       console.error("[ALLPAY-WEBHOOK] Invalid signature", {
         expectedSign,
         incomingSign,
-        allpay_order_id: incomingOrderId,
-      });
-
-      // Try to resolve our internal order to make this entry findable in admin UI
-      const { data: orderForLog } = await serviceClient
-        .from("orders")
-        .select("id, user_id, task_id, amount, currency, status")
-        .eq("allpay_order_id", incomingOrderId)
-        .maybeSingle();
-
-      await serviceClient.from("app_events").insert({
-        event_type: "payment.webhook_signature_invalid",
-        entity_type: "order",
-        entity_id: orderForLog?.id ?? null,
-        actor_id: orderForLog?.user_id ?? null,
-        metadata: {
-          provider: "allpay",
-          allpay_order_id: incomingOrderId,
-          internal_order_id: orderForLog?.id ?? null,
-          task_id: orderForLog?.task_id ?? null,
-          expected_sign: expectedSign,
-          incoming_sign: incomingSign,
-          payload_keys: Object.keys(payload),
-          payload_status:
-            payload.status ?? payload.payment_status ?? payload.pay_status ?? null,
-          payload_amount: payload.amount ?? null,
-          payload_currency: payload.currency ?? null,
-        },
       });
 
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
@@ -277,15 +218,6 @@ Deno.serve(async (req) => {
 
     if (orderError) {
       console.error("[ALLPAY-WEBHOOK] Order lookup error:", orderError);
-      await serviceClient.from("app_events").insert({
-        event_type: "payment.webhook_order_lookup_failed",
-        entity_type: "order",
-        metadata: {
-          provider: "allpay",
-          allpay_order_id: incomingOrderId,
-          error: orderError.message,
-        },
-      });
       return new Response(JSON.stringify({ error: "Order lookup failed" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -293,68 +225,11 @@ Deno.serve(async (req) => {
     }
 
     if (!order) {
-      console.error("[ALLPAY-WEBHOOK] Order not found:", incomingOrderId);
-      await serviceClient.from("app_events").insert({
-        event_type: "payment.webhook_order_not_found",
-        entity_type: "order",
-        metadata: {
-          provider: "allpay",
-          allpay_order_id: incomingOrderId,
-        },
-      });
       return new Response(JSON.stringify({ error: "Order not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // ======================================================
-    // 2.5 PAYLOAD <-> ORDER CONSISTENCY CHECK
-    // Detect amount/currency mismatch between Allpay payload and our order.
-    // Don't block the webhook (we still want to record the payment),
-    // but flag it so admin can investigate.
-    // ======================================================
-    const payloadAmountRaw = payload.amount ?? payload.sum ?? null;
-    const payloadAmount =
-      payloadAmountRaw != null && payloadAmountRaw !== ""
-        ? Number(payloadAmountRaw)
-        : null;
-    const payloadCurrency =
-      typeof payload.currency === "string" && payload.currency.trim()
-        ? payload.currency.trim().toUpperCase()
-        : null;
-    const orderCurrency = (order.currency || "").toUpperCase();
-    const amountMismatch =
-      payloadAmount != null && Number(order.amount) !== payloadAmount;
-    const currencyMismatch =
-      payloadCurrency != null && orderCurrency && orderCurrency !== payloadCurrency;
-
-    if (amountMismatch || currencyMismatch) {
-      console.error("[ALLPAY-WEBHOOK] Payload/order mismatch", {
-        order_id: order.id,
-        amountMismatch,
-        currencyMismatch,
-      });
-      await serviceClient.from("app_events").insert({
-        event_type: "payment.webhook_payload_mismatch",
-        entity_type: "order",
-        entity_id: order.id,
-        actor_id: order.user_id,
-        metadata: {
-          provider: "allpay",
-          allpay_order_id: incomingOrderId,
-          internal_order_id: order.id,
-          task_id: order.task_id,
-          order_amount: Number(order.amount),
-          payload_amount: payloadAmount,
-          order_currency: orderCurrency,
-          payload_currency: payloadCurrency,
-          amount_mismatch: amountMismatch,
-          currency_mismatch: currencyMismatch,
-        },
-      });
-    }
-
     if (order.status === "paid") {
       await serviceClient.from("app_events").insert({
         actor_id: order.user_id,
@@ -552,83 +427,11 @@ Deno.serve(async (req) => {
     }
 
     // ======================================================
-    // 8.5 CREATE TASK ASSIGNMENT IF NOT EXISTS (IDEMPOTENT)
-    // Required for disputes flow which uses assignment_id.
-    // ======================================================
-    const commissionRate = 0.15;
-    const orderAmount = Number(order.amount);
-    const commissionAmount = Math.round(orderAmount * commissionRate * 100) / 100;
-    const netAmount = Math.round((orderAmount - commissionAmount) * 100) / 100;
-    const escrowCurrency = order.currency || proposal.currency || task.currency || "ILS";
-
-    let assignmentId: string | null = order.assignment_id ?? null;
-
-    if (!assignmentId) {
-      const { data: existingAssignment, error: existingAssignmentError } = await serviceClient
-        .from("task_assignments")
-        .select("id")
-        .eq("task_id", task.id)
-        .maybeSingle();
-
-      if (existingAssignmentError) {
-        console.error("[ALLPAY-WEBHOOK] Assignment lookup error:", existingAssignmentError);
-        return new Response(JSON.stringify({ error: "Failed to check assignment" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (existingAssignment) {
-        assignmentId = existingAssignment.id;
-      } else {
-        const { data: newAssignment, error: assignmentInsertError } = await serviceClient
-          .from("task_assignments")
-          .insert({
-            task_id: task.id,
-            proposal_id: proposal.id,
-            client_id: order.user_id,
-            tasker_id: proposal.user_id,
-            agreed_price: orderAmount,
-            currency: escrowCurrency,
-            commission_rate: commissionRate,
-            commission_amount: commissionAmount,
-            net_amount: netAmount,
-            status: "in_progress",
-            funded_at: new Date().toISOString(),
-            started_at: new Date().toISOString(),
-          })
-          .select("id")
-          .single();
-
-        if (assignmentInsertError || !newAssignment) {
-          console.error("[ALLPAY-WEBHOOK] Assignment insert error:", assignmentInsertError);
-          return new Response(JSON.stringify({ error: "Failed to create task assignment" }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        assignmentId = newAssignment.id;
-      }
-
-      // Link order to assignment (best effort, do not fail webhook if it errors)
-      const { error: linkOrderError } = await serviceClient
-        .from("orders")
-        .update({ assignment_id: assignmentId })
-        .eq("id", order.id);
-
-      if (linkOrderError) {
-        console.error("[ALLPAY-WEBHOOK] Failed to link order to assignment:", linkOrderError);
-      }
-    }
-
-    // ======================================================
     // 9. CREATE ESCROW IF NOT EXISTS (IDEMPOTENT)
-    // Always link escrow to assignment_id for disputes.
     // ======================================================
     const { data: existingEscrow, error: existingEscrowError } = await serviceClient
       .from("escrow_transactions")
-      .select("id, assignment_id")
+      .select("id")
       .eq("task_id", task.id)
       .eq("proposal_id", proposal.id)
       .maybeSingle();
@@ -642,14 +445,18 @@ Deno.serve(async (req) => {
     }
 
     if (!existingEscrow) {
+      const commissionRate = 0.15;
+      const orderAmount = Number(order.amount);
+      const commissionAmount = Math.round(orderAmount * commissionRate * 100) / 100;
+      const netAmount = Math.round((orderAmount - commissionAmount) * 100) / 100;
+
       const { error: escrowInsertError } = await serviceClient.from("escrow_transactions").insert({
         task_id: task.id,
         proposal_id: proposal.id,
-        assignment_id: assignmentId,
         client_id: order.user_id,
         tasker_id: proposal.user_id,
         amount: orderAmount,
-        currency: escrowCurrency,
+        currency: order.currency || proposal.currency || task.currency || "ILS",
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
         net_amount: netAmount,
@@ -662,16 +469,6 @@ Deno.serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
-      }
-    } else if (assignmentId && !existingEscrow.assignment_id) {
-      // Backfill assignment_id on legacy escrow rows
-      const { error: escrowLinkError } = await serviceClient
-        .from("escrow_transactions")
-        .update({ assignment_id: assignmentId })
-        .eq("id", existingEscrow.id);
-
-      if (escrowLinkError) {
-        console.error("[ALLPAY-WEBHOOK] Failed to backfill escrow assignment_id:", escrowLinkError);
       }
     }
 
@@ -704,6 +501,21 @@ Deno.serve(async (req) => {
     // ======================================================
     // 11. SUCCESS
     // ======================================================
+    await serviceClient.from("app_events").insert({
+      actor_id: order.user_id,
+      event_type: "payment.webhook_paid",
+      entity_type: "order",
+      entity_id: order.id,
+      metadata: {
+        provider: "allpay",
+        provider_order_id: incomingOrderId,
+        task_id: task.id,
+        proposal_id: proposal.id,
+        assignment_id: assignmentId,
+        amount: order.amount,
+        currency: order.currency,
+      },
+    });
     return new Response(
       JSON.stringify({
         success: true,
@@ -737,6 +549,20 @@ Deno.serve(async (req) => {
     } catch {
       // ignore logging errors
     }
+    await serviceClient.from("app_events").insert({
+      actor_id: order.user_id,
+      event_type: "payment.webhook_paid",
+      entity_type: "order",
+      entity_id: order.id,
+      metadata: {
+        provider: "allpay",
+        provider_order_id: incomingOrderId,
+        task_id: task.id,
+        proposal_id: proposal.id,
+        amount: order.amount,
+        currency: order.currency,
+      },
+    });
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Internal server error",
