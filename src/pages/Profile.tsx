@@ -76,7 +76,7 @@ const ProfilePage = () => {
       await refreshProfile();
       toast.success(t('profile.avatar.uploaded'));
     } catch (err: any) {
-      toast.error(friendlyErrorMessage(err, t('profile.avatar.uploaded')));
+      toast.error(friendlyErrorMessage(err, 'Failed to upload avatar'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -94,7 +94,7 @@ const ProfilePage = () => {
       await refreshProfile();
       toast.success(t('profile.avatar.deleted'));
     } catch (err: any) {
-      toast.error(friendlyErrorMessage(err, t('profile.avatar.deleted')));
+      toast.error(friendlyErrorMessage(err, 'Failed to remove avatar'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -143,7 +143,7 @@ const ProfilePage = () => {
     const updateData: any = { display_name: form.display_name, phone: form.phone, city: form.city, bio: form.bio };
     if (isTasker) updateData.payment_method = form.payment_method || null;
     const { error } = await supabase.from('profiles').update(updateData).eq('user_id', user.id);
-    if (error) toast.error(friendlyErrorMessage(error, t('profile.saved')));
+    if (error) toast.error(friendlyErrorMessage(error, 'Failed to save profile'));
     else { toast.success(t('profile.saved')); await refreshProfile(); }
     setSaving(false);
   };
