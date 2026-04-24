@@ -381,14 +381,34 @@ const TaskDetailPage = () => {
 
   const handleSubmitProposal = async () => {
     if (!id || !user || !price) return;
+    const numericPrice = Number(price);
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      toast.error(t('proposal.error.INVALID_PRICE'));
+      return;
+    }
     setSubmitting(true);
     try {
+      // Auto-grant executor role if user is missing it. Users are allowed
+      // by RLS to insert their own client/executor role rows. This fixes
+      // the case where a client browses tasks-nearby and tries to bid:
+      // the server would otherwise reject with NOT_EXECUTOR.
+      const isExecutor = roles?.includes('executor') || roles?.includes('admin') || roles?.includes('super_admin');
+      if (!isExecutor) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role: 'executor' as never });
+        // Ignore unique-violation (role already exists in a race); rethrow others.
+        if (roleError && !/duplicate key|unique/i.test(roleError.message)) {
+          throw roleError;
+        }
+        await refreshProfile();
+      }
       // Idempotent RPC: returns existing active proposal id if user already
       // submitted one, otherwise creates a new proposal. Safe against double-clicks
       // and race conditions thanks to advisory lock + unique partial index.
       const { error } = await supabase.rpc('submit_proposal', {
         _task_id: id,
-        _price: Number(price),
+        _price: numericPrice,
         _currency: task?.currency || currency || 'ILS',
         _comment: comment.trim() || null,
         _portfolio_urls: null,
