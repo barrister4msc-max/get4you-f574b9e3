@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
       lang,
       currency: requestedCurrency,
       assignment_id, // optional for future use
+      idempotency_key: clientIdempotencyKey,
     } = body ?? {};
 
     if (!proposal_id) {
@@ -114,6 +115,43 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ======================================================
+    // 2.1 IDEMPOTENCY KEY
+    // Prefer client-provided key, fall back to header, then derive
+    // a stable one from (user, task, proposal) so retries don't double-charge.
+    // ======================================================
+    const headerIdempotencyKey = req.headers.get("Idempotency-Key") || req.headers.get("idempotency-key");
+    const idempotencyKey = String(
+      clientIdempotencyKey || headerIdempotencyKey || `${userId}:${proposal_id}`,
+    ).slice(0, 200);
+
+    // If an order with this idempotency_key already exists, return it as-is.
+    const { data: existingByKey } = await serviceClient
+      .from("orders")
+      .select("id, status, payment_url, allpay_order_id, amount, currency")
+      .eq("user_id", userId)
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+
+    if (existingByKey) {
+      console.log("[CREATE-PAYMENT] Idempotent hit:", existingByKey.id, existingByKey.status);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          reused: true,
+          order_id: existingByKey.allpay_order_id || existingByKey.id,
+          payment_url: existingByKey.payment_url,
+          status: existingByKey.status,
+          amount: existingByKey.amount,
+          currency: existingByKey.currency,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // ======================================================
