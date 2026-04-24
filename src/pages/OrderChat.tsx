@@ -3,8 +3,20 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, ArrowLeft, User, MessageCircle, Paperclip, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
+import {
+  Send,
+  ArrowLeft,
+  User,
+  MessageCircle,
+  Paperclip,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  AlertTriangle,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { openDispute } from '@/lib/api/protectedWrites';
+import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
 interface OrderMessage {
   id: string;
@@ -29,6 +41,10 @@ const OrderChat = () => {
   const [loading, setLoading] = useState(true);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeDetails, setDisputeDetails] = useState('');
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
