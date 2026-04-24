@@ -17,7 +17,7 @@ type SortDir = 'asc' | 'desc';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
-  const { isSuperAdmin, user: currentUser } = useAuth();
+  const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [bannedIds, setBannedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -53,12 +53,18 @@ export default function AdminUsers() {
         : [...u.roles, role];
       return { ...u, roles: nextRoles };
     }));
-    if (hasRole) {
-      const { error } = await supabase.from('user_roles').delete().eq('user_id', userId).eq('role', role as any);
-      if (error) { toast.error(error.message); load(); return; }
-    } else {
-      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: role as any });
-      if (error) { toast.error(error.message); load(); return; }
+    const { data, error } = await supabase.functions.invoke('manage-user', {
+      body: {
+        action: hasRole ? 'remove_role' : 'add_role',
+        target_user_id: userId,
+        role,
+      },
+    });
+    if (error || (data && (data as any).error)) {
+      const msg = (data as any)?.error || error?.message || 'Failed to update role';
+      toast.error(msg);
+      load();
+      return;
     }
     toast.success(hasRole ? t('admin.roleRemoved').replace('{role}', role) : t('admin.roleAdded').replace('{role}', role));
   };
@@ -68,17 +74,19 @@ export default function AdminUsers() {
       toast.error('Только super admin может блокировать пользователей');
       return;
     }
-    if (isBanned) {
-      await supabase.from('banned_users' as any).delete().eq('user_id', userId);
-      toast.success('Пользователь разблокирован');
-    } else {
-      await supabase.from('banned_users' as any).insert({ 
-        user_id: userId, 
-        banned_by: currentUser!.id,
-        reason: 'Blocked by super admin'
-      });
-      toast.success('Пользователь заблокирован');
+    const { data, error } = await supabase.functions.invoke('manage-user', {
+      body: {
+        action: isBanned ? 'unban' : 'ban',
+        target_user_id: userId,
+      },
+    });
+    if (error || (data && (data as any).error)) {
+      const msg = (data as any)?.error || error?.message || 'Failed to update ban status';
+      toast.error(msg);
+      load();
+      return;
     }
+    toast.success(isBanned ? 'Пользователь разблокирован' : 'Пользователь заблокирован');
     load();
   };
 
