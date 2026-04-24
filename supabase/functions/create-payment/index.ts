@@ -127,6 +127,19 @@ Deno.serve(async (req) => {
       clientIdempotencyKey || headerIdempotencyKey || `${userId}:${proposal_id}`,
     ).slice(0, 200);
 
+    // Log: payment attempt started
+    await serviceClient.from("app_events").insert({
+      actor_id: userId,
+      event_type: "payment.create_started",
+      entity_type: "proposal",
+      entity_id: proposal_id,
+      metadata: {
+        task_id: task_id ?? null,
+        idempotency_key: idempotencyKey,
+        currency: requestedCurrency ?? null,
+      },
+    });
+
     // If an order with this idempotency_key already exists, return it as-is.
     const { data: existingByKey } = await serviceClient
       .from("orders")
@@ -137,6 +150,17 @@ Deno.serve(async (req) => {
 
     if (existingByKey) {
       console.log("[CREATE-PAYMENT] Idempotent hit:", existingByKey.id, existingByKey.status);
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.duplicate_prevented",
+        entity_type: "order",
+        entity_id: existingByKey.id,
+        metadata: {
+          idempotency_key: idempotencyKey,
+          status: existingByKey.status,
+          allpay_order_id: existingByKey.allpay_order_id,
+        },
+      });
       return new Response(
         JSON.stringify({
           success: true,
@@ -398,6 +422,17 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("[CREATE-PAYMENT] Insert error:", insertError);
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.create_failed",
+        entity_type: "proposal",
+        entity_id: proposal.id,
+        metadata: {
+          stage: "db_insert",
+          idempotency_key: idempotencyKey,
+          error: insertError.message,
+        },
+      });
       return new Response(
         JSON.stringify({
           error: "Failed to create order",
@@ -414,6 +449,18 @@ Deno.serve(async (req) => {
     // 13. HANDLE ALLPAY ERROR
     // ======================================================
     if (allpayData.error_code) {
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.create_failed",
+        entity_type: "order",
+        entity_id: insertedOrder?.id ?? null,
+        metadata: {
+          stage: "allpay",
+          idempotency_key: idempotencyKey,
+          error_code: allpayData.error_code,
+          error_msg: allpayData.error_msg ?? null,
+        },
+      });
       return new Response(
         JSON.stringify({
           error: allpayData.error_msg || "Payment creation failed",
@@ -430,6 +477,20 @@ Deno.serve(async (req) => {
     // ======================================================
     // 14. SUCCESS
     // ======================================================
+    await serviceClient.from("app_events").insert({
+      actor_id: userId,
+      event_type: "payment.created",
+      entity_type: "order",
+      entity_id: insertedOrder?.id ?? null,
+      metadata: {
+        idempotency_key: idempotencyKey,
+        allpay_order_id: orderId,
+        amount: safeAmount,
+        currency: safeCurrency,
+        proposal_id: proposal.id,
+        task_id: task.id,
+      },
+    });
     return new Response(
       JSON.stringify({
         success: true,
@@ -445,6 +506,23 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("[CREATE-PAYMENT] Unexpected error:", err);
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && supabaseServiceKey) {
+        const svc = createClient(supabaseUrl, supabaseServiceKey);
+        await svc.from("app_events").insert({
+          event_type: "payment.create_failed",
+          entity_type: "proposal",
+          metadata: {
+            stage: "exception",
+            error: err instanceof Error ? err.message : String(err),
+          },
+        });
+      }
+    } catch (_) {
+      // best effort
+    }
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Internal server error",
