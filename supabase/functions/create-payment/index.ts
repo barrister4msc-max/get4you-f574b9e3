@@ -380,6 +380,7 @@ Deno.serve(async (req) => {
       provider: "allpay",
       provider_order_id: orderId,
       provider_status: allpayData?.status || null,
+      idempotency_key: idempotencyKey,
     };
 
     // Optional future compatibility if column already exists
