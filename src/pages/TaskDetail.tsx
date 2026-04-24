@@ -13,7 +13,7 @@ import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
   Lock, Unlock, AlertTriangle, MessageSquare, CreditCard, Star,
-  Pencil, Save, X,
+  Pencil, Save, X, RefreshCw,
 } from 'lucide-react';
 
 function TaskerRecentHistory({ taskerId }: { taskerId: string }) {
@@ -124,6 +124,9 @@ const TaskDetailPage = () => {
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+
+  // Manual payment/escrow check state
+  const [checkingPayment, setCheckingPayment] = useState(false);
 
   const isOwner = user?.id === task?.user_id;
   const isAssignedTasker = user?.id === task?.assigned_to;
@@ -360,6 +363,42 @@ const TaskDetailPage = () => {
       toast.error(t('escrow.error'));
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleCheckPayment = async () => {
+    if (!id) return;
+    setCheckingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reconcile-payments', {
+        body: { task_id: id },
+      });
+      if (error) throw error;
+
+      const state = (data as any)?.state;
+      if (state?.escrow) setEscrow(state.escrow);
+      if (state?.order) setPaymentOrder(state.order);
+      if (state?.task) {
+        setTask((prev: any) => prev ? { ...prev, status: state.task.status, assigned_to: state.task.assigned_to } : prev);
+      }
+
+      const created = Array.isArray((data as any)?.results)
+        ? (data as any).results.some((r: any) => r.escrow_created)
+        : false;
+
+      if (created) {
+        toast.success(t('payment.checkSyncedSuccess') || 'Эскроу синхронизирован');
+      } else if (state?.escrow) {
+        toast.success(t('payment.checkAlreadyOk') || 'Оплата и эскроу подтверждены');
+      } else if (state?.order?.status === 'paid') {
+        toast.message(t('payment.checkPaidNoEscrow') || 'Платёж получен, эскроу формируется…');
+      } else {
+        toast.message(t('payment.checkNoPayment') || 'Подтверждённой оплаты пока нет');
+      }
+    } catch (e: any) {
+      toast.error(t('payment.checkError') || 'Не удалось проверить статус');
+    } finally {
+      setCheckingPayment(false);
     }
   };
 
@@ -1094,6 +1133,20 @@ const handlePaymentConfirm = async () => {
                       {t('payment.openPaymentPage')}
                     </a>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={handleCheckPayment}
+                    disabled={checkingPayment}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                  >
+                    {checkingPayment ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
+                    {t('payment.checkNow') || 'Проверить оплату/эскроу сейчас'}
+                  </button>
                 </div>
               )}
 

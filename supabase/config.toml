@@ -17,3 +17,5 @@ project_id = "emkiekjlxmtnzrgzfdep"
     verify_jwt = false
   [functions.ai-task-assistant]
 verify_jwt = true
+  [functions.reconcile-payments]
+    verify_jwt = false
