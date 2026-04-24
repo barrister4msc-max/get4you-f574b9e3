@@ -125,25 +125,40 @@ const AdminDisputes = () => {
       .order('created_at', { ascending: false });
     if (!rows) return;
 
-    const taskIds = [...new Set(rows.map((r) => r.task_id).filter(Boolean))];
-    const assignmentIds = [...new Set(rows.map((r) => r.assignment_id).filter(Boolean))];
+    const taskIds = [...new Set(rows.map((r) => r.task_id).filter(Boolean) as string[])];
+    const assignmentIds = [...new Set(rows.map((r) => r.assignment_id).filter(Boolean) as string[])];
     const escrowIds = [...new Set(rows.map((r) => r.escrow_id).filter(Boolean) as string[])];
 
     const [tasksRes, assignmentsRes, escrowsRes] = await Promise.all([
       taskIds.length
         ? supabase.from('tasks').select('id, title').in('id', taskIds)
-        : Promise.resolve({ data: [] as { id: string; title: string }[] }),
-      assignmentsRes_load(assignmentIds),
+        : Promise.resolve({ data: [] as Array<{ id: string; title: string }> }),
+      assignmentIds.length
+        ? supabase
+            .from('task_assignments')
+            .select('id, client_id, tasker_id')
+            .in('id', assignmentIds)
+        : Promise.resolve({
+            data: [] as Array<{ id: string; client_id: string; tasker_id: string }>,
+          }),
       escrowIds.length
         ? supabase.from('escrow_transactions').select('id, status').in('id', escrowIds)
-        : Promise.resolve({ data: [] as { id: string; status: string }[] }),
+        : Promise.resolve({ data: [] as Array<{ id: string; status: string }> }),
     ]);
 
-    const taskMap = new Map((tasksRes.data ?? []).map((t) => [t.id, t.title]));
-    const assignmentMap = new Map(
-      (assignmentsRes.data ?? []).map((a) => [a.id, a]),
+    const taskMap = new Map<string, string>(
+      ((tasksRes.data ?? []) as Array<{ id: string; title: string }>).map((t) => [t.id, t.title]),
     );
-    const escrowMap = new Map((escrowsRes.data ?? []).map((e) => [e.id, e.status]));
+    type AssignmentLite = { id: string; client_id: string; tasker_id: string };
+    const assignmentMap = new Map<string, AssignmentLite>(
+      ((assignmentsRes.data ?? []) as AssignmentLite[]).map((a) => [a.id, a]),
+    );
+    const escrowMap = new Map<string, string>(
+      ((escrowsRes.data ?? []) as Array<{ id: string; status: string }>).map((e) => [
+        e.id,
+        e.status,
+      ]),
+    );
 
     const userIds = new Set<string>();
     rows.forEach((r) => userIds.add(r.opened_by));
