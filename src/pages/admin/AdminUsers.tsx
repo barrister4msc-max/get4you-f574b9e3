@@ -40,9 +40,13 @@ export default function AdminUsers() {
 
   useEffect(() => { load(); }, []);
 
-  const toggleRole = async (userId: string, role: string, hasRole: boolean) => {
+  const toggleRole = async (userId: string, email: string | null | undefined, role: string, hasRole: boolean) => {
     if (!isSuperAdmin) {
       toast.error('Только super admin может изменять роли');
+      return;
+    }
+    if (!email) {
+      toast.error('Не удалось обновить роль: у пользователя не указан email');
       return;
     }
     // Optimistic update so the highlight changes instantly
@@ -53,16 +57,16 @@ export default function AdminUsers() {
         : [...u.roles, role];
       return { ...u, roles: nextRoles };
     }));
-    const { data, error } = await supabase.functions.invoke('manage-user', {
+    const { data, error } = await supabase.functions.invoke('manage-admin', {
       body: {
-        action: hasRole ? 'remove_role' : 'add_role',
-        target_user_id: userId,
+        action: hasRole ? 'remove' : 'add',
+        email,
         role,
       },
     });
-    if (error || (data && (data as any).error)) {
-      const msg = (data as any)?.error || error?.message || 'Failed to update role';
-      toast.error(msg);
+    const errMsg = (data as any)?.error || error?.message;
+    if (errMsg) {
+      toast.error(`Не удалось обновить роль: ${errMsg}`);
       load();
       return;
     }
@@ -205,7 +209,7 @@ export default function AdminUsers() {
                             variant={has ? 'default' : 'outline'}
                             size="sm"
                             className="text-xs h-7"
-                            onClick={() => toggleRole(u.user_id, role, has)}
+                            onClick={() => toggleRole(u.user_id, u.email, role, has)}
                           >
                             {has && <span className="mr-1">✓</span>}
                             {label}

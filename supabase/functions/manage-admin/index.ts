@@ -58,8 +58,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate role
-    const allowedRoles = ["client", "tasker", "admin"];
+    // Validate role — must match roles that exist in the database/UI
+    const allowedRoles = ["client", "executor", "admin"];
     if (!allowedRoles.includes(role)) {
       return new Response(JSON.stringify({ error: "Invalid role. Cannot assign super_admin via this endpoint." }), {
         status: 400,
