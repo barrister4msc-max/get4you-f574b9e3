@@ -64,7 +64,7 @@ const TaskDetailPage = () => {
   const navigate = useNavigate();
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
-  const { user } = useAuth();
+  const { user, roles, refreshProfile } = useAuth();
   const [task, setTask] = useState<any>(null);
   const [ownerProfile, setOwnerProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
   const [assignedProfile, setAssignedProfile] = useState<{ display_name: string | null; avatar_url: string | null; bio: string | null; city: string | null } | null>(null);
