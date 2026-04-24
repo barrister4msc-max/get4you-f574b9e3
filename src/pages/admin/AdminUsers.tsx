@@ -209,7 +209,7 @@ export default function AdminUsers() {
                             variant={has ? 'default' : 'outline'}
                             size="sm"
                             className="text-xs h-7"
-                            onClick={() => toggleRole(u.user_id, role, has)}
+                            onClick={() => toggleRole(u.user_id, u.email, role, has)}
                           >
                             {has && <span className="mr-1">✓</span>}
                             {label}
