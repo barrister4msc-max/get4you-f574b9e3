@@ -73,20 +73,25 @@ export default function AdminUsers() {
     toast.success(hasRole ? t('admin.roleRemoved').replace('{role}', role) : t('admin.roleAdded').replace('{role}', role));
   };
 
-  const toggleBan = async (userId: string, isBanned: boolean) => {
+  const toggleBan = async (userId: string, email: string | null | undefined, isBanned: boolean) => {
     if (!isSuperAdmin) {
       toast.error('Только super admin может блокировать пользователей');
       return;
     }
-    const { data, error } = await supabase.functions.invoke('manage-user', {
+    if (!email) {
+      toast.error('Не удалось обновить статус: у пользователя не указан email');
+      return;
+    }
+    void userId;
+    const { data, error } = await supabase.functions.invoke('manage-admin', {
       body: {
         action: isBanned ? 'unban' : 'ban',
-        target_user_id: userId,
+        email,
       },
     });
-    if (error || (data && (data as any).error)) {
-      const msg = (data as any)?.error || error?.message || 'Failed to update ban status';
-      toast.error(msg);
+    const errMsg = (data as any)?.error || error?.message;
+    if (errMsg) {
+      toast.error(`Не удалось обновить статус: ${errMsg}`);
       load();
       return;
     }
