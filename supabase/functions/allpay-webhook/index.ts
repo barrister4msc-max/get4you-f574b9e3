@@ -534,20 +534,6 @@ Deno.serve(async (req) => {
     } catch {
       // ignore logging errors
     }
-    await serviceClient.from("app_events").insert({
-      actor_id: order.user_id,
-      event_type: "payment.webhook_paid",
-      entity_type: "order",
-      entity_id: order.id,
-      metadata: {
-        provider: "allpay",
-        provider_order_id: incomingOrderId,
-        task_id: task.id,
-        proposal_id: proposal.id,
-        amount: order.amount,
-        currency: order.currency,
-      },
-    });
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Internal server error",
