@@ -13,7 +13,7 @@ import {
   MapPin, Clock, User, Shield, ArrowRight, Play, ImageIcon,
   Send, DollarSign, CheckCircle2, XCircle, Loader2, MessageCircle,
   Lock, Unlock, AlertTriangle, MessageSquare, CreditCard, Star,
-  Pencil, Save, X,
+  Pencil, Save, X, RefreshCw,
 } from 'lucide-react';
 
 function TaskerRecentHistory({ taskerId }: { taskerId: string }) {
