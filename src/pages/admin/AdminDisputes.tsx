@@ -7,6 +7,7 @@ import {
   adminRefundEscrow,
   adminReleaseEscrow,
   closeDisputeWithoutPayout,
+  resolveDispute,
 } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
@@ -197,33 +198,26 @@ const AdminDisputes = () => {
     try {
       const note = escrowNotes[dispute.id]?.trim() || '';
 
-      if (favor === 'client' && dispute.escrow_id) {
-        const { error } = await adminRefundEscrow(dispute.escrow_id, dispute.task_id);
-        if (error) throw error;
-      } else if (favor === 'tasker' && dispute.escrow_id) {
-        const { error } = await adminReleaseEscrow(dispute.escrow_id, dispute.task_id);
-        if (error) throw error;
-      }
-
-      const { error: closeErr } = await closeDisputeWithoutPayout(
-        dispute.id,
-        note ||
-          (favor === 'client'
-            ? 'Resolved in favor of client'
-            : favor === 'tasker'
-              ? 'Resolved in favor of tasker'
-              : 'Closed without payout'),
-      );
-      if (closeErr) throw closeErr;
+      // Single atomic call → resolve-dispute Edge Function:
+      // updates dispute + escrow_transactions + payouts + app_events.
+      const { error } = await resolveDispute(dispute.id, favor, note || undefined);
+      if (error) throw error;
 
       toast.success(
         favor === 'close'
-          ? 'Dispute closed without payout'
-          : `Dispute resolved in favor of ${favor}`,
+          ? t('dispute.toast.closed') || 'Dispute closed without payout'
+          : favor === 'client'
+            ? t('dispute.toast.refundedToClient') || 'Refunded to client'
+            : t('dispute.toast.releasedToTasker') || 'Released to tasker',
       );
       fetchEscrowDisputes();
     } catch (err) {
-      toast.error(friendlyErrorMessage(err, 'Failed to resolve dispute'));
+      toast.error(
+        friendlyErrorMessage(
+          err,
+          t('dispute.toast.resolveFailed') || 'Failed to resolve dispute',
+        ),
+      );
     } finally {
       setEscrowActionId(null);
     }
