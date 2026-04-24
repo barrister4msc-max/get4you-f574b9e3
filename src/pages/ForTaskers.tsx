@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useEsekPaturCount } from '@/hooks/useEsekPaturCount';
+import { addSelfRole } from '@/lib/api/protectedWrites';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight, UserPlus, FileSignature, Clock, UserCheck, Globe, Megaphone, ShieldCheck, Search, TrendingUp, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ const ForTaskersPage = () => {
     if (!user) return;
     setAdding(true);
     try {
-      const { error } = await supabase.from('user_roles').insert({ user_id: user.id, role: 'client' as any });
+      const { error } = await addSelfRole(user.id, 'client');
       if (error) throw error;
       await refreshProfile();
       toast.success(t('taskers.becomeClient.success'));
