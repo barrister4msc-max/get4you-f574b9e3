@@ -13,7 +13,6 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { ProfileMap } from '@/components/ProfileMap';
 import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
@@ -310,10 +309,6 @@ const ProfilePage = () => {
             <LogOut className="w-4 h-4" />
             {t('nav.logout')}
           </button>
-        </div>
-
-        <div className="mt-8">
-          <ProfileMap />
         </div>
 
         <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>

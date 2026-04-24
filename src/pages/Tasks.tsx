@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
+import { TasksMap } from "@/components/TasksMap";
 
 interface TaskRow {
   id: string;
@@ -593,6 +594,22 @@ const TasksPage = () => {
         <h1 className="text-2xl font-bold mb-6">{t("tasks.title")}</h1>
 
         <NearbyOrders defaultRadiusKm={10} />
+
+        {tab === "all" && (
+          <div className="mb-6">
+            <TasksMap
+              tasks={sortedFiltered.map((t) => ({
+                id: t.id,
+                title: t.title,
+                latitude: t.latitude,
+                longitude: t.longitude,
+              }))}
+              userLat={userCoords?.lat ?? null}
+              userLng={userCoords?.lng ?? null}
+              title={t("tasks.title")}
+            />
+          </div>
+        )}
 
         {isTasker && (
           <div className="flex gap-2 mb-6">
