@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (proposal.status && !["pending", "selected"].includes(String(proposal.status))) {
+    if (proposal.status && !["pending", "selected", "accepted"].includes(String(proposal.status))) {
       return new Response(JSON.stringify({ error: "Proposal is not payable" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
