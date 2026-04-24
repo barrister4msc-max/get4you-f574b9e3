@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -226,6 +226,32 @@ const CreateTaskPage = () => {
     address: null,
   });
   const [geoAutoTried, setGeoAutoTried] = useState(false);
+  const [addressGeocoding, setAddressGeocoding] = useState(false);
+  // Tracks the address string for which the current lat/lng were geocoded,
+  // so we know if the user changed the address since the last geocode.
+  const [geocodedFor, setGeocodedFor] = useState<string | null>(null);
+
+  /** Forward-geocode the address the user typed in, so the saved task has
+   *  coordinates that actually match its address. */
+  const geocodeTypedAddress = useCallback(
+    async (q: string) => {
+      const query = q.trim();
+      if (!query) return;
+      if (geocodedFor === query) return;
+      setAddressGeocoding(true);
+      try {
+        const r = await searchAddress(query);
+        if (r) {
+          setGeocodedFor(query);
+          // Keep the user's typed text but normalize coords via setManualLocation
+          // (searchAddress already calls setManualLocation internally with display_name)
+        }
+      } finally {
+        setAddressGeocoding(false);
+      }
+    },
+    [geocodedFor, searchAddress]
+  );
 
   // On entering step 2 (address step) — auto-detect location once and ask the user
   useEffect(() => {
@@ -270,6 +296,28 @@ const CreateTaskPage = () => {
 
     setSubmitting(true);
     try {
+      // Make sure coordinates match the address typed in by the user.
+      // If the user typed an address but never triggered geocoding, do it now.
+      let finalLat: number | null = latitude ?? null;
+      let finalLng: number | null = longitude ?? null;
+      if (form.taskType === "remote") {
+        finalLat = null;
+        finalLng = null;
+      } else {
+        const typed = form.location.trim();
+        if (typed && (geocodedFor !== typed || finalLat == null || finalLng == null)) {
+          try {
+            const r = await searchAddress(typed);
+            if (r) {
+              finalLat = r.lat;
+              finalLng = r.lng;
+            }
+          } catch {
+            // Non-fatal — we'll still publish with whatever coords we have.
+          }
+        }
+      }
+
       // Upload photos
       const photoUrls: string[] = [];
       for (const file of photos) {
@@ -315,8 +363,8 @@ const CreateTaskPage = () => {
       }
 
       const { error } = await supabase.from("tasks").insert({
-        latitude: latitude ?? null,
-        longitude: longitude ?? null,
+        latitude: finalLat,
+        longitude: finalLng,
         user_id: user.id,
         title: form.title.trim(),
         description: form.description.trim() || null,
@@ -584,9 +632,19 @@ const CreateTaskPage = () => {
                   <input
                     value={form.location}
                     onChange={(e) => update({ location: e.target.value })}
+                    onBlur={(e) => {
+                      // After the user finishes typing an address, resolve it to
+                      // coordinates so the saved task carries an accurate geo point.
+                      if (form.taskType !== "remote") {
+                        void geocodeTypedAddress(e.target.value);
+                      }
+                    }}
                     className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder={t("task.location.placeholder")}
                   />
+                  {addressGeocoding && (
+                    <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
               </div>
 
