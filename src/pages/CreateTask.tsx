@@ -226,6 +226,11 @@ const CreateTaskPage = () => {
     address: null,
   });
   const [geoAutoTried, setGeoAutoTried] = useState(false);
+  // Choice dialog: "use my current location" vs. "enter manually"
+  const [geoChoice, setGeoChoice] = useState<{ open: boolean; resolving: boolean }>({
+    open: false,
+    resolving: false,
+  });
   const [addressGeocoding, setAddressGeocoding] = useState(false);
   // Tracks the address string for which the current lat/lng were geocoded,
   // so we know if the user changed the address since the last geocode.
@@ -253,36 +258,36 @@ const CreateTaskPage = () => {
     [geocodedFor, searchAddress]
   );
 
-  // On entering step 2 (address step) — auto-detect location once and ask the user
+  // On entering step 2 (address step) — ask the user how they want to set the address
   useEffect(() => {
     if (step !== 2) return;
     if (geoAutoTried) return;
     if (form.taskType === "remote") return;
     if (form.location.trim()) return;
     setGeoAutoTried(true);
-    getCurrentLocation();
-  }, [step, geoAutoTried, form.taskType, form.location, getCurrentLocation]);
+    setGeoChoice({ open: true, resolving: false });
+  }, [step, geoAutoTried, form.taskType, form.location]);
 
-  // When coords arrive from auto-detect, reverse-geocode and show prompt
+  // When coords arrive after the user picked "use current location",
+  // reverse-geocode them and write the result into the address field.
   useEffect(() => {
-    if (!geoAutoTried) return;
-    if (geoPrompt.open) return;
-    if (form.location.trim()) return;
+    if (!geoChoice.resolving) return;
     if (geoSource !== "gps") return;
     if (latitude == null || longitude == null) return;
     let cancelled = false;
     (async () => {
       const address = await reverseGeocode(latitude, longitude, locale);
       if (cancelled) return;
-      setGeoPrompt({
-        open: true,
-        address: address ?? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
-      });
+      const resolved = address ?? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      update({ location: resolved });
+      setGeocodedFor(resolved);
+      setGeoChoice({ open: false, resolving: false });
+      toast.success(t("task.geo.applied") || "Адрес определён");
     })();
     return () => {
       cancelled = true;
     };
-  }, [geoAutoTried, latitude, longitude, geoSource, geoPrompt.open, form.location, reverseGeocode, locale]);
+  }, [geoChoice.resolving, latitude, longitude, geoSource, reverseGeocode, locale, t]);
 
   const handleSubmit = async () => {
     if (!user) {
