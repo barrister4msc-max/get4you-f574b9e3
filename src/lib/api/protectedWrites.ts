@@ -119,3 +119,50 @@ export async function adminReleaseEscrow(escrowId: string, taskId: string) {
     .eq("id", taskId);
   return { error: taskErr ?? null };
 }
+
+// ──────────────────────────────────────────────────────────────────────
+// Disputes
+// `openDispute` calls the `open-dispute` Edge Function which atomically
+// validates the participant, locks the related escrow if held, creates
+// the dispute row and writes an audit event.
+// `closeDisputeWithoutPayout` is a thin wrapper used by admins to mark
+// an open dispute as resolved without moving funds.
+// TODO(backend): replace the close path with a dedicated
+// `admin-resolve-dispute` Edge Function for full audit logging.
+// ──────────────────────────────────────────────────────────────────────
+
+export async function openDispute(
+  assignmentId: string,
+  reason: string,
+  description?: string,
+) {
+  const { data, error: invokeErr } = await supabase.functions.invoke(
+    "open-dispute",
+    { body: { assignment_id: assignmentId, reason, description } },
+  );
+  if (invokeErr) return { data: null, error: invokeErr };
+  if (data && typeof data === "object" && "error" in data && data.error) {
+    return {
+      data: null,
+      error: new Error(String((data as { error: unknown }).error)),
+    };
+  }
+  return { data, error: null };
+}
+
+export async function closeDisputeWithoutPayout(
+  disputeId: string,
+  note?: string,
+) {
+  // TODO: route through Edge Function `admin-resolve-dispute`.
+  const { error } = await supabase
+    .from("disputes")
+    .update({
+      status: "resolved",
+      resolution_type: "closed_no_payout",
+      resolution_note: note ?? null,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq("id", disputeId);
+  return { error };
+}
