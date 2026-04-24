@@ -3,7 +3,12 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, XCircle, Loader2, MessageSquare, User } from 'lucide-react';
-import { adminRefundEscrow, adminReleaseEscrow } from '@/lib/api/protectedWrites';
+import {
+  adminRefundEscrow,
+  adminReleaseEscrow,
+  closeDisputeWithoutPayout,
+} from '@/lib/api/protectedWrites';
+import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
 interface Dispute {
   id: string;
@@ -19,6 +24,25 @@ interface Dispute {
   client_id?: string;
   tasker_id?: string;
   escrow_id?: string;
+}
+
+interface EscrowDispute {
+  id: string;
+  assignment_id: string;
+  task_id: string;
+  escrow_id: string | null;
+  opened_by: string;
+  reason: string;
+  details: string | null;
+  status: string;
+  created_at: string;
+  task_title?: string;
+  client_id?: string;
+  tasker_id?: string;
+  client_name?: string;
+  tasker_name?: string;
+  opened_by_name?: string;
+  escrow_status?: string | null;
 }
 
 const AdminDisputes = () => {
