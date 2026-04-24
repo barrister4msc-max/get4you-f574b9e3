@@ -272,6 +272,11 @@ const CreateTaskPage = () => {
   // reverse-geocode them and write the result into the address field.
   useEffect(() => {
     if (!geoChoice.resolving) return;
+    // If geolocation failed, stop the spinner so the user can retry or pick "manual".
+    if (geoError) {
+      setGeoChoice((c) => ({ ...c, resolving: false }));
+      return;
+    }
     if (geoSource !== "gps") return;
     if (latitude == null || longitude == null) return;
     let cancelled = false;
@@ -287,7 +292,7 @@ const CreateTaskPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [geoChoice.resolving, latitude, longitude, geoSource, reverseGeocode, locale, t]);
+  }, [geoChoice.resolving, latitude, longitude, geoSource, geoError, reverseGeocode, locale, t]);
 
   const handleSubmit = async () => {
     if (!user) {
