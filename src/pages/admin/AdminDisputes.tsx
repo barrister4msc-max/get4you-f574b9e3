@@ -6,7 +6,6 @@ import { AlertTriangle, CheckCircle2, XCircle, Loader2, MessageSquare, User } fr
 import {
   adminRefundEscrow,
   adminReleaseEscrow,
-  closeDisputeWithoutPayout,
   resolveDispute as resolveEscrowDisputeApi,
 } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
@@ -273,23 +272,23 @@ const AdminDisputes = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <AlertTriangle className="w-6 h-6 text-destructive" />
-        <h1 className="text-2xl font-bold text-foreground">Disputes</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('admin.disputes.title') || 'Disputes'}</h1>
         <span className="px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive rounded-full">
-          {disputes.filter(d => d.status === 'open').length} open
+          {disputes.filter(d => d.status === 'open').length} {t('admin.disputes.openCount') || 'open'}
         </span>
       </div>
 
       {/* Escrow-locking disputes (new flow) */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Escrow disputes</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('admin.disputes.escrowSection') || 'Escrow disputes'}</h2>
           <span className="px-2 py-0.5 text-[10px] font-medium bg-destructive/10 text-destructive rounded-full">
-            {escrowDisputes.filter((d) => d.status === 'open').length} open
+            {escrowDisputes.filter((d) => d.status === 'open').length} {t('admin.disputes.openCount') || 'open'}
           </span>
         </div>
         {escrowDisputes.length === 0 ? (
           <p className="text-muted-foreground text-sm py-6 text-center border border-dashed border-border rounded-xl">
-            No escrow disputes found
+            {t('admin.disputes.emptyEscrow') || 'No escrow disputes found'}
           </p>
         ) : (
           <div className="space-y-4">
@@ -310,11 +309,11 @@ const AdminDisputes = () => {
                             isOpen ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'
                           }`}
                         >
-                          {d.status}
+                          {t(`admin.disputes.status.${d.status}`) || d.status}
                         </span>
                         {d.escrow_status && (
                           <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-secondary text-foreground">
-                            escrow: {d.escrow_status}
+                            {t('admin.disputes.escrowLabel') || 'escrow'}: {t(`escrow.status.${d.escrow_status}`) || d.escrow_status}
                           </span>
                         )}
                         <span className="text-xs text-muted-foreground">
@@ -328,19 +327,19 @@ const AdminDisputes = () => {
                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5">
                       <User className="w-3 h-3" />
-                      <span>Client: <strong className="text-foreground">{d.client_name}</strong></span>
+                      <span>{t('admin.disputes.client') || 'Client'}: <strong className="text-foreground">{d.client_name}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <User className="w-3 h-3" />
-                      <span>Tasker: <strong className="text-foreground">{d.tasker_name}</strong></span>
+                      <span>{t('admin.disputes.tasker') || 'Tasker'}: <strong className="text-foreground">{d.tasker_name}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span>Opened by: <strong className="text-foreground">{d.opened_by_name}</strong></span>
+                      <span>{t('admin.disputes.openedBy') || 'Opened by'}: <strong className="text-foreground">{d.opened_by_name}</strong></span>
                     </div>
                   </div>
 
                   <div className="bg-secondary/50 rounded-lg p-3">
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Reason:</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('admin.disputes.reason') || 'Reason'}:</p>
                     <p className="text-sm text-foreground whitespace-pre-wrap">{d.reason}</p>
                     {d.details && (
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{d.details}</p>
@@ -354,7 +353,7 @@ const AdminDisputes = () => {
                         onChange={(e) =>
                           setEscrowNotes((prev) => ({ ...prev, [d.id]: e.target.value }))
                         }
-                        placeholder="Admin note (optional)..."
+                        placeholder={t('admin.disputes.adminNotePlaceholder') || 'Admin note (optional)...'}
                         className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
                         rows={2}
                       />
@@ -369,7 +368,7 @@ const AdminDisputes = () => {
                           ) : (
                             <XCircle className="w-3 h-3" />
                           )}
-                          Refund to Client
+                          {t('admin.disputes.refundToClient') || 'Refund to Client'}
                         </button>
                         <button
                           onClick={() => resolveEscrowDispute(d, 'tasker')}
@@ -381,7 +380,7 @@ const AdminDisputes = () => {
                           ) : (
                             <CheckCircle2 className="w-3 h-3" />
                           )}
-                          Release to Tasker
+                          {t('admin.disputes.releaseToTasker') || 'Release to Tasker'}
                         </button>
                         <button
                           onClick={() => resolveEscrowDispute(d, 'close')}
@@ -393,7 +392,7 @@ const AdminDisputes = () => {
                           ) : (
                             <XCircle className="w-3 h-3" />
                           )}
-                          Close without payout
+                          {t('admin.disputes.closeWithoutPayout') || 'Close without payout'}
                         </button>
                         {d.task_id && (
                           <a
@@ -401,7 +400,7 @@ const AdminDisputes = () => {
                             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors ml-auto"
                           >
                             <MessageSquare className="w-3 h-3" />
-                            View Chat
+                            {t('admin.disputes.viewChat') || 'View Chat'}
                           </a>
                         )}
                       </div>
@@ -415,7 +414,7 @@ const AdminDisputes = () => {
       </section>
 
       {disputes.length === 0 ? (
-        <p className="text-muted-foreground text-sm py-12 text-center">No disputes found</p>
+        <p className="text-muted-foreground text-sm py-12 text-center">{t('admin.disputes.emptyComplaints') || 'No disputes found'}</p>
       ) : (
         <div className="space-y-4">
           {disputes.map(dispute => {
