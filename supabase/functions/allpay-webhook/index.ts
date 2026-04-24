@@ -427,11 +427,83 @@ Deno.serve(async (req) => {
     }
 
     // ======================================================
+    // 8.5 CREATE TASK ASSIGNMENT IF NOT EXISTS (IDEMPOTENT)
+    // Required for disputes flow which uses assignment_id.
+    // ======================================================
+    const commissionRate = 0.15;
+    const orderAmount = Number(order.amount);
+    const commissionAmount = Math.round(orderAmount * commissionRate * 100) / 100;
+    const netAmount = Math.round((orderAmount - commissionAmount) * 100) / 100;
+    const escrowCurrency = order.currency || proposal.currency || task.currency || "ILS";
+
+    let assignmentId: string | null = order.assignment_id ?? null;
+
+    if (!assignmentId) {
+      const { data: existingAssignment, error: existingAssignmentError } = await serviceClient
+        .from("task_assignments")
+        .select("id")
+        .eq("task_id", task.id)
+        .maybeSingle();
+
+      if (existingAssignmentError) {
+        console.error("[ALLPAY-WEBHOOK] Assignment lookup error:", existingAssignmentError);
+        return new Response(JSON.stringify({ error: "Failed to check assignment" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (existingAssignment) {
+        assignmentId = existingAssignment.id;
+      } else {
+        const { data: newAssignment, error: assignmentInsertError } = await serviceClient
+          .from("task_assignments")
+          .insert({
+            task_id: task.id,
+            proposal_id: proposal.id,
+            client_id: order.user_id,
+            tasker_id: proposal.user_id,
+            agreed_price: orderAmount,
+            currency: escrowCurrency,
+            commission_rate: commissionRate,
+            commission_amount: commissionAmount,
+            net_amount: netAmount,
+            status: "in_progress",
+            funded_at: new Date().toISOString(),
+            started_at: new Date().toISOString(),
+          })
+          .select("id")
+          .single();
+
+        if (assignmentInsertError || !newAssignment) {
+          console.error("[ALLPAY-WEBHOOK] Assignment insert error:", assignmentInsertError);
+          return new Response(JSON.stringify({ error: "Failed to create task assignment" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        assignmentId = newAssignment.id;
+      }
+
+      // Link order to assignment (best effort, do not fail webhook if it errors)
+      const { error: linkOrderError } = await serviceClient
+        .from("orders")
+        .update({ assignment_id: assignmentId })
+        .eq("id", order.id);
+
+      if (linkOrderError) {
+        console.error("[ALLPAY-WEBHOOK] Failed to link order to assignment:", linkOrderError);
+      }
+    }
+
+    // ======================================================
     // 9. CREATE ESCROW IF NOT EXISTS (IDEMPOTENT)
+    // Always link escrow to assignment_id for disputes.
     // ======================================================
     const { data: existingEscrow, error: existingEscrowError } = await serviceClient
       .from("escrow_transactions")
-      .select("id")
+      .select("id, assignment_id")
       .eq("task_id", task.id)
       .eq("proposal_id", proposal.id)
       .maybeSingle();
@@ -445,18 +517,14 @@ Deno.serve(async (req) => {
     }
 
     if (!existingEscrow) {
-      const commissionRate = 0.15;
-      const orderAmount = Number(order.amount);
-      const commissionAmount = Math.round(orderAmount * commissionRate * 100) / 100;
-      const netAmount = Math.round((orderAmount - commissionAmount) * 100) / 100;
-
       const { error: escrowInsertError } = await serviceClient.from("escrow_transactions").insert({
         task_id: task.id,
         proposal_id: proposal.id,
+        assignment_id: assignmentId,
         client_id: order.user_id,
         tasker_id: proposal.user_id,
         amount: orderAmount,
-        currency: order.currency || proposal.currency || task.currency || "ILS",
+        currency: escrowCurrency,
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
         net_amount: netAmount,
@@ -469,6 +537,16 @@ Deno.serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+    } else if (assignmentId && !existingEscrow.assignment_id) {
+      // Backfill assignment_id on legacy escrow rows
+      const { error: escrowLinkError } = await serviceClient
+        .from("escrow_transactions")
+        .update({ assignment_id: assignmentId })
+        .eq("id", existingEscrow.id);
+
+      if (escrowLinkError) {
+        console.error("[ALLPAY-WEBHOOK] Failed to backfill escrow assignment_id:", escrowLinkError);
       }
     }
 
