@@ -394,9 +394,6 @@ await serviceClient.from("app_events").insert({
     provider_order_id: orderId,
   },
 });
-        },
-      );
-    }
 
     // ======================================================
     // 13. HANDLE ALLPAY ERROR
