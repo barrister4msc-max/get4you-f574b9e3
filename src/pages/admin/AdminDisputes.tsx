@@ -281,6 +281,141 @@ const AdminDisputes = () => {
         </span>
       </div>
 
+      {/* Escrow-locking disputes (new flow) */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-foreground">Escrow disputes</h2>
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-destructive/10 text-destructive rounded-full">
+            {escrowDisputes.filter((d) => d.status === 'open').length} open
+          </span>
+        </div>
+        {escrowDisputes.length === 0 ? (
+          <p className="text-muted-foreground text-sm py-6 text-center border border-dashed border-border rounded-xl">
+            No escrow disputes found
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {escrowDisputes.map((d) => {
+              const isOpen = d.status === 'open';
+              return (
+                <div
+                  key={d.id}
+                  className={`border rounded-xl p-5 space-y-3 transition-colors ${
+                    isOpen ? 'border-destructive/30 bg-destructive/5' : 'border-border bg-card'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span
+                          className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
+                            isOpen ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'
+                          }`}
+                        >
+                          {d.status}
+                        </span>
+                        {d.escrow_status && (
+                          <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-secondary text-foreground">
+                            escrow: {d.escrow_status}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(d.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-sm text-foreground truncate">{d.task_title}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3 h-3" />
+                      <span>Client: <strong className="text-foreground">{d.client_name}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3 h-3" />
+                      <span>Tasker: <strong className="text-foreground">{d.tasker_name}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span>Opened by: <strong className="text-foreground">{d.opened_by_name}</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="bg-secondary/50 rounded-lg p-3">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Reason:</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{d.reason}</p>
+                    {d.details && (
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{d.details}</p>
+                    )}
+                  </div>
+
+                  {isOpen && (
+                    <div className="space-y-3 pt-2">
+                      <textarea
+                        value={escrowNotes[d.id] || ''}
+                        onChange={(e) =>
+                          setEscrowNotes((prev) => ({ ...prev, [d.id]: e.target.value }))
+                        }
+                        placeholder="Admin note (optional)..."
+                        className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        rows={2}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => resolveEscrowDispute(d, 'client')}
+                          disabled={escrowActionId === d.id || !d.escrow_id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-secondary text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-50"
+                        >
+                          {escrowActionId === d.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <XCircle className="w-3 h-3" />
+                          )}
+                          Refund to Client
+                        </button>
+                        <button
+                          onClick={() => resolveEscrowDispute(d, 'tasker')}
+                          disabled={escrowActionId === d.id || !d.escrow_id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        >
+                          {escrowActionId === d.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3 h-3" />
+                          )}
+                          Release to Tasker
+                        </button>
+                        <button
+                          onClick={() => resolveEscrowDispute(d, 'close')}
+                          disabled={escrowActionId === d.id}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+                        >
+                          {escrowActionId === d.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <XCircle className="w-3 h-3" />
+                          )}
+                          Close without payout
+                        </button>
+                        {d.task_id && (
+                          <a
+                            href={`/admin/chat?taskId=${d.task_id}`}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors ml-auto"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            View Chat
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {disputes.length === 0 ? (
         <p className="text-muted-foreground text-sm py-12 text-center">No disputes found</p>
       ) : (
