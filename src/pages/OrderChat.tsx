@@ -205,6 +205,34 @@ const OrderChat = () => {
 
   const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(url);
 
+  const submitDispute = async () => {
+    if (!order?.assignment_id) {
+      toast.error(t('dispute.error'));
+      return;
+    }
+    const reason = disputeReason.trim();
+    if (reason.length < 3) return;
+
+    setDisputeSubmitting(true);
+    try {
+      const { error } = await openDispute(
+        order.assignment_id,
+        reason,
+        disputeDetails.trim() || undefined,
+      );
+      if (error) {
+        toast.error(friendlyErrorMessage(error, t('dispute.error')));
+        return;
+      }
+      toast.success(t('dispute.submitted'));
+      setDisputeOpen(false);
+      setDisputeReason('');
+      setDisputeDetails('');
+    } finally {
+      setDisputeSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
