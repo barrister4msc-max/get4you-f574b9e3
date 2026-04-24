@@ -51,9 +51,13 @@ const AdminDisputes = () => {
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
+  const [escrowDisputes, setEscrowDisputes] = useState<EscrowDispute[]>([]);
+  const [escrowNotes, setEscrowNotes] = useState<Record<string, string>>({});
+  const [escrowActionId, setEscrowActionId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDisputes();
+    fetchEscrowDisputes();
   }, []);
 
   const fetchDisputes = async () => {
