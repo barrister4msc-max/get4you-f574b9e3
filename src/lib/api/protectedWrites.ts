@@ -166,3 +166,34 @@ export async function closeDisputeWithoutPayout(
     .eq("id", disputeId);
   return { error };
 }
+
+// ──────────────────────────────────────────────────────────────────────
+// `resolveDispute` calls the admin-only `resolve-dispute` Edge Function
+// which atomically updates the dispute, the linked escrow_transactions
+// row, inserts a payout (when releasing to tasker) and writes audit
+// entries to app_events. Used in the admin disputes UI.
+// ──────────────────────────────────────────────────────────────────────
+export async function resolveDispute(
+  disputeId: string,
+  resolution: "client" | "tasker" | "close",
+  adminNote?: string,
+) {
+  const { data, error: invokeErr } = await supabase.functions.invoke(
+    "resolve-dispute",
+    {
+      body: {
+        dispute_id: disputeId,
+        resolution,
+        admin_note: adminNote ?? null,
+      },
+    },
+  );
+  if (invokeErr) return { data: null, error: invokeErr };
+  if (data && typeof data === "object" && "error" in data && data.error) {
+    return {
+      data: null,
+      error: new Error(String((data as { error: unknown }).error)),
+    };
+  }
+  return { data, error: null };
+}
