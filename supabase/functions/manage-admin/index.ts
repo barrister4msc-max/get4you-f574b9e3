@@ -1,20 +1,7 @@
 import { corsHeaders } from "@supabase/supabase-js/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-
-// пример внутри функции
-await supabase.from("app_events").insert({
-  actor_id: currentUserId,
-  event_type: "admin.role_changed",
-  entity_type: "user",
-  entity_id: targetUserId,
-  metadata: {
-    role,
-    action,
-  },
-});
+import { corsHeaders } from "@supabase/supabase-js/cors";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -164,7 +151,17 @@ Deno.serve(async (req) => {
       target_id: profile.user_id,
       details: { role, target_email: email.trim().toLowerCase(), target_name: profile.display_name },
     });
-
+    await adminClient.from("app_events").insert({
+      actor_id: user.id,
+      event_type: action === "remove" ? "admin.role_removed" : "admin.role_added",
+      entity_type: "user",
+      entity_id: profile.user_id,
+      metadata: {
+        role,
+        target_email: email.trim().toLowerCase(),
+        target_name: profile.display_name,
+      },
+    });
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
