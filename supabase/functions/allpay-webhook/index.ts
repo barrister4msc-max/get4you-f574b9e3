@@ -208,6 +208,16 @@ Deno.serve(async (req) => {
     // 2. VALIDATE SIGNATURE
     // ======================================================
     if (!incomingSign) {
+      console.error("[ALLPAY-WEBHOOK] Missing signature for order:", incomingOrderId);
+      await serviceClient.from("app_events").insert({
+        event_type: "payment.webhook_signature_missing",
+        entity_type: "order",
+        metadata: {
+          provider: "allpay",
+          allpay_order_id: incomingOrderId,
+          payload_keys: Object.keys(payload),
+        },
+      });
       return new Response(JSON.stringify({ error: "Missing signature" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -220,6 +230,34 @@ Deno.serve(async (req) => {
       console.error("[ALLPAY-WEBHOOK] Invalid signature", {
         expectedSign,
         incomingSign,
+        allpay_order_id: incomingOrderId,
+      });
+
+      // Try to resolve our internal order to make this entry findable in admin UI
+      const { data: orderForLog } = await serviceClient
+        .from("orders")
+        .select("id, user_id, task_id, amount, currency, status")
+        .eq("allpay_order_id", incomingOrderId)
+        .maybeSingle();
+
+      await serviceClient.from("app_events").insert({
+        event_type: "payment.webhook_signature_invalid",
+        entity_type: "order",
+        entity_id: orderForLog?.id ?? null,
+        actor_id: orderForLog?.user_id ?? null,
+        metadata: {
+          provider: "allpay",
+          allpay_order_id: incomingOrderId,
+          internal_order_id: orderForLog?.id ?? null,
+          task_id: orderForLog?.task_id ?? null,
+          expected_sign: expectedSign,
+          incoming_sign: incomingSign,
+          payload_keys: Object.keys(payload),
+          payload_status:
+            payload.status ?? payload.payment_status ?? payload.pay_status ?? null,
+          payload_amount: payload.amount ?? null,
+          payload_currency: payload.currency ?? null,
+        },
       });
 
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
@@ -239,6 +277,15 @@ Deno.serve(async (req) => {
 
     if (orderError) {
       console.error("[ALLPAY-WEBHOOK] Order lookup error:", orderError);
+      await serviceClient.from("app_events").insert({
+        event_type: "payment.webhook_order_lookup_failed",
+        entity_type: "order",
+        metadata: {
+          provider: "allpay",
+          allpay_order_id: incomingOrderId,
+          error: orderError.message,
+        },
+      });
       return new Response(JSON.stringify({ error: "Order lookup failed" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -246,11 +293,68 @@ Deno.serve(async (req) => {
     }
 
     if (!order) {
+      console.error("[ALLPAY-WEBHOOK] Order not found:", incomingOrderId);
+      await serviceClient.from("app_events").insert({
+        event_type: "payment.webhook_order_not_found",
+        entity_type: "order",
+        metadata: {
+          provider: "allpay",
+          allpay_order_id: incomingOrderId,
+        },
+      });
       return new Response(JSON.stringify({ error: "Order not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ======================================================
+    // 2.5 PAYLOAD <-> ORDER CONSISTENCY CHECK
+    // Detect amount/currency mismatch between Allpay payload and our order.
+    // Don't block the webhook (we still want to record the payment),
+    // but flag it so admin can investigate.
+    // ======================================================
+    const payloadAmountRaw = payload.amount ?? payload.sum ?? null;
+    const payloadAmount =
+      payloadAmountRaw != null && payloadAmountRaw !== ""
+        ? Number(payloadAmountRaw)
+        : null;
+    const payloadCurrency =
+      typeof payload.currency === "string" && payload.currency.trim()
+        ? payload.currency.trim().toUpperCase()
+        : null;
+    const orderCurrency = (order.currency || "").toUpperCase();
+    const amountMismatch =
+      payloadAmount != null && Number(order.amount) !== payloadAmount;
+    const currencyMismatch =
+      payloadCurrency != null && orderCurrency && orderCurrency !== payloadCurrency;
+
+    if (amountMismatch || currencyMismatch) {
+      console.error("[ALLPAY-WEBHOOK] Payload/order mismatch", {
+        order_id: order.id,
+        amountMismatch,
+        currencyMismatch,
+      });
+      await serviceClient.from("app_events").insert({
+        event_type: "payment.webhook_payload_mismatch",
+        entity_type: "order",
+        entity_id: order.id,
+        actor_id: order.user_id,
+        metadata: {
+          provider: "allpay",
+          allpay_order_id: incomingOrderId,
+          internal_order_id: order.id,
+          task_id: order.task_id,
+          order_amount: Number(order.amount),
+          payload_amount: payloadAmount,
+          order_currency: orderCurrency,
+          payload_currency: payloadCurrency,
+          amount_mismatch: amountMismatch,
+          currency_mismatch: currencyMismatch,
+        },
+      });
+    }
+
     if (order.status === "paid") {
       await serviceClient.from("app_events").insert({
         actor_id: order.user_id,

@@ -582,6 +582,13 @@ const handleAcceptClick = (proposalId: string) => {
 
   if (!proposal) return;
 
+  // Defensive: if escrow already exists or order already paid, the task is
+  // past the acceptance/payment stage. Refuse to open the payment dialog.
+  if (escrow || paymentOrder?.status === "paid" || (task?.status && task.status !== "open" && task.status !== "draft")) {
+    toast.error(t("payment.alreadyPaid") || "Оплата уже произведена");
+    return;
+  }
+
   const canPay =
     (proposal.status === "pending" || proposal.status === "accepted") &&
     task?.status === "open";
@@ -1056,7 +1063,7 @@ const handlePaymentConfirm = async () => {
                 </>
               )}
 
-              {isOwner && (paymentOrder || paymentErrorText) && !escrow && (
+              {isOwner && (paymentOrder || paymentErrorText) && !escrow && !paymentLocked && (
                 <div className="mt-4 rounded-xl border border-border bg-secondary/50 p-4 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -1078,7 +1085,7 @@ const handlePaymentConfirm = async () => {
                     </div>
                   )}
 
-                  {paymentOrder?.payment_url && paymentOrder.status !== 'paid' && (
+                  {paymentOrder?.payment_url && paymentOrder.status !== 'paid' && !escrow && (
                     <a
                       href={paymentOrder.payment_url}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
