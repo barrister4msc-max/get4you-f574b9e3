@@ -718,6 +718,15 @@ const handlePaymentConfirm = async () => {
 
   const paymentErrorText = paymentError || (paymentOrder?.status === 'failed' ? t('payment.statusError.failed') : null);
 
+  // Once payment succeeded (escrow exists OR order paid OR task moved beyond `open`),
+  // lock proposal/acceptance UI: no more accept/reject buttons, no new offers,
+  // no edits to existing pending proposals.
+  const paymentLocked = Boolean(
+    escrow ||
+    paymentOrder?.status === 'paid' ||
+    (task.status && task.status !== 'open' && task.status !== 'draft')
+  );
+
   return (
     <div className="py-8">
       <div className="container max-w-4xl">
@@ -752,7 +761,7 @@ const handlePaymentConfirm = async () => {
                 ) : (
                   <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
                 )}
-                {isOwner && task.status === 'open' && !editing && (
+                {isOwner && task.status === 'open' && !editing && !paymentLocked && (
                   <button onClick={handleStartEdit} className="shrink-0 p-1.5 rounded-lg hover:bg-secondary transition-colors" title={t('task.edit')}>
                     <Pencil className="w-4 h-4 text-muted-foreground" />
                   </button>
@@ -959,7 +968,7 @@ const handlePaymentConfirm = async () => {
                         )}
 
                         {/* Edit button for own pending proposals */}
-                        {proposal.user_id === user?.id && proposal.status === 'pending' && task.status === 'open' && (
+                        {proposal.user_id === user?.id && proposal.status === 'pending' && task.status === 'open' && !paymentLocked && (
                           <button
                             onClick={() => handleEditProposal(proposal)}
                             className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors"
@@ -972,7 +981,7 @@ const handlePaymentConfirm = async () => {
                     )}
 
                     {/* Accept/Reject buttons for task owner */}
-                    {isOwner && proposal.status === 'pending' && task.status === 'open' && (
+                    {isOwner && proposal.status === 'pending' && task.status === 'open' && !paymentLocked && (
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => handleAcceptClick(proposal.id)}
@@ -1074,7 +1083,7 @@ const handlePaymentConfirm = async () => {
               )}
 
               {/* Offer button / form */}
-              {!isOwner && task.status === 'open' && (
+              {!isOwner && task.status === 'open' && !paymentLocked && (
                 <>
                   {!user ? (
                     <button
