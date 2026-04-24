@@ -597,6 +597,51 @@ const TasksPage = () => {
 
         {tab === "all" && (
           <div className="mb-6">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <select
+                value={filterCat}
+                onChange={(e) => setFilterCat(e.target.value)}
+                className="px-3 py-1.5 rounded-lg border border-input bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                <option value="">{t("task.category")}: {t("tasks.allTasks")}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {locale === "ru"
+                      ? c.name_ru || c.name_en
+                      : locale === "he"
+                        ? c.name_he || c.name_en
+                        : c.name_en}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={filterRadius}
+                onChange={(e) => {
+                  setFilterRadius(e.target.value);
+                  if (e.target.value && !userCoords) requestGeolocation();
+                }}
+                className="px-3 py-1.5 rounded-lg border border-input bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                <option value="">{t("tasks.filter.anyDistance")}</option>
+                {RADIUS_OPTIONS.map((r) => (
+                  <option key={r} value={r}>
+                    {r} km
+                  </option>
+                ))}
+              </select>
+              {(filterCat || filterRadius) && (
+                <button
+                  onClick={() => {
+                    setFilterCat("");
+                    setFilterRadius("");
+                  }}
+                  className="flex items-center gap-1 text-xs text-destructive hover:underline"
+                >
+                  <X className="w-3 h-3" />
+                  {t("tasks.filter.clear")}
+                </button>
+              )}
+            </div>
             <TasksMap
               tasks={sortedFiltered.map((t) => ({
                 id: t.id,
@@ -608,6 +653,7 @@ const TasksPage = () => {
               userLng={userCoords?.lng ?? null}
               onRequestLocation={requestGeolocation}
               geoLoading={geoLoading}
+              radiusKm={filterRadius ? Number(filterRadius) : null}
             />
           </div>
         )}

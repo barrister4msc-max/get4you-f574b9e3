@@ -30,6 +30,14 @@ export type TasksMapTask = {
   longitude: number | null;
 };
 
+const Recenter = ({ target, zoom }: { target: [number, number] | null; zoom: number }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (target) map.flyTo(target, zoom, { duration: 0.8 });
+  }, [target, zoom, map]);
+  return null;
+};
+
 const ClusteredMarkers = ({ tasks, dir, openLabel }: { tasks: TasksMapTask[]; dir: 'ltr' | 'rtl'; openLabel: string }) => {
   const map = useMap();
   const groupRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -80,9 +88,10 @@ type TasksMapProps = {
   title?: string;
   onRequestLocation?: () => void;
   geoLoading?: boolean;
+  radiusKm?: number | null;
 };
 
-export const TasksMap = ({ tasks, userLat, userLng, title, onRequestLocation, geoLoading }: TasksMapProps) => {
+export const TasksMap = ({ tasks, userLat, userLng, title, onRequestLocation, geoLoading, radiusKm }: TasksMapProps) => {
   const { t, dir } = useLanguage();
   const heading = title ?? t('tasks.map.title');
   const youHereLabel = t('tasks.map.youHere');
@@ -96,6 +105,13 @@ export const TasksMap = ({ tasks, userLat, userLng, title, onRequestLocation, ge
     if (validTasks.length > 0) return [validTasks[0].latitude as number, validTasks[0].longitude as number];
     return [32.0853, 34.7818];
   }, [hasUser, userLat, userLng, validTasks]);
+
+  const flyTarget = useMemo<[number, number] | null>(
+    () => (hasUser ? [userLat as number, userLng as number] : null),
+    [hasUser, userLat, userLng],
+  );
+
+  const circleRadius = (radiusKm && radiusKm > 0 ? radiusKm : 3) * 1000;
 
   return (
     <div className="space-y-2" dir={dir}>
@@ -132,6 +148,7 @@ export const TasksMap = ({ tasks, userLat, userLng, title, onRequestLocation, ge
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <Recenter target={flyTarget} zoom={13} />
           {hasUser && (
             <>
               <Marker position={[userLat as number, userLng as number]} icon={meIcon}>
@@ -143,7 +160,7 @@ export const TasksMap = ({ tasks, userLat, userLng, title, onRequestLocation, ge
               </Marker>
               <Circle
                 center={[userLat as number, userLng as number]}
-                radius={3000}
+                radius={circleRadius}
                 pathOptions={{ color: 'hsl(var(--primary))', fillOpacity: 0.08 }}
               />
             </>
