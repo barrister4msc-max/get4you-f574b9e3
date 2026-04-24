@@ -606,7 +606,8 @@ const TasksPage = () => {
               }))}
               userLat={userCoords?.lat ?? null}
               userLng={userCoords?.lng ?? null}
-              title={t("tasks.title")}
+              onRequestLocation={requestGeolocation}
+              geoLoading={geoLoading}
             />
           </div>
         )}

@@ -5,7 +5,9 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster';
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const meIcon = L.divIcon({
   className: '',
@@ -28,7 +30,7 @@ export type TasksMapTask = {
   longitude: number | null;
 };
 
-const ClusteredMarkers = ({ tasks }: { tasks: TasksMapTask[] }) => {
+const ClusteredMarkers = ({ tasks, dir, openLabel }: { tasks: TasksMapTask[]; dir: 'ltr' | 'rtl'; openLabel: string }) => {
   const map = useMap();
   const groupRef = useRef<L.MarkerClusterGroup | null>(null);
 
@@ -55,14 +57,18 @@ const ClusteredMarkers = ({ tasks }: { tasks: TasksMapTask[] }) => {
       .filter((t) => t.latitude != null && t.longitude != null)
       .map((t) => {
         const m = L.marker([t.latitude as number, t.longitude as number], { icon: taskIcon });
+        const safeTitle = t.title.replace(/</g, '&lt;');
+        const arrow = dir === 'rtl' ? '←' : '→';
         m.bindPopup(
-          `<div style="min-width:140px"><strong>${t.title.replace(/</g, '&lt;')}</strong>` +
-            `<div><a href="/tasks/${t.id}" style="color:hsl(var(--primary));font-size:11px;text-decoration:underline">Открыть →</a></div></div>`
+          `<div dir="${dir}" style="min-width:140px;text-align:${dir === 'rtl' ? 'right' : 'left'}">` +
+            `<strong>${safeTitle}</strong>` +
+            `<div><a href="/tasks/${t.id}" style="color:hsl(var(--primary));font-size:11px;text-decoration:underline">${openLabel} ${arrow}</a></div>` +
+            `</div>`
         );
         return m;
       });
     group.addLayers(markers);
-  }, [tasks]);
+  }, [tasks, dir, openLabel]);
 
   return null;
 };
@@ -72,9 +78,16 @@ type TasksMapProps = {
   userLat?: number | null;
   userLng?: number | null;
   title?: string;
+  onRequestLocation?: () => void;
+  geoLoading?: boolean;
 };
 
-export const TasksMap = ({ tasks, userLat, userLng, title = 'Карта задач' }: TasksMapProps) => {
+export const TasksMap = ({ tasks, userLat, userLng, title, onRequestLocation, geoLoading }: TasksMapProps) => {
+  const { t, dir } = useLanguage();
+  const heading = title ?? t('tasks.map.title');
+  const youHereLabel = t('tasks.map.youHere');
+  const openLabel = t('tasks.map.open');
+  const allowLabel = t('tasks.map.allowLocation');
   const hasUser = userLat != null && userLng != null;
   const validTasks = tasks.filter((t) => t.latitude != null && t.longitude != null);
 
@@ -85,13 +98,28 @@ export const TasksMap = ({ tasks, userLat, userLng, title = 'Карта зада
   }, [hasUser, userLat, userLng, validTasks]);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
+    <div className="space-y-2" dir={dir}>
+      <div className="flex items-center gap-2 flex-wrap">
         <MapPin className="w-4 h-4 text-primary" />
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <span className="text-xs text-muted-foreground">
-          ({validTasks.length})
-        </span>
+        <h2 className="text-sm font-semibold">{heading}</h2>
+        <span className="text-xs text-muted-foreground">({validTasks.length})</span>
+        {!hasUser && onRequestLocation && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onRequestLocation}
+            disabled={geoLoading}
+            className="ms-auto h-8"
+          >
+            {geoLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Navigation className="w-3.5 h-3.5" />
+            )}
+            <span className="ms-2">{allowLabel}</span>
+          </Button>
+        )}
       </div>
       <div className="h-[220px] w-full overflow-hidden rounded-xl border border-border">
         <MapContainer
@@ -108,7 +136,9 @@ export const TasksMap = ({ tasks, userLat, userLng, title = 'Карта зада
             <>
               <Marker position={[userLat as number, userLng as number]} icon={meIcon}>
                 <Popup>
-                  <strong>Вы здесь</strong>
+                  <div dir={dir} style={{ textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+                    <strong>{youHereLabel}</strong>
+                  </div>
                 </Popup>
               </Marker>
               <Circle
@@ -118,7 +148,7 @@ export const TasksMap = ({ tasks, userLat, userLng, title = 'Карта зада
               />
             </>
           )}
-          <ClusteredMarkers tasks={validTasks} />
+          <ClusteredMarkers tasks={validTasks} dir={dir} openLabel={openLabel} />
         </MapContainer>
       </div>
     </div>
