@@ -610,9 +610,19 @@ const CreateTaskPage = () => {
                   <input
                     value={form.location}
                     onChange={(e) => update({ location: e.target.value })}
+                    onBlur={(e) => {
+                      // After the user finishes typing an address, resolve it to
+                      // coordinates so the saved task carries an accurate geo point.
+                      if (form.taskType !== "remote") {
+                        void geocodeTypedAddress(e.target.value);
+                      }
+                    }}
                     className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     placeholder={t("task.location.placeholder")}
                   />
+                  {addressGeocoding && (
+                    <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
               </div>
 
