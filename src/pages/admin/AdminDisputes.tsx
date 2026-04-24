@@ -7,7 +7,7 @@ import {
   adminRefundEscrow,
   adminReleaseEscrow,
   closeDisputeWithoutPayout,
-  resolveDispute,
+  resolveDispute as resolveEscrowDisputeApi,
 } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
@@ -200,7 +200,11 @@ const AdminDisputes = () => {
 
       // Single atomic call → resolve-dispute Edge Function:
       // updates dispute + escrow_transactions + payouts + app_events.
-      const { error } = await resolveDispute(dispute.id, favor, note || undefined);
+      const { error } = await resolveEscrowDisputeApi(
+        dispute.id,
+        favor,
+        note || undefined,
+      );
       if (error) throw error;
 
       toast.success(
