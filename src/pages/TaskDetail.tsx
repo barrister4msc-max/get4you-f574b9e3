@@ -582,6 +582,13 @@ const handleAcceptClick = (proposalId: string) => {
 
   if (!proposal) return;
 
+  // Defensive: if escrow already exists or order already paid, the task is
+  // past the acceptance/payment stage. Refuse to open the payment dialog.
+  if (escrow || paymentOrder?.status === "paid" || (task?.status && task.status !== "open" && task.status !== "draft")) {
+    toast.error(t("payment.alreadyPaid") || "Оплата уже произведена");
+    return;
+  }
+
   const canPay =
     (proposal.status === "pending" || proposal.status === "accepted") &&
     task?.status === "open";
