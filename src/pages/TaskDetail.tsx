@@ -529,8 +529,14 @@ const TaskDetailPage = () => {
       // Reset rejected proposals so those taskers can re-propose
       const rejectedIds = proposals.filter(p => p.status === 'rejected').map(p => p.id);
       if (rejectedIds.length > 0) {
-        await supabase.from('proposals').delete().in('id', rejectedIds);
-        setProposals(prev => prev.filter(p => p.status !== 'rejected'));
+        const { error: delErr } = await supabase
+          .from('proposals')
+          .delete()
+          .in('id', rejectedIds);
+        if (!delErr) {
+          setProposals(prev => prev.filter(p => p.status !== 'rejected'));
+        }
+        // Silent on RLS denial — task update already succeeded.
       }
       setEditing(false);
       toast.success(t('task.edit.saved'));
