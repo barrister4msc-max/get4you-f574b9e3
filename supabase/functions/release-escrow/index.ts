@@ -60,6 +60,17 @@ Deno.serve(async (req: Request) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // Identify the calling user from their JWT
+  const userClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: userData, error: userErr } = await userClient.auth.getUser();
+  if (userErr || !userData?.user) {
+    return jsonResponse({ error: "Unauthorized" }, 401);
+  }
+  const callerId = userData.user.id;
+
   // 1. Load escrow transaction
   const { data: escrow, error: loadErr } = await admin
     .from("escrow_transactions")
@@ -75,6 +86,20 @@ Deno.serve(async (req: Request) => {
   }
   if (!escrow) {
     return jsonResponse({ error: "Escrow not found" }, 404);
+  }
+
+  // Authorization: caller must be the escrow's client OR an admin/super_admin
+  let isAuthorized = callerId === escrow.client_id;
+  if (!isAuthorized) {
+    const { data: roles } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId)
+      .in("role", ["admin", "super_admin"]);
+    isAuthorized = !!(roles && roles.length > 0);
+  }
+  if (!isAuthorized) {
+    return jsonResponse({ error: "Forbidden" }, 403);
   }
 
   // 2. Idempotency: already released → return success without side effects
