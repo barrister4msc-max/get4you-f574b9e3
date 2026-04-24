@@ -718,6 +718,15 @@ const handlePaymentConfirm = async () => {
 
   const paymentErrorText = paymentError || (paymentOrder?.status === 'failed' ? t('payment.statusError.failed') : null);
 
+  // Once payment succeeded (escrow exists OR order paid OR task moved beyond `open`),
+  // lock proposal/acceptance UI: no more accept/reject buttons, no new offers,
+  // no edits to existing pending proposals.
+  const paymentLocked = Boolean(
+    escrow ||
+    paymentOrder?.status === 'paid' ||
+    (task.status && task.status !== 'open' && task.status !== 'draft')
+  );
+
   return (
     <div className="py-8">
       <div className="container max-w-4xl">
