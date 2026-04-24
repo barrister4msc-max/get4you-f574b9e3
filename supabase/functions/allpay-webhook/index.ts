@@ -21,7 +21,24 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
 
   for (const key of sortedKeys) {
     if (key === "sign") continue;
-    const value = params[key];
+    let value = params[key];
+
+    // Allpay may serialize array fields (e.g. "items") as JSON strings
+    // when sending form-encoded webhooks. Try to parse them back to arrays
+    // so the signature matches the one computed on Allpay side.
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            value = parsed;
+          }
+        } catch {
+          // keep as string
+        }
+      }
+    }
 
     if (Array.isArray(value)) {
       for (const item of value) {
@@ -29,14 +46,18 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
           const itemKeys = Object.keys(item as Record<string, unknown>).sort();
           for (const name of itemKeys) {
             const val = (item as Record<string, unknown>)[name];
-            if (typeof val === "string" && val.trim() !== "") {
-              chunks.push(val);
+            const strVal = val == null ? "" : String(val);
+            if (strVal.trim() !== "") {
+              chunks.push(strVal);
             }
           }
         }
       }
-    } else if (typeof value === "string" && value.trim() !== "") {
-      chunks.push(value);
+    } else if (value != null) {
+      const strVal = String(value);
+      if (strVal.trim() !== "") {
+        chunks.push(strVal);
+      }
     }
   }
 
