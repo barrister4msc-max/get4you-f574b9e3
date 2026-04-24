@@ -97,7 +97,7 @@ export async function logAppEvent(input: LogAppEventInput): Promise<void> {
         event_type: input.event_type,
         entity_type: input.entity_type ?? undefined,
         entity_id: input.entity_id ?? undefined,
-        metadata: safeMetadata,
+        metadata: safeMetadata as never,
       },
     ]);
   } catch {
