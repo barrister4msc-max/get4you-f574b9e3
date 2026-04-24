@@ -799,15 +799,15 @@ const CreateTaskPage = () => {
           )}
         </div>
 
-        {/* Geolocation confirmation modal */}
+        {/* Geolocation choice modal: use current location or enter manually */}
         <AnimatePresence>
-          {geoPrompt.open && (
+          {geoChoice.open && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-              onClick={() => setGeoPrompt({ open: false, address: null })}
+              onClick={() => !geoChoice.resolving && setGeoChoice({ open: false, resolving: false })}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -816,35 +816,47 @@ const CreateTaskPage = () => {
                 className="bg-card rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto">
+                <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mx-auto">
                   <MapPin className="w-7 h-7 text-primary" />
                 </div>
-                <h2 className="text-lg font-bold text-foreground">{t("task.geo.detectedTitle")}</h2>
-                <p className="text-sm text-muted-foreground">{t("task.geo.detectedDesc")}</p>
-                {geoPrompt.address && (
-                  <div className="bg-secondary rounded-xl p-3 text-sm text-foreground text-start">
-                    {geoPrompt.address}
-                  </div>
-                )}
+                <h2 className="text-lg font-bold text-foreground">
+                  {t("task.geo.chooseTitle") || "Адрес выполнения задачи"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t("task.geo.chooseDesc") ||
+                    "Использовать вашу текущую геолокацию как адрес или ввести его вручную?"}
+                </p>
                 <div className="flex flex-col gap-2">
                   <button
                     type="button"
+                    disabled={geoChoice.resolving}
                     onClick={() => {
-                      if (geoPrompt.address) update({ location: geoPrompt.address });
-                      setGeoPrompt({ open: false, address: null });
+                      setGeoChoice({ open: true, resolving: true });
+                      getCurrentLocation();
                     }}
-                    className="w-full py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+                    className="w-full py-2.5 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    {t("task.geo.useIt")}
+                    {geoChoice.resolving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t("task.geo.detecting") || "Определяем..."}
+                      </>
+                    ) : (
+                      <>📍 {t("task.geo.useCurrent") || "Использовать текущую"}</>
+                    )}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setGeoPrompt({ open: false, address: null })}
-                    className="w-full py-2.5 rounded-xl font-medium border border-border text-foreground hover:bg-secondary transition-colors"
+                    disabled={geoChoice.resolving}
+                    onClick={() => setGeoChoice({ open: false, resolving: false })}
+                    className="w-full py-2.5 rounded-xl font-medium border border-border text-foreground hover:bg-secondary transition-colors disabled:opacity-60"
                   >
-                    {t("task.geo.skip")}
+                    {t("task.geo.enterManually") || "Ввести вручную"}
                   </button>
                 </div>
+                {geoError && geoChoice.resolving && (
+                  <p className="text-xs text-destructive">{geoError}</p>
+                )}
               </motion.div>
             </motion.div>
           )}
