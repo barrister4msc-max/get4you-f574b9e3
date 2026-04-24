@@ -22,9 +22,7 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
             if (typeof val === "string" && val.trim() !== "") {
               chunks.push(val);
             }
-          }
-        }
-      }
+
     } else if (typeof value === "string" && value.trim() !== "") {
       chunks.push(value);
     }
@@ -198,7 +196,12 @@ const {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
+if (safeAmount < 50) {
+  return new Response(JSON.stringify({ error: "Minimum payment amount is 50" }), {
+    status: 400,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
 
     const safeItemName = task.title ? `Task: ${task.title}` : `Task payment #${task.id}`;
