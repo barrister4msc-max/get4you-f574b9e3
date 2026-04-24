@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ProfileMap } from '@/components/ProfileMap';
 import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedWrites';
+import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -75,7 +76,7 @@ const ProfilePage = () => {
       await refreshProfile();
       toast.success(t('profile.avatar.uploaded'));
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(friendlyErrorMessage(err, t('profile.avatar.uploaded')));
     } finally {
       setUploadingAvatar(false);
     }
@@ -93,7 +94,7 @@ const ProfilePage = () => {
       await refreshProfile();
       toast.success(t('profile.avatar.deleted'));
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(friendlyErrorMessage(err, t('profile.avatar.deleted')));
     } finally {
       setUploadingAvatar(false);
     }
@@ -130,7 +131,7 @@ const ProfilePage = () => {
       await refreshProfile();
       toast.success(t('profile.roles.updated'));
     } catch (err: any) {
-      toast.error(err.message || 'Failed to update roles');
+      toast.error(friendlyErrorMessage(err, 'Failed to update roles'));
     } finally {
       setSavingRoles(false);
     }
@@ -142,7 +143,7 @@ const ProfilePage = () => {
     const updateData: any = { display_name: form.display_name, phone: form.phone, city: form.city, bio: form.bio };
     if (isTasker) updateData.payment_method = form.payment_method || null;
     const { error } = await supabase.from('profiles').update(updateData).eq('user_id', user.id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(friendlyErrorMessage(error, t('profile.saved')));
     else { toast.success(t('profile.saved')); await refreshProfile(); }
     setSaving(false);
   };
