@@ -1133,6 +1133,20 @@ const handlePaymentConfirm = async () => {
                       {t('payment.openPaymentPage')}
                     </a>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={handleCheckPayment}
+                    disabled={checkingPayment}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+                  >
+                    {checkingPayment ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
+                    {t('payment.checkNow') || 'Проверить оплату/эскроу сейчас'}
+                  </button>
                 </div>
               )}
 
