@@ -49,21 +49,22 @@ export async function removeSelfRole(userId: string, role: SelfRole) {
 
 // ──────────────────────────────────────────────────────────────────────
 // Escrow release (task completion by client)
-// TODO(backend): replace with `supabase.functions.invoke('release-escrow', ...)`
-// Server should: verify caller is the task owner, mark escrow released,
-// create payout row, mark task completed — atomically.
+// Routes through Supabase Edge Function `release-escrow`, which validates
+// the escrow, blocks release when an open dispute exists, marks the
+// escrow released, creates the payout row, and writes an audit event.
+// The task `status` update remains here so the calling UI flow is
+// unchanged.
 // ──────────────────────────────────────────────────────────────────────
 
 export async function releaseEscrow(escrowId: string, taskId: string) {
-  // TODO: route through Edge Function `release-escrow`.
-  const { error: escrowErr } = await supabase
-    .from("escrow_transactions")
-    .update({
-      status: "released",
-      released_at: new Date().toISOString(),
-    } as never)
-    .eq("id", escrowId);
-  if (escrowErr) return { error: escrowErr };
+  const { data, error: invokeErr } = await supabase.functions.invoke(
+    "release-escrow",
+    { body: { escrow_id: escrowId } },
+  );
+  if (invokeErr) return { error: invokeErr };
+  if (data && typeof data === "object" && "error" in data && data.error) {
+    return { error: new Error(String((data as { error: unknown }).error)) };
+  }
 
   const { error: taskErr } = await supabase
     .from("tasks")
@@ -101,15 +102,16 @@ export async function adminRefundEscrow(escrowId: string, taskId: string) {
 }
 
 export async function adminReleaseEscrow(escrowId: string, taskId: string) {
-  // TODO: route through Edge Function `admin-resolve-dispute` (favor=tasker).
-  const { error: escrowErr } = await supabase
-    .from("escrow_transactions")
-    .update({
-      status: "released",
-      released_at: new Date().toISOString(),
-    } as never)
-    .eq("id", escrowId);
-  if (escrowErr) return { error: escrowErr };
+  // Reuses the `release-escrow` Edge Function. A dedicated
+  // `admin-resolve-dispute` function can wrap this later for full audit.
+  const { data, error: invokeErr } = await supabase.functions.invoke(
+    "release-escrow",
+    { body: { escrow_id: escrowId } },
+  );
+  if (invokeErr) return { error: invokeErr };
+  if (data && typeof data === "object" && "error" in data && data.error) {
+    return { error: new Error(String((data as { error: unknown }).error)) };
+  }
 
   const { error: taskErr } = await supabase
     .from("tasks")
