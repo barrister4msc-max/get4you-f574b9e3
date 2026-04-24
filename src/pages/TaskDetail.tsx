@@ -761,7 +761,7 @@ const handlePaymentConfirm = async () => {
                 ) : (
                   <h1 className="text-xl font-bold">{translatedTitle || task.title}</h1>
                 )}
-                {isOwner && task.status === 'open' && !editing && (
+                {isOwner && task.status === 'open' && !editing && !paymentLocked && (
                   <button onClick={handleStartEdit} className="shrink-0 p-1.5 rounded-lg hover:bg-secondary transition-colors" title={t('task.edit')}>
                     <Pencil className="w-4 h-4 text-muted-foreground" />
                   </button>
@@ -1083,7 +1083,7 @@ const handlePaymentConfirm = async () => {
               )}
 
               {/* Offer button / form */}
-              {!isOwner && task.status === 'open' && (
+              {!isOwner && task.status === 'open' && !paymentLocked && (
                 <>
                   {!user ? (
                     <button
