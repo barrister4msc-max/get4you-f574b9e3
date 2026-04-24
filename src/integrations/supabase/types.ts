@@ -922,6 +922,7 @@ export type Database = {
           currency: string
           description: string | null
           id: string
+          idempotency_key: string | null
           lat: number | null
           lng: number | null
           payment_url: string | null
@@ -946,6 +947,7 @@ export type Database = {
           currency?: string
           description?: string | null
           id?: string
+          idempotency_key?: string | null
           lat?: number | null
           lng?: number | null
           payment_url?: string | null
@@ -970,6 +972,7 @@ export type Database = {
           currency?: string
           description?: string | null
           id?: string
+          idempotency_key?: string | null
           lat?: number | null
           lng?: number | null
           payment_url?: string | null
