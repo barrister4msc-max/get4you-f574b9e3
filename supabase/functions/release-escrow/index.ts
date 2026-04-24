@@ -2,8 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -18,8 +17,7 @@ interface ReleaseEscrowBody {
   escrow_id?: string;
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -128,7 +126,7 @@ Deno.serve(async (req: Request) => {
       .from("disputes")
       .select("id, status")
       .eq("assignment_id", escrow.assignment_id)
-      .neq("status", "resolved");
+      .in("status", ["open", "pending", "in_review"]);
 
     if (disputeErr) {
       console.error("[release-escrow] dispute check error", disputeErr);
@@ -197,6 +195,7 @@ Deno.serve(async (req: Request) => {
 
   // 7. Audit event
   const { error: eventErr } = await admin.from("app_events").insert({
+    actor_id: callerId,
     event_type: "escrow.released",
     entity_type: "escrow",
     entity_id: escrow.id,
