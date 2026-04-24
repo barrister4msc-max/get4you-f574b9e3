@@ -164,7 +164,15 @@ Deno.serve(async (req) => {
     // ======================================================
     const payload = await parseIncomingPayload(req);
     console.log("[ALLPAY-WEBHOOK] payload:", JSON.stringify(payload));
-
+    await serviceClient.from("app_events").insert({
+      event_type: "payment.webhook_received",
+      entity_type: "order",
+      metadata: {
+        provider: "allpay",
+        order_id: payload.order_id || payload.orderId || payload.invoice_id || null,
+        status: payload.status || payload.payment_status || payload.pay_status || null,
+      },
+    });
     const incomingSign = String(payload.sign || "").trim();
     const incomingOrderId = String(payload.order_id || payload.orderId || payload.invoice_id || "").trim();
 
@@ -222,7 +230,32 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (order.status === "paid") {
+      await serviceClient.from("app_events").insert({
+        actor_id: order.user_id,
+        event_type: "payment.webhook_duplicate_ignored",
+        entity_type: "order",
+        entity_id: order.id,
+        metadata: {
+          provider: "allpay",
+          provider_order_id: incomingOrderId,
+          current_status: order.status,
+        },
+      });
 
+      return new Response(
+        JSON.stringify({
+          success: true,
+          order_id: incomingOrderId,
+          status: "paid",
+          duplicate: true,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
     // ======================================================
     // 4. DETERMINE PAYMENT OUTCOME
     // ======================================================
@@ -263,6 +296,17 @@ Deno.serve(async (req) => {
 
     // If not paid, stop here safely
     if (!paid) {
+      await serviceClient.from("app_events").insert({
+        actor_id: order.user_id,
+        event_type: failed ? "payment.webhook_failed" : "payment.webhook_not_paid",
+        entity_type: "order",
+        entity_id: order.id,
+        metadata: {
+          provider: "allpay",
+          provider_order_id: incomingOrderId,
+          provider_status: providerStatus,
+        },
+      });
       return new Response(
         JSON.stringify({
           success: true,
