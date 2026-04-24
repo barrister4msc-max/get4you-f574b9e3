@@ -118,6 +118,102 @@ const AdminDisputes = () => {
     setLoading(false);
   };
 
+  const fetchEscrowDisputes = async () => {
+    const { data: rows } = await supabase
+      .from('disputes')
+      .select('id, assignment_id, task_id, escrow_id, opened_by, reason, details, status, created_at')
+      .order('created_at', { ascending: false });
+    if (!rows) return;
+
+    const taskIds = [...new Set(rows.map((r) => r.task_id).filter(Boolean))];
+    const assignmentIds = [...new Set(rows.map((r) => r.assignment_id).filter(Boolean))];
+    const escrowIds = [...new Set(rows.map((r) => r.escrow_id).filter(Boolean) as string[])];
+
+    const [tasksRes, assignmentsRes, escrowsRes] = await Promise.all([
+      taskIds.length
+        ? supabase.from('tasks').select('id, title').in('id', taskIds)
+        : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+      assignmentsRes_load(assignmentIds),
+      escrowIds.length
+        ? supabase.from('escrow_transactions').select('id, status').in('id', escrowIds)
+        : Promise.resolve({ data: [] as { id: string; status: string }[] }),
+    ]);
+
+    const taskMap = new Map((tasksRes.data ?? []).map((t) => [t.id, t.title]));
+    const assignmentMap = new Map(
+      (assignmentsRes.data ?? []).map((a) => [a.id, a]),
+    );
+    const escrowMap = new Map((escrowsRes.data ?? []).map((e) => [e.id, e.status]));
+
+    const userIds = new Set<string>();
+    rows.forEach((r) => userIds.add(r.opened_by));
+    assignmentMap.forEach((a) => {
+      userIds.add(a.client_id);
+      userIds.add(a.tasker_id);
+    });
+    const { data: profiles } = await supabase.rpc('get_public_profiles', {
+      target_user_ids: [...userIds],
+    });
+    const nameMap = new Map<string, string>();
+    profiles?.forEach((p) => nameMap.set(p.user_id, p.display_name || 'User'));
+
+    const enriched: EscrowDispute[] = rows.map((r) => {
+      const a = assignmentMap.get(r.assignment_id);
+      return {
+        ...r,
+        task_title: taskMap.get(r.task_id) ?? '—',
+        client_id: a?.client_id,
+        tasker_id: a?.tasker_id,
+        client_name: a ? nameMap.get(a.client_id) ?? 'User' : '—',
+        tasker_name: a ? nameMap.get(a.tasker_id) ?? 'User' : '—',
+        opened_by_name: nameMap.get(r.opened_by) ?? 'User',
+        escrow_status: r.escrow_id ? escrowMap.get(r.escrow_id) ?? null : null,
+      };
+    });
+    setEscrowDisputes(enriched);
+  };
+
+  const resolveEscrowDispute = async (
+    dispute: EscrowDispute,
+    favor: 'client' | 'tasker' | 'close',
+  ) => {
+    if (!dispute.task_id) return;
+    setEscrowActionId(dispute.id);
+    try {
+      const note = escrowNotes[dispute.id]?.trim() || '';
+
+      if (favor === 'client' && dispute.escrow_id) {
+        const { error } = await adminRefundEscrow(dispute.escrow_id, dispute.task_id);
+        if (error) throw error;
+      } else if (favor === 'tasker' && dispute.escrow_id) {
+        const { error } = await adminReleaseEscrow(dispute.escrow_id, dispute.task_id);
+        if (error) throw error;
+      }
+
+      const { error: closeErr } = await closeDisputeWithoutPayout(
+        dispute.id,
+        note ||
+          (favor === 'client'
+            ? 'Resolved in favor of client'
+            : favor === 'tasker'
+              ? 'Resolved in favor of tasker'
+              : 'Closed without payout'),
+      );
+      if (closeErr) throw closeErr;
+
+      toast.success(
+        favor === 'close'
+          ? 'Dispute closed without payout'
+          : `Dispute resolved in favor of ${favor}`,
+      );
+      fetchEscrowDisputes();
+    } catch (err) {
+      toast.error(friendlyErrorMessage(err, 'Failed to resolve dispute'));
+    } finally {
+      setEscrowActionId(null);
+    }
+  };
+
   const resolveDispute = async (dispute: Dispute, favor: 'client' | 'tasker') => {
     if (!dispute.task_id) return;
     setActionId(dispute.id);
