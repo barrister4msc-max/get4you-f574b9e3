@@ -193,6 +193,18 @@ const AdminDisputes = () => {
     favor: 'client' | 'tasker' | 'close',
   ) => {
     if (!dispute.task_id) return;
+
+    const confirmMsg =
+      favor === 'client'
+        ? t('admin.disputes.confirmRefund') ||
+          'Refund escrow to the client? This cannot be undone.'
+        : favor === 'tasker'
+          ? t('admin.disputes.confirmRelease') ||
+            'Release escrow to the tasker? This cannot be undone.'
+          : t('admin.disputes.confirmClose') ||
+            'Close this dispute without payout? Escrow will remain held.';
+    if (!window.confirm(confirmMsg)) return;
+
     setEscrowActionId(dispute.id);
     try {
       const note = escrowNotes[dispute.id]?.trim() || '';
