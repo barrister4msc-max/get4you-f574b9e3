@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log("[CREATE-PAYMENT] >>> invoked", req.method, new Date().toISOString());
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
