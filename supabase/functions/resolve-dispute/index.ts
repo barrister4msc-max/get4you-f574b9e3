@@ -118,6 +118,15 @@ Deno.serve(async (req: Request) => {
 
   // 5. Dispute must be open
   if (dispute.status !== "open") {
+    // Idempotency: if already resolved, return success without duplicating
+    if (dispute.status === "resolved") {
+      return jsonResponse({
+        success: true,
+        idempotent: true,
+        dispute_id: dispute.id,
+        status: dispute.status,
+      });
+    }
     return jsonResponse(
       { error: "Dispute is not open", status: dispute.status },
       409,
@@ -223,8 +232,8 @@ Deno.serve(async (req: Request) => {
 
     escrowEventType = "escrow.refunded";
   } else {
-    // resolution === "close": keep funds locked, return escrow to "held"
-    // so existing release flow can be triggered later by the parties.
+    // resolution === "close": return escrow to "held" so the normal release
+    // flow can later be triggered by the parties. No payout, no refund.
     const { error: updateErr } = await admin
       .from("escrow_transactions")
       .update({
@@ -238,7 +247,7 @@ Deno.serve(async (req: Request) => {
       console.error("[resolve-dispute] close update error", updateErr);
       return jsonResponse({ error: "Failed to close dispute" }, 500);
     }
-    // No escrow.* event for close (state returned to held, no money moved).
+    escrowEventType = "escrow.held";
   }
 
   // 10. Update dispute → resolved
