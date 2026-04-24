@@ -13,7 +13,6 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { ProfileMap } from '@/components/ProfileMap';
 import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 
