@@ -91,13 +91,15 @@ export async function logAppEvent(input: LogAppEventInput): Promise<void> {
       actorId = null;
     }
 
-    await supabase.from("app_events").insert({
-      actor_id: actorId,
-      event_type: input.event_type,
-      entity_type: input.entity_type ?? null,
-      entity_id: input.entity_id ?? null,
-      metadata: safeMetadata,
-    });
+    await supabase.from("app_events").insert([
+      {
+        actor_id: actorId ?? undefined,
+        event_type: input.event_type,
+        entity_type: input.entity_type ?? undefined,
+        entity_id: input.entity_id ?? undefined,
+        metadata: safeMetadata,
+      },
+    ]);
   } catch {
     // Intentionally swallow all errors — logging must never break user flow.
   }
