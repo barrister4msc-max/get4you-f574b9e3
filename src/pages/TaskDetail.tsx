@@ -366,6 +366,42 @@ const TaskDetailPage = () => {
     }
   };
 
+  const handleCheckPayment = async () => {
+    if (!id) return;
+    setCheckingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reconcile-payments', {
+        body: { task_id: id },
+      });
+      if (error) throw error;
+
+      const state = (data as any)?.state;
+      if (state?.escrow) setEscrow(state.escrow);
+      if (state?.order) setPaymentOrder(state.order);
+      if (state?.task) {
+        setTask((prev: any) => prev ? { ...prev, status: state.task.status, assigned_to: state.task.assigned_to } : prev);
+      }
+
+      const created = Array.isArray((data as any)?.results)
+        ? (data as any).results.some((r: any) => r.escrow_created)
+        : false;
+
+      if (created) {
+        toast.success(t('payment.checkSyncedSuccess') || 'Эскроу синхронизирован');
+      } else if (state?.escrow) {
+        toast.success(t('payment.checkAlreadyOk') || 'Оплата и эскроу подтверждены');
+      } else if (state?.order?.status === 'paid') {
+        toast.message(t('payment.checkPaidNoEscrow') || 'Платёж получен, эскроу формируется…');
+      } else {
+        toast.message(t('payment.checkNoPayment') || 'Подтверждённой оплаты пока нет');
+      }
+    } catch (e: any) {
+      toast.error(t('payment.checkError') || 'Не удалось проверить статус');
+    } finally {
+      setCheckingPayment(false);
+    }
+  };
+
   const handleSubmitReview = async () => {
     if (!id || !user || reviewRating === 0) return;
     // Determine who is being reviewed
