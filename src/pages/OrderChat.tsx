@@ -278,6 +278,16 @@ const OrderChat = () => {
             </p>
             <p className="text-xs text-white/70 truncate">{taskTitle || t('orderChat.title')}</p>
           </div>
+          {order?.assignment_id && (
+            <button
+              onClick={() => setDisputeOpen(true)}
+              className="text-white/80 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+              title={t('dispute.openDispute')}
+              aria-label={t('dispute.openDispute')}
+            >
+              <AlertTriangle className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
