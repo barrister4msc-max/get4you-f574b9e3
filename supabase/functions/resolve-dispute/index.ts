@@ -2,8 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -14,8 +13,7 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Resolution = "client" | "tasker" | "close";
 
@@ -74,10 +72,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "dispute_id is required (uuid)" }, 400);
   }
   if (!resolution || !["client", "tasker", "close"].includes(resolution)) {
-    return jsonResponse(
-      { error: "resolution must be 'client', 'tasker', or 'close'" },
-      400,
-    );
+    return jsonResponse({ error: "resolution must be 'client', 'tasker', or 'close'" }, 400);
   }
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -85,18 +80,13 @@ Deno.serve(async (req: Request) => {
   });
 
   // 3. Authorize: admin or super_admin only
-  const { data: roles, error: roleErr } = await admin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", callerId);
+  const { data: roles, error: roleErr } = await admin.from("user_roles").select("role").eq("user_id", callerId);
 
   if (roleErr) {
     console.error("[resolve-dispute] role lookup error", roleErr);
     return jsonResponse({ error: "Failed to verify permissions" }, 500);
   }
-  const isAdmin =
-    !!roles &&
-    roles.some((r) => r.role === "admin" || r.role === "super_admin");
+  const isAdmin = !!roles && roles.some((r) => r.role === "admin" || r.role === "super_admin");
   if (!isAdmin) {
     return jsonResponse({ error: "Forbidden" }, 403);
   }
@@ -118,27 +108,13 @@ Deno.serve(async (req: Request) => {
 
   // 5. Dispute must be open
   if (dispute.status !== "open") {
-    // Idempotency: if already resolved, return success without duplicating
-    if (dispute.status === "resolved") {
-      return jsonResponse({
-        success: true,
-        idempotent: true,
-        dispute_id: dispute.id,
-        status: dispute.status,
-      });
-    }
-    return jsonResponse(
-      { error: "Dispute is not open", status: dispute.status },
-      409,
-    );
+    return jsonResponse({ error: "Dispute is not open", status: dispute.status }, 409);
   }
 
   // 6. Load escrow by assignment_id
   const { data: escrow, error: escrowErr } = await admin
     .from("escrow_transactions")
-    .select(
-      "id, status, assignment_id, task_id, tasker_id, client_id, amount, net_amount, commission_amount, currency",
-    )
+    .select("id, status, assignment_id, task_id, tasker_id, client_id, amount, net_amount, commission_amount, currency")
     .eq("assignment_id", dispute.assignment_id)
     .maybeSingle();
 
@@ -232,8 +208,8 @@ Deno.serve(async (req: Request) => {
 
     escrowEventType = "escrow.refunded";
   } else {
-    // resolution === "close": return escrow to "held" so the normal release
-    // flow can later be triggered by the parties. No payout, no refund.
+    // resolution === "close": keep funds locked, return escrow to "held"
+    // so existing release flow can be triggered later by the parties.
     const { error: updateErr } = await admin
       .from("escrow_transactions")
       .update({
@@ -247,11 +223,11 @@ Deno.serve(async (req: Request) => {
       console.error("[resolve-dispute] close update error", updateErr);
       return jsonResponse({ error: "Failed to close dispute" }, 500);
     }
-    escrowEventType = "escrow.held";
+    // No escrow.* event for close (state returned to held, no money moved).
   }
 
   // 10. Update dispute → resolved
-  const { error: disputeUpdateErr } = await admin
+  const { data: resolvedDispute, error: disputeUpdateErr } = await admin
     .from("disputes")
     .update({
       status: "resolved",
@@ -267,9 +243,11 @@ Deno.serve(async (req: Request) => {
       updated_at: nowIso,
     })
     .eq("id", dispute.id)
-    .eq("status", "open");
+    .eq("status", "open")
+    .select("id")
+    .maybeSingle();
 
-  if (disputeUpdateErr) {
+  if (disputeUpdateErr || !resolvedDispute) {
     console.error("[resolve-dispute] dispute update error", disputeUpdateErr);
     return jsonResponse({ error: "Failed to update dispute" }, 500);
   }
