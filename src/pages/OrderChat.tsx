@@ -417,6 +417,78 @@ const OrderChat = () => {
           </button>
         </div>
       </div>
+
+      {/* Open dispute modal */}
+      {disputeOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 py-6"
+          onClick={() => !disputeSubmitting && setDisputeOpen(false)}
+        >
+          <div
+            className="w-full max-w-md bg-card text-card-foreground rounded-2xl shadow-xl border border-border p-5 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold text-foreground">
+                  {t('dispute.openDispute')}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t('dispute.escrowLockNotice') || 'Funds will be locked until an admin resolves the dispute.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t('dispute.reasonPlaceholder')}
+              </label>
+              <textarea
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                placeholder={t('dispute.reasonPlaceholder')}
+                rows={3}
+                maxLength={500}
+                className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t('dispute.detailsOptional') || 'Details (optional)'}
+              </label>
+              <textarea
+                value={disputeDetails}
+                onChange={(e) => setDisputeDetails(e.target.value)}
+                rows={3}
+                maxLength={2000}
+                className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                onClick={() => setDisputeOpen(false)}
+                disabled={disputeSubmitting}
+                className="px-4 py-2 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+              >
+                {t('common.cancel') || 'Cancel'}
+              </button>
+              <button
+                onClick={submitDispute}
+                disabled={disputeSubmitting || disputeReason.trim().length < 3}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {disputeSubmitting && <Loader2 className="w-3 h-3 animate-spin" />}
+                {t('dispute.submit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
