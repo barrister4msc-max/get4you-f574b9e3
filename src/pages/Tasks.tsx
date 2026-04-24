@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
+import { TasksMap } from "@/components/TasksMap";
 
 interface TaskRow {
   id: string;

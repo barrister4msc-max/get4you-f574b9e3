@@ -311,10 +311,6 @@ const ProfilePage = () => {
           </button>
         </div>
 
-        <div className="mt-8">
-          <ProfileMap />
-        </div>
-
         <Dialog open={showEmploymentDialog} onOpenChange={setShowEmploymentDialog}>
           <DialogContent>
             <DialogHeader>
