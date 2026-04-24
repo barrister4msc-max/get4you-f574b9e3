@@ -599,6 +599,8 @@ const handleAcceptClick = (proposalId: string) => {
 
 const handlePaymentConfirm = async () => {
   if (!pendingAcceptProposalId || !id) return;
+  // Hard guard against double-submit (covers double-click before React re-renders).
+  if (paymentProcessing) return;
 
   setPaymentProcessing(true);
   setPaymentError(null);
@@ -609,6 +611,12 @@ const handlePaymentConfirm = async () => {
 
     const baseUrl = window.location.origin;
 
+    // One idempotency key per payment attempt.
+    const idempotencyKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${pendingAcceptProposalId}:${Date.now()}`;
+
     const { data, error } = await supabase.functions.invoke("create-payment", {
       body: {
         task_id: id,
@@ -617,6 +625,7 @@ const handlePaymentConfirm = async () => {
         success_url: `${baseUrl}/payment-success`,
         cancel_url: `${baseUrl}/payment-cancel`,
         lang: locale === "ru" ? "RU" : locale === "he" ? "HE" : "EN",
+        idempotency_key: idempotencyKey,
       },
     });
 
