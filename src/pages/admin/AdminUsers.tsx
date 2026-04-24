@@ -17,7 +17,7 @@ type SortDir = 'asc' | 'desc';
 
 export default function AdminUsers() {
   const { t } = useLanguage();
-  const { isSuperAdmin, user: currentUser } = useAuth();
+  const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [bannedIds, setBannedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
