@@ -296,6 +296,28 @@ const CreateTaskPage = () => {
 
     setSubmitting(true);
     try {
+      // Make sure coordinates match the address typed in by the user.
+      // If the user typed an address but never triggered geocoding, do it now.
+      let finalLat: number | null = latitude ?? null;
+      let finalLng: number | null = longitude ?? null;
+      if (form.taskType === "remote") {
+        finalLat = null;
+        finalLng = null;
+      } else {
+        const typed = form.location.trim();
+        if (typed && (geocodedFor !== typed || finalLat == null || finalLng == null)) {
+          try {
+            const r = await searchAddress(typed);
+            if (r) {
+              finalLat = r.lat;
+              finalLng = r.lng;
+            }
+          } catch {
+            // Non-fatal — we'll still publish with whatever coords we have.
+          }
+        }
+      }
+
       // Upload photos
       const photoUrls: string[] = [];
       for (const file of photos) {
@@ -341,8 +363,8 @@ const CreateTaskPage = () => {
       }
 
       const { error } = await supabase.from("tasks").insert({
-        latitude: latitude ?? null,
-        longitude: longitude ?? null,
+        latitude: finalLat,
+        longitude: finalLng,
         user_id: user.id,
         title: form.title.trim(),
         description: form.description.trim() || null,
