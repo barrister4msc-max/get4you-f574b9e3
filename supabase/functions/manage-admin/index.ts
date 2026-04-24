@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, action = "add", role = "admin" } = body;
+    const { email, action = "add", role = "admin", reason } = body;
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
       return new Response(JSON.stringify({ error: "Valid email required" }), {
@@ -58,19 +58,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate role — must match roles that exist in the database/UI
-    const allowedRoles = ["client", "executor", "admin"];
-    if (!allowedRoles.includes(role)) {
-      return new Response(JSON.stringify({ error: "Invalid role. Cannot assign super_admin via this endpoint." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const isBanAction = action === "ban" || action === "unban";
+
+    // Validate role only for role actions
+    if (!isBanAction) {
+      const allowedRoles = ["client", "executor", "admin"];
+      if (!allowedRoles.includes(role)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid role. Cannot assign super_admin via this endpoint." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // Prevent self-modification
     const callerEmail = user.email?.toLowerCase();
     if (callerEmail === email.trim().toLowerCase()) {
-      return new Response(JSON.stringify({ error: "Cannot modify your own roles" }), {
+      return new Response(JSON.stringify({ error: "Cannot modify your own account" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -96,7 +100,7 @@ Deno.serve(async (req) => {
       _role: "super_admin",
     });
     if (targetIsSuperAdmin) {
-      return new Response(JSON.stringify({ error: "Cannot modify super admin roles" }), {
+      return new Response(JSON.stringify({ error: "Cannot modify a super admin" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -104,7 +108,39 @@ Deno.serve(async (req) => {
 
     let result: any;
 
-    if (action === "remove") {
+    if (action === "ban") {
+      const { data: existingBan } = await adminClient
+        .from("banned_users")
+        .select("id")
+        .eq("user_id", profile.user_id)
+        .maybeSingle();
+      if (!existingBan) {
+        const { error: banErr } = await adminClient.from("banned_users").insert({
+          user_id: profile.user_id,
+          banned_by: user.id,
+          reason: reason || "Blocked by super admin",
+        });
+        if (banErr) {
+          return new Response(JSON.stringify({ error: banErr.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+      result = { success: true, action: "banned", display_name: profile.display_name, user_id: profile.user_id };
+    } else if (action === "unban") {
+      const { error: unbanErr } = await adminClient
+        .from("banned_users")
+        .delete()
+        .eq("user_id", profile.user_id);
+      if (unbanErr) {
+        return new Response(JSON.stringify({ error: unbanErr.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      result = { success: true, action: "unbanned", display_name: profile.display_name, user_id: profile.user_id };
+    } else if (action === "remove") {
       const { error: deleteError } = await adminClient
         .from("user_roles")
         .delete()
@@ -148,24 +184,39 @@ Deno.serve(async (req) => {
     }
 
     // Audit log
+    const auditAction = isBanAction
+      ? action === "ban"
+        ? "user_banned"
+        : "user_unbanned"
+      : `role_${action === "remove" ? "removed" : "added"}`;
+    const eventType = isBanAction
+      ? action === "ban"
+        ? "admin.user_banned"
+        : "admin.user_unbanned"
+      : action === "remove"
+        ? "admin.role_removed"
+        : "admin.role_added";
+    const details: Record<string, unknown> = {
+      target_email: email.trim().toLowerCase(),
+      target_name: profile.display_name,
+    };
+    if (!isBanAction) details.role = role;
+    if (isBanAction && reason) details.reason = reason;
+
     await adminClient.from("admin_audit_log").insert({
       actor_id: user.id,
-      action: `role_${action === "remove" ? "removed" : "added"}`,
+      action: auditAction,
       target_type: "user",
       target_id: profile.user_id,
-      details: { role, target_email: email.trim().toLowerCase(), target_name: profile.display_name },
+      details,
     });
 
     await adminClient.from("app_events").insert({
       actor_id: user.id,
-      event_type: action === "remove" ? "admin.role_removed" : "admin.role_added",
+      event_type: eventType,
       entity_type: "user",
       entity_id: profile.user_id,
-      metadata: {
-        role,
-        target_email: email.trim().toLowerCase(),
-        target_name: profile.display_name,
-      },
+      metadata: details,
     });
 
     return new Response(JSON.stringify(result), {
