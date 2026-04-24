@@ -93,6 +93,14 @@ const TaskDetailPage = () => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [pendingAcceptProposalId, setPendingAcceptProposalId] = useState<string | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<{
+    id: string;
+    status: string;
+    payment_url: string | null;
+    provider_status: string | null;
+    created_at?: string;
+  } | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // Translation state
   const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
@@ -303,6 +311,40 @@ const TaskDetailPage = () => {
       .maybeSingle()
       .then(({ data }) => setExistingReview(data || null));
   }, [id, user]);
+
+  useEffect(() => {
+    if (!id || !user || !isOwner) return;
+
+    const fetchLatestPaymentOrder = async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('id, status, payment_url, provider_status, created_at, proposal_id')
+        .eq('task_id', id)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setPaymentOrder(data || null);
+    };
+
+    fetchLatestPaymentOrder();
+
+    const ordersChannel = supabase
+      .channel(`task-orders-${id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `task_id=eq.${id}` },
+        () => {
+          fetchLatestPaymentOrder();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+    };
+  }, [id, user, isOwner]);
 
   const handleCompleteTask = async () => {
     if (!id || !escrow) return;
@@ -551,6 +593,7 @@ const handleAcceptClick = (proposalId: string) => {
   }
 
   setPendingAcceptProposalId(proposalId);
+  setPaymentError(null);
   setShowPaymentDialog(true);
 };
 
@@ -558,6 +601,7 @@ const handlePaymentConfirm = async () => {
   if (!pendingAcceptProposalId || !id) return;
 
   setPaymentProcessing(true);
+  setPaymentError(null);
 
   try {
     const proposal = proposals.find((p) => p.id === pendingAcceptProposalId);
@@ -578,6 +622,15 @@ const handlePaymentConfirm = async () => {
 
     if (error) throw error;
 
+    if (data?.order_id) {
+      setPaymentOrder({
+        id: data.order_id,
+        status: data.reused ? 'pending' : 'created',
+        payment_url: data.payment_url || null,
+        provider_status: data.reused ? 'reused_pending' : 'created_in_allpay',
+      });
+    }
+
     if (data?.payment_url) {
       setPendingAcceptProposalId(null);
       setShowPaymentDialog(false);
@@ -588,7 +641,14 @@ const handlePaymentConfirm = async () => {
     throw new Error(data?.error || "No payment URL returned");
   } catch (err: any) {
     console.error("Payment error:", err);
-    toast.error(err.message || t("payment.error"));
+    const message = err?.message || t("payment.error");
+    setPaymentError(message);
+    setPaymentOrder((prev) =>
+      prev
+        ? { ...prev, status: 'failed', provider_status: prev.provider_status || 'create_failed' }
+        : { id: '', status: 'failed', payment_url: null, provider_status: 'create_failed' }
+    );
+    toast.error(message);
   } finally {
     setPaymentProcessing(false);
   }
