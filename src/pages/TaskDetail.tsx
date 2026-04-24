@@ -686,6 +686,38 @@ const handlePaymentConfirm = async () => {
     rejected: 'bg-red-50 text-red-600',
   };
 
+  const paymentStatusKey = paymentOrder?.status === 'created'
+    ? 'payment.status.created'
+    : paymentOrder?.status === 'pending'
+      ? 'payment.status.waiting'
+      : paymentOrder?.status === 'paid'
+        ? 'payment.status.paid'
+        : paymentOrder?.status === 'cancelled'
+          ? 'payment.status.cancelled'
+          : paymentOrder?.status === 'failed'
+            ? 'payment.status.failed'
+            : null;
+
+  const paymentStatusTone = paymentOrder?.status === 'paid'
+    ? 'text-primary bg-primary/10 border-primary/20'
+    : paymentOrder?.status === 'failed' || paymentOrder?.status === 'cancelled'
+      ? 'text-destructive bg-destructive/10 border-destructive/20'
+      : 'text-foreground bg-secondary border-border';
+
+  const paymentStatusDescription = paymentOrder?.status === 'created'
+    ? t('payment.statusDescription.created')
+    : paymentOrder?.status === 'pending'
+      ? t('payment.statusDescription.waiting')
+      : paymentOrder?.status === 'paid'
+        ? t('payment.statusDescription.paid')
+        : paymentOrder?.status === 'cancelled'
+          ? t('payment.statusDescription.cancelled')
+          : paymentOrder?.status === 'failed'
+            ? t('payment.statusDescription.failed')
+            : null;
+
+  const paymentErrorText = paymentError || (paymentOrder?.status === 'failed' ? t('payment.statusError.failed') : null);
+
   return (
     <div className="py-8">
       <div className="container max-w-4xl">
@@ -1005,6 +1037,40 @@ const handlePaymentConfirm = async () => {
                   <div className="text-2xl font-bold text-primary">{formatPrice(budget, currency, task.currency)}</div>
                   <p className="text-xs text-muted-foreground mt-1">{t('task.budget')}</p>
                 </>
+              )}
+
+              {isOwner && (paymentOrder || paymentErrorText) && !escrow && (
+                <div className="mt-4 rounded-xl border border-border bg-secondary/50 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">{t('payment.statusCard.title')}</p>
+                      {paymentStatusDescription && (
+                        <p className="text-xs text-muted-foreground mt-1">{paymentStatusDescription}</p>
+                      )}
+                    </div>
+                    {paymentStatusKey && (
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${paymentStatusTone}`}>
+                        {t(paymentStatusKey)}
+                      </span>
+                    )}
+                  </div>
+
+                  {paymentErrorText && (
+                    <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                      {paymentErrorText}
+                    </div>
+                  )}
+
+                  {paymentOrder?.payment_url && paymentOrder.status !== 'paid' && (
+                    <a
+                      href={paymentOrder.payment_url}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {t('payment.openPaymentPage')}
+                    </a>
+                  )}
+                </div>
               )}
 
               {/* Offer button / form */}
