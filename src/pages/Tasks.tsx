@@ -595,6 +595,22 @@ const TasksPage = () => {
 
         <NearbyOrders defaultRadiusKm={10} />
 
+        {tab === "all" && (
+          <div className="mb-6">
+            <TasksMap
+              tasks={sortedFiltered.map((t) => ({
+                id: t.id,
+                title: t.title,
+                latitude: t.latitude,
+                longitude: t.longitude,
+              }))}
+              userLat={userCoords?.lat ?? null}
+              userLng={userCoords?.lng ?? null}
+              title={t("tasks.title")}
+            />
+          </div>
+        )}
+
         {isTasker && (
           <div className="flex gap-2 mb-6">
             <button
