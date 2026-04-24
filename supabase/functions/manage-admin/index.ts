@@ -145,6 +145,17 @@ Deno.serve(async (req) => {
 
     // Audit log
     await adminClient.from("admin_audit_log").insert({
+      await adminClient.from("app_events").insert({
+  actor_id: user.id,
+  event_type: action === "remove" ? "admin.role_removed" : "admin.role_added",
+  entity_type: "user",
+  entity_id: profile.user_id,
+  metadata: {
+    role,
+    target_email: email.trim().toLowerCase(),
+    target_name: profile.display_name,
+  },
+});
       actor_id: user.id,
       action: `role_${action === "remove" ? "removed" : "added"}`,
       target_type: "user",
