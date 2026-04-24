@@ -6,6 +6,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { supabase } from '@/integrations/supabase/client';
 import { getCachedTranslation, setCachedTranslations } from '@/lib/translationCache';
 import { trackEvent, extractProposalErrorCode } from '@/lib/analytics';
+import { releaseEscrow, addSelfRole } from '@/lib/api/protectedWrites';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -350,14 +351,8 @@ const TaskDetailPage = () => {
     if (!id || !escrow) return;
     setCompleting(true);
     try {
-      await supabase
-        .from('escrow_transactions')
-        .update({ status: 'released', released_at: new Date().toISOString() })
-        .eq('id', escrow.id);
-      await supabase
-        .from('tasks')
-        .update({ status: 'completed' })
-        .eq('id', id);
+      const { error } = await releaseEscrow(escrow.id, id);
+      if (error) throw error;
       setEscrow((prev: any) => ({ ...prev, status: 'released' }));
       setTask((prev: any) => ({ ...prev, status: 'completed' }));
       toast.success(t('escrow.released'));
@@ -436,9 +431,7 @@ const TaskDetailPage = () => {
       // the server would otherwise reject with NOT_EXECUTOR.
       const isExecutor = roles?.includes('executor') || roles?.includes('admin') || roles?.includes('super_admin');
       if (!isExecutor) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: user.id, role: 'executor' as never });
+        const { error: roleError } = await addSelfRole(user.id, 'executor');
         // Ignore unique-violation (role already exists in a race); rethrow others.
         if (roleError && !/duplicate key|unique/i.test(roleError.message)) {
           throw roleError;

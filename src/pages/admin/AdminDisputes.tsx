@@ -3,6 +3,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AlertTriangle, CheckCircle2, XCircle, Loader2, MessageSquare, User } from 'lucide-react';
+import { adminRefundEscrow, adminReleaseEscrow } from '@/lib/api/protectedWrites';
 
 interface Dispute {
   id: string;
@@ -97,21 +98,13 @@ const AdminDisputes = () => {
       const note = adminNotes[dispute.id]?.trim() || '';
 
       if (favor === 'client' && dispute.escrow_id) {
-        // Refund to client
-        await supabase.from('escrow_transactions')
-          .update({ status: 'refunded', refunded_at: new Date().toISOString() })
-          .eq('id', dispute.escrow_id);
-        await supabase.from('tasks')
-          .update({ status: 'cancelled' })
-          .eq('id', dispute.task_id);
+        // Refund to client (TODO: route through admin-resolve-dispute Edge Function)
+        const { error } = await adminRefundEscrow(dispute.escrow_id, dispute.task_id);
+        if (error) throw error;
       } else if (favor === 'tasker' && dispute.escrow_id) {
-        // Release to tasker
-        await supabase.from('escrow_transactions')
-          .update({ status: 'released', released_at: new Date().toISOString() })
-          .eq('id', dispute.escrow_id);
-        await supabase.from('tasks')
-          .update({ status: 'completed' })
-          .eq('id', dispute.task_id);
+        // Release to tasker (TODO: route through admin-resolve-dispute Edge Function)
+        const { error } = await adminReleaseEscrow(dispute.escrow_id, dispute.task_id);
+        if (error) throw error;
       }
 
       // Update complaint status

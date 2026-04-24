@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ProfileMap } from '@/components/ProfileMap';
+import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedWrites';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -119,11 +120,11 @@ const ProfilePage = () => {
       const toAdd = selectedRoles.filter(r => !roles.includes(r));
       const toRemove = roles.filter(r => !selectedRoles.includes(r) && (r === 'client' || r === 'executor'));
       for (const role of toRemove) {
-        const { error } = await supabase.from('user_roles').delete().eq('user_id', user.id).eq('role', role as any);
+        const { error } = await removeSelfRole(user.id, role as SelfRole);
         if (error) throw error;
       }
       for (const role of toAdd) {
-        const { error } = await supabase.from('user_roles').insert({ user_id: user.id, role: role as any });
+        const { error } = await addSelfRole(user.id, role as SelfRole);
         if (error) throw error;
       }
       await refreshProfile();
