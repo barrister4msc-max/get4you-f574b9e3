@@ -968,7 +968,7 @@ const handlePaymentConfirm = async () => {
                         )}
 
                         {/* Edit button for own pending proposals */}
-                        {proposal.user_id === user?.id && proposal.status === 'pending' && task.status === 'open' && (
+                        {proposal.user_id === user?.id && proposal.status === 'pending' && task.status === 'open' && !paymentLocked && (
                           <button
                             onClick={() => handleEditProposal(proposal)}
                             className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors"
@@ -981,7 +981,7 @@ const handlePaymentConfirm = async () => {
                     )}
 
                     {/* Accept/Reject buttons for task owner */}
-                    {isOwner && proposal.status === 'pending' && task.status === 'open' && (
+                    {isOwner && proposal.status === 'pending' && task.status === 'open' && !paymentLocked && (
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => handleAcceptClick(proposal.id)}
