@@ -226,6 +226,32 @@ const CreateTaskPage = () => {
     address: null,
   });
   const [geoAutoTried, setGeoAutoTried] = useState(false);
+  const [addressGeocoding, setAddressGeocoding] = useState(false);
+  // Tracks the address string for which the current lat/lng were geocoded,
+  // so we know if the user changed the address since the last geocode.
+  const [geocodedFor, setGeocodedFor] = useState<string | null>(null);
+
+  /** Forward-geocode the address the user typed in, so the saved task has
+   *  coordinates that actually match its address. */
+  const geocodeTypedAddress = useCallback(
+    async (q: string) => {
+      const query = q.trim();
+      if (!query) return;
+      if (geocodedFor === query) return;
+      setAddressGeocoding(true);
+      try {
+        const r = await searchAddress(query);
+        if (r) {
+          setGeocodedFor(query);
+          // Keep the user's typed text but normalize coords via setManualLocation
+          // (searchAddress already calls setManualLocation internally with display_name)
+        }
+      } finally {
+        setAddressGeocoding(false);
+      }
+    },
+    [geocodedFor, searchAddress]
+  );
 
   // On entering step 2 (address step) — auto-detect location once and ask the user
   useEffect(() => {
