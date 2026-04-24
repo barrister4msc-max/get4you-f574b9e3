@@ -226,7 +226,7 @@ export default function AdminUsers() {
                           variant={isBanned ? 'outline' : 'destructive'}
                           size="sm"
                           className="text-xs h-7"
-                          onClick={() => toggleBan(u.user_id, isBanned)}
+                          onClick={() => toggleBan(u.user_id, u.email, isBanned)}
                         >
                           <Ban className="w-3.5 h-3.5 mr-1" />
                           {isBanned ? 'Unban' : 'Ban'}
