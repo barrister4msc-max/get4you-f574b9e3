@@ -221,10 +221,6 @@ const CreateTaskPage = () => {
 
   const [showMotivation, setShowMotivation] = useState(false);
 
-  const [geoPrompt, setGeoPrompt] = useState<{ open: boolean; address: string | null }>({
-    open: false,
-    address: null,
-  });
   const [geoAutoTried, setGeoAutoTried] = useState(false);
   // Choice dialog: "use my current location" vs. "enter manually"
   const [geoChoice, setGeoChoice] = useState<{ open: boolean; resolving: boolean }>({
