@@ -22,7 +22,9 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
             if (typeof val === "string" && val.trim() !== "") {
               chunks.push(val);
             }
-
+          }
+        }
+      }
     } else if (typeof value === "string" && value.trim() !== "") {
       chunks.push(value);
     }
