@@ -428,17 +428,26 @@ const TaskDetailPage = () => {
 
   const handleSubmitDispute = async () => {
     if (!id || !user || !disputeReason.trim()) return;
+    if (!escrow?.assignment_id) {
+      toast.error(t('dispute.error'));
+      return;
+    }
     setDisputeSubmitting(true);
     try {
-      const { error } = await supabase.from('complaints').insert({
-        task_id: id,
-        user_id: user.id,
-        reason: disputeReason.trim(),
-        status: 'open',
+      const { data, error } = await supabase.functions.invoke('open-dispute', {
+        body: {
+          assignment_id: escrow.assignment_id,
+          reason: disputeReason.trim(),
+          task_id: id,
+        },
       });
       if (error) throw error;
-      await supabase.from('tasks').update({ status: 'dispute' }).eq('id', id);
-      setTask((prev: any) => ({ ...prev, status: 'dispute' }));
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setEscrow((prev: any) => (prev ? { ...prev, status: 'disputed' } : prev));
+      const returnedTaskStatus = (data as any)?.task_status;
+      if (returnedTaskStatus === 'dispute') {
+        setTask((prev: any) => (prev ? { ...prev, status: 'dispute' } : prev));
+      }
       setShowDisputeForm(false);
       setDisputeReason('');
       toast.success(t('dispute.submitted'));
