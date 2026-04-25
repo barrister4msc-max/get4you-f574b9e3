@@ -144,6 +144,29 @@ Deno.serve(async (req: Request) => {
   }
 
   // 5. Update escrow → released (guarded by status='held' for race-safety)
+  // 4b. Require the linked task to be completed before releasing funds.
+  if (!escrow.task_id) {
+    return jsonResponse({ error: "Escrow has no linked task" }, 409);
+  }
+  const { data: task, error: taskErr } = await admin
+    .from("tasks")
+    .select("id, status")
+    .eq("id", escrow.task_id)
+    .maybeSingle();
+  if (taskErr) {
+    console.error("[release-escrow] task load error", taskErr);
+    return jsonResponse({ error: "Failed to load task" }, 500);
+  }
+  if (!task) {
+    return jsonResponse({ error: "Task not found" }, 404);
+  }
+  if (task.status !== "completed") {
+    return jsonResponse(
+      { error: "Task is not completed", status: task.status },
+      409,
+    );
+  }
+
   const releasedAt = new Date().toISOString();
   const { data: updated, error: updateErr } = await admin
     .from("escrow_transactions")
