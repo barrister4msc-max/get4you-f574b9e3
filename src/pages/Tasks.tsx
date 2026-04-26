@@ -670,6 +670,43 @@ const TasksPage = () => {
                 </button>
               )}
             </div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="relative flex-1">
+                <MapPin className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none ltr:left-2 rtl:right-2" />
+                <input
+                  type="text"
+                  value={addressQuery}
+                  onChange={(e) => {
+                    setAddressQuery(e.target.value);
+                    if (addressError) setAddressError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      searchAddress();
+                    }
+                  }}
+                  placeholder={t("tasks.filter.addressPlaceholder")}
+                  className="w-full px-3 py-1.5 ltr:pl-7 rtl:pr-7 rounded-lg border border-input bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={searchAddress}
+                disabled={addressLoading || !addressQuery.trim()}
+                className="shrink-0 px-3 py-1.5 rounded-lg border border-input bg-card text-xs hover:bg-secondary transition-colors disabled:opacity-50"
+                title={t("tasks.filter.addressSearch")}
+              >
+                {addressLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                ) : (
+                  <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </button>
+            </div>
+            {addressError && (
+              <p className="text-[11px] text-destructive mb-2">{addressError}</p>
+            )}
             <TasksMap
               tasks={sortedFiltered.map((t) => ({
                 id: t.id,
