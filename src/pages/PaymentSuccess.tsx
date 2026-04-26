@@ -57,16 +57,11 @@ const PaymentSuccess = () => {
                 </div>
               )}
               <div className="flex flex-col gap-2 pt-2">
-                {order?.task_id && (
-                  <Button asChild>
-                    <Link to={`/tasks/${order.task_id}`}>
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      {t('payment.backToTask') || 'Back to Task'}
-                    </Link>
-                  </Button>
-                )}
-                <Button variant="outline" asChild>
-                  <Link to="/dashboard">{t('payment.toDashboard') || 'Go to Dashboard'}</Link>
+                <Button asChild>
+                  <Link to="/tasks">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    {t('payment.backToTasks') || 'Вернуться к задачам'}
+                  </Link>
                 </Button>
               </div>
             </>
