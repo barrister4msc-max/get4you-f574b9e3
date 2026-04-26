@@ -176,6 +176,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'proposals',
     'proposal.none': 'No proposals yet',
     'proposal.completedShort': 'completed',
+    'proposal.reviewsShort': 'reviews',
+    'proposal.noReviews': 'No reviews',
 
     // Auth
     'auth.login': 'Log In',
@@ -909,6 +911,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'предложений',
     'proposal.none': 'Пока нет предложений',
     'proposal.completedShort': 'выполнено',
+    'proposal.reviewsShort': 'отзывов',
+    'proposal.noReviews': 'Без отзывов',
 
     'auth.login': 'Войти',
     'auth.signup': 'Регистрация',
@@ -1624,6 +1628,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'הצעות',
     'proposal.none': 'אין הצעות עדיין',
     'proposal.completedShort': 'הושלמו',
+    'proposal.reviewsShort': 'חוות דעת',
+    'proposal.noReviews': 'אין חוות דעת',
 
     'auth.login': 'התחברות',
     'auth.signup': 'הרשמה',
@@ -2339,6 +2345,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'عروض',
     'proposal.none': 'لا توجد عروض بعد',
     'proposal.completedShort': 'مكتمل',
+    'proposal.reviewsShort': 'تقييمات',
+    'proposal.noReviews': 'لا توجد تقييمات',
 
     'auth.login': 'تسجيل الدخول',
     'auth.signup': 'إنشاء حساب',
