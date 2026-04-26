@@ -949,12 +949,12 @@ const handlePaymentConfirm = async () => {
                             {proposal.profile?.city && (
                               <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{proposal.profile.city}</span>
                             )}
-                            {proposal.avgRating && (
-                              <span className="flex items-center gap-0.5">
-                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                {proposal.avgRating.toFixed(1)} ({proposal.reviewCount})
-                              </span>
-                            )}
+                            <span className="flex items-center gap-0.5">
+                              <Star className={`w-3 h-3 ${proposal.avgRating ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground'}`} />
+                              {proposal.avgRating
+                                ? `${proposal.avgRating.toFixed(1)} (${proposal.reviewCount} ${t('proposal.reviewsShort') || 'отзывов'})`
+                                : t('proposal.noReviews') || 'Без отзывов'}
+                            </span>
                             {(proposal.completedOrders ?? 0) > 0 && (
                               <span className="inline-flex items-center gap-0.5 text-primary font-medium">
                                 <CheckCircle2 className="w-3 h-3" />

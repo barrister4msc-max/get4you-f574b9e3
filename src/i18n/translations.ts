@@ -176,6 +176,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'proposals',
     'proposal.none': 'No proposals yet',
     'proposal.completedShort': 'completed',
+    'proposal.reviewsShort': 'reviews',
+    'proposal.noReviews': 'No reviews',
 
     // Auth
     'auth.login': 'Log In',
@@ -623,6 +625,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.statusError.failed': 'Failed to start payment. Please try again.',
     'payment.openPaymentPage': 'Open payment page',
     'payment.backToTask': 'Back to Task',
+    'payment.backToTasks': 'Back to Tasks',
     'payment.toDashboard': 'Go to Dashboard',
     'payment.checkNow': 'Check payment / escrow now',
     'payment.checkSyncedSuccess': 'Escrow synced successfully',
@@ -908,6 +911,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'предложений',
     'proposal.none': 'Пока нет предложений',
     'proposal.completedShort': 'выполнено',
+    'proposal.reviewsShort': 'отзывов',
+    'proposal.noReviews': 'Без отзывов',
 
     'auth.login': 'Войти',
     'auth.signup': 'Регистрация',
@@ -1338,6 +1343,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.statusError.failed': 'Не удалось запустить оплату. Попробуйте ещё раз.',
     'payment.openPaymentPage': 'Открыть страницу оплаты',
     'payment.backToTask': 'Вернуться к задаче',
+    'payment.backToTasks': 'Вернуться к задачам',
     'payment.toDashboard': 'В панель управления',
     'payment.checkNow': 'Проверить оплату/эскроу сейчас',
     'payment.checkSyncedSuccess': 'Эскроу успешно синхронизирован',
@@ -1622,6 +1628,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'הצעות',
     'proposal.none': 'אין הצעות עדיין',
     'proposal.completedShort': 'הושלמו',
+    'proposal.reviewsShort': 'חוות דעת',
+    'proposal.noReviews': 'אין חוות דעת',
 
     'auth.login': 'התחברות',
     'auth.signup': 'הרשמה',
@@ -2052,6 +2060,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.statusError.failed': 'לא ניתן היה להתחיל את התשלום. נסה שוב.',
     'payment.openPaymentPage': 'פתח את דף התשלום',
     'payment.backToTask': 'חזרה למשימה',
+    'payment.backToTasks': 'חזרה למשימות',
     'payment.toDashboard': 'ללוח הבקרה',
     'payment.checkNow': 'בדוק תשלום/אסקרו עכשיו',
     'payment.checkSyncedSuccess': 'האסקרו סונכרן בהצלחה',
@@ -2336,6 +2345,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'proposal.count': 'عروض',
     'proposal.none': 'لا توجد عروض بعد',
     'proposal.completedShort': 'مكتمل',
+    'proposal.reviewsShort': 'تقييمات',
+    'proposal.noReviews': 'لا توجد تقييمات',
 
     'auth.login': 'تسجيل الدخول',
     'auth.signup': 'إنشاء حساب',
@@ -2765,6 +2776,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'payment.statusError.failed': 'تعذر بدء الدفع. حاول مرة أخرى.',
     'payment.openPaymentPage': 'افتح صفحة الدفع',
     'payment.backToTask': 'العودة إلى المهمة',
+    'payment.backToTasks': 'العودة إلى المهام',
     'payment.toDashboard': 'إلى لوحة التحكم',
     'payment.checkNow': 'تحقق من الدفع/الضمان الآن',
     'payment.checkSyncedSuccess': 'تمت مزامنة الضمان بنجاح',
