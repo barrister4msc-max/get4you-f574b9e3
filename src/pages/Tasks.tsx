@@ -244,6 +244,9 @@ const TasksPage = () => {
   const [tab, setTab] = useState<"all" | "my">("all");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState<string | null>(null);
   const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
   const [nearbyDistances, setNearbyDistances] = useState<Record<string, number>>({});
 
@@ -295,6 +298,31 @@ const TasksPage = () => {
       () => setGeoLoading(false),
       { enableHighAccuracy: false, timeout: 10000 },
     );
+  };
+
+  const searchAddress = async () => {
+    const q = addressQuery.trim();
+    if (!q || addressLoading) return;
+    setAddressLoading(true);
+    setAddressError(null);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error("geocode failed");
+      const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+      if (!data?.length) {
+        setAddressError(t("tasks.filter.addressNotFound"));
+        return;
+      }
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      setUserCoords({ lat, lng });
+      if (!filterRadius) setFilterRadius("25");
+    } catch {
+      setAddressError(t("tasks.filter.addressNotFound"));
+    } finally {
+      setAddressLoading(false);
+    }
   };
 
   const nearbyLatParam = searchParams.get("lat");
