@@ -198,13 +198,28 @@ const {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-if (safeAmount < 50) {
-  return new Response(JSON.stringify({ error: "Minimum payment amount is 50" }), {
-    status: 400,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
+
+    // Allpay requires a minimum charge. Apply per-currency thresholds so
+    // small USD/EUR proposals (e.g. $29) are not falsely rejected by the
+    // ILS-only floor of 50.
+    const minByCurrency: Record<string, number> = {
+      ILS: 50,
+      USD: 5,
+      EUR: 5,
+    };
+    const minAmount = minByCurrency[safeCurrency] ?? 5;
+    if (safeAmount < minAmount) {
+      return new Response(
+        JSON.stringify({
+          error: `Minimum payment amount is ${minAmount} ${safeCurrency}`,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     const safeItemName = task.title ? `Task: ${task.title}` : `Task payment #${task.id}`;
     // ======================================================
