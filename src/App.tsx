@@ -9,6 +9,7 @@ import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { GeocodeChoiceDialog } from "@/components/GeocodeChoiceDialog";
 import Index from "./pages/Index";
 import Tasks from "./pages/Tasks";
 import TaskDetail from "./pages/TaskDetail";
@@ -61,6 +62,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <GeocodeChoiceDialog />
             <BrowserRouter>
               <Routes>
                 <Route element={<Layout />}>
