@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { geocodeChoiceStore } from "@/lib/geocodeChoice";
 
 export type GeoSource = "gps" | "manual" | null;
 export type GeoPermission = "unknown" | "granted" | "denied" | "unsupported" | "prompt";
@@ -172,28 +173,57 @@ export function useGeolocation() {
       const q = query.trim();
       if (!q) return null;
       setState((prev) => ({ ...prev, loading: true, error: null }));
-      try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`;
+      const fetchOnce = async () => {
         const res = await fetch(url, { headers: { Accept: "application/json" } });
-        if (!res.ok) throw new Error("Geocoding request failed");
-        const data = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
-        if (!data?.length) {
-          setState((prev) => ({ ...prev, loading: false, error: "Address not found" }));
+        if (!res.ok) throw new Error(`Geocoding request failed (${res.status})`);
+        return (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
+      };
+
+      let data: Array<{ lat: string; lon: string; display_name: string }> | null = null;
+      try {
+        data = await fetchOnce();
+      } catch {
+        // One automatic retry with small backoff before surfacing an error.
+        await new Promise((r) => setTimeout(r, 600));
+        try {
+          data = await fetchOnce();
+        } catch (e) {
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error: e instanceof Error ? e.message : "Geocoding failed",
+          }));
           return null;
         }
-        const hit = data[0];
-        const lat = parseFloat(hit.lat);
-        const lng = parseFloat(hit.lon);
-        setManualLocation(lat, lng, hit.display_name);
-        return { lat, lng, label: hit.display_name };
-      } catch (e) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: e instanceof Error ? e.message : "Geocoding failed",
-        }));
+      }
+
+      if (!data?.length) {
+        setState((prev) => ({ ...prev, loading: false, error: "Address not found" }));
         return null;
       }
+
+      const candidates = data.slice(0, 5).map((d) => ({
+        lat: parseFloat(d.lat),
+        lng: parseFloat(d.lon),
+        label: d.display_name,
+      }));
+
+      // Single match — apply directly.
+      if (candidates.length === 1) {
+        const c = candidates[0];
+        setManualLocation(c.lat, c.lng, c.label);
+        setState((prev) => ({ ...prev, loading: false, error: null }));
+        return c;
+      }
+
+      // Multiple matches — ask the user to confirm before saving.
+      setState((prev) => ({ ...prev, loading: false, error: null }));
+      const picked = await geocodeChoiceStore.request(q, candidates);
+      if (!picked) return null;
+      setManualLocation(picked.lat, picked.lng, picked.label);
+      return picked;
     },
     [setManualLocation]
   );
