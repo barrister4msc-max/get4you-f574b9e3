@@ -30,20 +30,20 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Подтвердите смену email для TaskFlow</Preview>
+    <Preview>Подтвердите смену email для 4You</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
           <table cellPadding="0" cellSpacing="0" style={{ margin: '0 auto' }}>
             <tr>
               <td style={logoIcon}><span style={logoIconText}>T</span></td>
-              <td style={logoTextTd}><span style={logoTextGreen}>Task</span><span style={logoTextGold}>Flow</span></td>
+              <td style={logoTextTd}><span style={logoTextGreen}>4</span><span style={logoTextGold}>You</span></td>
             </tr>
           </table>
         </Section>
         <Heading style={h1}>Подтвердите смену email</Heading>
         <Text style={text}>
-          Вы запросили смену email-адреса для TaskFlow с{' '}
+          Вы запросили смену email-адреса для 4You с{' '}
           <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
           на{' '}
           <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.

@@ -25,20 +25,20 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Сброс пароля для TaskFlow</Preview>
+    <Preview>Сброс пароля для 4You</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
           <table cellPadding="0" cellSpacing="0" style={{ margin: '0 auto' }}>
             <tr>
               <td style={logoIcon}><span style={logoIconText}>T</span></td>
-              <td style={logoTextTd}><span style={logoTextGreen}>Task</span><span style={logoTextGold}>Flow</span></td>
+              <td style={logoTextTd}><span style={logoTextGreen}>4</span><span style={logoTextGold}>You</span></td>
             </tr>
           </table>
         </Section>
         <Heading style={h1}>Сброс пароля</Heading>
         <Text style={text}>
-          Мы получили запрос на сброс пароля для вашего аккаунта TaskFlow.
+          Мы получили запрос на сброс пароля для вашего аккаунта 4You.
           Нажмите на кнопку ниже, чтобы выбрать новый пароль.
         </Text>
         <Button style={button} href={confirmationUrl}>

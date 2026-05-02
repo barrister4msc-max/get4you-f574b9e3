@@ -60,7 +60,7 @@ serve(async (req) => {
     const langDirective = `IMPORTANT: The user interface language is ${uiLangName} (code: ${uiLang}). You MUST write ALL output text fields (title, description, location, improved_title, and any free-form text) in ${uiLangName}, regardless of the language of the user's input. Translate the user's message into ${uiLangName} for the structured fields. The "category" enum value stays in English.`;
 
     const systemPrompts: Record<string, string> = {
-      assist: `You are a helpful task creation assistant for a task marketplace platform called TaskFlow. 
+      assist: `You are a helpful task creation assistant for a task marketplace platform called 4You. 
 Help users describe their tasks clearly and in detail. Ask clarifying questions if the description is vague.
 Suggest improvements to make the task more attractive to taskers.
 Keep responses concise (2-3 sentences max). Always respond in ${uiLangName} (the user's chosen UI language), regardless of the language of the user input.

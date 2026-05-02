@@ -15,7 +15,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "TaskFlow"
+const SITE_NAME = "4You"
 
 interface WelcomeEmailProps {
   name?: string
@@ -31,7 +31,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
           <table cellPadding="0" cellSpacing="0" style={{ margin: '0 auto' }}>
             <tr>
               <td style={logoIcon}><span style={logoIconText}>T</span></td>
-              <td style={logoTextTd}><span style={logoTextGreen}>Task</span><span style={logoTextGold}>Flow</span></td>
+              <td style={logoTextTd}><span style={logoTextGreen}>4</span><span style={logoTextGold}>You</span></td>
             </tr>
           </table>
         </Section>
@@ -61,7 +61,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
 
 export const template = {
   component: WelcomeEmail,
-  subject: 'Добро пожаловать в TaskFlow!',
+  subject: 'Добро пожаловать в 4You!',
   displayName: 'Welcome email',
   previewData: { name: 'Анна' },
 } satisfies TemplateEntry
