@@ -40,8 +40,8 @@ export const SignupEmail = ({
                 <span style={logoIconText}>T</span>
               </td>
               <td style={logoTextTd}>
-                <span style={logoTextGreen}>Task</span>
-                <span style={logoTextGold}>Flow</span>
+                <span style={logoTextGreen}>4</span>
+                <span style={logoTextGold}>You</span>
               </td>
             </tr>
           </table>
