@@ -325,7 +325,7 @@ const LoginPage = () => {
       <div className="w-full max-w-md mx-auto px-4">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-gradient-emerald flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold text-lg">T</span>
+            <span className="text-primary-foreground font-bold text-lg">4</span>
           </div>
           <h1 className="text-2xl font-bold">{t('nav.account')}</h1>
         </div>

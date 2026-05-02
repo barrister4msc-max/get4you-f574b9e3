@@ -36,7 +36,7 @@ export const EmailChangeEmail = ({
         <Section style={logoSection}>
           <table cellPadding="0" cellSpacing="0" style={{ margin: '0 auto' }}>
             <tr>
-              <td style={logoIcon}><span style={logoIconText}>T</span></td>
+              <td style={logoIcon}><span style={logoIconText}>4</span></td>
               <td style={logoTextTd}><span style={logoTextGreen}>4</span><span style={logoTextGold}>You</span></td>
             </tr>
           </table>
