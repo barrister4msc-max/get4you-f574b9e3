@@ -25,7 +25,7 @@ export const MagicLinkEmail = ({
 }: MagicLinkEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Ссылка для входа в TaskFlow</Preview>
+    <Preview>Ссылка для входа в 4You</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
@@ -38,7 +38,7 @@ export const MagicLinkEmail = ({
         </Section>
         <Heading style={h1}>Ваша ссылка для входа</Heading>
         <Text style={text}>
-          Нажмите на кнопку ниже, чтобы войти в TaskFlow. Ссылка действительна
+          Нажмите на кнопку ниже, чтобы войти в 4You. Ссылка действительна
           ограниченное время.
         </Text>
         <Button style={button} href={confirmationUrl}>

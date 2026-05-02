@@ -117,7 +117,7 @@ export const Header = () => {
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(152, 55%, 42%), hsl(45, 95%, 55%))' }}>
             <span className="text-primary-foreground font-bold text-sm">T</span>
           </div>
-          <span className="font-bold text-lg text-gradient-emerald">TaskFlow</span>
+          <span className="font-bold text-lg text-gradient-emerald">4You</span>
         </Link>
 
         {/* Desktop nav */}
@@ -175,7 +175,7 @@ export const Header = () => {
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(152, 55%, 42%), hsl(45, 95%, 55%))' }}>
                     <span className="text-primary-foreground font-bold text-sm">T</span>
                   </div>
-                  <span className="font-bold text-lg text-gradient-emerald">TaskFlow</span>
+                  <span className="font-bold text-lg text-gradient-emerald">4You</span>
                 </Link>
               </div>
 

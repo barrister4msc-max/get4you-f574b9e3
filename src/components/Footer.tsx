@@ -16,7 +16,7 @@ export const Footer = () => {
             <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: 'linear-gradient(135deg, hsl(152, 55%, 42%), hsl(45, 95%, 55%))' }}>
               <span className="text-primary-foreground font-bold text-xs">T</span>
             </div>
-            <span className="font-semibold text-gradient-emerald">TaskFlow</span>
+            <span className="font-semibold text-gradient-emerald">4You</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>

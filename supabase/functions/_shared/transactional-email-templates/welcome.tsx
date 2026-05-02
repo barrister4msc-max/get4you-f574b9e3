@@ -15,7 +15,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "TaskFlow"
+const SITE_NAME = "4You"
 
 interface WelcomeEmailProps {
   name?: string
@@ -61,7 +61,7 @@ const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
 
 export const template = {
   component: WelcomeEmail,
-  subject: 'Добро пожаловать в TaskFlow!',
+  subject: 'Добро пожаловать в 4You!',
   displayName: 'Welcome email',
   previewData: { name: 'Анна' },
 } satisfies TemplateEntry
