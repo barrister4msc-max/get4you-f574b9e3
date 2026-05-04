@@ -11,6 +11,12 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import NotFound from "./NotFound";
+import {
+  slugFromPath,
+  buildCanonical,
+  getCachedSeo,
+  setCachedSeo,
+} from "@/lib/seoUtils";
 
 type SeoRow = {
   id: string;
@@ -34,15 +40,26 @@ export default function SeoPage() {
   const { pathname } = useLocation();
   const { locale, t } = useLanguage();
   const lang = langKey(locale);
-  const slug = useMemo(() => pathname.replace(/^\/+/, "").replace(/\/+$/, ""), [pathname]);
+  const slug = useMemo(() => slugFromPath(pathname), [pathname]);
 
   const [row, setRow] = useState<SeoRow | null>(null);
   const [related, setRelated] = useState<SeoRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => getCachedSeo(slug) === undefined);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    setNotFound(false);
+    const cached = getCachedSeo(slug);
+    if (cached !== undefined) {
+      // Cached either as row or explicit null (= not published / missing)
+      setRow((cached as unknown as SeoRow) || null);
+      setNotFound(cached === null);
+      setLoading(false);
+      if (cached === null) return;
+    } else {
+      setLoading(true);
+    }
     (async () => {
       const { data } = await supabase
         .from("seo_pages")
@@ -52,7 +69,9 @@ export default function SeoPage() {
         .maybeSingle();
       if (cancelled) return;
       const r = (data as unknown as SeoRow) || null;
+      setCachedSeo(slug, (r as unknown) as Record<string, unknown> | null);
       setRow(r);
+      setNotFound(!r);
 
       if (r) {
         const filters: string[] = [];
@@ -79,13 +98,13 @@ export default function SeoPage() {
   if (loading) {
     return <div className="container py-16 text-center text-muted-foreground">Loading…</div>;
   }
-  if (!row) return <NotFound />;
+  if (notFound || !row) return <NotFound />;
 
   const title = (row as any)[`title_${lang}`] || row.title_en;
   const meta = (row as any)[`meta_${lang}`] || row.meta_en;
   const h1 = (row as any)[`h1_${lang}`] || row.h1_en;
   const content = (row as any)[`content_${lang}`] || row.content_en;
-  const canonical = `https://4you.ai${row.canonical_path || `/${row.slug}`}`;
+  const canonical = buildCanonical(row.canonical_path || row.slug);
 
   const faqSchema = {
     "@context": "https://schema.org",
