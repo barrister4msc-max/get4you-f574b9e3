@@ -21,6 +21,13 @@ import {
 } from "lucide-react";
 import { useRef, useMemo, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Helmet } from "react-helmet-async";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 import heroImage from "@/assets/hero-image.png";
 import heroImage2 from "@/assets/hero-image-2.jpg";
 
@@ -54,6 +61,47 @@ const stats = [
   { key: "hero.tasksCompleted", value: "12,400+" },
   { key: "hero.verifiedPros", value: "3,200+" },
   { key: "hero.satisfaction", value: "98%" },
+];
+
+const popularCategories = [
+  { slug: "cleaning", label: "Cleaning" },
+  { slug: "repair", label: "Repair" },
+  { slug: "delivery", label: "Delivery" },
+  { slug: "moving", label: "Moving" },
+  { slug: "handyman", label: "Handyman" },
+];
+
+const popularCities = [
+  { slug: "tel-aviv", label: "Tel Aviv" },
+  { slug: "haifa", label: "Haifa" },
+  { slug: "jerusalem", label: "Jerusalem" },
+  { slug: "netanya", label: "Netanya" },
+  { slug: "rishon-lezion", label: "Rishon LeZion" },
+  { slug: "ashdod", label: "Ashdod" },
+  { slug: "beersheba", label: "Beersheba" },
+];
+
+const faqItems = [
+  {
+    q: "How does 4You.AI work?",
+    a: "Post your task, receive offers from verified taskers, compare profiles and prices, and choose the best one. Payment is held safely in escrow until the job is done.",
+  },
+  {
+    q: "Is payment protected?",
+    a: "Yes. Funds are held in escrow and only released to the tasker after you confirm the work is completed.",
+  },
+  {
+    q: "How are taskers verified?",
+    a: "Every tasker passes ID verification and signs a legal agreement before accepting tasks.",
+  },
+  {
+    q: "How much does it cost?",
+    a: "Posting a task is free. Taskers pay a small progressive service fee (7–12%) on completed jobs.",
+  },
+  {
+    q: "Which cities are supported?",
+    a: "All of Israel — including Tel Aviv, Haifa, Jerusalem, Netanya, Rishon LeZion, Ashdod, Beersheba and more.",
+  },
 ];
 
 const IndexPage = () => {
@@ -107,6 +155,18 @@ const IndexPage = () => {
 
   return (
     <div>
+      <Helmet>
+        <title>4You.AI — Find trusted taskers in Israel</title>
+        <meta
+          name="description"
+          content="Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow. Cleaning, repair, delivery, moving and more."
+        />
+        <link rel="canonical" href="https://4you.ai/" />
+        <meta property="og:title" content="4You.AI — Find trusted taskers in Israel" />
+        <meta property="og:description" content="Post a task, compare offers and pay safely with escrow." />
+        <meta property="og:url" content="https://4you.ai/" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section
         ref={heroRef}
@@ -163,24 +223,28 @@ const IndexPage = () => {
               className="flex-1 max-w-2xl"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
-                {t("hero.title")} <span className="text-gradient-emerald">{t("hero.titleAccent")}</span>
+                Find trusted taskers in Israel with{" "}
+                <span className="text-gradient-emerald">4You.AI</span>
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">{t("hero.subtitle")}</p>
+              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
+                Post a task, compare offers from verified taskers, choose the right person and pay
+                safely — your money is protected by escrow until the job is done.
+              </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 {!isTaskerOnly && (
                   <Link
                     to="/create-task"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                   >
-                    {t("hero.cta")}
+                    Post a task
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 )}
                 <Link
-                  to="/tasks"
+                  to="/for-taskers"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
                 >
-                  {t("hero.browse")}
+                  Become a tasker
                 </Link>
                 <button
                   onClick={handleFindNearby}
@@ -295,6 +359,106 @@ const IndexPage = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Popular categories (SEO links) */}
+      <section className="py-12 md:py-16 bg-warm-surface">
+        <div className="container">
+          <h2 className="text-2xl md:text-3xl font-bold text-center">Popular categories</h2>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            {popularCategories.map((c) => (
+              <Link
+                key={c.slug}
+                to={`/services/${c.slug}`}
+                className="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+              >
+                {c.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Popular cities */}
+      <section className="py-12 md:py-16">
+        <div className="container">
+          <h2 className="text-2xl md:text-3xl font-bold text-center">Popular cities</h2>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            {popularCities.map((c) => (
+              <Link
+                key={c.slug}
+                to={`/${c.slug}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
+              >
+                <MapPin className="w-4 h-4 text-primary" />
+                {c.label}
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link to="/israel" className="text-primary hover:underline font-medium">
+              View all of Israel →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Payments */}
+      <section className="py-16 md:py-20 bg-warm-surface">
+        <div className="container max-w-3xl text-center">
+          <h2 className="text-2xl md:text-3xl font-bold">Safe payments with escrow</h2>
+          <p className="mt-4 text-muted-foreground leading-relaxed">
+            Pay through Allpay — funds are held securely in escrow and only released to the tasker
+            after you confirm the job is done. Cards, bank transfer and cash/check options are
+            supported. A small progressive service fee (7–12%) applies to taskers only.
+          </p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-16 md:py-20">
+        <div className="container max-w-3xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            Frequently asked questions
+          </h2>
+          <Accordion type="single" collapsible className="w-full">
+            {faqItems.map((f, i) => (
+              <AccordionItem key={i} value={`faq-${i}`}>
+                <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
+                <AccordionContent>{f.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: faqItems.map((f) => ({
+                  "@type": "Question",
+                  name: f.q,
+                  acceptedAnswer: { "@type": "Answer", text: f.a },
+                })),
+              }),
+            }}
+          />
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link
+              to="/create-task"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
+            >
+              Post a task
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/for-taskers"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
+            >
+              Become a tasker
+            </Link>
           </div>
         </div>
       </section>
