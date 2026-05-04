@@ -182,9 +182,46 @@ const {
       });
     }
 
-    // Optional: guard task status
-    if (task.status && !["draft", "open", "awaiting_payment"].includes(String(task.status))) {
-      console.log("[CREATE-PAYMENT] Task status warning:", task.status);
+    // Hard guard: task must still be in a payable state.
+    // Once a task moves to in_progress / completed / cancelled / closed,
+    // no new payment may be initiated for it.
+    const PAYABLE_TASK_STATUSES = ["draft", "open", "awaiting_payment"];
+    if (task.status && !PAYABLE_TASK_STATUSES.includes(String(task.status))) {
+      console.log("[CREATE-PAYMENT] Rejected: task not payable, status =", task.status);
+      return new Response(
+        JSON.stringify({
+          error: "Task is no longer payable",
+          task_status: task.status,
+        }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // Hard guard: if an escrow already exists for this task (held / released /
+    // refunded), the task has already been funded once. Block any further
+    // payment attempts to prevent the client from paying twice.
+    const { data: existingEscrow } = await serviceClient
+      .from("escrow_transactions")
+      .select("id, status")
+      .eq("task_id", task.id)
+      .in("status", ["held", "released", "refunded"])
+      .maybeSingle();
+
+    if (existingEscrow) {
+      return new Response(
+        JSON.stringify({
+          error: "This task has already been funded",
+          escrow_id: existingEscrow.id,
+          escrow_status: existingEscrow.status,
+        }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // ======================================================
