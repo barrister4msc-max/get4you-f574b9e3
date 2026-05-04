@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,11 +52,13 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminProposalAttempts from "./pages/admin/AdminProposalAttempts";
+import SeoPage from "./pages/SeoPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+   <HelmetProvider>
     <LanguageProvider>
       <AuthProvider>
         <ActiveRoleProvider>
@@ -172,6 +175,11 @@ const App = () => (
                     <Route path="broadcast" element={<AdminBroadcast />} />
                     <Route path="employment" element={<AdminEmployment />} />
                   </Route>
+                  {/* Public SEO landing pages (must be last inside Layout) */}
+                  <Route path="/israel" element={<SeoPage />} />
+                  <Route path="/services/:category" element={<SeoPage />} />
+                  <Route path="/:city/:category" element={<SeoPage />} />
+                  <Route path="/:city" element={<SeoPage />} />
                 </Route>
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="*" element={<NotFound />} />
@@ -181,6 +189,7 @@ const App = () => (
         </ActiveRoleProvider>
       </AuthProvider>
     </LanguageProvider>
+   </HelmetProvider>
   </QueryClientProvider>
 );
 

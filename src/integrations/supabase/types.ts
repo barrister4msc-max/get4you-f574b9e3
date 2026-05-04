@@ -1393,6 +1393,87 @@ export type Database = {
           },
         ]
       }
+      seo_pages: {
+        Row: {
+          canonical_path: string | null
+          category_slug: string | null
+          city_slug: string | null
+          content_en: string
+          content_he: string
+          content_ru: string
+          created_at: string
+          faq: Json
+          h1_en: string
+          h1_he: string
+          h1_ru: string
+          id: string
+          is_published: boolean
+          keywords: string[]
+          meta_en: string
+          meta_he: string
+          meta_ru: string
+          page_type: string
+          schema_type: string
+          slug: string
+          title_en: string
+          title_he: string
+          title_ru: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_path?: string | null
+          category_slug?: string | null
+          city_slug?: string | null
+          content_en: string
+          content_he: string
+          content_ru: string
+          created_at?: string
+          faq?: Json
+          h1_en: string
+          h1_he: string
+          h1_ru: string
+          id?: string
+          is_published?: boolean
+          keywords?: string[]
+          meta_en: string
+          meta_he: string
+          meta_ru: string
+          page_type: string
+          schema_type?: string
+          slug: string
+          title_en: string
+          title_he: string
+          title_ru: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_path?: string | null
+          category_slug?: string | null
+          city_slug?: string | null
+          content_en?: string
+          content_he?: string
+          content_ru?: string
+          created_at?: string
+          faq?: Json
+          h1_en?: string
+          h1_he?: string
+          h1_ru?: string
+          id?: string
+          is_published?: boolean
+          keywords?: string[]
+          meta_en?: string
+          meta_he?: string
+          meta_ru?: string
+          page_type?: string
+          schema_type?: string
+          slug?: string
+          title_en?: string
+          title_he?: string
+          title_ru?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null
