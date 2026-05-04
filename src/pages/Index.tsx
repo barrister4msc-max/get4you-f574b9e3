@@ -169,12 +169,20 @@ const HOME_I18N: Record<L, {
 };
 
 const IndexPage = () => {
-  const { t, locale, dir } = useLanguage();
+  const { t, locale, dir, setLocale } = useLanguage();
   const lang = pickLang(locale);
   const i18n = HOME_I18N[lang];
   const { user, roles } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // Sync ?lang=he|ru|en with selected locale
+  useEffect(() => {
+    const q = searchParams.get("lang");
+    if (q === "en" || q === "ru" || q === "he") {
+      if (q !== locale) setLocale(q);
+    }
+  }, [searchParams, locale, setLocale]);
   const { latitude, longitude, loading: geoLoading, error: geoError, getCurrentLocation } = useGeolocation();
   const [pendingNearby, setPendingNearby] = useState(false);
 
