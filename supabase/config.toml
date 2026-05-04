@@ -19,3 +19,5 @@ project_id = "emkiekjlxmtnzrgzfdep"
 verify_jwt = true
   [functions.reconcile-payments]
     verify_jwt = false
+  [functions.sitemap]
+    verify_jwt = false
