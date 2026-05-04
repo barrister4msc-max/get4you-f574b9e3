@@ -64,48 +64,114 @@ const stats = [
 ];
 
 const popularCategories = [
-  { slug: "cleaning", label: "Cleaning" },
-  { slug: "repair", label: "Repair" },
-  { slug: "delivery", label: "Delivery" },
-  { slug: "moving", label: "Moving" },
-  { slug: "handyman", label: "Handyman" },
+  { slug: "cleaning", labels: { en: "Cleaning", ru: "Уборка", he: "ניקיון" } },
+  { slug: "repair", labels: { en: "Repair", ru: "Ремонт", he: "תיקונים" } },
+  { slug: "delivery", labels: { en: "Delivery", ru: "Доставка", he: "משלוחים" } },
+  { slug: "moving", labels: { en: "Moving", ru: "Переезд", he: "הובלות" } },
+  { slug: "handyman", labels: { en: "Handyman", ru: "Мастер на час", he: "הנדימן" } },
 ];
 
 const popularCities = [
-  { slug: "tel-aviv", label: "Tel Aviv" },
-  { slug: "haifa", label: "Haifa" },
-  { slug: "jerusalem", label: "Jerusalem" },
-  { slug: "netanya", label: "Netanya" },
-  { slug: "rishon-lezion", label: "Rishon LeZion" },
-  { slug: "ashdod", label: "Ashdod" },
-  { slug: "beersheba", label: "Beersheba" },
+  { slug: "tel-aviv", labels: { en: "Tel Aviv", ru: "Тель-Авив", he: "תל אביב" } },
+  { slug: "haifa", labels: { en: "Haifa", ru: "Хайфа", he: "חיפה" } },
+  { slug: "jerusalem", labels: { en: "Jerusalem", ru: "Иерусалим", he: "ירושלים" } },
+  { slug: "netanya", labels: { en: "Netanya", ru: "Нетания", he: "נתניה" } },
+  { slug: "rishon-lezion", labels: { en: "Rishon LeZion", ru: "Ришон-ле-Цион", he: "ראשון לציון" } },
+  { slug: "ashdod", labels: { en: "Ashdod", ru: "Ашдод", he: "אשדוד" } },
+  { slug: "beersheba", labels: { en: "Beersheba", ru: "Беэр-Шева", he: "באר שבע" } },
 ];
 
-const faqItems = [
-  {
-    q: "How does 4You.AI work?",
-    a: "Post your task, receive offers from verified taskers, compare profiles and prices, and choose the best one. Payment is held safely in escrow until the job is done.",
+type L = "en" | "ru" | "he";
+const pickLang = (loc: string): L => (loc === "ru" || loc === "he" ? loc : "en");
+
+const HOME_I18N: Record<L, {
+  metaTitle: string;
+  metaDesc: string;
+  h1Pre: string;
+  h1Brand: string;
+  subtitle: string;
+  ctaPost: string;
+  ctaBecome: string;
+  popularCats: string;
+  popularCities: string;
+  viewAll: string;
+  paymentsTitle: string;
+  paymentsDesc: string;
+  faqTitle: string;
+  faq: { q: string; a: string }[];
+}> = {
+  en: {
+    metaTitle: "4You.AI — Find trusted taskers in Israel",
+    metaDesc: "Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow.",
+    h1Pre: "Find trusted taskers in Israel with",
+    h1Brand: "4You.AI",
+    subtitle: "Post a task, compare offers from verified taskers, choose the right person and pay safely — your money is protected by escrow until the job is done.",
+    ctaPost: "Post a task",
+    ctaBecome: "Become a tasker",
+    popularCats: "Popular categories",
+    popularCities: "Popular cities",
+    viewAll: "View all of Israel →",
+    paymentsTitle: "Safe payments with escrow",
+    paymentsDesc: "Pay through Allpay — funds are held securely in escrow and only released to the tasker after you confirm the job is done. Cards, bank transfer and cash/check options are supported. A small progressive service fee (7–12%) applies to taskers only.",
+    faqTitle: "Frequently asked questions",
+    faq: [
+      { q: "How does 4You.AI work?", a: "Post your task, receive offers from verified taskers, compare profiles and prices, and choose the best one. Payment is held safely in escrow until the job is done." },
+      { q: "Is payment protected?", a: "Yes. Funds are held in escrow and only released to the tasker after you confirm the work is completed." },
+      { q: "How are taskers verified?", a: "Every tasker passes ID verification and signs a legal agreement before accepting tasks." },
+      { q: "How much does it cost?", a: "Posting a task is free. Taskers pay a small progressive service fee (7–12%) on completed jobs." },
+      { q: "Which cities are supported?", a: "All of Israel — including Tel Aviv, Haifa, Jerusalem, Netanya, Rishon LeZion, Ashdod, Beersheba and more." },
+    ],
   },
-  {
-    q: "Is payment protected?",
-    a: "Yes. Funds are held in escrow and only released to the tasker after you confirm the work is completed.",
+  ru: {
+    metaTitle: "4You.AI — Надёжные исполнители в Израиле",
+    metaDesc: "Опубликуйте задачу, сравните предложения проверенных исполнителей по всему Израилю и оплатите безопасно через эскроу.",
+    h1Pre: "Найдите надёжных исполнителей в Израиле с",
+    h1Brand: "4You.AI",
+    subtitle: "Опубликуйте задачу, сравните предложения проверенных исполнителей, выберите подходящего и оплатите безопасно — деньги защищены через эскроу до завершения работ.",
+    ctaPost: "Создать задачу",
+    ctaBecome: "Стать исполнителем",
+    popularCats: "Популярные категории",
+    popularCities: "Популярные города",
+    viewAll: "Посмотреть весь Израиль →",
+    paymentsTitle: "Безопасные платежи через эскроу",
+    paymentsDesc: "Оплата через Allpay — средства надёжно хранятся в эскроу и переводятся исполнителю только после подтверждения выполнения работы. Поддерживаются карты, банковский перевод и оплата наличными/чеком. Небольшая прогрессивная комиссия (7–12%) удерживается только с исполнителей.",
+    faqTitle: "Часто задаваемые вопросы",
+    faq: [
+      { q: "Как работает 4You.AI?", a: "Опубликуйте задачу, получите предложения от проверенных исполнителей, сравните профили и цены, выберите лучшего. Оплата надёжно хранится в эскроу до завершения работ." },
+      { q: "Защищена ли оплата?", a: "Да. Средства хранятся в эскроу и переводятся исполнителю только после подтверждения выполнения." },
+      { q: "Как проверяются исполнители?", a: "Каждый исполнитель проходит проверку личности и подписывает договор перед началом работы." },
+      { q: "Сколько это стоит?", a: "Публикация задачи бесплатна. Исполнители платят небольшую прогрессивную комиссию (7–12%) с выполненных заказов." },
+      { q: "Какие города поддерживаются?", a: "Весь Израиль — включая Тель-Авив, Хайфу, Иерусалим, Нетанию, Ришон-ле-Цион, Ашдод, Беэр-Шеву и другие." },
+    ],
   },
-  {
-    q: "How are taskers verified?",
-    a: "Every tasker passes ID verification and signs a legal agreement before accepting tasks.",
+  he: {
+    metaTitle: "4You.AI — מצאו נותני שירות אמינים בישראל",
+    metaDesc: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים ושלמו בבטחה דרך נאמנות.",
+    h1Pre: "מצאו נותני שירות אמינים בישראל עם",
+    h1Brand: "4You.AI",
+    subtitle: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים, בחרו את האדם הנכון ושלמו בבטחה — הכסף שלכם מוגן בנאמנות עד לסיום העבודה.",
+    ctaPost: "פרסם משימה",
+    ctaBecome: "הצטרף כנותן שירות",
+    popularCats: "קטגוריות פופולריות",
+    popularCities: "ערים פופולריות",
+    viewAll: "צפו בכל ישראל ←",
+    paymentsTitle: "תשלומים מאובטחים בנאמנות",
+    paymentsDesc: "תשלום דרך Allpy — הכספים נשמרים בנאמנות ומועברים לנותן השירות רק לאחר שאתם מאשרים שהעבודה הסתיימה. נתמכים כרטיסי אשראי, העברה בנקאית ומזומן/צ'ק. עמלת שירות פרוגרסיבית קטנה (7–12%) נגבית מנותני השירות בלבד.",
+    faqTitle: "שאלות נפוצות",
+    faq: [
+      { q: "איך 4You.AI עובד?", a: "פרסמו משימה, קבלו הצעות מנותני שירות מאומתים, השוו פרופילים ומחירים ובחרו את הטוב ביותר. התשלום נשמר בנאמנות עד לסיום העבודה." },
+      { q: "האם התשלום מוגן?", a: "כן. הכספים נשמרים בנאמנות ומועברים לנותן השירות רק לאחר שאתם מאשרים את סיום העבודה." },
+      { q: "איך נותני השירות מאומתים?", a: "כל נותן שירות עובר אימות זהות וחותם על הסכם משפטי לפני קבלת משימות." },
+      { q: "כמה זה עולה?", a: "פרסום משימה חינם. נותני שירות משלמים עמלת שירות פרוגרסיבית קטנה (7–12%) על עבודות שהושלמו." },
+      { q: "אילו ערים נתמכות?", a: "כל ישראל — כולל תל אביב, חיפה, ירושלים, נתניה, ראשון לציון, אשדוד, באר שבע ועוד." },
+    ],
   },
-  {
-    q: "How much does it cost?",
-    a: "Posting a task is free. Taskers pay a small progressive service fee (7–12%) on completed jobs.",
-  },
-  {
-    q: "Which cities are supported?",
-    a: "All of Israel — including Tel Aviv, Haifa, Jerusalem, Netanya, Rishon LeZion, Ashdod, Beersheba and more.",
-  },
-];
+};
 
 const IndexPage = () => {
-  const { t } = useLanguage();
+  const { t, locale, dir } = useLanguage();
+  const lang = pickLang(locale);
+  const i18n = HOME_I18N[lang];
   const { user, roles } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -149,6 +215,8 @@ const IndexPage = () => {
     }
   }, [searchParams]);
   const isTaskerOnly = user && roles.length > 0 && roles.every((r) => r === "tasker");
+  const postTaskHref = user ? "/create-task" : "/login?redirect=/create-task";
+  const becomeTaskerHref = user ? "/for-taskers" : "/signup?role=tasker";
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
@@ -156,16 +224,22 @@ const IndexPage = () => {
   return (
     <div>
       <Helmet>
-        <title>4You.AI — Find trusted taskers in Israel</title>
-        <meta
-          name="description"
-          content="Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow. Cleaning, repair, delivery, moving and more."
-        />
-        <link rel="canonical" href="https://4you.ai/" />
-        <meta property="og:title" content="4You.AI — Find trusted taskers in Israel" />
-        <meta property="og:description" content="Post a task, compare offers and pay safely with escrow." />
-        <meta property="og:url" content="https://4you.ai/" />
+        <html lang={lang} dir={dir} />
+        <title>{i18n.metaTitle}</title>
+        <meta name="description" content={i18n.metaDesc} />
+        <link rel="canonical" href={`https://4you.ai/${lang === "en" ? "" : `?lang=${lang}`}`} />
+        <link rel="alternate" hrefLang="en" href="https://4you.ai/" />
+        <link rel="alternate" hrefLang="ru" href="https://4you.ai/?lang=ru" />
+        <link rel="alternate" hrefLang="he" href="https://4you.ai/?lang=he" />
+        <link rel="alternate" hrefLang="x-default" href="https://4you.ai/" />
+        <meta property="og:title" content={i18n.metaTitle} />
+        <meta property="og:description" content={i18n.metaDesc} />
+        <meta property="og:url" content={`https://4you.ai/${lang === "en" ? "" : `?lang=${lang}`}`} />
         <meta property="og:type" content="website" />
+        <meta property="og:locale" content={lang === "ru" ? "ru_RU" : lang === "he" ? "he_IL" : "en_US"} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={i18n.metaTitle} />
+        <meta name="twitter:description" content={i18n.metaDesc} />
       </Helmet>
       {/* Hero — full-screen with background image, dark overlay & parallax */}
       <section
@@ -223,28 +297,27 @@ const IndexPage = () => {
               className="flex-1 max-w-2xl"
             >
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
-                Find trusted taskers in Israel with{" "}
-                <span className="text-gradient-emerald">4You.AI</span>
+                {i18n.h1Pre}{" "}
+                <span className="text-gradient-emerald">{i18n.h1Brand}</span>
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-                Post a task, compare offers from verified taskers, choose the right person and pay
-                safely — your money is protected by escrow until the job is done.
+                {i18n.subtitle}
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 {!isTaskerOnly && (
                   <Link
-                    to="/create-task"
+                    to={postTaskHref}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                   >
-                    Post a task
+                    {i18n.ctaPost}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 )}
                 <Link
-                  to="/for-taskers"
+                  to={becomeTaskerHref}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
                 >
-                  Become a tasker
+                  {i18n.ctaBecome}
                 </Link>
                 <button
                   onClick={handleFindNearby}
@@ -366,7 +439,7 @@ const IndexPage = () => {
       {/* Popular categories (SEO links) */}
       <section className="py-12 md:py-16 bg-warm-surface">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center">Popular categories</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center">{i18n.popularCats}</h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             {popularCategories.map((c) => (
               <Link
@@ -374,7 +447,7 @@ const IndexPage = () => {
                 to={`/services/${c.slug}`}
                 className="px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
               >
-                {c.label}
+                {c.labels[lang]}
               </Link>
             ))}
           </div>
@@ -384,7 +457,7 @@ const IndexPage = () => {
       {/* Popular cities */}
       <section className="py-12 md:py-16">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center">Popular cities</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-center">{i18n.popularCities}</h2>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             {popularCities.map((c) => (
               <Link
@@ -393,13 +466,13 @@ const IndexPage = () => {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-card text-foreground font-medium hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
               >
                 <MapPin className="w-4 h-4 text-primary" />
-                {c.label}
+                {c.labels[lang]}
               </Link>
             ))}
           </div>
           <div className="mt-6 text-center">
             <Link to="/israel" className="text-primary hover:underline font-medium">
-              View all of Israel →
+              {i18n.viewAll}
             </Link>
           </div>
         </div>
@@ -408,12 +481,8 @@ const IndexPage = () => {
       {/* Payments */}
       <section className="py-16 md:py-20 bg-warm-surface">
         <div className="container max-w-3xl text-center">
-          <h2 className="text-2xl md:text-3xl font-bold">Safe payments with escrow</h2>
-          <p className="mt-4 text-muted-foreground leading-relaxed">
-            Pay through Allpay — funds are held securely in escrow and only released to the tasker
-            after you confirm the job is done. Cards, bank transfer and cash/check options are
-            supported. A small progressive service fee (7–12%) applies to taskers only.
-          </p>
+          <h2 className="text-2xl md:text-3xl font-bold">{i18n.paymentsTitle}</h2>
+          <p className="mt-4 text-muted-foreground leading-relaxed">{i18n.paymentsDesc}</p>
         </div>
       </section>
 
@@ -421,10 +490,10 @@ const IndexPage = () => {
       <section className="py-16 md:py-20">
         <div className="container max-w-3xl">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
-            Frequently asked questions
+            {i18n.faqTitle}
           </h2>
           <Accordion type="single" collapsible className="w-full">
-            {faqItems.map((f, i) => (
+            {i18n.faq.map((f, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
                 <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
                 <AccordionContent>{f.a}</AccordionContent>
@@ -437,7 +506,8 @@ const IndexPage = () => {
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "FAQPage",
-                mainEntity: faqItems.map((f) => ({
+                inLanguage: lang,
+                mainEntity: i18n.faq.map((f) => ({
                   "@type": "Question",
                   name: f.q,
                   acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -447,17 +517,17 @@ const IndexPage = () => {
           />
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
-              to="/create-task"
+              to={postTaskHref}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
             >
-              Post a task
+              {i18n.ctaPost}
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/for-taskers"
+              to={becomeTaskerHref}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
             >
-              Become a tasker
+              {i18n.ctaBecome}
             </Link>
           </div>
         </div>
