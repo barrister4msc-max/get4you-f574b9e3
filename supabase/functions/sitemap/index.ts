@@ -26,6 +26,7 @@ Deno.serve(async () => {
   }
 
   const urls = [
+    { loc: `${SITE}/tasks/DEBUG-TEST` },
     ...staticUrls.map((p) => ({
       loc: p ? `${SITE}/${p}` : SITE,
       lastmod: null as string | null,
