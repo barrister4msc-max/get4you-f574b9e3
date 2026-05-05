@@ -48,14 +48,21 @@ Deno.test("sitemap: omits private routes", async () => {
   }
 });
 
-Deno.test("sitemap: only includes is_published=true seo_pages", async () => {
+Deno.test({
+  name: "sitemap: only includes is_published=true seo_pages",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!serviceKey) {
     console.warn("SUPABASE_SERVICE_ROLE_KEY missing, skipping DB cross-check");
     return;
   }
   const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.0");
-  const supabase = createClient(SUPABASE_URL, serviceKey);
+  const supabase = createClient(SUPABASE_URL, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { params: { eventsPerSecond: 1 } },
+  });
 
   const { data: published } = await supabase
     .from("seo_pages")
@@ -76,6 +83,7 @@ Deno.test("sitemap: only includes is_published=true seo_pages", async () => {
     const path = (r as any).canonical_path || `/${(r as any).slug}`;
     assert(!body.includes(`https://4you.ai${path}`), `unpublished slug leaked: ${path}`);
   }
+  },
 });
 
 Deno.test("sitemap: lastmod values are valid ISO dates when present", async () => {
