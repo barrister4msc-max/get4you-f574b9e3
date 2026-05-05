@@ -103,8 +103,8 @@ const HOME_I18N: Record<L, {
   en: {
     metaTitle: "4You.AI — Find trusted taskers in Israel",
     metaDesc: "Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow.",
-    h1Pre: "Find trusted taskers in Israel with",
-    h1Brand: "4You.AI",
+    h1Pre: "Any task —",
+    h1Brand: "A reliable pro",
     subtitle: "Post a task, compare offers from verified taskers, choose the right person and pay safely — your money is protected by escrow until the job is done.",
     ctaPost: "Post a task",
     ctaBecome: "Become a tasker",
@@ -125,8 +125,8 @@ const HOME_I18N: Record<L, {
   ru: {
     metaTitle: "4You.AI — Надёжные исполнители в Израиле",
     metaDesc: "Опубликуйте задачу, сравните предложения проверенных исполнителей по всему Израилю и оплатите безопасно через эскроу.",
-    h1Pre: "Найдите надёжных исполнителей в Израиле с",
-    h1Brand: "4You.AI",
+    h1Pre: "Any task —",
+    h1Brand: "A reliable pro",
     subtitle: "Опубликуйте задачу, сравните предложения проверенных исполнителей, выберите подходящего и оплатите безопасно — деньги защищены через эскроу до завершения работ.",
     ctaPost: "Создать задачу",
     ctaBecome: "Стать исполнителем",
@@ -147,8 +147,8 @@ const HOME_I18N: Record<L, {
   he: {
     metaTitle: "4You.AI — מצאו נותני שירות אמינים בישראל",
     metaDesc: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים ושלמו בבטחה דרך נאמנות.",
-    h1Pre: "מצאו נותני שירות אמינים בישראל עם",
-    h1Brand: "4You.AI",
+    h1Pre: "Any task —",
+    h1Brand: "A reliable pro",
     subtitle: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים, בחרו את האדם הנכון ושלמו בבטחה — הכסף שלכם מוגן בנאמנות עד לסיום העבודה.",
     ctaPost: "פרסם משימה",
     ctaBecome: "הצטרף כנותן שירות",
