@@ -3,51 +3,42 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const SITE = "https://4you.ai";
 
 Deno.serve(async () => {
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
 
-  const { data, error } = await supabase
+  const staticUrls = ["", "how-it-works", "for-taskers", "tasks", "terms", "privacy"];
+
+  const { data: seoPages, error: seoError } = await supabase
     .from("seo_pages")
     .select("slug, canonical_path, updated_at")
     .eq("is_published", true);
-  const { data: tasks, error: tasksError } = await supabase.rpc("get_public_tasks_seo");
 
-  if (tasksError) {
-    console.error("Tasks sitemap error:", tasksError);
-  }
-
-  const urls = [
-    ...staticPages,
-
-    ...(pages || []).map((p) => ({
-      loc: `${SITE}${p.canonical_path || `/${p.slug}`}`,
-      lastmod: p.updated_at,
-    })),
-
-    ...(tasks || []).map((task) => ({
-      loc: `${SITE}/tasks/${task.id}`,
-      lastmod: task.updated_at,
-      changefreq: "daily",
-      priority: "0.7",
-    })),
-  ];
-  if (error) {
-    return new Response(`<!-- ${error.message} -->`, {
+  if (seoError) {
+    return new Response(`<!-- ${seoError.message} -->`, {
       status: 500,
       headers: { "content-type": "application/xml; charset=utf-8" },
     });
   }
 
-  const staticUrls = ["", "how-it-works", "for-taskers", "tasks", "terms", "privacy"];
   const { data: tasks, error: tasksError } = await supabase.rpc("get_public_tasks_seo");
 
   if (tasksError) {
     console.error("Tasks sitemap error:", tasksError);
   }
+
   const urls = [
-    ...staticUrls.map((p) => ({ loc: `${SITE}/${p}`.replace(/\/$/, "") || SITE, lastmod: null as string | null })),
-    ...(data || []).map((r: any) => ({
+    ...staticUrls.map((p) => ({
+      loc: p ? `${SITE}/${p}` : SITE,
+      lastmod: null as string | null,
+    })),
+
+    ...(seoPages || []).map((r: any) => ({
       loc: `${SITE}${r.canonical_path || `/${r.slug}`}`,
       lastmod: r.updated_at ? new Date(r.updated_at).toISOString() : null,
+    })),
+
+    ...(tasks || []).map((task: any) => ({
+      loc: `${SITE}/tasks/${task.id}`,
+      lastmod: task.updated_at ? new Date(task.updated_at).toISOString() : null,
     })),
   ];
 
