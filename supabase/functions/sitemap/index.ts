@@ -9,7 +9,27 @@ Deno.serve(async () => {
     .from("seo_pages")
     .select("slug, canonical_path, updated_at")
     .eq("is_published", true);
+  const { data: tasks, error: tasksError } = await supabase.rpc("get_public_tasks_seo");
 
+  if (tasksError) {
+    console.error("Tasks sitemap error:", tasksError);
+  }
+
+  const urls = [
+    ...staticPages,
+
+    ...(pages || []).map((p) => ({
+      loc: `${SITE}${p.canonical_path || `/${p.slug}`}`,
+      lastmod: p.updated_at,
+    })),
+
+    ...(tasks || []).map((task) => ({
+      loc: `${SITE}/tasks/${task.id}`,
+      lastmod: task.updated_at,
+      changefreq: "daily",
+      priority: "0.7",
+    })),
+  ];
   if (error) {
     return new Response(`<!-- ${error.message} -->`, {
       status: 500,
