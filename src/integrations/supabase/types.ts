@@ -2283,6 +2283,26 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_tasks_seo: {
+        Args: never
+        Returns: {
+          budget_fixed: number
+          budget_max: number
+          budget_min: number
+          category_id: string
+          city: string
+          created_at: string
+          currency: string
+          description: string
+          due_date: string
+          id: string
+          is_urgent: boolean
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }[]
+      }
       get_recommended_tasks: {
         Args: {
           _radius_km?: number
