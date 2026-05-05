@@ -1,23 +1,11 @@
 User-agent: *
 Allow: /
 
-Disallow: /dashboard
 Disallow: /admin
-Disallow: /login
-Disallow: /signup
-Disallow: /reset-password
-Disallow: /auth/
+Disallow: /dashboard
+Disallow: /chat
+Disallow: /orders
 Disallow: /profile
-Disallow: /settings
-Disallow: /chat/
-Disallow: /order-chat/
-Disallow: /messages
-Disallow: /payment-success
-Disallow: /payment-cancel
-Disallow: /unsubscribe
-Disallow: /esek-patur
-Disallow: /contractor-agreement
-Disallow: /employment-agreement
+Disallow: /auth
 
 Sitemap: https://4you.ai/sitemap.xml
-Sitemap: https://emkiekjlxmtnzrgzfdep.supabase.co/functions/v1/sitemap
