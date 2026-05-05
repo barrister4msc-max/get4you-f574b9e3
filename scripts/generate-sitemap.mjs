@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Generates public/sitemap.xml as a direct <urlset> from seo_pages.
  * Runs at build time (vite build) and on dev startup.
