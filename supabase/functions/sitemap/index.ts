@@ -37,28 +37,31 @@ Deno.serve(async () => {
     console.error("Tasks sitemap error:", tasksError);
   }
 
-  const urls = [
+  const urls: Array<{
+    loc: string;
+    lastmod?: string | null;
+    changefreq?: string;
+    priority?: string;
+  }> = [
     ...staticUrls.map((p) => ({
       loc: p ? `${SITE}/${p}` : SITE,
-      lastmod: null as string | null,
+      lastmod: null,
       changefreq: "weekly",
       priority: p === "" ? "1.0" : "0.8",
     })),
 
     ...(seoPages || []).map((r: any) => ({
       loc: `${SITE}${r.canonical_path || `/${r.slug}`}`,
-      lastmod: r.updated_at
-        ? new Date(r.updated_at).toISOString()
-        : null,
+      lastmod: r.updated_at ? new Date(r.updated_at).toISOString() : null,
       changefreq: "weekly",
       priority: "0.8",
     })),
 
+    { loc: `${SITE}/tasks/test-id` },
+
     ...(tasks || []).map((task: any) => ({
       loc: `${SITE}/tasks/${task.id}`,
-      lastmod: task.updated_at
-        ? new Date(task.updated_at).toISOString()
-        : null,
+      lastmod: task.updated_at ? new Date(task.updated_at).toISOString() : null,
       changefreq: "daily",
       priority: "0.7",
     })),
@@ -73,8 +76,8 @@ Deno.serve(async () => {
           `  <url>` +
           `<loc>${u.loc}</loc>` +
           `${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}` +
-          `<changefreq>${u.changefreq}</changefreq>` +
-          `<priority>${u.priority}</priority>` +
+          `${u.changefreq ? `<changefreq>${u.changefreq}</changefreq>` : ""}` +
+          `${u.priority ? `<priority>${u.priority}</priority>` : ""}` +
           `</url>`
       )
       .join("\n") +
