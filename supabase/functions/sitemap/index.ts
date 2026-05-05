@@ -3,10 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const SITE = "https://4you.ai";
 
 Deno.serve(async () => {
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   const { data, error } = await supabase
     .from("seo_pages")
@@ -21,7 +18,11 @@ Deno.serve(async () => {
   }
 
   const staticUrls = ["", "how-it-works", "for-taskers", "tasks", "terms", "privacy"];
+  const { data: tasks, error: tasksError } = await supabase.rpc("get_public_tasks_seo");
 
+  if (tasksError) {
+    console.error("Tasks sitemap error:", tasksError);
+  }
   const urls = [
     ...staticUrls.map((p) => ({ loc: `${SITE}/${p}`.replace(/\/$/, "") || SITE, lastmod: null as string | null })),
     ...(data || []).map((r: any) => ({
@@ -34,10 +35,7 @@ Deno.serve(async () => {
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls
-      .map(
-        (u) =>
-          `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`,
-      )
+      .map((u) => `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`)
       .join("\n") +
     `\n</urlset>\n`;
 
