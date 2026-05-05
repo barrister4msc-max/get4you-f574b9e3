@@ -33,6 +33,8 @@ Deno.serve(async () => {
     "get_public_tasks_seo"
   );
 
+  console.log("TASKS:", tasks?.length);
+
   if (tasksError) {
     console.error("Tasks sitemap error:", tasksError);
   }
