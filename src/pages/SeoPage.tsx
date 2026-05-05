@@ -128,6 +128,10 @@ export default function SeoPage() {
           <meta name="keywords" content={row.keywords.join(", ")} />
         )}
         <link rel="canonical" href={canonical} />
+        <link rel="alternate" hrefLang="en" href={`${canonical}?lang=en`} />
+        <link rel="alternate" hrefLang="ru" href={`${canonical}?lang=ru`} />
+        <link rel="alternate" hrefLang="he" href={`${canonical}?lang=he`} />
+        <link rel="alternate" hrefLang="x-default" href={canonical} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={meta} />
         <meta property="og:url" content={canonical} />
