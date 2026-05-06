@@ -515,6 +515,22 @@ const TasksPage = () => {
 
   const displayTasks = tab === "my" ? myTasks : sortedFiltered;
 
+  // "For you" subset: keep only tasks with a positive recommendation score
+  // (skill / preferred-category match) OR within ~50km of the tasker.
+  const forYouTasks = sortedFiltered.filter((task) => {
+    const score = getTaskRecommendationScore(task, competencyTerms, preferredCategoryIds);
+    if (score > 0) return true;
+    if (userCoords) {
+      const d = getTaskDistance(task);
+      if (d != null && d <= 50) return true;
+    }
+    return false;
+  });
+  const forYouHasResults = forYouTasks.length > 0;
+  const allTabTasks =
+    isTasker && allView === "for_you" && forYouHasResults ? forYouTasks : sortedFiltered;
+  const finalDisplayTasks = tab === "my" ? myTasks : allTabTasks;
+
   return (
     <div className="py-8">
       <div className="container">
