@@ -548,7 +548,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                       <span className="text-xs text-muted-foreground">{t('tasks.remote') || 'Remote'}</span>
                     )}
                     <span className="text-xs text-muted-foreground">
-                      {new Date(task.created_at).toLocaleDateString()}
+                      {new Date(task.created_at).toLocaleDateString(locale)}
                     </span>
                     <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
                       <Users className="w-3 h-3" />
