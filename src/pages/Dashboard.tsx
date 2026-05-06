@@ -598,33 +598,33 @@ const DashboardPage = () => {
                   onChange={(e) => setRadiusKm(Number(e.target.value))}
                   className="px-3 py-2 border rounded-lg"
                 >
-                  <option value={5}>5 км</option>
-                  <option value={10}>10 км</option>
-                  <option value={20}>20 км</option>
-                  <option value={50}>50 км</option>
+                  <option value={5}>5 {t("dashboard.tasker.km")}</option>
+                  <option value={10}>10 {t("dashboard.tasker.km")}</option>
+                  <option value={20}>20 {t("dashboard.tasker.km")}</option>
+                  <option value={50}>50 {t("dashboard.tasker.km")}</option>
                 </select>
 
                 <button
                   onClick={loadNearbyTasks}
                   className="inline-flex items-center justify-center gap-2 border border-border px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-secondary transition-colors"
                 >
-                  Найти задачи рядом
+                  {t("dashboard.tasker.findNearbyBtn")}
                 </button>
 
                 <Link
                   to="/tasks"
                   className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
                 >
-                  Все задачи <ArrowRight className="w-4 h-4" />
+                  {t("dashboard.tasker.allTasks")} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
 
-              {loadingNearby && <p className="text-center text-sm text-muted-foreground mt-3">Ищем задачи рядом...</p>}
+              {loadingNearby && <p className="text-center text-sm text-muted-foreground mt-3">{t("dashboard.tasker.searching")}</p>}
             </div>
 
             {nearbyTasks.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground">Задачи рядом</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground">{t("dashboard.tasker.nearbyTitle")}</h3>
 
                 {nearbyTasks.map((task) => (
                   <Link
@@ -659,7 +659,7 @@ const DashboardPage = () => {
             )}
 
             {searchedNearby && !loadingNearby && nearbyTasks.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-6">В выбранном радиусе задач не найдено</div>
+              <div className="text-center text-sm text-muted-foreground py-6">{t("dashboard.tasker.noNearby")}</div>
             )}
           </div>
         )}
