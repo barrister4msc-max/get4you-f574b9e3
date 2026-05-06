@@ -46,6 +46,9 @@ export default function SeoPage() {
   const [related, setRelated] = useState<SeoRow[]>([]);
   const [loading, setLoading] = useState(() => getCachedSeo(slug) === undefined);
   const [notFound, setNotFound] = useState(false);
+  const [publicTasks, setPublicTasks] = useState<
+    Array<{ id: string; title: string; city: string | null; category_name: string | null; created_at: string }>
+  >([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,8 +90,17 @@ export default function SeoPage() {
           ? await q.or(filters.join(","))
           : await q;
         if (!cancelled) setRelated((rel as unknown as SeoRow[]) || []);
+
+        // Fetch live public tasks for this city/category combo
+        const { data: pt } = await supabase.rpc("get_seo_public_tasks" as never, {
+          _city_slug: r.city_slug,
+          _category_slug: r.category_slug,
+          _result_limit: 10,
+        } as never);
+        if (!cancelled) setPublicTasks((pt as any[]) || []);
       } else {
         setRelated([]);
+        setPublicTasks([]);
       }
       setLoading(false);
     })();
@@ -161,6 +173,43 @@ export default function SeoPage() {
             <Link to="/for-taskers">{t("nav.forTaskers") || "Become a Tasker"}</Link>
           </Button>
         </div>
+
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-4">
+            {locale === "ru" ? "Свежие задачи" : locale === "he" ? "משימות אחרונות" : "Latest tasks"}
+          </h2>
+          {publicTasks.length === 0 ? (
+            <p className="text-muted-foreground">
+              {locale === "ru"
+                ? "Пока нет задач. Опубликуйте первую в этой категории."
+                : locale === "he"
+                ? "אין משימות עדיין. פרסמו את המשימה הראשונה בקטגוריה זו."
+                : "No recent public tasks yet. Post the first task in this category."}
+            </p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {publicTasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2"
+                >
+                  <div className="font-medium line-clamp-2">{task.title}</div>
+                  <div className="text-sm text-muted-foreground flex flex-wrap gap-x-2">
+                    {task.city && <span>{task.city}</span>}
+                    {task.category_name && <span>· {task.category_name}</span>}
+                    <span>· {new Date(task.created_at).toLocaleDateString(locale)}</span>
+                  </div>
+                  <Link
+                    to={`/tasks/${task.id}`}
+                    className="text-sm text-primary hover:underline mt-auto"
+                  >
+                    {locale === "ru" ? "Посмотреть задачу" : locale === "he" ? "צפייה במשימה" : "View task"}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {row.faq?.length > 0 && (
           <section className="mb-10">
