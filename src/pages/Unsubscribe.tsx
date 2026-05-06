@@ -70,12 +70,10 @@ const Unsubscribe = () => {
 
           {status === "valid" && (
             <>
-              <h1 className="text-xl font-bold text-foreground">Отписка от рассылки</h1>
-              <p className="text-muted-foreground">
-                Вы уверены, что хотите отписаться от уведомлений Flow4You?
-              </p>
+              <h1 className="text-xl font-bold text-foreground">{t('unsubscribe.title')}</h1>
+              <p className="text-muted-foreground">{t('unsubscribe.confirm')}</p>
               <Button onClick={handleUnsubscribe} variant="destructive">
-                Подтвердить отписку
+                {t('unsubscribe.confirmBtn')}
               </Button>
             </>
           )}
@@ -83,30 +81,24 @@ const Unsubscribe = () => {
           {status === "success" && (
             <>
               <CheckCircle className="h-12 w-12 text-primary mx-auto" />
-              <h1 className="text-xl font-bold text-foreground">Вы отписаны</h1>
-              <p className="text-muted-foreground">
-                Вы больше не будете получать уведомления от Flow4You.
-              </p>
+              <h1 className="text-xl font-bold text-foreground">{t('unsubscribe.successTitle')}</h1>
+              <p className="text-muted-foreground">{t('unsubscribe.successDesc')}</p>
             </>
           )}
 
           {status === "already" && (
             <>
               <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto" />
-              <h1 className="text-xl font-bold text-foreground">Уже отписаны</h1>
-              <p className="text-muted-foreground">
-                Вы уже отписаны от уведомлений.
-              </p>
+              <h1 className="text-xl font-bold text-foreground">{t('unsubscribe.alreadyTitle')}</h1>
+              <p className="text-muted-foreground">{t('unsubscribe.alreadyDesc')}</p>
             </>
           )}
 
           {(status === "invalid" || status === "error") && (
             <>
               <XCircle className="h-12 w-12 text-destructive mx-auto" />
-              <h1 className="text-xl font-bold text-foreground">Ошибка</h1>
-              <p className="text-muted-foreground">
-                Ссылка для отписки недействительна или устарела.
-              </p>
+              <h1 className="text-xl font-bold text-foreground">{t('unsubscribe.errorTitle')}</h1>
+              <p className="text-muted-foreground">{t('unsubscribe.errorDesc')}</p>
             </>
           )}
         </CardContent>
