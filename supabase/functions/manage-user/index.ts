@@ -67,7 +67,9 @@ Deno.serve(async (req) => {
       return json({ error: "Cannot modify a super admin" }, 403);
     }
 
-    const allowedRoles = ["client", "executor", "tasker", "admin"];
+    // Note: "tasker" is the legacy alias for "executor" and is intentionally
+    // excluded from new writes. Use "executor" for the worker role.
+    const allowedRoles = ["client", "executor", "admin"];
 
     if (action === "add_role" || action === "remove_role") {
       if (!role || !allowedRoles.includes(role)) {
