@@ -656,6 +656,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Admin Panel
     'admin.panel': 'Admin Panel',
+    'admin.role.admin': 'Admin',
     'admin.dashboard': 'Dashboard',
     'admin.orders': 'Orders',
     'admin.users': 'Users',
@@ -1412,6 +1413,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Admin Panel
     'admin.panel': 'Админ-панель',
+    'admin.role.admin': 'Администратор',
     'admin.dashboard': 'Дашборд',
     'admin.orders': 'Заказы',
     'admin.users': 'Пользователи',
@@ -2167,6 +2169,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Admin Panel
     'admin.panel': 'פאנל ניהול',
+    'admin.role.admin': 'מנהל',
     'admin.dashboard': 'לוח בקרה',
     'admin.orders': 'הזמנות',
     'admin.users': 'משתמשים',
@@ -2921,6 +2924,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Admin Panel
     'admin.panel': 'لوحة الإدارة',
+    'admin.role.admin': 'مدير',
     'admin.dashboard': 'لوحة التحكم',
     'admin.orders': 'الطلبات',
     'admin.users': 'المستخدمون',
