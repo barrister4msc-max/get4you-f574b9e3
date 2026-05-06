@@ -101,8 +101,8 @@ const HOME_I18N: Record<L, {
   faq: { q: string; a: string }[];
 }> = {
   en: {
-    metaTitle: "Flow4You.AI — Find trusted taskers in Israel",
-    metaDesc: "Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow.",
+    metaTitle: "Any task — A reliable pro | Flow4You.AI",
+    metaDesc: "Any task — a reliable pro. Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow.",
     h1Pre: "Any task —",
     h1Brand: "A reliable pro",
     subtitle: "Post a task, compare offers from verified taskers, choose the right person and pay safely — your money is protected by escrow until the job is done.",
@@ -123,8 +123,8 @@ const HOME_I18N: Record<L, {
     ],
   },
   ru: {
-    metaTitle: "Flow4You.AI — Надёжные исполнители в Израиле",
-    metaDesc: "Опубликуйте задачу, сравните предложения проверенных исполнителей по всему Израилю и оплатите безопасно через эскроу.",
+    metaTitle: "Any task — A reliable pro | Flow4You.AI",
+    metaDesc: "Any task — a reliable pro. Опубликуйте задачу, сравните предложения проверенных исполнителей по всему Израилю и оплатите безопасно через эскроу.",
     h1Pre: "Any task —",
     h1Brand: "A reliable pro",
     subtitle: "Опубликуйте задачу, сравните предложения проверенных исполнителей, выберите подходящего и оплатите безопасно — деньги защищены через эскроу до завершения работ.",
@@ -145,8 +145,8 @@ const HOME_I18N: Record<L, {
     ],
   },
   he: {
-    metaTitle: "Flow4You.AI — מצאו נותני שירות אמינים בישראל",
-    metaDesc: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים ושלמו בבטחה דרך נאמנות.",
+    metaTitle: "Any task — A reliable pro | Flow4You.AI",
+    metaDesc: "Any task — a reliable pro. פרסמו משימה, השוו הצעות מנותני שירות מאומתים בישראל ושלמו בבטחה דרך נאמנות.",
     h1Pre: "Any task —",
     h1Brand: "A reliable pro",
     subtitle: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים, בחרו את האדם הנכון ושלמו בבטחה — הכסף שלכם מוגן בנאמנות עד לסיום העבודה.",

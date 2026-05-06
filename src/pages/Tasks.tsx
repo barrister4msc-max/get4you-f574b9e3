@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { getCachedTranslation, setCachedTranslations, makeKey, isTranslatedCopyUsable } from "@/lib/translationCache";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { supabase } from "@/integrations/supabase/client";
+import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation, Loader2 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
@@ -29,15 +29,6 @@ interface TaskRow {
   latitude: number | null;
   longitude: number | null;
   categories?: { name_en: string; name_ru: string | null; name_he: string | null } | null;
-}
-
-interface TranslatedTaskCopy {
-  title: string;
-  description: string | null;
-}
-
-interface TaskTranslationResult extends TranslatedTaskCopy {
-  id: string;
 }
 
 const urgencyColors: Record<string, string> = {
@@ -247,7 +238,6 @@ const TasksPage = () => {
   const [addressQuery, setAddressQuery] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
-  const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
   const [nearbyDistances, setNearbyDistances] = useState<Record<string, number>>({});
 
   const isTasker = roles.includes("executor") || roles.includes("tasker");
@@ -459,102 +449,7 @@ const TasksPage = () => {
   const cities = [...new Set(tasks.map((task) => task.city).filter(Boolean))] as string[];
   const tasksForCurrentTab = tab === "my" ? myTasks : tasks;
 
-  const getDisplayedTaskCopy = (task: TaskRow): TranslatedTaskCopy => {
-    const key = makeKey(locale, task.id);
-    const inState = translatedTasks[key];
-    if (isTranslatedCopyUsable(locale, task.title, task.description, inState)) {
-      return inState;
-    }
-
-    const cached = getCachedTranslation(locale, task.id);
-    if (isTranslatedCopyUsable(locale, task.title, task.description, cached)) {
-      return { title: cached!.title, description: cached!.description };
-    }
-
-    return { title: task.title, description: task.description };
-  };
-
-  useEffect(() => {
-    const fromCache: Record<string, TranslatedTaskCopy> = {};
-    for (const task of tasksForCurrentTab) {
-      const key = makeKey(locale, task.id);
-      if (!isTranslatedCopyUsable(locale, task.title, task.description, translatedTasks[key])) {
-        const cached = getCachedTranslation(locale, task.id);
-        if (isTranslatedCopyUsable(locale, task.title, task.description, cached)) {
-          fromCache[key] = { title: cached!.title, description: cached!.description };
-        }
-      }
-    }
-
-    if (Object.keys(fromCache).length > 0) {
-      setTranslatedTasks((prev) => ({ ...prev, ...fromCache }));
-    }
-  }, [locale, tasksForCurrentTab, translatedTasks]);
-
-  useEffect(() => {
-    const tasksNeedingTranslation = tasksForCurrentTab
-      .filter((task) => task.title || task.description)
-      .filter((task) => {
-        const key = makeKey(locale, task.id);
-        return (
-          !isTranslatedCopyUsable(locale, task.title, task.description, translatedTasks[key]) &&
-          !isTranslatedCopyUsable(locale, task.title, task.description, getCachedTranslation(locale, task.id))
-        );
-      });
-
-    if (tasksNeedingTranslation.length === 0) return;
-
-    let cancelled = false;
-
-    const translateTasks = async () => {
-      const { data, error } = await supabase.functions.invoke("ai-task-assistant", {
-        body: {
-          type: "translate_tasks",
-          targetLocale: locale,
-          tasks: tasksNeedingTranslation.map(({ id, title, description }) => ({ id, title, description })),
-        },
-      });
-
-      if (cancelled || error || !data?.translations) return;
-
-      const validTranslations = (data.translations as TaskTranslationResult[])
-        .map((translation) => {
-          const originalTask = tasksNeedingTranslation.find((task) => task.id === translation.id);
-          if (!originalTask) return null;
-
-          const nextCopy: TaskTranslationResult = {
-            id: translation.id,
-            title: translation.title || originalTask.title,
-            description: translation.description ?? originalTask.description,
-          };
-
-          return isTranslatedCopyUsable(locale, originalTask.title, originalTask.description, nextCopy)
-            ? nextCopy
-            : null;
-        })
-        .filter((translation): translation is TaskTranslationResult => Boolean(translation));
-
-      if (validTranslations.length === 0) return;
-
-      setCachedTranslations(locale, validTranslations);
-      setTranslatedTasks((prev) => {
-        const next = { ...prev };
-        validTranslations.forEach((translation) => {
-          next[makeKey(locale, translation.id)] = {
-            title: translation.title,
-            description: translation.description,
-          };
-        });
-        return next;
-      });
-    };
-
-    translateTasks().catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-    };
-  }, [locale, tasksForCurrentTab, translatedTasks]);
+  const { getDisplayCopy: getDisplayedTaskCopy } = useTaskTranslations(locale, tasksForCurrentTab);
 
   const getTaskDistance = (task: TaskRow): number | null => {
     if (typeof nearbyDistances[task.id] === "number") return nearbyDistances[task.id];

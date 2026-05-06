@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
 import { ProfileMap } from "@/components/ProfileMap";
+import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
@@ -342,6 +343,15 @@ const DashboardPage = () => {
 
   const tt = (id: string, original: string) => translatedTitles[makeKey(locale, id)] || original;
 
+  const { getDisplayCopy: getNearbyDisplayCopy } = useTaskTranslations(
+    locale,
+    nearbyTasks.map((task) => ({
+      id: task.id,
+      title: task.title ?? null,
+      description: task.description ?? null,
+    })),
+  );
+
   const totalEarnings = escrowData.reduce((sum, e) => sum + Number(e.net_amount), 0);
   const pendingEarnings = allEscrow
     .filter((e) => e.status === "held")
@@ -634,10 +644,21 @@ const DashboardPage = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm truncate">{task.title}</h3>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                        )}
+                        {(() => {
+                          const copy = getNearbyDisplayCopy({
+                            id: task.id,
+                            title: task.title ?? null,
+                            description: task.description ?? null,
+                          });
+                          return (
+                            <>
+                              <h3 className="font-semibold text-sm truncate">{copy.title}</h3>
+                              {copy.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{copy.description}</p>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         <div className="flex items-center gap-2 mt-2">
                           <span
