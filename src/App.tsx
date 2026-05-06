@@ -52,6 +52,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminProposalAttempts from "./pages/admin/AdminProposalAttempts";
+import AdminAIUsage from "./pages/admin/AdminAIUsage";
 import SeoPage from "./pages/SeoPage";
 
 const queryClient = new QueryClient();
@@ -171,6 +172,7 @@ const App = () => (
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="audit-log" element={<AdminAuditLog />} />
                     <Route path="proposal-attempts" element={<AdminProposalAttempts />} />
+                    <Route path="ai-usage" element={<AdminAIUsage />} />
                     <Route path="esek-patur" element={<AdminEsekPatur />} />
                     <Route path="broadcast" element={<AdminBroadcast />} />
                     <Route path="employment" element={<AdminEmployment />} />

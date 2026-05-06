@@ -1616,6 +1616,39 @@ export type Database = {
           },
         ]
       }
+      task_translations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          locale: string
+          source_hash: string
+          task_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          locale: string
+          source_hash: string
+          task_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          locale?: string
+          source_hash?: string
+          task_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           address: string | null
@@ -2208,6 +2241,23 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_ai_usage_daily: {
+        Args: { _days?: number }
+        Returns: {
+          day: string
+          function_name: string
+          request_count: number
+        }[]
+      }
+      get_ai_usage_stats: {
+        Args: { _days?: number }
+        Returns: {
+          function_name: string
+          last_used: string
+          request_count: number
+          user_id: string
+        }[]
+      }
       get_conversations: {
         Args: never
         Returns: {
