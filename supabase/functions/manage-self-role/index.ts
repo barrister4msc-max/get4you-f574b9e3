@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .in("role", ["client", "executor", "tasker"] as never);
+      .in("role", ["client", "executor"] as never);
     if (readErr) return json({ error: readErr.message }, 500);
 
     const current = new Set<string>((existing ?? []).map((r: { role: string }) => r.role));
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     if (action === "add") {
       // Mutual exclusion: cannot have both client and executor at the same time.
       const other: SelfRole = role === "client" ? "executor" : "client";
-      if (current.has(other) || (role === "executor" && current.has("tasker"))) {
+      if (current.has(other)) {
         return json(
           { error: "Cannot have both client and executor roles. Remove the other role first." },
           409,
@@ -81,14 +81,6 @@ Deno.serve(async (req) => {
           .from("user_roles")
           .insert({ user_id: user.id, role: role as never });
         if (error) return json({ error: error.message }, 500);
-      }
-      // Also normalise legacy `tasker` to `executor` if both somehow exist.
-      if (role === "executor" && current.has("tasker")) {
-        await admin
-          .from("user_roles")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("role", "tasker" as never);
       }
       // Sync active_role on profile.
       await admin
