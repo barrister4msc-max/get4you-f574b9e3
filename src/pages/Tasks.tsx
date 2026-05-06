@@ -663,6 +663,34 @@ const TasksPage = () => {
           </div>
         )}
 
+        {isTasker && tab === "all" && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <button
+              onClick={() => setAllView("for_you")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                allView === "for_you"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t("tasks.forYou")} {forYouHasResults ? `(${forYouTasks.length})` : ""}
+            </button>
+            <button
+              onClick={() => setAllView("all")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                allView === "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t("tasks.allTasks")} ({sortedFiltered.length})
+            </button>
+            {allView === "for_you" && !forYouHasResults && sortedFiltered.length > 0 && (
+              <span className="text-xs text-muted-foreground">{t("tasks.forYou.empty")}</span>
+            )}
+          </div>
+        )}
+
         {tab === "all" && (
           <>
             <div className="flex flex-col sm:flex-row gap-3 mb-4">
@@ -816,12 +844,12 @@ const TasksPage = () => {
 
         <div className="grid gap-4">
           {loading && <p className="text-center text-muted-foreground py-12">{t("dashboard.loading")}</p>}
-          {!loading && displayTasks.length === 0 && (
+          {!loading && finalDisplayTasks.length === 0 && (
             <p className="text-center text-muted-foreground py-12">
               {tab === "my" ? t("tasks.noMyTasks") : t("tasks.noResults")}
             </p>
           )}
-          {displayTasks.map((task, i) => {
+          {finalDisplayTasks.map((task, i) => {
             const displayCopy = getDisplayedTaskCopy(task);
             return (
               <TaskCard
