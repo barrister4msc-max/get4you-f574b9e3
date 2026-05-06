@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_alert_thresholds: {
+        Row: {
+          block_pct: number
+          created_at: string
+          critical_pct: number
+          daily_limit: number
+          function_name: string
+          high_pct: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+          warn_pct: number
+        }
+        Insert: {
+          block_pct?: number
+          created_at?: string
+          critical_pct?: number
+          daily_limit?: number
+          function_name: string
+          high_pct?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          warn_pct?: number
+        }
+        Update: {
+          block_pct?: number
+          created_at?: string
+          critical_pct?: number
+          daily_limit?: number
+          function_name?: string
+          high_pct?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          warn_pct?: number
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           function_name: string
@@ -2241,16 +2280,19 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
-      get_ai_usage_alerts: {
-        Args: { _threshold?: number }
-        Returns: {
-          daily_limit: number
-          function_name: string
-          request_count: number
-          usage_ratio: number
-          user_id: string
-        }[]
-      }
+      get_ai_usage_alerts:
+        | {
+            Args: { _threshold?: number }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_ai_usage_alerts(_threshold => float8), public.get_ai_usage_alerts(_threshold => numeric). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { _threshold?: number }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_ai_usage_alerts(_threshold => float8), public.get_ai_usage_alerts(_threshold => numeric). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       get_ai_usage_daily: {
         Args: { _days?: number }
         Returns: {
