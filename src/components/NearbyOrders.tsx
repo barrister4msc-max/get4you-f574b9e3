@@ -504,7 +504,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
           {sortedTasks.map((task) => (
             <Link
               key={task.id}
-              to={`/tasks/${task.id}`}
+              to={`/task/${task.id}`}
               className="block p-3 rounded-xl border border-border bg-background hover:shadow-card-hover transition-all"
             >
               <div className="flex items-start justify-between gap-3">
