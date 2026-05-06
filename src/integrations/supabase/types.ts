@@ -2435,6 +2435,20 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_seo_public_tasks: {
+        Args: {
+          _category_slug?: string
+          _city_slug?: string
+          _result_limit?: number
+        }
+        Returns: {
+          category_name: string
+          city: string
+          created_at: string
+          id: string
+          title: string
+        }[]
+      }
       get_tasker_order_history: {
         Args: { _user_id: string }
         Returns: {
