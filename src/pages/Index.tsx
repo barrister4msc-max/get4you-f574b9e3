@@ -101,7 +101,7 @@ const HOME_I18N: Record<L, {
   faq: { q: string; a: string }[];
 }> = {
   en: {
-    metaTitle: "4You.AI — Find trusted taskers in Israel",
+    metaTitle: "Flow4You.AI — Find trusted taskers in Israel",
     metaDesc: "Post a task, compare offers from verified taskers across Israel and pay safely with protected escrow.",
     h1Pre: "Any task —",
     h1Brand: "A reliable pro",
@@ -115,7 +115,7 @@ const HOME_I18N: Record<L, {
     paymentsDesc: "Pay through Allpay — funds are held securely in escrow and only released to the tasker after you confirm the job is done. Cards, bank transfer and cash/check options are supported. A small progressive service fee (7–12%) applies to taskers only.",
     faqTitle: "Frequently asked questions",
     faq: [
-      { q: "How does 4You.AI work?", a: "Post your task, receive offers from verified taskers, compare profiles and prices, and choose the best one. Payment is held safely in escrow until the job is done." },
+      { q: "How does Flow4You.AI work?", a: "Post your task, receive offers from verified taskers, compare profiles and prices, and choose the best one. Payment is held safely in escrow until the job is done." },
       { q: "Is payment protected?", a: "Yes. Funds are held in escrow and only released to the tasker after you confirm the work is completed." },
       { q: "How are taskers verified?", a: "Every tasker passes ID verification and signs a legal agreement before accepting tasks." },
       { q: "How much does it cost?", a: "Posting a task is free. Taskers pay a small progressive service fee (7–12%) on completed jobs." },
@@ -123,7 +123,7 @@ const HOME_I18N: Record<L, {
     ],
   },
   ru: {
-    metaTitle: "4You.AI — Надёжные исполнители в Израиле",
+    metaTitle: "Flow4You.AI — Надёжные исполнители в Израиле",
     metaDesc: "Опубликуйте задачу, сравните предложения проверенных исполнителей по всему Израилю и оплатите безопасно через эскроу.",
     h1Pre: "Any task —",
     h1Brand: "A reliable pro",
@@ -137,7 +137,7 @@ const HOME_I18N: Record<L, {
     paymentsDesc: "Оплата через Allpay — средства надёжно хранятся в эскроу и переводятся исполнителю только после подтверждения выполнения работы. Поддерживаются карты, банковский перевод и оплата наличными/чеком. Небольшая прогрессивная комиссия (7–12%) удерживается только с исполнителей.",
     faqTitle: "Часто задаваемые вопросы",
     faq: [
-      { q: "Как работает 4You.AI?", a: "Опубликуйте задачу, получите предложения от проверенных исполнителей, сравните профили и цены, выберите лучшего. Оплата надёжно хранится в эскроу до завершения работ." },
+      { q: "Как работает Flow4You.AI?", a: "Опубликуйте задачу, получите предложения от проверенных исполнителей, сравните профили и цены, выберите лучшего. Оплата надёжно хранится в эскроу до завершения работ." },
       { q: "Защищена ли оплата?", a: "Да. Средства хранятся в эскроу и переводятся исполнителю только после подтверждения выполнения." },
       { q: "Как проверяются исполнители?", a: "Каждый исполнитель проходит проверку личности и подписывает договор перед началом работы." },
       { q: "Сколько это стоит?", a: "Публикация задачи бесплатна. Исполнители платят небольшую прогрессивную комиссию (7–12%) с выполненных заказов." },
@@ -145,7 +145,7 @@ const HOME_I18N: Record<L, {
     ],
   },
   he: {
-    metaTitle: "4You.AI — מצאו נותני שירות אמינים בישראל",
+    metaTitle: "Flow4You.AI — מצאו נותני שירות אמינים בישראל",
     metaDesc: "פרסמו משימה, השוו הצעות מנותני שירות מאומתים ושלמו בבטחה דרך נאמנות.",
     h1Pre: "Any task —",
     h1Brand: "A reliable pro",
@@ -159,7 +159,7 @@ const HOME_I18N: Record<L, {
     paymentsDesc: "תשלום דרך Allpy — הכספים נשמרים בנאמנות ומועברים לנותן השירות רק לאחר שאתם מאשרים שהעבודה הסתיימה. נתמכים כרטיסי אשראי, העברה בנקאית ומזומן/צ'ק. עמלת שירות פרוגרסיבית קטנה (7–12%) נגבית מנותני השירות בלבד.",
     faqTitle: "שאלות נפוצות",
     faq: [
-      { q: "איך 4You.AI עובד?", a: "פרסמו משימה, קבלו הצעות מנותני שירות מאומתים, השוו פרופילים ומחירים ובחרו את הטוב ביותר. התשלום נשמר בנאמנות עד לסיום העבודה." },
+      { q: "איך Flow4You.AI עובד?", a: "פרסמו משימה, קבלו הצעות מנותני שירות מאומתים, השוו פרופילים ומחירים ובחרו את הטוב ביותר. התשלום נשמר בנאמנות עד לסיום העבודה." },
       { q: "האם התשלום מוגן?", a: "כן. הכספים נשמרים בנאמנות ומועברים לנותן השירות רק לאחר שאתם מאשרים את סיום העבודה." },
       { q: "איך נותני השירות מאומתים?", a: "כל נותן שירות עובר אימות זהות וחותם על הסכם משפטי לפני קבלת משימות." },
       { q: "כמה זה עולה?", a: "פרסום משימה חינם. נותני שירות משלמים עמלת שירות פרוגרסיבית קטנה (7–12%) על עבודות שהושלמו." },
@@ -357,7 +357,7 @@ const IndexPage = () => {
             >
               <img
                 src={heroImage2}
-                alt="Get4You services"
+                alt="Flow4You services"
                 className="w-full max-w-lg rounded-2xl object-cover border border-border/40 shadow-xl ring-1 ring-black/5"
               />
             </motion.div>

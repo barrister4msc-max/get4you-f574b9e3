@@ -72,7 +72,7 @@ const Unsubscribe = () => {
             <>
               <h1 className="text-xl font-bold text-foreground">Отписка от рассылки</h1>
               <p className="text-muted-foreground">
-                Вы уверены, что хотите отписаться от уведомлений Get4You?
+                Вы уверены, что хотите отписаться от уведомлений Flow4You?
               </p>
               <Button onClick={handleUnsubscribe} variant="destructive">
                 Подтвердить отписку
@@ -85,7 +85,7 @@ const Unsubscribe = () => {
               <CheckCircle className="h-12 w-12 text-primary mx-auto" />
               <h1 className="text-xl font-bold text-foreground">Вы отписаны</h1>
               <p className="text-muted-foreground">
-                Вы больше не будете получать уведомления от Get4You.
+                Вы больше не будете получать уведомления от Flow4You.
               </p>
             </>
           )}

@@ -30,7 +30,7 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Подтвердите email для 4You</Preview>
+    <Preview>Подтвердите email для Flow4You</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
@@ -50,7 +50,7 @@ export const SignupEmail = ({
         <Text style={text}>
           Спасибо за регистрацию на{' '}
           <Link href={siteUrl} style={link}>
-            <strong>4You</strong>
+            <strong>Flow4You</strong>
           </Link>
           !
         </Text>
