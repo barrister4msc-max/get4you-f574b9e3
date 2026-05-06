@@ -656,6 +656,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Admin Panel
     'admin.panel': 'Admin Panel',
+    'admin.role.admin': 'Admin',
     'admin.dashboard': 'Dashboard',
     'admin.orders': 'Orders',
     'admin.users': 'Users',
