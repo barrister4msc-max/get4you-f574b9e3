@@ -357,7 +357,7 @@ const IndexPage = () => {
             >
               <img
                 src={heroImage2}
-                alt="FlowFlow4You services"
+                alt="Flow4You services"
                 className="w-full max-w-lg rounded-2xl object-cover border border-border/40 shadow-xl ring-1 ring-black/5"
               />
             </motion.div>
