@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getCachedTranslation,
@@ -28,6 +28,10 @@ export interface DisplayCopy {
  */
 export function useTaskTranslations(locale: string, tasks: TranslatableTask[]) {
   const [translated, setTranslated] = useState<Record<string, DisplayCopy>>({});
+  const taskMap = useMemo(
+    () => new Map(tasks.map((task) => [task.id, task] as const)),
+    [tasks],
+  );
 
   // Hydrate from localStorage cache when locale/tasks change.
   useEffect(() => {
@@ -77,40 +81,55 @@ export function useTaskTranslations(locale: string, tasks: TranslatableTask[]) {
     let cancelled = false;
 
     (async () => {
-      const { data, error } = await supabase.functions.invoke("ai-task-assistant", {
-        body: {
-          type: "translate_tasks",
-          targetLocale: locale,
-          tasks: need.map(({ id, title, description }) => ({
-            id,
-            title: title || "",
-            description,
-          })),
-        },
-      });
-      if (cancelled || error || !data?.translations) return;
+      const batches: TranslatableTask[][] = [];
+      for (let index = 0; index < need.length; index += 10) {
+        batches.push(need.slice(index, index + 10));
+      }
 
-      const valid = (data.translations as Array<{ id: string; title: string; description: string | null }>)
-        .map((tr) => {
-          const orig = need.find((task) => task.id === tr.id);
-          if (!orig) return null;
-          const next = {
-            id: tr.id,
-            title: tr.title || orig.title || "",
-            description: tr.description ?? orig.description,
-          };
-          return isTranslatedCopyUsable(
-            locale,
-            orig.title || "",
-            orig.description,
-            next,
-          )
-            ? next
-            : null;
-        })
-        .filter((tr): tr is { id: string; title: string; description: string | null } => Boolean(tr));
+      const valid: Array<{ id: string; title: string; description: string | null }> = [];
 
-      if (valid.length === 0) return;
+      for (const batch of batches) {
+        if (cancelled) return;
+
+        const { data, error } = await supabase.functions.invoke("ai-task-assistant", {
+          body: {
+            type: "translate_tasks",
+            targetLocale: locale,
+            tasks: batch.map(({ id, title, description }) => ({
+              id,
+              title: title || "",
+              description,
+            })),
+          },
+        });
+
+        if (error || !data?.translations) continue;
+
+        const batchValid = (data.translations as Array<{ id: string; title: string; description: string | null }>)
+          .map((tr) => {
+            const orig = taskMap.get(tr.id);
+            if (!orig) return null;
+            const next = {
+              id: tr.id,
+              title: tr.title || orig.title || "",
+              description: tr.description ?? orig.description,
+            };
+            return isTranslatedCopyUsable(
+              locale,
+              orig.title || "",
+              orig.description,
+              next,
+            )
+              ? next
+              : null;
+          })
+          .filter((tr): tr is { id: string; title: string; description: string | null } => Boolean(tr));
+
+        valid.push(...batchValid);
+      }
+
+      if (valid.length === 0 || cancelled) return;
+
       setCachedTranslations(locale, valid);
       setTranslated((prev) => {
         const next = { ...prev };
@@ -127,7 +146,7 @@ export function useTaskTranslations(locale: string, tasks: TranslatableTask[]) {
     return () => {
       cancelled = true;
     };
-  }, [locale, tasks, translated]);
+  }, [locale, taskMap, tasks, translated]);
 
   const getDisplayCopy = (task: TranslatableTask): DisplayCopy => {
     const key = makeKey(locale, task.id);

@@ -70,7 +70,7 @@ const ClusteredMarkers = ({ tasks, dir, openLabel }: { tasks: TasksMapTask[]; di
         m.bindPopup(
           `<div dir="${dir}" style="min-width:140px;text-align:${dir === 'rtl' ? 'right' : 'left'}">` +
             `<strong>${safeTitle}</strong>` +
-            `<div><a href="/tasks/${t.id}" style="color:hsl(var(--primary));font-size:11px;text-decoration:underline">${openLabel} ${arrow}</a></div>` +
+            `<div><a href="/task/${t.id}" style="color:hsl(var(--primary));font-size:11px;text-decoration:underline">${openLabel} ${arrow}</a></div>` +
             `</div>`
         );
         return m;
