@@ -36,96 +36,30 @@ type SeoRow = {
 type Lang = "en" | "ru" | "he";
 const langKey = (l: string): Lang => (l === "ru" || l === "he" ? l : "en");
 
-const CITY_NAMES: Record<string, Record<Lang, string>> = {
-  "tel-aviv": { en: "Tel Aviv", ru: "Тель-Авив", he: "תל אביב" },
-  haifa: { en: "Haifa", ru: "Хайфа", he: "חיפה" },
-  netanya: { en: "Netanya", ru: "Нетания", he: "נתניה" },
-  jerusalem: { en: "Jerusalem", ru: "Иерусалим", he: "ירושלים" },
-  "rishon-lezion": { en: "Rishon LeZion", ru: "Ришон-ле-Цион", he: "ראשון לציון" },
-  ashdod: { en: "Ashdod", ru: "Ашдод", he: "אשדוד" },
-  beersheba: { en: "Beersheba", ru: "Беэр-Шева", he: "באר שבע" },
-};
-const CATEGORY_NAMES: Record<string, Record<Lang, string>> = {
-  cleaning: { en: "Cleaning", ru: "Уборка", he: "ניקיון" },
-  moving: { en: "Moving", ru: "Переезд", he: "הובלות" },
-  repair: { en: "Repair", ru: "Ремонт", he: "תיקונים" },
-  delivery: { en: "Delivery", ru: "Доставка", he: "משלוחים" },
-  handyman: { en: "Handyman", ru: "Мастер на час", he: "הנדימן" },
-  tutoring: { en: "Tutoring", ru: "Репетиторство", he: "שיעורים פרטיים" },
-};
-const CATEGORY_NAMES_LOWER: Record<string, Record<Lang, string>> = {
-  cleaning: { en: "cleaning", ru: "по уборке", he: "ניקיון" },
-  moving: { en: "moving", ru: "по переезду", he: "הובלות" },
-  repair: { en: "repair", ru: "по ремонту", he: "תיקונים" },
-  delivery: { en: "delivery", ru: "по доставке", he: "משלוחים" },
-  handyman: { en: "handyman", ru: "мастера на час", he: "הנדימן" },
-  tutoring: { en: "tutoring", ru: "по репетиторству", he: "שיעורים פרטיים" },
-};
+function fillTemplate(s: string, vars: Record<string, string>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+}
 
 function buildTasksBlockStrings(
   citySlug: string | null,
   categorySlug: string | null,
-  lang: Lang,
+  t: (k: string) => string,
 ) {
-  const city = citySlug ? CITY_NAMES[citySlug]?.[lang] : null;
-  const cat = categorySlug ? CATEGORY_NAMES[categorySlug]?.[lang] : null;
-  const catLower = categorySlug ? CATEGORY_NAMES_LOWER[categorySlug]?.[lang] : null;
+  const cityKey = citySlug ? `seo.city.${citySlug}` : null;
+  const catKey = categorySlug ? `seo.cat.${categorySlug}` : null;
+  const catLowerKey = categorySlug ? `seo.catLower.${categorySlug}` : null;
+  const city = cityKey ? t(cityKey) || null : null;
+  const cat = catKey ? t(catKey) || null : null;
+  const catLower = catLowerKey ? t(catLowerKey) || cat : cat;
 
-  const titleParts = {
-    en: cat && city ? `${cat} tasks in ${city}` : cat ? `${cat} tasks` : city ? `Tasks in ${city}` : "Latest tasks",
-    ru: cat && city ? `Задачи ${catLower} в ${city}` : cat ? `Задачи ${catLower}` : city ? `Задачи в ${city}` : "Свежие задачи",
-    he: cat && city ? `משימות ${cat} ב${city}` : cat ? `משימות ${cat}` : city ? `משימות ב${city}` : "משימות אחרונות",
-  };
-  const emptyParts = {
-    en: cat && city
-      ? `No ${catLower} tasks in ${city} yet.`
-      : cat
-      ? `No ${catLower} tasks yet.`
-      : city
-      ? `No tasks in ${city} yet.`
-      : "No public tasks yet.",
-    ru: cat && city
-      ? `Пока нет задач ${catLower} в ${city}.`
-      : cat
-      ? `Пока нет задач ${catLower}.`
-      : city
-      ? `Пока нет задач в ${city}.`
-      : "Пока нет задач.",
-    he: cat && city
-      ? `אין עדיין משימות ${cat} ב${city}.`
-      : cat
-      ? `אין עדיין משימות ${cat}.`
-      : city
-      ? `אין עדיין משימות ב${city}.`
-      : "אין עדיין משימות ציבוריות.",
-  };
-  const ctaParts = {
-    en: cat && city
-      ? `Post ${catLower} task in ${city}`
-      : cat
-      ? `Post ${catLower} task`
-      : city
-      ? `Post a task in ${city}`
-      : "Post a task",
-    ru: cat && city
-      ? `Опубликовать задачу ${catLower} в ${city}`
-      : cat
-      ? `Опубликовать задачу ${catLower}`
-      : city
-      ? `Опубликовать задачу в ${city}`
-      : "Опубликовать задачу",
-    he: cat && city
-      ? `פרסמו משימת ${cat} ב${city}`
-      : cat
-      ? `פרסמו משימת ${cat}`
-      : city
-      ? `פרסמו משימה ב${city}`
-      : "פרסמו משימה",
-  };
+  const variant =
+    cat && city ? "cityCat" : cat ? "cat" : city ? "city" : "default";
+  const vars = { city: city || "", cat: cat || "", catLower: catLower || "" };
+
   return {
-    title: titleParts[lang],
-    empty: emptyParts[lang],
-    cta: ctaParts[lang],
+    title: fillTemplate(t(`seo.tasks.title.${variant}`), vars),
+    empty: fillTemplate(t(`seo.tasks.empty.${variant}`), vars),
+    cta: fillTemplate(t(`seo.tasks.cta.${variant}`), vars),
   };
 }
 
@@ -210,7 +144,7 @@ export default function SeoPage() {
   const h1 = (row as any)[`h1_${lang}`] || row.h1_en;
   const content = (row as any)[`content_${lang}`] || row.content_en;
   const canonical = buildCanonical(row.canonical_path || row.slug);
-  const tasksStrings = buildTasksBlockStrings(row.city_slug, row.category_slug, lang);
+  const tasksStrings = buildTasksBlockStrings(row.city_slug, row.category_slug, t);
   const createTaskHref = `/create-task${
     row.category_slug || row.city_slug
       ? `?${[
@@ -296,10 +230,10 @@ export default function SeoPage() {
                     <span>· {new Date(task.created_at).toLocaleDateString(locale)}</span>
                   </div>
                   <Link
-                    to={`/tasks/${task.id}`}
+                    to={`/task/${task.id}`}
                     className="text-sm text-primary hover:underline mt-auto"
                   >
-                    {locale === "ru" ? "Посмотреть задачу" : locale === "he" ? "צפייה במשימה" : "View task"}
+                    {t("seo.tasks.viewTask") || "View task"}
                   </Link>
                 </li>
               ))}
