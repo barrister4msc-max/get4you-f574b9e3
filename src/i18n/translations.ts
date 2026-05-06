@@ -874,6 +874,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'tasks.noResults': 'Задачи не найдены',
     'tasks.allTasks': 'Все задачи',
     'tasks.noMyTasks': 'Пока нет назначенных задач',
+    'tasks.forYou': 'Для вас',
+    'tasks.forYou.empty': 'Пока нет задач, подходящих по профилю — ниже все доступные задачи.',
     'tasks.status.open': 'Открыта',
     'tasks.status.in_progress': 'В работе',
     'tasks.status.completed': 'Завершена',
