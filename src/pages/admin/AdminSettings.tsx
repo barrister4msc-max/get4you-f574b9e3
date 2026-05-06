@@ -9,19 +9,19 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const settingsLinks = [
-  { to: '/admin/broadcast', label: 'WhatsApp Рассылка', icon: MessageSquare, desc: 'Отправка массовых сообщений исполнителям' },
-  { to: '/admin/esek-patur', label: 'Осек Патур', icon: FileText, desc: 'Управление заявками Осек Патур' },
-  { to: '/admin/employment', label: 'Трудовые договоры', icon: Briefcase, desc: 'Управление трудовыми договорами' },
-  { to: '/terms', label: 'Terms of Service', icon: ScrollText, desc: 'Загрузка и обновление условий использования' },
-  { to: '/privacy', label: 'Privacy Policy', icon: Shield, desc: 'Загрузка и обновление политики конфиденциальности' },
-];
-
 export default function AdminSettings() {
   const { t } = useLanguage();
   const { isSuperAdmin } = useAuth();
   const [adminEmail, setAdminEmail] = useState('');
   const [addingAdmin, setAddingAdmin] = useState(false);
+
+  const settingsLinks = [
+    { to: '/admin/broadcast', label: t('admin.settings.broadcast'), icon: MessageSquare, desc: t('admin.settings.broadcastDesc') },
+    { to: '/admin/esek-patur', label: t('admin.settings.esek'), icon: FileText, desc: t('admin.settings.esekDesc') },
+    { to: '/admin/employment', label: t('admin.settings.employment'), icon: Briefcase, desc: t('admin.settings.employmentDesc') },
+    { to: '/terms', label: t('admin.settings.terms'), icon: ScrollText, desc: t('admin.settings.termsDesc') },
+    { to: '/privacy', label: t('admin.settings.privacy'), icon: Shield, desc: t('admin.settings.privacyDesc') },
+  ];
 
   const handleAddAdmin = async () => {
     if (!adminEmail.trim()) return;
@@ -32,11 +32,11 @@ export default function AdminSettings() {
       });
 
       if (error) {
-        toast.error('Ошибка: ' + error.message);
+        toast.error(t('admin.settings.errorPrefix') + error.message);
       } else if (data?.error) {
         toast.error(data.error);
       } else {
-        toast.success(`${data.display_name || adminEmail} назначен администратором`);
+        toast.success(t('admin.settings.assignedToast').replace('{name}', data.display_name || adminEmail));
         setAdminEmail('');
       }
     } catch (e: any) {
@@ -55,11 +55,11 @@ export default function AdminSettings() {
         <Card className="mb-6 border-primary/20">
           <CardHeader className="flex flex-row items-center gap-3 pb-2">
             <UserPlus className="w-5 h-5 text-primary" />
-            <CardTitle className="text-base">Добавить администратора</CardTitle>
+            <CardTitle className="text-base">{t('admin.settings.addAdmin')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-3">
-              Введите email зарегистрированного пользователя, чтобы назначить его администратором.
+              {t('admin.settings.addAdminDesc')}
             </p>
             <div className="flex gap-2">
               <Input
@@ -72,7 +72,7 @@ export default function AdminSettings() {
               />
               <Button onClick={handleAddAdmin} disabled={addingAdmin || !adminEmail.trim()} size="sm">
                 {addingAdmin ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                Назначить
+                {t('admin.settings.assign')}
               </Button>
             </div>
           </CardContent>
