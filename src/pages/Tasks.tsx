@@ -130,7 +130,7 @@ const TaskCard = ({
       transition={{ delay: i * 0.05 }}
     >
       <Link
-        to={`/tasks/${task.id}`}
+        to={`/task/${task.id}`}
         className="block bg-card border border-border rounded-2xl p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
       >
         <div className="flex items-start gap-4">
