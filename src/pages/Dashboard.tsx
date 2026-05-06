@@ -793,9 +793,9 @@ const DashboardPage = () => {
                               : "bg-amber-50"
                         }`}
                       >
-                        {order.status === "paid" ? (
+                        {order.status?.toLowerCase() === "paid" ? (
                           <CheckCircle2 className="w-4 h-4 text-primary" />
-                        ) : order.status === "failed" ? (
+                        ) : order.status?.toLowerCase() === "failed" ? (
                           <ShoppingCart className="w-4 h-4 text-red-600" />
                         ) : (
                           <Clock className="w-4 h-4 text-amber-600" />
@@ -804,8 +804,8 @@ const DashboardPage = () => {
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{order.task?.title || order.id.slice(0, 8)}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(order.status)}`}>
-                            {t(`orders.status.${order.status}`) || order.status}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge(order.status?.toLowerCase())}`}>
+                            {t(`orders.status.${order.status?.toLowerCase()}`) || order.status}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {new Date(order.created_at).toLocaleDateString()}
@@ -817,7 +817,7 @@ const DashboardPage = () => {
                       {formatPrice(order.amount, currency, order.currency)}
                     </span>
                   </div>
-                  {order.status === "pending" && order.payment_url && (
+                  {order.status?.toLowerCase() === "pending" && order.payment_url && (
                     <a
                       href={order.payment_url}
                       target="_blank"
