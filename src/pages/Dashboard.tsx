@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
 import { ProfileMap } from "@/components/ProfileMap";
+import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
