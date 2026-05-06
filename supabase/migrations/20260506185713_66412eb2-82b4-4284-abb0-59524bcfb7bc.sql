@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.get_ai_usage_alerts(double precision);
