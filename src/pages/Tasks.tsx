@@ -233,6 +233,10 @@ const TasksPage = () => {
     { id: string; name_en: string; name_ru: string | null; name_he: string | null }[]
   >([]);
   const [tab, setTab] = useState<"all" | "my">("all");
+  // Within the "all" tab, toggle between recommended-for-you and full list.
+  // "for_you" prioritises matches by tasker skills/categories/geo. If nothing matches,
+  // we transparently fall back to the full list with a hint.
+  const [allView, setAllView] = useState<"for_you" | "all">("for_you");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
@@ -511,6 +515,22 @@ const TasksPage = () => {
 
   const displayTasks = tab === "my" ? myTasks : sortedFiltered;
 
+  // "For you" subset: keep only tasks with a positive recommendation score
+  // (skill / preferred-category match) OR within ~50km of the tasker.
+  const forYouTasks = sortedFiltered.filter((task) => {
+    const score = getTaskRecommendationScore(task, competencyTerms, preferredCategoryIds);
+    if (score > 0) return true;
+    if (userCoords) {
+      const d = getTaskDistance(task);
+      if (d != null && d <= 50) return true;
+    }
+    return false;
+  });
+  const forYouHasResults = forYouTasks.length > 0;
+  const allTabTasks =
+    isTasker && allView === "for_you" && forYouHasResults ? forYouTasks : sortedFiltered;
+  const finalDisplayTasks = tab === "my" ? myTasks : allTabTasks;
+
   return (
     <div className="py-8">
       <div className="container">
@@ -640,6 +660,34 @@ const TasksPage = () => {
             >
               {t("nav.myTasks")} ({myTasks.length})
             </button>
+          </div>
+        )}
+
+        {isTasker && tab === "all" && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <button
+              onClick={() => setAllView("for_you")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                allView === "for_you"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t("tasks.forYou")} {forYouHasResults ? `(${forYouTasks.length})` : ""}
+            </button>
+            <button
+              onClick={() => setAllView("all")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                allView === "all"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t("tasks.allTasks")} ({sortedFiltered.length})
+            </button>
+            {allView === "for_you" && !forYouHasResults && sortedFiltered.length > 0 && (
+              <span className="text-xs text-muted-foreground">{t("tasks.forYou.empty")}</span>
+            )}
           </div>
         )}
 
@@ -796,12 +844,12 @@ const TasksPage = () => {
 
         <div className="grid gap-4">
           {loading && <p className="text-center text-muted-foreground py-12">{t("dashboard.loading")}</p>}
-          {!loading && displayTasks.length === 0 && (
+          {!loading && finalDisplayTasks.length === 0 && (
             <p className="text-center text-muted-foreground py-12">
               {tab === "my" ? t("tasks.noMyTasks") : t("tasks.noResults")}
             </p>
           )}
-          {displayTasks.map((task, i) => {
+          {finalDisplayTasks.map((task, i) => {
             const displayCopy = getDisplayedTaskCopy(task);
             return (
               <TaskCard
