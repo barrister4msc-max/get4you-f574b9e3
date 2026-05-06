@@ -413,15 +413,15 @@ const DashboardPage = () => {
           <div className="mb-5 p-3 rounded-2xl border border-border bg-card">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs text-muted-foreground">Активная роль:</span>
+                <span className="text-xs text-muted-foreground">{t("dashboard.activeRole")}</span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
                   {activeRole === "tasker" ? (
                     <>
-                      <Briefcase className="w-3.5 h-3.5" /> Исполнитель
+                      <Briefcase className="w-3.5 h-3.5" /> {t("dashboard.role.tasker")}
                     </>
                   ) : (
                     <>
-                      <ClipboardList className="w-3.5 h-3.5" /> Заказчик
+                      <ClipboardList className="w-3.5 h-3.5" /> {t("dashboard.role.client")}
                     </>
                   )}
                 </span>
@@ -437,7 +437,7 @@ const DashboardPage = () => {
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    Заказчик
+                    {t("dashboard.role.client")}
                   </button>
                   <button
                     type="button"
@@ -448,7 +448,7 @@ const DashboardPage = () => {
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    Исполнитель
+                    {t("dashboard.role.tasker")}
                   </button>
                 </div>
               )}
