@@ -25,6 +25,8 @@ const getInitialLocale = (): Locale => {
   try {
     const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
     if (isLocale(stored)) return stored;
+    const nav = (window.navigator?.language || '').slice(0, 2).toLowerCase();
+    if (isLocale(nav)) return nav;
   } catch {}
   return 'en';
 };
