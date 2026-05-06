@@ -481,7 +481,7 @@ const TaskDetailPage = () => {
       if (!isExecutor) {
         const { error: roleError } = await addSelfRole(user.id, 'executor');
         // Ignore unique-violation (role already exists in a race); rethrow others.
-        if (roleError && !/duplicate key|unique/i.test(roleError.message)) {
+        if (roleError && !/duplicate key|unique/i.test((roleError as { message?: string }).message ?? '')) {
           throw roleError;
         }
         await refreshProfile();
