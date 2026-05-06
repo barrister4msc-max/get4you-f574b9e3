@@ -263,10 +263,14 @@ const AdminDisputes = () => {
         })
         .eq('id', dispute.id);
 
-      toast.success(`Dispute resolved in favor of ${favor}`);
+      toast.success(
+        favor === 'client'
+          ? t('dispute.toast.refundedToClient') || 'Refunded to client'
+          : t('dispute.toast.releasedToTasker') || 'Released to tasker',
+      );
       fetchDisputes();
     } catch {
-      toast.error('Failed to resolve dispute');
+      toast.error(t('dispute.toast.resolveFailed') || 'Failed to resolve dispute');
     } finally {
       setActionId(null);
     }
