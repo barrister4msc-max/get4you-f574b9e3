@@ -105,12 +105,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const queryLng = Number(searchParams.get('lng'));
   const hasQueryCoords = searchParams.get('nearby') === '1' && !Number.isNaN(queryLat) && !Number.isNaN(queryLng);
 
-  const anyLanguageLabel = useMemo(() => {
-    if (locale === 'ru') return 'Любой';
-    if (locale === 'he') return 'הכול';
-    if (locale === 'ar') return 'الكل';
-    return 'Any';
-  }, [locale]);
+  const anyLanguageLabel = t('nearby.anyLanguage') || 'Any';
 
   const languageOptions = useMemo(
     () => [
