@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { hasClientRole, hasWorkerRole, toDbRole, toUiRole } from '@/lib/roles';
 
 export type ActiveRole = 'client' | 'tasker';
 const STORAGE_KEY = 'dashboard_active_role';
@@ -18,8 +19,8 @@ const ActiveRoleContext = createContext<ActiveRoleContextValue | null>(null);
 export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { roles, profile, user, refreshProfile } = useAuth();
 
-  const isClient = roles.includes('client');
-  const isTasker = roles.includes('executor') || roles.includes('tasker');
+  const isClient = hasClientRole(roles);
+  const isTasker = hasWorkerRole(roles);
   const hasBothRoles = isClient && isTasker;
   const defaultRole: ActiveRole = isTasker && !isClient ? 'tasker' : 'client';
 
@@ -35,8 +36,8 @@ export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // alias to keep older components working.
   useEffect(() => {
     const dbRole = (profile as any)?.active_role as string | null | undefined;
-    if (dbRole === 'client' || dbRole === 'executor') {
-      const uiRole: ActiveRole = dbRole === 'executor' ? 'tasker' : 'client';
+    if (dbRole === 'client' || dbRole === 'executor' || dbRole === 'tasker') {
+      const uiRole: ActiveRole = toUiRole(dbRole);
       setActiveRoleState(uiRole);
       try { window.localStorage.setItem(STORAGE_KEY, uiRole); } catch {}
     }
@@ -74,7 +75,7 @@ export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch {}
     // Persist to profiles.active_role (canonical: executor, not tasker)
     if (user) {
-      const dbRole = r === 'tasker' ? 'executor' : 'client';
+      const dbRole = toDbRole(r);
       supabase
         .from('profiles')
         .update({ active_role: dbRole as never })
