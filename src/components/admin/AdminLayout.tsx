@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Users, Wrench, Star,
-  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield, Bug
+  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield, Bug, Activity
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ export const AdminLayout = () => {
     { to: '/admin/disputes', icon: AlertTriangle, label: 'Disputes' },
     { to: '/admin/chat', icon: MessageSquare, label: t('admin.chat') },
     { to: '/admin/settings', icon: FolderOpen, label: t('admin.settings') },
+    { to: '/admin/ai-usage', icon: Activity, label: t('admin.aiUsage') },
     { to: '/admin/audit-log', icon: Shield, label: 'Аудит-лог' },
     { to: '/admin/proposal-attempts', icon: Bug, label: 'Попытки откликов' },
   ];
