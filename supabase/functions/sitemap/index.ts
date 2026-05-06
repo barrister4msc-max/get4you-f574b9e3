@@ -19,27 +19,14 @@ Deno.serve(async () => {
     });
   }
 
-  const { data: tasks, error: tasksError } = await supabase.rpc("get_public_tasks_seo");
-  console.log("TASKS:", tasks?.length);
-  if (tasksError) {
-    console.error("Tasks sitemap error:", tasksError);
-  }
-
   const urls = [
-    { loc: `${SITE}/tasks/DEBUG-TEST` },
     ...staticUrls.map((p) => ({
       loc: p ? `${SITE}/${p}` : SITE,
       lastmod: null as string | null,
     })),
-
     ...(seoPages || []).map((r: any) => ({
       loc: `${SITE}${r.canonical_path || `/${r.slug}`}`,
-      lastmod: r.updated_at ? new Date(r.updated_at).toISOString() : null,
-    })),
-
-    ...(tasks || []).map((task: any) => ({
-      loc: `${SITE}/tasks/${task.id}`,
-      lastmod: task.updated_at ? new Date(task.updated_at).toISOString() : null,
+      lastmod: r.updated_at ? new Date(r.updated_at).toISOString().slice(0, 10) : null,
     })),
   ];
 
@@ -47,7 +34,12 @@ Deno.serve(async () => {
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls
-      .map((u) => `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`)
+      .map(
+        (u) =>
+          `  <url>\n    <loc>${u.loc}</loc>${
+            u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ""
+          }\n  </url>`,
+      )
       .join("\n") +
     `\n</urlset>\n`;
 
