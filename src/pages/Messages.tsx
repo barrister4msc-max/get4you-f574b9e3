@@ -45,7 +45,7 @@ export default function Messages() {
     for (const r of (rows ?? []) as DM[]) {
       const otherId = r.sender_id === user.id ? r.recipient_id : r.sender_id;
       if (!map.has(otherId)) {
-        map.set(otherId, { otherId, otherName: 'Admin', lastContent: r.content, lastAt: r.created_at });
+        map.set(otherId, { otherId, otherName: t('admin.role.admin') || 'Admin', lastContent: r.content, lastAt: r.created_at });
       }
     }
 
@@ -53,8 +53,8 @@ export default function Messages() {
     if (ids.length) {
       const { data: profiles } = await supabase.rpc('get_public_profiles', { target_user_ids: ids });
       profiles?.forEach((p: any) => {
-        const t = map.get(p.user_id);
-        if (t) t.otherName = p.display_name || 'Admin';
+        const th = map.get(p.user_id);
+        if (th) th.otherName = p.display_name || t('admin.role.admin') || 'Admin';
       });
     }
 
@@ -62,7 +62,7 @@ export default function Messages() {
     setThreads(list);
     setSelectedId((prev) => prev ?? list[0]?.otherId ?? null);
     setLoading(false);
-  }, [user]);
+  }, [user, t]);
 
   useEffect(() => { loadThreads(); }, [loadThreads]);
 
