@@ -25,7 +25,7 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Сброс пароля для 4You</Preview>
+    <Preview>Сброс пароля для Flow4You</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
@@ -38,7 +38,7 @@ export const RecoveryEmail = ({
         </Section>
         <Heading style={h1}>Сброс пароля</Heading>
         <Text style={text}>
-          Мы получили запрос на сброс пароля для вашего аккаунта 4You.
+          Мы получили запрос на сброс пароля для вашего аккаунта Flow4You.
           Нажмите на кнопку ниже, чтобы выбрать новый пароль.
         </Text>
         <Button style={button} href={confirmationUrl}>

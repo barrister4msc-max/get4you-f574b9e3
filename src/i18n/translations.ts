@@ -370,7 +370,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // For Taskers page
     'taskers.title': 'Earn Money on Your Terms',
     'taskers.subtitle': 'Join thousands of professionals earning with flexible schedules.',
-    'taskers.benefits.title': 'Why Join Get4You?',
+    'taskers.benefits.title': 'Why Join FlowFlow4You?',
     'taskers.benefits.subtitle': 'Everything you need to start earning — we handle the rest.',
     'taskers.benefit.quickStart': 'Registration takes just 5–10 minutes — start earning today',
     'taskers.benefit.profile': 'Create your profile and portfolio to showcase your skills',
@@ -1091,7 +1091,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'taskers.title': 'Зарабатывайте на своих условиях',
     'taskers.subtitle': 'Присоединяйтесь к тысячам профессионалов с гибким графиком.',
-    'taskers.benefits.title': 'Почему Get4You?',
+    'taskers.benefits.title': 'Почему FlowFlow4You?',
     'taskers.benefits.subtitle': 'Всё, что нужно для старта — остальное берём на себя.',
     'taskers.benefit.quickStart': 'Регистрация за 5–10 минут — начните зарабатывать сегодня',
     'taskers.benefit.profile': 'Создайте профиль и портфолио, чтобы показать свои навыки',
@@ -1808,7 +1808,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'taskers.title': 'הרוויחו בתנאים שלכם',
     'taskers.subtitle': 'הצטרפו לאלפי מקצוענים עם לוח זמנים גמיש.',
-    'taskers.benefits.title': 'למה Get4You?',
+    'taskers.benefits.title': 'למה FlowFlow4You?',
     'taskers.benefits.subtitle': 'כל מה שצריך כדי להתחיל להרוויח — אנחנו מטפלים בשאר.',
     'taskers.benefit.quickStart': 'הרשמה תוך 5–10 דקות — התחילו להרוויח היום',
     'taskers.benefit.profile': 'צרו פרופיל ותיק עבודות להצגת הכישורים שלכם',
@@ -2525,7 +2525,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     'taskers.title': 'اكسب بشروطك',
     'taskers.subtitle': 'انضم لآلاف المحترفين بجدول مرن.',
-    'taskers.benefits.title': 'لماذا Get4You؟',
+    'taskers.benefits.title': 'لماذا FlowFlow4You؟',
     'taskers.benefits.subtitle': 'كل ما تحتاجه للبدء — نحن نتولى الباقي.',
     'taskers.benefit.quickStart': 'التسجيل خلال 5–10 دقائق — ابدأ الكسب اليوم',
     'taskers.benefit.profile': 'أنشئ ملفك الشخصي ومعرض أعمالك لعرض مهاراتك',
