@@ -644,10 +644,21 @@ const DashboardPage = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm truncate">{task.title}</h3>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
-                        )}
+                        {(() => {
+                          const copy = getNearbyDisplayCopy({
+                            id: task.id,
+                            title: task.title ?? null,
+                            description: task.description ?? null,
+                          });
+                          return (
+                            <>
+                              <h3 className="font-semibold text-sm truncate">{copy.title}</h3>
+                              {copy.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{copy.description}</p>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         <div className="flex items-center gap-2 mt-2">
                           <span
