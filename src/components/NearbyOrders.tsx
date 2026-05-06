@@ -435,7 +435,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                 radiusKm === radius && coords ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {radius} km
+              {radius} {t('dashboard.tasker.km')}
             </button>
           ))}
         </div>
@@ -539,7 +539,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                     )}
                     {task.distance_km != null ? (
                       <span className="text-xs text-primary font-medium">
-                        {task.distance_km < 1 ? `${Math.round(task.distance_km * 1000)} m` : `${task.distance_km.toFixed(1)} km`}
+                        {task.distance_km < 1 ? `${Math.round(task.distance_km * 1000)} ${t('nearby.distanceMeters')}` : `${task.distance_km.toFixed(1)} ${t('dashboard.tasker.km')}`}
                         {task.city ? ` · ${task.city}` : ''}
                       </span>
                     ) : task.city ? (
