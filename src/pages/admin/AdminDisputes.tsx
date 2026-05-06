@@ -446,7 +446,7 @@ const AdminDisputes = () => {
                       <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
                         isOpen ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'
                       }`}>
-                        {dispute.status}
+                        {t(`admin.disputes.status.${dispute.status}`) || dispute.status}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {new Date(dispute.created_at).toLocaleDateString()}
@@ -457,27 +457,27 @@ const AdminDisputes = () => {
                 </div>
 
                 {/* Participants */}
-                <div className="flex gap-6 text-xs text-muted-foreground">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <User className="w-3 h-3" />
-                    <span>Client: <strong className="text-foreground">{dispute.client_name}</strong></span>
+                    <span>{t('admin.disputes.client') || 'Client'}: <strong className="text-foreground">{dispute.client_name}</strong></span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <User className="w-3 h-3" />
-                    <span>Tasker: <strong className="text-foreground">{dispute.tasker_name}</strong></span>
+                    <span>{t('admin.disputes.tasker') || 'Tasker'}: <strong className="text-foreground">{dispute.tasker_name}</strong></span>
                   </div>
                 </div>
 
                 {/* Reason */}
                 <div className="bg-secondary/50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Reason:</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">{t('admin.disputes.reason') || 'Reason'}:</p>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{dispute.reason}</p>
                 </div>
 
                 {/* Admin note (if resolved) */}
                 {dispute.admin_note && isResolved && (
                   <div className="bg-primary/5 rounded-lg p-3">
-                    <p className="text-xs font-medium text-primary mb-1">Admin note:</p>
+                    <p className="text-xs font-medium text-primary mb-1">{t('admin.disputes.adminNoteLabel') || 'Admin note'}:</p>
                     <p className="text-sm text-foreground">{dispute.admin_note}</p>
                   </div>
                 )}
@@ -488,18 +488,18 @@ const AdminDisputes = () => {
                     <textarea
                       value={adminNotes[dispute.id] || ''}
                       onChange={e => setAdminNotes(prev => ({ ...prev, [dispute.id]: e.target.value }))}
-                      placeholder="Admin note (optional)..."
+                      placeholder={t('admin.disputes.adminNotePlaceholder') || 'Admin note (optional)...'}
                       className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
                       rows={2}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => resolveDispute(dispute, 'client')}
                         disabled={actionId === dispute.id}
                         className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors disabled:opacity-50 dark:bg-amber-900/30 dark:text-amber-300"
                       >
                         {actionId === dispute.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
-                        Refund to Client
+                        {t('admin.disputes.refundToClient') || 'Refund to Client'}
                       </button>
                       <button
                         onClick={() => resolveDispute(dispute, 'tasker')}
@@ -507,15 +507,15 @@ const AdminDisputes = () => {
                         className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors disabled:opacity-50 dark:bg-emerald-900/30 dark:text-emerald-300"
                       >
                         {actionId === dispute.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                        Release to Tasker
+                        {t('admin.disputes.releaseToTasker') || 'Release to Tasker'}
                       </button>
                       {dispute.task_id && (
                         <a
                           href={`/admin/chat?taskId=${dispute.task_id}`}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors ml-auto"
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:bg-secondary transition-colors ms-auto"
                         >
                           <MessageSquare className="w-3 h-3" />
-                          View Chat
+                          {t('admin.disputes.viewChat') || 'View Chat'}
                         </a>
                       )}
                     </div>
