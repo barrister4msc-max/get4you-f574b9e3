@@ -5,6 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { Link, useSearchParams } from 'react-router-dom';
 import { MapPin, Loader2, Filter, Globe2, Tag, Users, CheckCircle2, ArrowDownUp } from 'lucide-react';
+import {
+  getCachedTranslation,
+  setCachedTranslations,
+  makeKey,
+  isTranslatedCopyUsable,
+} from '@/lib/translationCache';
 
 interface NearbyTask {
   id: string;
@@ -98,6 +104,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
   const [myProposalIds, setMyProposalIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [translated, setTranslated] = useState<Record<string, { title: string; description: string | null }>>({});
 
   const queryLat = Number(searchParams.get('lat'));
   const queryLng = Number(searchParams.get('lng'));
@@ -379,6 +386,83 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     return task.category_name_en;
   };
 
+  const getDisplayCopy = (task: NearbyTask): { title: string | null; description: string | null } => {
+    const key = makeKey(locale, task.id);
+    const inState = translated[key];
+    if (isTranslatedCopyUsable(locale, task.title || '', task.description, inState)) {
+      return inState;
+    }
+    const cached = getCachedTranslation(locale, task.id);
+    if (isTranslatedCopyUsable(locale, task.title || '', task.description, cached)) {
+      return { title: cached!.title, description: cached!.description };
+    }
+    return { title: task.title, description: task.description };
+  };
+
+  useEffect(() => {
+    const fromCache: Record<string, { title: string; description: string | null }> = {};
+    for (const task of tasks) {
+      const key = makeKey(locale, task.id);
+      if (!isTranslatedCopyUsable(locale, task.title || '', task.description, translated[key])) {
+        const cached = getCachedTranslation(locale, task.id);
+        if (isTranslatedCopyUsable(locale, task.title || '', task.description, cached)) {
+          fromCache[key] = { title: cached!.title, description: cached!.description };
+        }
+      }
+    }
+    if (Object.keys(fromCache).length > 0) {
+      setTranslated((prev) => ({ ...prev, ...fromCache }));
+    }
+  }, [locale, tasks, translated]);
+
+  useEffect(() => {
+    const need = tasks
+      .filter((task) => task.title || task.description)
+      .filter((task) => {
+        const key = makeKey(locale, task.id);
+        return (
+          !isTranslatedCopyUsable(locale, task.title || '', task.description, translated[key]) &&
+          !isTranslatedCopyUsable(locale, task.title || '', task.description, getCachedTranslation(locale, task.id))
+        );
+      });
+    if (need.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: fnError } = await supabase.functions.invoke('ai-task-assistant', {
+        body: {
+          type: 'translate_tasks',
+          targetLocale: locale,
+          tasks: need.map(({ id, title, description }) => ({ id, title, description })),
+        },
+      });
+      if (cancelled || fnError || !data?.translations) return;
+      const valid = (data.translations as Array<{ id: string; title: string; description: string | null }>)
+        .map((tr) => {
+          const orig = need.find((task) => task.id === tr.id);
+          if (!orig) return null;
+          const next = {
+            id: tr.id,
+            title: tr.title || orig.title || '',
+            description: tr.description ?? orig.description,
+          };
+          return isTranslatedCopyUsable(locale, orig.title || '', orig.description, next) ? next : null;
+        })
+        .filter((tr): tr is { id: string; title: string; description: string | null } => Boolean(tr));
+      if (valid.length === 0) return;
+      setCachedTranslations(locale, valid);
+      setTranslated((prev) => {
+        const next = { ...prev };
+        valid.forEach((tr) => {
+          next[makeKey(locale, tr.id)] = { title: tr.title, description: tr.description };
+        });
+        return next;
+      });
+    })().catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, tasks, translated]);
+
   const taskBudget = (task: NearbyTask): number => Number(task.budget_fixed ?? task.budget_min ?? task.budget_max ?? 0);
 
   const headerNote = useMemo(() => {
@@ -514,7 +598,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm truncate">
-                      {task.title || t('nearby.untitled') || 'Untitled'}
+                      {getDisplayCopy(task).title || t('nearby.untitled') || 'Untitled'}
                     </h3>
                     {task.is_urgent && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive">
@@ -528,8 +612,8 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
                       </span>
                     )}
                   </div>
-                  {task.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{task.description}</p>
+                  {getDisplayCopy(task).description && (
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{getDisplayCopy(task).description}</p>
                   )}
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {task.category_name_en && (
