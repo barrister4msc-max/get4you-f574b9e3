@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
-import { getCachedTranslation, setCachedTranslations, makeKey, isTranslatedCopyUsable } from "@/lib/translationCache";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { supabase } from "@/integrations/supabase/client";
+import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import { motion } from "framer-motion";
 import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation, Loader2 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
@@ -29,15 +29,6 @@ interface TaskRow {
   latitude: number | null;
   longitude: number | null;
   categories?: { name_en: string; name_ru: string | null; name_he: string | null } | null;
-}
-
-interface TranslatedTaskCopy {
-  title: string;
-  description: string | null;
-}
-
-interface TaskTranslationResult extends TranslatedTaskCopy {
-  id: string;
 }
 
 const urgencyColors: Record<string, string> = {
@@ -247,7 +238,6 @@ const TasksPage = () => {
   const [addressQuery, setAddressQuery] = useState("");
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
-  const [translatedTasks, setTranslatedTasks] = useState<Record<string, TranslatedTaskCopy>>({});
   const [nearbyDistances, setNearbyDistances] = useState<Record<string, number>>({});
 
   const isTasker = roles.includes("executor") || roles.includes("tasker");
