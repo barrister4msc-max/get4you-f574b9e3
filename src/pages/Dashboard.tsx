@@ -343,6 +343,15 @@ const DashboardPage = () => {
 
   const tt = (id: string, original: string) => translatedTitles[makeKey(locale, id)] || original;
 
+  const { getDisplayCopy: getNearbyDisplayCopy } = useTaskTranslations(
+    locale,
+    nearbyTasks.map((task) => ({
+      id: task.id,
+      title: task.title ?? null,
+      description: task.description ?? null,
+    })),
+  );
+
   const totalEarnings = escrowData.reduce((sum, e) => sum + Number(e.net_amount), 0);
   const pendingEarnings = allEscrow
     .filter((e) => e.status === "held")
