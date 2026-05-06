@@ -53,7 +53,7 @@ const PaymentSuccess = () => {
               {order && (
                 <div className="bg-muted rounded-lg p-4 text-sm space-y-1">
                   <p><span className="font-medium">{t('payment.amount') || 'Amount'}:</span> {order.amount} {order.currency}</p>
-                  <p><span className="font-medium">{t('payment.status') || 'Status'}:</span> {order.status === 'paid' ? '✅ Paid' : order.status === 'pending' ? '⏳ Processing' : order.status}</p>
+                  <p><span className="font-medium">{t('payment.status') || 'Status'}:</span> {order.status === 'paid' ? `✅ ${t('orders.status.paid') || 'Paid'}` : order.status === 'pending' ? `⏳ ${t('orders.status.pending') || 'Processing'}` : (t(`orders.status.${order.status}`) || order.status)}</p>
                 </div>
               )}
               <div className="flex flex-col gap-2 pt-2">
