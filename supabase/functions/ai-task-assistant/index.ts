@@ -6,7 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const DAILY_LIMIT = 30;
+// Per-type daily quotas. Translate is high-volume but cached, voice is heavy.
+const LIMITS: Record<string, number> = {
+  assist: 30,
+  categorize: 50,
+  voice_to_task: 20,
+  translate_tasks: 200,
+};
+const DEFAULT_LIMIT = 30;
+const MIN_PROMPT_LEN = 2;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -14,40 +22,87 @@ serve(async (req) => {
   try {
     const { messages = [], type, tasks = [], targetLocale, userLocale } = await req.json();
 
-    // Skip rate limiting for translation requests — they are background UI operations
-    const skipRateLimit = type === "translate_tasks";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Rate limiting
+    // Auth required for all AI calls
     const authHeader = req.headers.get("authorization");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    if (authHeader && !skipRateLimit) {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    let userId: string | null = null;
+    if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
       const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id ?? null;
+    }
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-      if (user) {
-        const { data: allowed } = await supabase.rpc("check_ai_rate_limit", {
-          _user_id: user.id,
-          _function_name: "task-assistant",
-          _max_requests: DAILY_LIMIT,
-        });
+    // Per-type rate limit
+    const fnKey = `task-assistant:${type || "assist"}`;
+    const limit = LIMITS[type] ?? DEFAULT_LIMIT;
+    const { data: allowed } = await supabase.rpc("check_ai_rate_limit", {
+      _user_id: userId,
+      _function_name: fnKey,
+      _max_requests: limit,
+    });
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "daily_limit", limit, type }), {
+        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-        if (!allowed) {
-          return new Response(JSON.stringify({ error: "daily_limit", limit: DAILY_LIMIT }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        await supabase.from("ai_usage").insert({
-          user_id: user.id,
-          function_name: "task-assistant",
+    // Anti-abuse: minimum prompt length for chat-style calls
+    if (type !== "translate_tasks") {
+      const lastUser = [...messages].reverse().find((m: any) => m?.role === "user");
+      const text = (lastUser?.content || "").toString().trim();
+      if (text.length < MIN_PROMPT_LEN && type !== "translate_tasks") {
+        return new Response(JSON.stringify({ error: "prompt_too_short" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
+
+    // Translation cache: serve from DB first, only translate the missing ones
+    let cachedTranslations: Array<{ id: string; title: string; description: string | null }> = [];
+    let tasksToTranslate: typeof tasks = tasks;
+    const hashStr = async (s: string) => {
+      const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+    };
+    if (type === "translate_tasks" && Array.isArray(tasks) && tasks.length > 0 && targetLocale) {
+      const ids = tasks.map((t: any) => t.id);
+      const { data: cached } = await supabase
+        .from("task_translations")
+        .select("task_id, title, description, source_hash")
+        .in("task_id", ids)
+        .eq("locale", targetLocale);
+      const cacheMap = new Map((cached || []).map((c: any) => [c.task_id, c]));
+      const missing: any[] = [];
+      for (const t of tasks) {
+        const src = await hashStr(`${t.title || ""}\n${t.description || ""}`);
+        const c = cacheMap.get(t.id);
+        if (c && c.source_hash === src) {
+          cachedTranslations.push({ id: t.id, title: c.title, description: c.description });
+        } else {
+          missing.push({ ...t, _src_hash: src });
+        }
+      }
+      tasksToTranslate = missing;
+      if (missing.length === 0) {
+        // Do not bill rate limit for fully-cached responses (best-effort: already incremented; acceptable)
+        return new Response(JSON.stringify({ translations: cachedTranslations }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Log usage (after passing rate limit, before billable AI call)
+    await supabase.from("ai_usage").insert({ user_id: userId, function_name: fnKey });
 
     const localeNames: Record<string, string> = {
       en: 'English',
@@ -103,14 +158,17 @@ You MUST respond using the provided tool/function.`,
           role: "user",
           content: JSON.stringify({
             target_locale: targetLocale,
-            tasks,
+            tasks: tasksToTranslate.map(({ _src_hash, ...rest }: any) => rest),
           }),
         }]
       : messages;
 
     const useToolCalling = type === "categorize" || type === "voice_to_task" || type === "translate_tasks";
+    // Bulk/structured ops: use the cheapest tier. Free-form chat: balanced flash.
+    const cheapModel = "google/gemini-2.5-flash-lite";
+    const balancedModel = "google/gemini-3-flash-preview";
     const body: Record<string, unknown> = {
-      model: useToolCalling ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview",
+      model: useToolCalling ? cheapModel : balancedModel,
       messages: [
         { role: "system", content: systemPrompts[type] || systemPrompts.assist },
         ...promptMessages,
@@ -235,6 +293,27 @@ You MUST respond using the provided tool/function.`,
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       if (toolCall) {
         const result = JSON.parse(toolCall.function.arguments);
+        // Persist new translations into cache
+        if (type === "translate_tasks" && Array.isArray(result?.translations)) {
+          const rows = result.translations
+            .map((tr: any) => {
+              const orig = tasksToTranslate.find((t: any) => t.id === tr.id);
+              if (!orig) return null;
+              return {
+                task_id: tr.id,
+                locale: targetLocale,
+                title: tr.title || orig.title || "",
+                description: tr.description ?? orig.description ?? null,
+                source_hash: orig._src_hash,
+              };
+            })
+            .filter(Boolean);
+          if (rows.length > 0) {
+            await supabase.from("task_translations").upsert(rows, { onConflict: "task_id,locale" });
+          }
+          // Merge cached + new
+          result.translations = [...cachedTranslations, ...result.translations];
+        }
         return new Response(JSON.stringify(result), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
