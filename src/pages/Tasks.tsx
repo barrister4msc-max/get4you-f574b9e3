@@ -233,6 +233,10 @@ const TasksPage = () => {
     { id: string; name_en: string; name_ru: string | null; name_he: string | null }[]
   >([]);
   const [tab, setTab] = useState<"all" | "my">("all");
+  // Within the "all" tab, toggle between recommended-for-you and full list.
+  // "for_you" prioritises matches by tasker skills/categories/geo. If nothing matches,
+  // we transparently fall back to the full list with a hint.
+  const [allView, setAllView] = useState<"for_you" | "all">("for_you");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
