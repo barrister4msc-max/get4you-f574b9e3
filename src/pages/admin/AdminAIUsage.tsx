@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, Download, Save } from "lucide-react";
+import { toast } from "sonner";
 
 interface UsageRow {
   function_name: string;
@@ -24,6 +26,15 @@ interface AlertRow {
   daily_limit: number;
   usage_ratio: number;
 }
+interface ThresholdRow {
+  id: string;
+  function_name: string;
+  daily_limit: number;
+  warn_pct: number;
+  high_pct: number;
+  critical_pct: number;
+  block_pct: number;
+}
 
 const csvEscape = (v: unknown) => {
   const s = v == null ? "" : String(v);
@@ -40,11 +51,23 @@ const downloadCsv = (filename: string, rows: (string | number)[][]) => {
 
 export default function AdminAIUsage() {
   const [days, setDays] = useState(7);
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("");
   const [stats, setStats] = useState<UsageRow[]>([]);
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [thresholds, setThresholds] = useState<ThresholdRow[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  const loadThresholds = async () => {
+    const { data } = await supabase
+      .from("ai_alert_thresholds")
+      .select("*")
+      .order("function_name");
+    setThresholds((data || []) as ThresholdRow[]);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -70,36 +93,88 @@ export default function AdminAIUsage() {
         (profs || []).forEach((p: any) => { map[p.user_id] = p.display_name || p.user_id.slice(0, 8); });
         setProfiles(map);
       }
+      await loadThresholds();
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [days]);
 
+  const filteredStats = useMemo(() => {
+    const q = userFilter.trim().toLowerCase();
+    return stats.filter((r) => {
+      if (q) {
+        const name = (profiles[r.user_id] || "").toLowerCase();
+        if (!name.includes(q) && !r.user_id.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [stats, userFilter, profiles]);
+
   const totals = useMemo(() => {
-    const total = stats.reduce((acc, r) => acc + Number(r.request_count), 0);
+    const total = filteredStats.reduce((acc, r) => acc + Number(r.request_count), 0);
     const byFn = new Map<string, number>();
-    stats.forEach((r) => byFn.set(r.function_name, (byFn.get(r.function_name) || 0) + Number(r.request_count)));
-    const uniqueUsers = new Set(stats.map((r) => r.user_id)).size;
+    filteredStats.forEach((r) => byFn.set(r.function_name, (byFn.get(r.function_name) || 0) + Number(r.request_count)));
+    const uniqueUsers = new Set(filteredStats.map((r) => r.user_id)).size;
     return { total, byFn: Array.from(byFn.entries()).sort((a, b) => b[1] - a[1]), uniqueUsers };
-  }, [stats]);
+  }, [filteredStats]);
 
   const topUsers = useMemo(() => {
     const map = new Map<string, number>();
-    stats.forEach((r) => map.set(r.user_id, (map.get(r.user_id) || 0) + Number(r.request_count)));
+    filteredStats.forEach((r) => map.set(r.user_id, (map.get(r.user_id) || 0) + Number(r.request_count)));
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  }, [stats]);
+  }, [filteredStats]);
 
+  const filterSuffix = () => {
+    const parts: string[] = [`${days}d`];
+    if (roleFilter !== "all") parts.push(`role-${roleFilter}`);
+    if (userFilter.trim()) parts.push(`user-${userFilter.trim().slice(0, 20).replace(/[^a-z0-9_-]/gi, "_")}`);
+    return parts.join("_");
+  };
+  const filterMeta = (): (string | number)[][] => [
+    ["# Export generated", new Date().toISOString()],
+    ["# Range", days === 1 ? "Last 24h" : `Last ${days} days`],
+    ["# Role filter", roleFilter],
+    ["# User filter", userFilter || "(none)"],
+    ["# Rows", filteredStats.length],
+    [],
+  ];
   const exportStatsCsv = () => {
     const header = ["function_name", "user_id", "user_name", "request_count", "last_used"];
-    const body = stats.map((r) => [
+    const body = filteredStats.map((r) => [
       r.function_name, r.user_id, profiles[r.user_id] || "", r.request_count, r.last_used,
     ]);
-    downloadCsv(`ai-usage-stats-${days}d-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...body]);
+    downloadCsv(
+      `ai-usage-stats_${filterSuffix()}_${new Date().toISOString().slice(0, 10)}.csv`,
+      [...filterMeta(), header, ...body],
+    );
   };
   const exportDailyCsv = () => {
     const header = ["day", "function_name", "request_count"];
     const body = daily.map((r) => [r.day, r.function_name, r.request_count]);
-    downloadCsv(`ai-usage-daily-${days}d-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...body]);
+    downloadCsv(
+      `ai-usage-daily_${filterSuffix()}_${new Date().toISOString().slice(0, 10)}.csv`,
+      [...filterMeta(), header, ...body],
+    );
+  };
+
+  const updateThreshold = (id: string, field: keyof ThresholdRow, value: number) => {
+    setThresholds((prev) => prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)));
+  };
+  const saveThreshold = async (row: ThresholdRow) => {
+    setSavingId(row.id);
+    const { error } = await supabase
+      .from("ai_alert_thresholds")
+      .update({
+        daily_limit: row.daily_limit,
+        warn_pct: row.warn_pct,
+        high_pct: row.high_pct,
+        critical_pct: row.critical_pct,
+        block_pct: row.block_pct,
+      })
+      .eq("id", row.id);
+    setSavingId(null);
+    if (error) toast.error(error.message);
+    else toast.success(`Saved ${row.function_name}`);
   };
 
   return (
@@ -124,6 +199,71 @@ export default function AdminAIUsage() {
           </Button>
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-2 items-center">
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="px-3 py-1.5 text-sm rounded-md border bg-card text-foreground border-border"
+        >
+          <option value="all">All roles</option>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+          <option value="super_admin">Super admin</option>
+        </select>
+        <Input
+          value={userFilter}
+          onChange={(e) => setUserFilter(e.target.value)}
+          placeholder="Filter by user name or ID…"
+          className="max-w-xs h-9"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Alert thresholds (configurable)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Function</TableHead>
+                <TableHead className="w-24">Daily limit</TableHead>
+                <TableHead className="w-20">Warn %</TableHead>
+                <TableHead className="w-20">High %</TableHead>
+                <TableHead className="w-24">Critical %</TableHead>
+                <TableHead className="w-20">Block %</TableHead>
+                <TableHead className="w-24"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {thresholds.map((t) => (
+                <TableRow key={t.id}>
+                  <TableCell className="font-mono text-xs">{t.function_name.replace("task-assistant:", "")}</TableCell>
+                  {(["daily_limit","warn_pct","high_pct","critical_pct","block_pct"] as const).map((f) => (
+                    <TableCell key={f}>
+                      <Input
+                        type="number"
+                        className="h-8"
+                        value={t[f]}
+                        onChange={(e) => updateThreshold(t.id, f, Number(e.target.value))}
+                      />
+                    </TableCell>
+                  ))}
+                  <TableCell>
+                    <Button size="sm" variant="outline" disabled={savingId === t.id} onClick={() => saveThreshold(t)}>
+                      <Save className="w-3 h-3 me-1" /> Save
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {thresholds.length === 0 && (
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No thresholds configured</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {alerts.length > 0 && (
         <Card className="border-destructive/40">
