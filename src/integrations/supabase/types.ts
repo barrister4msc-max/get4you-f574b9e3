@@ -2280,19 +2280,16 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
-      get_ai_usage_alerts:
-        | {
-            Args: { _threshold?: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.get_ai_usage_alerts(_threshold => float8), public.get_ai_usage_alerts(_threshold => numeric). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
-          }
-        | {
-            Args: { _threshold?: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.get_ai_usage_alerts(_threshold => float8), public.get_ai_usage_alerts(_threshold => numeric). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
-          }
+      get_ai_usage_alerts: {
+        Args: { _threshold?: number }
+        Returns: {
+          daily_limit: number
+          function_name: string
+          request_count: number
+          usage_ratio: number
+          user_id: string
+        }[]
+      }
       get_ai_usage_daily: {
         Args: { _days?: number }
         Returns: {
