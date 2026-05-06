@@ -114,11 +114,17 @@ const ProfilePage = () => {
 
   const handleSaveRoles = async () => {
     if (!user) return;
-    if (selectedRoles.length === 0) { toast.error(t('profile.roles.needOne')); return; }
+    // Only one ordinary role at a time: client OR executor (never both).
+    const ordinary = selectedRoles.filter((r) => r === 'client' || r === 'executor');
+    if (ordinary.length === 0) { toast.error(t('profile.roles.needOne')); return; }
+    if (ordinary.length > 1) { toast.error(t('profile.roles.needOne')); return; }
+    const chosen = ordinary[0] as 'client' | 'executor';
     setSavingRoles(true);
     try {
-      const toAdd = selectedRoles.filter(r => !roles.includes(r));
-      const toRemove = roles.filter(r => !selectedRoles.includes(r) && (r === 'client' || r === 'executor'));
+      const toRemove = roles.filter(
+        (r) => (r === 'client' || r === 'executor') && r !== chosen,
+      );
+      const toAdd = roles.includes(chosen) ? [] : [chosen];
       for (const role of toRemove) {
         const { error } = await removeSelfRole(user.id, role as SelfRole);
         if (error) throw error;
@@ -127,6 +133,11 @@ const ProfilePage = () => {
         const { error } = await addSelfRole(user.id, role as SelfRole);
         if (error) throw error;
       }
+      // Persist as the active role too so UI and DB stay aligned.
+      await supabase
+        .from('profiles')
+        .update({ active_role: chosen as never })
+        .eq('user_id', user.id);
       await refreshProfile();
       toast.success(t('profile.roles.updated'));
     } catch (err: any) {

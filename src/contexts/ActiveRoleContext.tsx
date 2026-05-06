@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export type ActiveRole = 'client' | 'tasker';
 const STORAGE_KEY = 'dashboard_active_role';
@@ -15,7 +16,7 @@ interface ActiveRoleContextValue {
 const ActiveRoleContext = createContext<ActiveRoleContextValue | null>(null);
 
 export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { roles } = useAuth();
+  const { roles, profile, user, refreshProfile } = useAuth();
 
   const isClient = roles.includes('client');
   const isTasker = roles.includes('executor') || roles.includes('tasker');
@@ -28,6 +29,18 @@ export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (stored === 'client' || stored === 'tasker') return stored;
     return defaultRole;
   });
+
+  // Primary source: profile.active_role (DB). Fallback: localStorage / default.
+  // Internally `executor` is the canonical worker role; map to UI's `tasker`
+  // alias to keep older components working.
+  useEffect(() => {
+    const dbRole = (profile as any)?.active_role as string | null | undefined;
+    if (dbRole === 'client' || dbRole === 'executor') {
+      const uiRole: ActiveRole = dbRole === 'executor' ? 'tasker' : 'client';
+      setActiveRoleState(uiRole);
+      try { window.localStorage.setItem(STORAGE_KEY, uiRole); } catch {}
+    }
+  }, [profile]);
 
   // Sync if user only has one role
   useEffect(() => {
@@ -59,6 +72,17 @@ export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       window.localStorage.setItem(STORAGE_KEY, r);
       window.dispatchEvent(new CustomEvent('active-role-changed', { detail: r }));
     } catch {}
+    // Persist to profiles.active_role (canonical: executor, not tasker)
+    if (user) {
+      const dbRole = r === 'tasker' ? 'executor' : 'client';
+      supabase
+        .from('profiles')
+        .update({ active_role: dbRole as never })
+        .eq('user_id', user.id)
+        .then(({ error }) => {
+          if (!error) refreshProfile();
+        });
+    }
   };
 
   const value = useMemo(

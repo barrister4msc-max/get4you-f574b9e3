@@ -1167,6 +1167,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_role: Database["public"]["Enums"]["app_role"] | null
           avatar_url: string | null
           bio: string | null
           city: string | null
@@ -1201,6 +1202,7 @@ export type Database = {
           user_number: number
         }
         Insert: {
+          active_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -1235,6 +1237,7 @@ export type Database = {
           user_number?: number
         }
         Update: {
+          active_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
           bio?: string | null
           city?: string | null
@@ -1795,6 +1798,24 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles_backup_before_active_role_fix: {
+        Row: {
+          id: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
         }
         Relationships: []
       }

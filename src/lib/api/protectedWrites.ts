@@ -29,8 +29,41 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type SelfRole = "client" | "executor";
 
+const ALLOWED_SELF_ROLES: readonly SelfRole[] = ["client", "executor"] as const;
+
+async function invokeManageSelfRole(
+  action: "add" | "remove",
+  userId: string,
+  role: SelfRole,
+): Promise<{ ok: boolean; error?: unknown }> {
+  try {
+    const { data, error } = await supabase.functions.invoke(
+      "manage-self-role",
+      { body: { action, user_id: userId, role } },
+    );
+    if (error) {
+      // Function not deployed (404) → signal fallback to caller.
+      const msg = (error as { message?: string }).message ?? "";
+      if (/not\s*found|404/i.test(msg)) return { ok: false };
+      return { ok: false, error };
+    }
+    if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+      return { ok: false, error: new Error(String((data as { error: unknown }).error)) };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false };
+  }
+}
+
 export async function addSelfRole(userId: string, role: SelfRole) {
-  // TODO: route through Edge Function once `manage-self-role` is deployed.
+  if (!ALLOWED_SELF_ROLES.includes(role)) {
+    return { error: new Error(`Invalid self role: ${role}`) };
+  }
+  const res = await invokeManageSelfRole("add", userId, role);
+  if (res.ok) return { error: null };
+  if (res.error) return { error: res.error };
+  // Fallback: direct insert (RLS-protected).
   const { error } = await supabase
     .from("user_roles")
     .insert({ user_id: userId, role: role as never });
@@ -38,7 +71,13 @@ export async function addSelfRole(userId: string, role: SelfRole) {
 }
 
 export async function removeSelfRole(userId: string, role: SelfRole) {
-  // TODO: route through Edge Function once `manage-self-role` is deployed.
+  if (!ALLOWED_SELF_ROLES.includes(role)) {
+    return { error: new Error(`Invalid self role: ${role}`) };
+  }
+  const res = await invokeManageSelfRole("remove", userId, role);
+  if (res.ok) return { error: null };
+  if (res.error) return { error: res.error };
+  // Fallback: direct delete (RLS-protected).
   const { error } = await supabase
     .from("user_roles")
     .delete()
