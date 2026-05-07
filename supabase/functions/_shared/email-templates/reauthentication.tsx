@@ -20,7 +20,7 @@ interface ReauthenticationEmailProps {
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Ваш код подтверждения Flow4You</Preview>
+    <Preview>Ваш код подтверждения 4YOU.AI</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
