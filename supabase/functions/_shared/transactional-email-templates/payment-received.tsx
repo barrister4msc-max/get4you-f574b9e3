@@ -15,7 +15,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "4YOU.AI"
+const SITE_NAME = "Flow4You"
 
 interface PaymentReceivedProps {
   taskerName?: string
