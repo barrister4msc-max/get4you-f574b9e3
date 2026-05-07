@@ -321,7 +321,7 @@ const TaskDetailPage = () => {
 
     const fetchLatestPaymentOrder = async () => {
       const { data } = await supabase
-        .from('orders')
+        .from('orders_safe')
         .select('id, status, payment_url, provider_status, created_at, proposal_id')
         .eq('task_id', id)
         .eq('user_id', user.id)
