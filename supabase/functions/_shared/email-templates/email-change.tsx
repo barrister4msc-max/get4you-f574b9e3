@@ -30,7 +30,7 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Подтвердите смену email для Flow4You</Preview>
+    <Preview>Подтвердите смену email для 4YOU.AI</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
@@ -43,7 +43,7 @@ export const EmailChangeEmail = ({
         </Section>
         <Heading style={h1}>Подтвердите смену email</Heading>
         <Text style={text}>
-          Вы запросили смену email-адреса для Flow4You с{' '}
+          Вы запросили смену email-адреса для 4YOU.AI с{' '}
           <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
           на{' '}
           <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.

@@ -28,7 +28,7 @@ export const InviteEmail = ({
 }: InviteEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Вас пригласили присоединиться к Flow4You</Preview>
+    <Preview>Вас пригласили присоединиться к 4YOU.AI</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={logoSection}>
@@ -43,7 +43,7 @@ export const InviteEmail = ({
         <Text style={text}>
           Вас пригласили присоединиться к{' '}
           <Link href={siteUrl} style={link}>
-            <strong>Flow4You</strong>
+            <strong>4YOU.AI</strong>
           </Link>
           . Нажмите на кнопку ниже, чтобы принять приглашение и создать аккаунт.
         </Text>
