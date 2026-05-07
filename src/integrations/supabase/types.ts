@@ -1873,14 +1873,18 @@ export type Database = {
       orders_safe: {
         Row: {
           amount: number | null
+          assignment_id: string | null
           created_at: string | null
           currency: string | null
+          description: string | null
           id: string | null
+          lat: number | null
+          lng: number | null
           payment_url: string | null
+          price: number | null
           proposal_id: string | null
           provider: string | null
           provider_order_id: string | null
-          provider_payment_id: string | null
           provider_status: string | null
           status: string | null
           task_id: string | null
@@ -1890,14 +1894,18 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          assignment_id?: string | null
           created_at?: string | null
           currency?: string | null
+          description?: string | null
           id?: string | null
+          lat?: number | null
+          lng?: number | null
           payment_url?: string | null
+          price?: number | null
           proposal_id?: string | null
           provider?: string | null
           provider_order_id?: string | null
-          provider_payment_id?: string | null
           provider_status?: string | null
           status?: string | null
           task_id?: string | null
@@ -1907,14 +1915,18 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          assignment_id?: string | null
           created_at?: string | null
           currency?: string | null
+          description?: string | null
           id?: string | null
+          lat?: number | null
+          lng?: number | null
           payment_url?: string | null
+          price?: number | null
           proposal_id?: string | null
           provider?: string | null
           provider_order_id?: string | null
-          provider_payment_id?: string | null
           provider_status?: string | null
           status?: string | null
           task_id?: string | null
@@ -1923,6 +1935,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "task_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_proposal_id_fkey"
             columns: ["proposal_id"]
