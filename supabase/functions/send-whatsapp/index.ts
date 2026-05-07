@@ -1,5 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js/cors";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-internal-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 const TWILIO_FROM = "whatsapp:+14155238886"; // Twilio Sandbox
@@ -16,29 +21,60 @@ Deno.serve(async (req) => {
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured");
 
-    // Validate JWT
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Two auth modes:
+    //  1) Internal/system call from another edge function: must present
+    //     X-Internal-Secret matching INTERNAL_FUNCTION_SECRET.
+    //  2) User-triggered call: must present a valid Supabase JWT.
+    const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
+    const incomingInternal = req.headers.get("x-internal-secret");
+    const isInternal =
+      !!internalSecret && !!incomingInternal && incomingInternal === internalSecret;
+
+    let userId: string | null = null;
+    if (!isInternal) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } =
+        await supabaseAuth.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = claimsData.claims.sub as string;
     }
 
-    const supabase = createClient(
+    const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const auditSend = async (
+      kind: string,
+      to: string | string[],
+      meta: Record<string, unknown>,
+    ) => {
+      try {
+        await adminClient.from("app_events").insert({
+          actor_id: userId,
+          event_type: `whatsapp.${kind}`,
+          entity_type: "whatsapp",
+          metadata: { to, internal: isInternal, ...meta },
+        });
+      } catch (_) { /* swallow */ }
+    };
 
     const body = await req.json();
     const { type, phone, message, task_id, phones } = body;
@@ -88,10 +124,6 @@ Deno.serve(async (req) => {
       }
       let targetPhone = phone;
       if (!targetPhone && body.user_id) {
-        const adminClient = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-        );
         const { data: profile } = await adminClient
           .from("profiles")
           .select("phone")
@@ -107,7 +139,9 @@ Deno.serve(async (req) => {
       }
       const taskUrl = `https://get4you.lovable.app/tasks/${task_id}`;
       const text = message || `🎉 You've been selected for a task! View details: ${taskUrl}`;
-      results.push(await sendWhatsApp(targetPhone, text));
+      const r = await sendWhatsApp(targetPhone, text);
+      results.push(r);
+      await auditSend(r.success ? "sent" : "failed", targetPhone, { type, task_id });
     } else if (type === "new_proposal") {
       // Notify task owner about a new proposal
       if (!phone || !task_id) {
@@ -118,21 +152,23 @@ Deno.serve(async (req) => {
       }
       const taskUrl = `https://get4you.lovable.app/tasks/${task_id}`;
       const text = message || `📩 New proposal on your task! View: ${taskUrl}`;
-      results.push(await sendWhatsApp(phone, text));
+      const r = await sendWhatsApp(phone, text);
+      results.push(r);
+      await auditSend(r.success ? "sent" : "failed", phone, { type, task_id });
     } else if (type === "admin_broadcast") {
-      // Admin check
-      const userId = claimsData.claims.sub as string;
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
+      // Admin broadcast is a user-triggered action only.
+      if (isInternal || !userId) {
+        return new Response(JSON.stringify({ error: "Admin only" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { data: roleData } = await adminClient
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
-        .eq("role", "admin")
+        .in("role", ["admin", "super_admin"])
         .maybeSingle();
-
       if (!roleData) {
         return new Response(JSON.stringify({ error: "Admin only" }), {
           status: 403,
@@ -148,7 +184,9 @@ Deno.serve(async (req) => {
       }
 
       for (const p of phones) {
-        results.push(await sendWhatsApp(p, message));
+        const r = await sendWhatsApp(p, message);
+        results.push(r);
+        await auditSend(r.success ? "sent" : "failed", p, { type: "admin_broadcast" });
       }
     } else {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
