@@ -57,7 +57,7 @@ const OrderChat = () => {
 
     const fetchData = async () => {
       const { data: orderData } = await supabase
-        .from('orders')
+        .from('orders_safe')
         .select('*')
         .eq('id', orderId)
         .maybeSingle();
