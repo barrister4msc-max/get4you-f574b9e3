@@ -1872,6 +1872,7 @@ export type Database = {
       }
       orders_safe: {
         Row: {
+          allpay_order_id: string | null
           amount: number | null
           assignment_id: string | null
           created_at: string | null
@@ -1885,6 +1886,7 @@ export type Database = {
           proposal_id: string | null
           provider: string | null
           provider_order_id: string | null
+          provider_payment_id: string | null
           provider_status: string | null
           status: string | null
           task_id: string | null
@@ -1893,6 +1895,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          allpay_order_id?: string | null
           amount?: number | null
           assignment_id?: string | null
           created_at?: string | null
@@ -1906,6 +1909,7 @@ export type Database = {
           proposal_id?: string | null
           provider?: string | null
           provider_order_id?: string | null
+          provider_payment_id?: string | null
           provider_status?: string | null
           status?: string | null
           task_id?: string | null
@@ -1914,6 +1918,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          allpay_order_id?: string | null
           amount?: number | null
           assignment_id?: string | null
           created_at?: string | null
@@ -1927,6 +1932,7 @@ export type Database = {
           proposal_id?: string | null
           provider?: string | null
           provider_order_id?: string | null
+          provider_payment_id?: string | null
           provider_status?: string | null
           status?: string | null
           task_id?: string | null
