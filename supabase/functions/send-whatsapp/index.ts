@@ -27,8 +27,19 @@ Deno.serve(async (req) => {
     //  2) User-triggered call: must present a valid Supabase JWT.
     const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
     const incomingInternal = req.headers.get("x-internal-secret");
+    // Constant-time comparison to avoid timing side-channels.
+    const safeEqual = (a: string, b: string): boolean => {
+      if (a.length !== b.length) return false;
+      let mismatch = 0;
+      for (let i = 0; i < a.length; i++) {
+        mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      }
+      return mismatch === 0;
+    };
     const isInternal =
-      !!internalSecret && !!incomingInternal && incomingInternal === internalSecret;
+      !!internalSecret &&
+      !!incomingInternal &&
+      safeEqual(incomingInternal, internalSecret);
 
     let userId: string | null = null;
     if (!isInternal) {
