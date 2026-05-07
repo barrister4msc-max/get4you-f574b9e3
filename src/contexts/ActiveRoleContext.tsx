@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { hasClientRole, hasWorkerRole, toDbRole, toUiRole } from '@/lib/roles';
+import { toast } from 'sonner';
 
 export type ActiveRole = 'client' | 'tasker';
 const STORAGE_KEY = 'dashboard_active_role';
@@ -26,8 +27,10 @@ export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const [activeRole, setActiveRoleState] = useState<ActiveRole>(() => {
     if (typeof window === 'undefined') return defaultRole;
-    const stored = window.localStorage.getItem(STORAGE_KEY) as ActiveRole | null;
-    if (stored === 'client' || stored === 'tasker') return stored;
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    // Normalize legacy values (e.g. accidental "executor" written previously).
+    if (stored === 'client') return 'client';
+    if (stored === 'tasker' || stored === 'executor') return 'tasker';
     return defaultRole;
   });
 
@@ -81,7 +84,11 @@ export const ActiveRoleProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         .update({ active_role: dbRole as never })
         .eq('user_id', user.id)
         .then(({ error }) => {
-          if (!error) refreshProfile();
+          if (error) {
+            toast.error('Не удалось сохранить роль. Попробуйте ещё раз.');
+            return;
+          }
+          refreshProfile();
         });
     }
   };

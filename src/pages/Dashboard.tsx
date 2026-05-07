@@ -258,7 +258,7 @@ const DashboardPage = () => {
 
       // Fetch orders
       const { data: ordersData } = await supabase
-        .from("orders")
+        .from("orders_safe")
         .select("id, amount, currency, status, created_at, payment_url, tasks:task_id(title)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });

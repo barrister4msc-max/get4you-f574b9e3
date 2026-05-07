@@ -535,20 +535,23 @@ Deno.serve(async (req) => {
       const projectRef = supabaseUrl.replace("https://", "").split(".")[0];
       const whatsappUrl = `https://${projectRef}.supabase.co/functions/v1/send-whatsapp`;
 
-      await fetch(whatsappUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // function may rely on internal checks; if needed adapt later
-          apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-          Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") ?? ""}`,
-        },
-        body: JSON.stringify({
-          type: "tasker_hired",
-          user_id: proposal.user_id,
-          task_id: task.id,
-        }),
-      });
+      const internalSecret = Deno.env.get("INTERNAL_FUNCTION_SECRET");
+      if (!internalSecret) {
+        console.warn("[ALLPAY-WEBHOOK] INTERNAL_FUNCTION_SECRET missing; skipping WhatsApp notify");
+      } else {
+        await fetch(whatsappUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": internalSecret,
+          },
+          body: JSON.stringify({
+            type: "tasker_hired",
+            user_id: proposal.user_id,
+            task_id: task.id,
+          }),
+        });
+      }
     } catch (whatsappError) {
       console.error("[ALLPAY-WEBHOOK] WhatsApp send failed:", whatsappError);
     }
