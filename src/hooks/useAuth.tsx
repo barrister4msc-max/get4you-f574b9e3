@@ -38,18 +38,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    setProfile(data);
-
-    const { data: rolesData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
-    setRoles(rolesData?.map(r => r.role) ?? []);
+    const [profileRes, rolesRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('user_id', userId).single(),
+      supabase.from('user_roles').select('role').eq('user_id', userId),
+    ]);
+    setProfile(profileRes.data);
+    setRoles(rolesRes.data?.map((r) => r.role) ?? []);
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -94,15 +88,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer to avoid deadlocks inside the auth callback
+        // Defer to avoid deadlocks inside the auth callback. Block
+        // `loading` until profile/roles are loaded so ProtectedRoute
+        // never renders children with empty roles (banned/role check
+        // race).
         setTimeout(() => {
-          if (!cancelled) fetchProfile(session.user.id);
+          if (cancelled) return;
+          fetchProfile(session.user.id).finally(finishLoading);
         }, 0);
       } else {
         setProfile(null);
         setRoles([]);
+        finishLoading();
       }
-      finishLoading();
     });
 
     recoverFromHash().then(() => {
