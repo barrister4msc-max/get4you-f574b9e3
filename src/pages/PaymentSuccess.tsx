@@ -20,7 +20,7 @@ const PaymentSuccess = () => {
     }
     const fetchOrder = async () => {
       const { data } = await supabase
-        .from("orders")
+        .from("orders_safe")
         .select("id, status, amount, currency, task_id, created_at")
         .eq("allpay_order_id", orderId)
         .maybeSingle();

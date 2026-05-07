@@ -230,6 +230,45 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ======================================================
+    // 3.1 VALIDATE WEBHOOK AMOUNT AGAINST ORDER AMOUNT
+    // If provider sends amount/sum, it must match orders.amount.
+    // If absent, log a warning but continue (signature is already valid).
+    // ======================================================
+    const rawAmount =
+      payload.amount ?? payload.sum ?? payload.total ?? payload.price ?? null;
+    if (rawAmount != null && String(rawAmount).trim() !== "") {
+      const payloadAmount = Number(String(rawAmount).replace(",", "."));
+      const orderAmount = Number(order.amount);
+      if (!Number.isFinite(payloadAmount) || Math.abs(orderAmount - payloadAmount) > 0.01) {
+        await serviceClient.from("app_events").insert({
+          actor_id: order.user_id,
+          event_type: "payment.webhook_amount_mismatch",
+          entity_type: "order",
+          entity_id: order.id,
+          metadata: {
+            provider: "allpay",
+            provider_order_id: incomingOrderId,
+            order_amount: orderAmount,
+            payload_amount: payloadAmount,
+          },
+        });
+        return new Response(
+          JSON.stringify({ error: "Webhook amount does not match order amount" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    } else {
+      console.warn("[ALLPAY-WEBHOOK] payload missing amount field; skipping amount check");
+      await serviceClient.from("app_events").insert({
+        actor_id: order.user_id,
+        event_type: "payment.webhook_amount_missing",
+        entity_type: "order",
+        entity_id: order.id,
+        metadata: { provider: "allpay", provider_order_id: incomingOrderId },
+      });
+    }
     if (order.status === "paid") {
       await serviceClient.from("app_events").insert({
         actor_id: order.user_id,
@@ -324,11 +363,12 @@ Deno.serve(async (req) => {
     // Cancel old pending orders for same task/proposal
     // now that this order is confirmed paid
     // ======================================================
+    // Cancel ALL other pending orders for this task (any proposal),
+    // since only one proposal can win per task.
     const { error: cancelDuplicateOrdersError } = await serviceClient
       .from("orders")
       .update({ status: "cancelled" })
       .eq("task_id", order.task_id)
-      .eq("proposal_id", order.proposal_id)
       .eq("status", "pending")
       .neq("id", order.id);
 
@@ -429,11 +469,13 @@ Deno.serve(async (req) => {
     // ======================================================
     // 9. CREATE ESCROW IF NOT EXISTS (IDEMPOTENT)
     // ======================================================
+    // Check for ANY active escrow on this task (held/released), not just
+    // task_id+proposal_id, to enforce single active escrow per task.
     const { data: existingEscrow, error: existingEscrowError } = await serviceClient
       .from("escrow_transactions")
-      .select("id")
+      .select("id, proposal_id, status")
       .eq("task_id", task.id)
-      .eq("proposal_id", proposal.id)
+      .in("status", ["held", "released"])
       .maybeSingle();
 
     if (existingEscrowError) {
@@ -464,11 +506,24 @@ Deno.serve(async (req) => {
       });
 
       if (escrowInsertError) {
-        console.error("[ALLPAY-WEBHOOK] Escrow insert error:", escrowInsertError);
-        return new Response(JSON.stringify({ error: "Failed to create escrow" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // 23505 = unique_violation — another concurrent webhook already
+        // created the escrow for this task. Treat as success (idempotent).
+        const code = (escrowInsertError as { code?: string }).code;
+        if (code === "23505") {
+          await serviceClient.from("app_events").insert({
+            actor_id: order.user_id,
+            event_type: "payment.webhook_escrow_duplicate_ignored",
+            entity_type: "order",
+            entity_id: order.id,
+            metadata: { provider: "allpay", task_id: task.id, proposal_id: proposal.id },
+          });
+        } else {
+          console.error("[ALLPAY-WEBHOOK] Escrow insert error:", escrowInsertError);
+          return new Response(JSON.stringify({ error: "Failed to create escrow" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
