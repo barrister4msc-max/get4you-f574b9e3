@@ -160,11 +160,8 @@ Deno.serve(async (req: Request) => {
   if (!task) {
     return jsonResponse({ error: "Task not found" }, 404);
   }
-  if (task.status !== "completed") {
-    return jsonResponse(
-      { error: "Task is not completed", status: task.status },
-      409,
-    );
+  if (!["completed", "in_progress", "completion_requested"].includes(task.status)) {
+    return jsonResponse({ error: "Task is not ready for escrow release", status: task.status }, 409);
   }
 
   const releasedAt = new Date().toISOString();
