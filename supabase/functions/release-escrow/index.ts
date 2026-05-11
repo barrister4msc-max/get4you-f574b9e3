@@ -190,7 +190,17 @@ Deno.serve(async (req: Request) => {
       escrow_id: escrow.id,
     });
   }
+  const { error: completeTaskErr } = await admin
+    .from("tasks")
+    .update({
+      status: "completed",
+      updated_at: releasedAt,
+    })
+    .eq("id", escrow.task_id);
 
+  if (completeTaskErr) {
+    console.error("[release-escrow] task complete update error", completeTaskErr);
+  }
   // 6. Create payout row for the tasker
   const { data: payout, error: payoutErr } = await admin
     .from("payouts")
