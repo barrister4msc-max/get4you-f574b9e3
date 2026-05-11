@@ -72,6 +72,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Supported WhatsApp event types and normalization map.
+    // - tasker_hired: tasker selected via paid order (also covers
+    //   "payment_success / proposal_accepted" — acceptance is gated by
+    //   payment in this product, so a separate type would be redundant).
+    // - new_proposal: notify task owner about an incoming bid.
+    // - admin_broadcast: admin-only mass message (user-triggered).
+    const SUPPORTED_TYPES = ["tasker_hired", "new_proposal", "admin_broadcast"] as const;
+    type SupportedType = typeof SUPPORTED_TYPES[number];
+    // Aliases — kept narrow on purpose. payment_success/proposal_accepted
+    // both collapse to tasker_hired (single source of truth for "you got the job").
+    const TYPE_ALIASES: Record<string, SupportedType> = {
+      payment_success: "tasker_hired",
+      proposal_accepted: "tasker_hired",
+    };
+
     const auditSend = async (
       kind: string,
       to: string | string[],
@@ -88,15 +103,25 @@ Deno.serve(async (req) => {
     };
 
     const body = await req.json();
-    const { type, phone, message, task_id, phones } = body;
+    const { type: rawType, phone, message, task_id, phones } = body;
 
-    // type: "tasker_hired" | "new_proposal" | "admin_broadcast"
-    if (!type) {
+    if (!rawType || typeof rawType !== "string") {
       return new Response(JSON.stringify({ error: "Missing type" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const normalizedType: SupportedType | null =
+      (SUPPORTED_TYPES as readonly string[]).includes(rawType)
+        ? (rawType as SupportedType)
+        : (TYPE_ALIASES[rawType] ?? null);
+    if (!normalizedType) {
+      return new Response(JSON.stringify({ error: "Invalid type" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const type = normalizedType;
 
     const sendWhatsApp = async (to: string, text: string) => {
       // Ensure whatsapp: prefix
