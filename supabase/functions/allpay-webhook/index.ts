@@ -236,8 +236,7 @@ Deno.serve(async (req) => {
     // If provider sends amount/sum, it must match orders.amount.
     // If absent, log a warning but continue (signature is already valid).
     // ======================================================
-    const rawAmount =
-      payload.amount ?? payload.sum ?? payload.total ?? payload.price ?? null;
+    const rawAmount = payload.amount ?? payload.sum ?? payload.total ?? payload.price ?? null;
     if (rawAmount != null && String(rawAmount).trim() !== "") {
       const payloadAmount = Number(String(rawAmount).replace(",", "."));
       const orderAmount = Number(order.amount);
@@ -254,10 +253,10 @@ Deno.serve(async (req) => {
             payload_amount: payloadAmount,
           },
         });
-        return new Response(
-          JSON.stringify({ error: "Webhook amount does not match order amount" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+        return new Response(JSON.stringify({ error: "Webhook amount does not match order amount" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     } else {
       console.warn("[ALLPAY-WEBHOOK] payload missing amount field; skipping amount check");
@@ -312,29 +311,32 @@ Deno.serve(async (req) => {
     const providerPaymentId =
       String(payload.payment_id || payload.transaction_id || payload.txn_id || "").trim() || null;
 
-    // save raw payload either way
-    const { error: updateOrderError } = await serviceClient
-      .from("orders")
-      .update({
-        status: nextOrderStatus,
-        allpay_response: payload,
-        provider: "allpay",
-        provider_order_id: incomingOrderId,
-        provider_status: providerStatus,
-        provider_payment_id: providerPaymentId,
-      })
-      .eq("id", order.id);
-
-    if (updateOrderError) {
-      console.error("[ALLPAY-WEBHOOK] Order update error:", updateOrderError);
-      return new Response(JSON.stringify({ error: "Failed to update order" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // If not paid, stop here safely
+    // ======================================================
+    // 4.1 IF NOT PAID — SAVE STATUS AND STOP
+    // ======================================================
     if (!paid) {
+      const { error: updateOrderError } = await serviceClient
+        .from("orders")
+        .update({
+          status: nextOrderStatus,
+          allpay_response: payload,
+          provider: "allpay",
+          provider_order_id: incomingOrderId,
+          provider_status: providerStatus,
+          provider_payment_id: providerPaymentId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", order.id);
+
+      if (updateOrderError) {
+        console.error("[ALLPAY-WEBHOOK] Order update error:", updateOrderError);
+
+        return new Response(JSON.stringify({ error: "Failed to update order" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       await serviceClient.from("app_events").insert({
         actor_id: order.user_id,
         event_type: failed ? "payment.webhook_failed" : "payment.webhook_not_paid",
@@ -346,6 +348,7 @@ Deno.serve(async (req) => {
           provider_status: providerStatus,
         },
       });
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -358,174 +361,59 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
-    } // ======================================================
-    // 4.1 CLEANUP DUPLICATE PENDING ORDERS
-    // Cancel old pending orders for same task/proposal
-    // now that this order is confirmed paid
+    }
+
     // ======================================================
-    // Cancel ALL other pending orders for this task (any proposal),
-    // since only one proposal can win per task.
-    const { error: cancelDuplicateOrdersError } = await serviceClient
+    // 5. FINALIZE PAID ORDER VIA RPC
+    // ======================================================
+    const { data: finalizeResult, error: finalizeError } = await serviceClient.rpc("finalize_paid_order", {
+      p_order_id: order.id,
+      p_provider_payment_id: providerPaymentId,
+      p_provider_status: providerStatus,
+    });
+
+    if (finalizeError) {
+      console.error("[ALLPAY-WEBHOOK] finalize_paid_order failed:", finalizeError);
+
+      await serviceClient.from("app_events").insert({
+        actor_id: order.user_id,
+        event_type: "payment.finalize_failed",
+        entity_type: "order",
+        entity_id: order.id,
+        metadata: {
+          provider: "allpay",
+          provider_order_id: incomingOrderId,
+          error: finalizeError.message,
+        },
+      });
+
+      return new Response(JSON.stringify({ error: "Finalize failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // save provider payload after successful finalize
+    await serviceClient
       .from("orders")
-      .update({ status: "cancelled" })
-      .eq("task_id", order.task_id)
-      .eq("status", "pending")
-      .neq("id", order.id);
-
-    if (cancelDuplicateOrdersError) {
-      console.error("[ALLPAY-WEBHOOK] Failed to cancel duplicate pending orders:", cancelDuplicateOrdersError);
-      return new Response(JSON.stringify({ error: "Failed to cancel duplicate pending orders" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ======================================================
-    // 5. LOAD TASK + PROPOSAL
-    // ======================================================
-    const { data: proposal, error: proposalError } = await serviceClient
-      .from("proposals")
-      .select("*")
-      .eq("id", order.proposal_id)
-      .maybeSingle();
-
-    if (proposalError || !proposal) {
-      console.error("[ALLPAY-WEBHOOK] Proposal load error:", proposalError);
-      return new Response(JSON.stringify({ error: "Proposal not found for paid order" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: task, error: taskError } = await serviceClient
-      .from("tasks")
-      .select("*")
-      .eq("id", order.task_id)
-      .maybeSingle();
-
-    if (taskError || !task) {
-      console.error("[ALLPAY-WEBHOOK] Task load error:", taskError);
-      return new Response(JSON.stringify({ error: "Task not found for paid order" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ======================================================
-    // 6. ACCEPT SELECTED PROPOSAL
-    // ======================================================
-    if (proposal.status !== "accepted") {
-      const { error: acceptProposalError } = await serviceClient
-        .from("proposals")
-        .update({ status: "accepted" })
-        .eq("id", proposal.id);
-
-      if (acceptProposalError) {
-        console.error("[ALLPAY-WEBHOOK] Proposal accept error:", acceptProposalError);
-        return new Response(JSON.stringify({ error: "Failed to accept proposal" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
-
-    // ======================================================
-    // 7. REJECT OTHER PENDING PROPOSALS
-    // ======================================================
-    const { error: rejectOthersError } = await serviceClient
-      .from("proposals")
-      .update({ status: "rejected" })
-      .eq("task_id", task.id)
-      .neq("id", proposal.id)
-      .eq("status", "pending");
-
-    if (rejectOthersError) {
-      console.error("[ALLPAY-WEBHOOK] Reject others error:", rejectOthersError);
-      return new Response(JSON.stringify({ error: "Failed to reject other proposals" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ======================================================
-    // 8. UPDATE TASK
-    // ======================================================
-    const { error: taskUpdateError } = await serviceClient
-      .from("tasks")
       .update({
-        status: "in_progress",
-        assigned_to: proposal.user_id,
+        allpay_response: payload,
+        provider: "allpay",
+        provider_order_id: incomingOrderId,
+        provider_status: providerStatus,
+        provider_payment_id: providerPaymentId,
+        updated_at: new Date().toISOString(),
       })
-      .eq("id", task.id);
+      .eq("id", order.id);
 
-    if (taskUpdateError) {
-      console.error("[ALLPAY-WEBHOOK] Task update error:", taskUpdateError);
-      return new Response(JSON.stringify({ error: "Failed to update task" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const finalizedTaskId = finalizeResult?.task_id || order.task_id;
+    const finalizedProposalId = finalizeResult?.proposal_id || order.proposal_id;
 
-    // ======================================================
-    // 9. CREATE ESCROW IF NOT EXISTS (IDEMPOTENT)
-    // ======================================================
-    // Check for ANY active escrow on this task (held/released), not just
-    // task_id+proposal_id, to enforce single active escrow per task.
-    const { data: existingEscrow, error: existingEscrowError } = await serviceClient
-      .from("escrow_transactions")
-      .select("id, proposal_id, status")
-      .eq("task_id", task.id)
-      .in("status", ["held", "released"])
+    const { data: finalizedProposal } = await serviceClient
+      .from("proposals")
+      .select("id, user_id")
+      .eq("id", finalizedProposalId)
       .maybeSingle();
-
-    if (existingEscrowError) {
-      console.error("[ALLPAY-WEBHOOK] Escrow lookup error:", existingEscrowError);
-      return new Response(JSON.stringify({ error: "Failed to check escrow" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (!existingEscrow) {
-      const commissionRate = 0.15;
-      const orderAmount = Number(order.amount);
-      const commissionAmount = Math.round(orderAmount * commissionRate * 100) / 100;
-      const netAmount = Math.round((orderAmount - commissionAmount) * 100) / 100;
-
-      const { error: escrowInsertError } = await serviceClient.from("escrow_transactions").insert({
-        task_id: task.id,
-        proposal_id: proposal.id,
-        client_id: order.user_id,
-        tasker_id: proposal.user_id,
-        amount: orderAmount,
-        currency: order.currency || proposal.currency || task.currency || "ILS",
-        commission_rate: commissionRate,
-        commission_amount: commissionAmount,
-        net_amount: netAmount,
-        status: "held",
-      });
-
-      if (escrowInsertError) {
-        // 23505 = unique_violation — another concurrent webhook already
-        // created the escrow for this task. Treat as success (idempotent).
-        const code = (escrowInsertError as { code?: string }).code;
-        if (code === "23505") {
-          await serviceClient.from("app_events").insert({
-            actor_id: order.user_id,
-            event_type: "payment.webhook_escrow_duplicate_ignored",
-            entity_type: "order",
-            entity_id: order.id,
-            metadata: { provider: "allpay", task_id: task.id, proposal_id: proposal.id },
-          });
-        } else {
-          console.error("[ALLPAY-WEBHOOK] Escrow insert error:", escrowInsertError);
-          return new Response(JSON.stringify({ error: "Failed to create escrow" }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-    }
 
     // ======================================================
     // 10. OPTIONAL: fire-and-forget WhatsApp
