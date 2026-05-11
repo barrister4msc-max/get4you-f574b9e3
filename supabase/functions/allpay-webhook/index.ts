@@ -435,8 +435,8 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             type: "tasker_hired",
-            user_id: proposal.user_id,
-            task_id: task.id,
+            user_id: finalizedProposal?.user_id,
+            task_id: finalizedTaskId,
           }),
         });
       }
@@ -455,8 +455,8 @@ Deno.serve(async (req) => {
       metadata: {
         provider: "allpay",
         provider_order_id: incomingOrderId,
-        task_id: task.id,
-        proposal_id: proposal.id,
+        task_id: finalizedTaskId,
+        proposal_id: finalizedProposalId,
         amount: order.amount,
         currency: order.currency,
       },
@@ -466,8 +466,8 @@ Deno.serve(async (req) => {
         success: true,
         order_id: incomingOrderId,
         order_status: "paid",
-        task_id: task.id,
-        proposal_id: proposal.id,
+        task_id: finalizedTaskId,
+        proposal_id: finalizedProposalId,
       }),
       {
         status: 200,
