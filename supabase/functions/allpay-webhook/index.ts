@@ -139,6 +139,7 @@ function isFailedPayment(payload: Record<string, unknown>): boolean {
     .trim()
     .toLowerCase();
 
+  // Allpay sends status=0 for failed payments
   if (["0", "failed", "error", "cancelled", "canceled", "declined"].includes(status)) {
     return true;
   }
