@@ -665,6 +665,7 @@ export type Database = {
           hold_mode: string
           id: string
           net_amount: number
+          order_id: string | null
           payment_confirmed_at: string | null
           proposal_id: string
           provider: string
@@ -692,6 +693,7 @@ export type Database = {
           hold_mode?: string
           id?: string
           net_amount?: number
+          order_id?: string | null
           payment_confirmed_at?: string | null
           proposal_id: string
           provider?: string
@@ -719,6 +721,7 @@ export type Database = {
           hold_mode?: string
           id?: string
           net_amount?: number
+          order_id?: string | null
           payment_confirmed_at?: string | null
           proposal_id?: string
           provider?: string
@@ -740,6 +743,20 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "task_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders_safe"
             referencedColumns: ["id"]
           },
           {
@@ -2300,6 +2317,14 @@ export type Database = {
         Returns: number
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      finalize_paid_order: {
+        Args: {
+          p_order_id: string
+          p_provider_payment_id?: string
+          p_provider_status?: string
+        }
+        Returns: Json
+      }
       find_executors_by_language: {
         Args: { target_language: string }
         Returns: {
