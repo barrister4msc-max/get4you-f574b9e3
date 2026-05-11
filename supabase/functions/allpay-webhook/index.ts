@@ -134,13 +134,22 @@ function isFailedPayment(payload: Record<string, unknown>): boolean {
   const result = String(payload.result || "")
     .trim()
     .toLowerCase();
+
   const errorCode = String(payload.error_code || "")
     .trim()
     .toLowerCase();
 
-  if (["failed", "error", "cancelled", "canceled", "declined"].includes(status)) return true;
-  if (["failed", "error", "cancelled", "canceled"].includes(result)) return true;
-  if (errorCode && errorCode !== "0") return true;
+  if (["0", "failed", "error", "cancelled", "canceled", "declined"].includes(status)) {
+    return true;
+  }
+
+  if (["0", "failed", "error", "cancelled", "canceled"].includes(result)) {
+    return true;
+  }
+
+  if (errorCode && errorCode !== "0") {
+    return true;
+  }
 
   return false;
 }
