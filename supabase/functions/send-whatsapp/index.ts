@@ -177,7 +177,9 @@ Deno.serve(async (req) => {
       const text = message || `🎉 You've been selected for a task! View details: ${taskUrl}`;
       const r = await sendWhatsApp(targetPhone, text);
       results.push(r);
-      await auditSend(r.success ? "sent" : "failed", targetPhone, { type, task_id });
+      await auditSend(r.success ? "sent" : "failed", targetPhone, {
+        type, original_type: rawType, task_id,
+      });
     } else if (type === "new_proposal") {
       // Notify task owner about a new proposal
       if (!phone || !task_id) {
@@ -190,7 +192,9 @@ Deno.serve(async (req) => {
       const text = message || `📩 New proposal on your task! View: ${taskUrl}`;
       const r = await sendWhatsApp(phone, text);
       results.push(r);
-      await auditSend(r.success ? "sent" : "failed", phone, { type, task_id });
+      await auditSend(r.success ? "sent" : "failed", phone, {
+        type, original_type: rawType, task_id,
+      });
     } else if (type === "admin_broadcast") {
       // Admin broadcast is a user-triggered action only.
       if (isInternal || !userId) {
@@ -222,13 +226,10 @@ Deno.serve(async (req) => {
       for (const p of phones) {
         const r = await sendWhatsApp(p, message);
         results.push(r);
-        await auditSend(r.success ? "sent" : "failed", p, { type: "admin_broadcast" });
+        await auditSend(r.success ? "sent" : "failed", p, {
+          type: "admin_broadcast", original_type: rawType,
+        });
       }
-    } else {
-      return new Response(JSON.stringify({ error: "Invalid type" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
