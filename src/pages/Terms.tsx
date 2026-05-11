@@ -1,9 +1,5 @@
-import { useLanguage } from '@/i18n/LanguageContext';
-import { LegalDocManager } from '@/components/LegalDocManager';
+import { SeoLegalPage } from '@/components/SeoLegalPage';
 
-const TermsPage = () => {
-  const { t } = useLanguage();
-  return <LegalDocManager prefix="terms" title={t('terms.title')} />;
-};
+const TermsPage = () => <SeoLegalPage slug="terms" />;
 
 export default TermsPage;
