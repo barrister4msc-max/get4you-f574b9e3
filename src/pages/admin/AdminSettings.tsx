@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { MessageSquare, FileText, Briefcase, Shield, ScrollText, UserPlus, Loader2, CheckCircle } from 'lucide-react';
+import { MessageSquare, FileText, Briefcase, Shield, ScrollText, UserPlus, Loader2, CheckCircle, FileEdit } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ export default function AdminSettings() {
     { to: '/admin/broadcast', label: t('admin.settings.broadcast'), icon: MessageSquare, desc: t('admin.settings.broadcastDesc') },
     { to: '/admin/esek-patur', label: t('admin.settings.esek'), icon: FileText, desc: t('admin.settings.esekDesc') },
     { to: '/admin/employment', label: t('admin.settings.employment'), icon: Briefcase, desc: t('admin.settings.employmentDesc') },
+    { to: '/admin/legal', label: 'Legal pages editor', icon: FileEdit, desc: 'Edit Privacy and Terms content + attached files.' },
     { to: '/terms', label: t('admin.settings.terms'), icon: ScrollText, desc: t('admin.settings.termsDesc') },
     { to: '/privacy', label: t('admin.settings.privacy'), icon: Shield, desc: t('admin.settings.privacyDesc') },
   ];
