@@ -19,7 +19,7 @@ export default function AdminSettings() {
     { to: '/admin/broadcast', label: t('admin.settings.broadcast'), icon: MessageSquare, desc: t('admin.settings.broadcastDesc') },
     { to: '/admin/esek-patur', label: t('admin.settings.esek'), icon: FileText, desc: t('admin.settings.esekDesc') },
     { to: '/admin/employment', label: t('admin.settings.employment'), icon: Briefcase, desc: t('admin.settings.employmentDesc') },
-    { to: '/admin/legal', label: 'Legal pages editor', icon: FileEdit, desc: 'Edit Privacy and Terms content + attached files.' },
+    { to: '/admin/legal', label: t('admin.settings.legal'), icon: FileEdit, desc: t('admin.settings.legalDesc') },
     { to: '/terms', label: t('admin.settings.terms'), icon: ScrollText, desc: t('admin.settings.termsDesc') },
     { to: '/privacy', label: t('admin.settings.privacy'), icon: Shield, desc: t('admin.settings.privacyDesc') },
   ];
@@ -80,16 +80,16 @@ export default function AdminSettings() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
         {settingsLinks.map((s) => (
-          <Link key={s.to} to={s.to}>
-            <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-              <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                <s.icon className="w-5 h-5 text-primary" />
-                <CardTitle className="text-base">{s.label}</CardTitle>
+          <Link key={s.to} to={s.to} className="h-full">
+            <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full flex flex-col">
+              <CardHeader className="flex flex-row items-start gap-3 pb-2">
+                <s.icon className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <CardTitle className="text-base leading-snug break-words">{s.label}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{s.desc}</p>
+              <CardContent className="flex-1">
+                <p className="text-sm text-muted-foreground break-words">{s.desc}</p>
               </CardContent>
             </Card>
           </Link>
