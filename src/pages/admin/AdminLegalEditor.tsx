@@ -213,15 +213,24 @@ export default function AdminLegalEditor() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Attached files</CardTitle>
-                    <label>
-                      <Button size="sm" variant="outline" disabled={uploading} asChild>
-                        <span className="cursor-pointer">
-                          {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
-                          Upload file
-                          <input type="file" className="hidden" onChange={onUpload} accept=".pdf,.doc,.docx,.txt,.html,.md" />
-                        </span>
+                    <div>
+                      <input
+                        id={`legal-upload-${s}`}
+                        type="file"
+                        className="sr-only"
+                        onChange={onUpload}
+                        accept=".pdf,.doc,.docx,.txt,.html,.md"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={uploading}
+                        onClick={() => document.getElementById(`legal-upload-${s}`)?.click()}
+                      >
+                        {uploading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Upload className="w-4 h-4 mr-1" />}
+                        Upload file
                       </Button>
-                    </label>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {files.length === 0 ? (
