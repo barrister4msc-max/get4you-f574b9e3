@@ -1,9 +1,5 @@
-import { useLanguage } from '@/i18n/LanguageContext';
-import { LegalDocManager } from '@/components/LegalDocManager';
+import { SeoLegalPage } from '@/components/SeoLegalPage';
 
-const PrivacyPage = () => {
-  const { t } = useLanguage();
-  return <LegalDocManager prefix="privacy" title={t('privacy.title')} />;
-};
+const PrivacyPage = () => <SeoLegalPage slug="privacy" />;
 
 export default PrivacyPage;
