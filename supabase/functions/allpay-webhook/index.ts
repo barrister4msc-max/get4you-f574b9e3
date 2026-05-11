@@ -97,19 +97,31 @@ function isSuccessfulPayment(payload: Record<string, unknown>): boolean {
   const result = String(payload.result || "")
     .trim()
     .toLowerCase();
+
   const errorCode = String(payload.error_code || "")
     .trim()
     .toLowerCase();
+
   const success = String(payload.success || payload.is_paid || "")
     .trim()
     .toLowerCase();
 
-  if (["paid", "success", "successful", "completed", "approved"].includes(status)) return true;
-  if (["success", "ok", "paid"].includes(result)) return true;
-  if (["true", "1", "yes"].includes(success)) return true;
+  // Allpay sends status=1 for successful paid webhook
+  if (["1", "paid", "success", "successful", "completed", "approved"].includes(status)) {
+    return true;
+  }
 
-  // If provider explicitly says no error and paid status absent, keep false by default
-  if (errorCode && errorCode !== "0") return false;
+  if (["1", "success", "ok", "paid"].includes(result)) {
+    return true;
+  }
+
+  if (["true", "1", "yes"].includes(success)) {
+    return true;
+  }
+
+  if (errorCode && errorCode !== "0") {
+    return false;
+  }
 
   return false;
 }
