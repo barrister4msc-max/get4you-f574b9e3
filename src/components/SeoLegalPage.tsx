@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import DOMPurify from 'dompurify';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FileText, ExternalLink } from 'lucide-react';
 import { buildCanonical } from '@/lib/seoUtils';
 
 interface Props {
@@ -11,6 +11,12 @@ interface Props {
 }
 
 type LangKey = 'en' | 'ru' | 'he';
+
+interface AttachedFile {
+  id: string;
+  name: string;
+  url: string;
+}
 
 const pickLang = (locale: string): LangKey => {
   if (locale === 'ru') return 'ru';
@@ -21,23 +27,36 @@ const pickLang = (locale: string): LangKey => {
 export const SeoLegalPage = ({ slug }: Props) => {
   const { locale } = useLanguage();
   const [row, setRow] = useState<Record<string, any> | null>(null);
+  const [files, setFiles] = useState<AttachedFile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    supabase
-      .from('seo_pages')
-      .select('title_en,title_ru,title_he,meta_en,meta_ru,meta_he,h1_en,h1_ru,h1_he,content_en,content_ru,content_he,canonical_path,slug')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) {
-          setRow(data ?? null);
-          setLoading(false);
-        }
-      });
+    Promise.all([
+      supabase
+        .from('seo_pages')
+        .select('title_en,title_ru,title_he,meta_en,meta_ru,meta_he,h1_en,h1_ru,h1_he,content_en,content_ru,content_he,canonical_path,slug')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .maybeSingle(),
+      supabase
+        .from('legal_documents')
+        .select('id, file_name, public_url, created_at')
+        .eq('prefix', slug)
+        .order('created_at', { ascending: false }),
+    ]).then(([pageRes, filesRes]) => {
+      if (cancelled) return;
+      setRow(pageRes.data ?? null);
+      setFiles(
+        (filesRes.data ?? []).map((f: any) => ({
+          id: f.id,
+          name: f.file_name,
+          url: f.public_url,
+        })),
+      );
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -80,6 +99,27 @@ export const SeoLegalPage = ({ slug }: Props) => {
           className="prose prose-neutral dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: content }}
         />
+        {files.length > 0 && (
+          <div className="mt-10 border-t pt-6">
+            <h2 className="text-lg font-semibold mb-3">Attached documents</h2>
+            <ul className="space-y-2">
+              {files.map((f) => (
+                <li key={f.id}>
+                  <a
+                    href={f.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:underline"
+                  >
+                    <FileText className="h-4 w-4" />
+                    {f.name}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
