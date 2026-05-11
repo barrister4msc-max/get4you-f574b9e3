@@ -53,6 +53,7 @@ import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminProposalAttempts from "./pages/admin/AdminProposalAttempts";
 import AdminAIUsage from "./pages/admin/AdminAIUsage";
+import AdminLegalEditor from "./pages/admin/AdminLegalEditor";
 import SeoPage from "./pages/SeoPage";
 
 const queryClient = new QueryClient();
@@ -177,6 +178,7 @@ const App = () => (
                     <Route path="esek-patur" element={<AdminEsekPatur />} />
                     <Route path="broadcast" element={<AdminBroadcast />} />
                     <Route path="employment" element={<AdminEmployment />} />
+                    <Route path="legal" element={<AdminLegalEditor />} />
                   </Route>
                   {/* Public SEO landing pages (must be last inside Layout) */}
                   <Route path="/israel" element={<SeoPage />} />
