@@ -26,7 +26,7 @@ function TaskerRecentHistory({ taskerId }: { taskerId: string }) {
         _tasker_id: taskerId, _limit: 5,
       } as never);
       if (cancelled) return;
-      setItems((data as any[]) || []);
+      setItems(((data as unknown) as any[]) || []);
       setLoaded(true);
     })();
     return () => { cancelled = true; };
@@ -95,11 +95,11 @@ const TaskDetailPage = () => {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [pendingAcceptProposalId, setPendingAcceptProposalId] = useState<string | null>(null);
   const [paymentOrder, setPaymentOrder] = useState<{
-    id: string;
-    status: string;
+    id: string | null;
+    status: string | null;
     payment_url: string | null;
     provider_status: string | null;
-    created_at?: string;
+    created_at?: string | null;
   } | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
@@ -494,8 +494,8 @@ const TaskDetailPage = () => {
         _task_id: id,
         _price: numericPrice,
         _currency: task?.currency || currency || 'ILS',
-        _comment: comment.trim() || null,
-        _portfolio_urls: null,
+        _comment: comment.trim() || (null as unknown as string | undefined),
+        _portfolio_urls: null as unknown as string[] | undefined,
       });
       if (error) throw error;
       toast.success(t('proposal.submitted'));
