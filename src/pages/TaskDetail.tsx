@@ -419,8 +419,9 @@ const TaskDetailPage = () => {
       if (error) throw error;
       setExistingReview(data);
       toast.success(t('review.submitted'));
-    } catch {
-      toast.error(t('review.error'));
+    } catch (e: any) {
+      console.error('[review] submit failed', e);
+      toast.error(`${t('review.error')}${e?.message ? `: ${e.message}` : ''}`);
     } finally {
       setReviewSubmitting(false);
     }
