@@ -323,7 +323,7 @@ export default function SeoPage() {
                       to={`/${row.city_slug}/${service}`}
                       className="text-primary hover:underline"
                     >
-                      {label} {locale === "he" ? `ב${cityName}` : locale === "ru" ? `в ${cityName}` : `in ${cityName}`}
+                      {label} {lang === "he" ? `ב${cityName}` : lang === "ru" ? `в ${cityName}` : `in ${cityName}`}
                     </Link>
                   </li>
                 );
