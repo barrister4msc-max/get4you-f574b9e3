@@ -57,6 +57,9 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
 
 Deno.serve(async (req) => {
   const requestCorsHeaders = getCorsHeaders(req);
+  console.log("[CREATE-PAYMENT] origin:", req.headers.get("origin"));
+  console.log("[CREATE-PAYMENT] cors:", JSON.stringify(requestCorsHeaders));
+  console.log("[CREATE-PAYMENT] auth:", req.headers.get("authorization") ? "present" : "missing");
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: requestCorsHeaders });
   }
