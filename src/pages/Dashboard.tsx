@@ -603,6 +603,12 @@ const DashboardPage = () => {
                         <span className="text-xs text-muted-foreground">
                           {new Date(task.created_at).toLocaleDateString()}
                         </span>
+                        {isClient && proposalCounts[task.id] > 0 && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            <Briefcase className="w-3 h-3" />
+                            {proposalCounts[task.id]} {t("dashboard.client.proposals")}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-primary font-bold text-sm">
