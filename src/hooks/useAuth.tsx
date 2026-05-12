@@ -85,18 +85,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (cancelled) return;
-      setSession(session);
-      setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer to avoid deadlocks inside the auth callback. Block
-        // `loading` until profile/roles are loaded so ProtectedRoute
-        // never renders children with empty roles (banned/role check
-        // race).
-        setTimeout(() => {
+        // Defer to avoid deadlocks inside the auth callback. Check
+        // banned status BEFORE setting session/profile so a banned user
+        // never gets an authenticated UI state, even briefly.
+        setTimeout(async () => {
           if (cancelled) return;
+          try {
+            const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: session.user.id });
+            if (banned) {
+              await supabase.auth.signOut();
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+              setRoles([]);
+              finishLoading();
+              return;
+            }
+          } catch (e) {
+            console.warn('[auth] is_user_banned check failed', e);
+          }
+          if (cancelled) return;
+          setSession(session);
+          setUser(session.user);
           fetchProfile(session.user.id).finally(finishLoading);
         }, 0);
       } else {
+        setSession(null);
+        setUser(null);
         setProfile(null);
         setRoles([]);
         finishLoading();
@@ -169,7 +185,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: banned } = await supabase.rpc('is_user_banned', { _user_id: data.user.id });
       if (banned) {
         await supabase.auth.signOut();
-        return { error: 'Ваш аккаунт заблокирован администратором. Обратитесь в поддержку.' };
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        setRoles([]);
+        return { error: 'Your account has been suspended. Please contact support.' };
       }
     }
     return { error: null };
