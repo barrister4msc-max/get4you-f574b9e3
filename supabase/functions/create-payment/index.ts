@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceKey || !anonKey) {
       return new Response(JSON.stringify({ error: "Supabase environment is not configured" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     if (!proposal_id) {
       return new Response(JSON.stringify({ error: "proposal_id is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -157,14 +157,14 @@ Deno.serve(async (req) => {
     if (proposalError || !proposal) {
       return new Response(JSON.stringify({ error: "Proposal not found" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (proposal.status && !["pending", "selected", "accepted"].includes(String(proposal.status))) {
       return new Response(JSON.stringify({ error: "Proposal is not payable" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -182,21 +182,21 @@ Deno.serve(async (req) => {
     if (taskError || !task) {
       return new Response(JSON.stringify({ error: "Task not found" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (task.user_id !== userId) {
       return new Response(JSON.stringify({ error: "You do not own this task" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (proposal.task_id !== task.id) {
       return new Response(JSON.stringify({ error: "Proposal does not belong to this task" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -237,7 +237,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
     if (!Number.isFinite(safeAmount) || safeAmount <= 0) {
       return new Response(JSON.stringify({ error: "Invalid proposal price" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
     if (!allpayLogin || !allpayApiKey) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -452,7 +452,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -482,7 +482,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -500,7 +500,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (err) {
@@ -511,7 +511,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       },
     );
   }
