@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-const TWILIO_FROM = "whatsapp:+14155238886"; // Twilio Sandbox
+const TWILIO_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM"); // Twilio Sandbox
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,10 +36,7 @@ Deno.serve(async (req) => {
       }
       return mismatch === 0;
     };
-    const isInternal =
-      !!internalSecret &&
-      !!incomingInternal &&
-      safeEqual(incomingInternal, internalSecret);
+    const isInternal = !!internalSecret && !!incomingInternal && safeEqual(incomingInternal, internalSecret);
 
     let userId: string | null = null;
     if (!isInternal) {
@@ -50,14 +47,11 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const supabaseAuth = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } }
-      );
+      const supabaseAuth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
       const token = authHeader.replace("Bearer ", "");
-      const { data: claimsData, error: claimsError } =
-        await supabaseAuth.auth.getClaims(token);
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
@@ -67,10 +61,7 @@ Deno.serve(async (req) => {
       userId = claimsData.claims.sub as string;
     }
 
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const adminClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // Supported WhatsApp event types and normalization map.
     // - tasker_hired: tasker selected via paid order (also covers
@@ -79,7 +70,7 @@ Deno.serve(async (req) => {
     // - new_proposal: notify task owner about an incoming bid.
     // - admin_broadcast: admin-only mass message (user-triggered).
     const SUPPORTED_TYPES = ["tasker_hired", "new_proposal", "admin_broadcast"] as const;
-    type SupportedType = typeof SUPPORTED_TYPES[number];
+    type SupportedType = (typeof SUPPORTED_TYPES)[number];
     // Aliases — kept narrow on purpose. payment_success/proposal_accepted
     // both collapse to tasker_hired (single source of truth for "you got the job").
     const TYPE_ALIASES: Record<string, SupportedType> = {
@@ -87,11 +78,7 @@ Deno.serve(async (req) => {
       proposal_accepted: "tasker_hired",
     };
 
-    const auditSend = async (
-      kind: string,
-      to: string | string[],
-      meta: Record<string, unknown>,
-    ) => {
+    const auditSend = async (kind: string, to: string | string[], meta: Record<string, unknown>) => {
       try {
         await adminClient.from("app_events").insert({
           actor_id: userId,
@@ -99,7 +86,9 @@ Deno.serve(async (req) => {
           entity_type: "whatsapp",
           metadata: { to, internal: isInternal, ...meta },
         });
-      } catch (_) { /* swallow */ }
+      } catch (_) {
+        /* swallow */
+      }
     };
 
     const body = await req.json();
@@ -111,10 +100,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const normalizedType: SupportedType | null =
-      (SUPPORTED_TYPES as readonly string[]).includes(rawType)
-        ? (rawType as SupportedType)
-        : (TYPE_ALIASES[rawType] ?? null);
+    const normalizedType: SupportedType | null = (SUPPORTED_TYPES as readonly string[]).includes(rawType)
+      ? (rawType as SupportedType)
+      : (TYPE_ALIASES[rawType] ?? null);
     if (!normalizedType) {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
         status: 400,
@@ -173,12 +161,15 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const taskUrl = `https://get4you.lovable.app/tasks/${task_id}`;
+      const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://4you.ai";
+      const taskUrl = `${APP_BASE_URL}/tasks/${task_id}`;
       const text = message || `🎉 You've been selected for a task! View details: ${taskUrl}`;
       const r = await sendWhatsApp(targetPhone, text);
       results.push(r);
       await auditSend(r.success ? "sent" : "failed", targetPhone, {
-        type, original_type: rawType, task_id,
+        type,
+        original_type: rawType,
+        task_id,
       });
     } else if (type === "new_proposal") {
       // Notify task owner about a new proposal
@@ -193,7 +184,9 @@ Deno.serve(async (req) => {
       const r = await sendWhatsApp(phone, text);
       results.push(r);
       await auditSend(r.success ? "sent" : "failed", phone, {
-        type, original_type: rawType, task_id,
+        type,
+        original_type: rawType,
+        task_id,
       });
     } else if (type === "admin_broadcast") {
       // Admin broadcast is a user-triggered action only.
@@ -227,7 +220,8 @@ Deno.serve(async (req) => {
         const r = await sendWhatsApp(p, message);
         results.push(r);
         await auditSend(r.success ? "sent" : "failed", p, {
-          type: "admin_broadcast", original_type: rawType,
+          type: "admin_broadcast",
+          original_type: rawType,
         });
       }
     }
