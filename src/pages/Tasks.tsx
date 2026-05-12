@@ -639,7 +639,7 @@ const TasksPage = () => {
         )}
 
         {isTasker && (
-          <div className="flex gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-6 items-center">
             <button
               onClick={() => setTab("all")}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
@@ -660,6 +660,15 @@ const TasksPage = () => {
             >
               {t("nav.myTasks")} ({myTasks.length})
             </button>
+            {tab === "my" && (
+              <Link
+                to="/dashboard"
+                className="ms-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                {t("nav.dashboard")}
+              </Link>
+            )}
           </div>
         )}
 
