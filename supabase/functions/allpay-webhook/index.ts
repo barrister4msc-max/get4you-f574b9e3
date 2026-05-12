@@ -1,61 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getApiSignatureAsync } from "./signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-/**
- * Allpay SHA256 signature validation helper.
- * Same algorithm as in create-payment:
- * - sort top-level keys alphabetically
- * - ignore "sign"
- * - collect non-empty string values
- * - for arrays of objects: sort item keys and collect non-empty string values
- * - join with ":" and append ":" + apiKey
- * - sha256 hex
- */
-async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: string): Promise<string> {
-  const sortedKeys = Object.keys(params).sort();
-  const chunks: string[] = [];
-
-  for (const key of sortedKeys) {
-    if (key === "sign") continue;
-    const value = params[key];
-
-    if (Array.isArray(value)) {
-      // Outgoing-request shape (create-payment): items is a real array of objects.
-      for (const item of value) {
-        if (typeof item === "object" && item !== null) {
-          const itemKeys = Object.keys(item as Record<string, unknown>).sort();
-          for (const name of itemKeys) {
-            const val = (item as Record<string, unknown>)[name];
-            if (typeof val === "string" && val.trim() !== "") {
-              chunks.push(val);
-            } else if (typeof val === "number" && Number.isFinite(val)) {
-              chunks.push(String(val));
-            }
-          }
-        }
-      }
-    } else if (typeof value === "string" && value.trim() !== "") {
-      // Incoming webhook: `items` arrives as a JSON-stringified array.
-      // Allpay signs it as the raw string at the top level, NOT parsed.
-      chunks.push(value);
-    } else if (typeof value === "number" && Number.isFinite(value)) {
-      // Webhook sends amount/status/inst as JSON numbers; Allpay signs them
-      // as their string form (including 0).
-      chunks.push(String(value));
-    }
-  }
-
-  const signatureString = chunks.join(":") + ":" + apiKey;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(signatureString);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 function normalizePayloadValue(value: FormDataEntryValue | string | null) {
   if (value == null) return null;
