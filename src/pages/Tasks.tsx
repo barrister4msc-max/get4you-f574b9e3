@@ -854,9 +854,20 @@ const TasksPage = () => {
         <div className="grid gap-4">
           {loading && <p className="text-center text-muted-foreground py-12">{t("dashboard.loading")}</p>}
           {!loading && finalDisplayTasks.length === 0 && (
-            <p className="text-center text-muted-foreground py-12">
-              {tab === "my" ? t("tasks.noMyTasks") : t("tasks.noResults")}
-            </p>
+            <div className="text-center py-12 flex flex-col items-center gap-3">
+              <p className="text-muted-foreground">
+                {tab === "my" ? t("tasks.noMyTasks") : t("tasks.noResults")}
+              </p>
+              {tab === "my" && (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  {t("nav.dashboard")}
+                </Link>
+              )}
+            </div>
           )}
           {finalDisplayTasks.map((task, i) => {
             const displayCopy = getDisplayedTaskCopy(task);
