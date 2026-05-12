@@ -6,7 +6,7 @@ import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import { motion } from "framer-motion";
-import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation, Loader2 } from "lucide-react";
+import { MapPin, Clock, Search, ImageIcon, SlidersHorizontal, X, Navigation, Loader2, LayoutDashboard } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
 import { TasksMap } from "@/components/TasksMap";
 
