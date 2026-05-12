@@ -1,9 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const allowedOrigins = [
+  "https://4you.ai",
+  "https://www.4you.ai",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowOrigin = allowedOrigins.includes(origin)
+    ? origin
+    : "https://4you.ai";
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: string): Promise<string> {
   const sortedKeys = Object.keys(params).sort();
@@ -40,15 +55,17 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
+
+  const requestCorsHeaders = getCorsHeaders(req);
 
   try {
     console.log("[CREATE-PAYMENT] >>> invoked", req.method, new Date().toISOString());
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -59,7 +76,7 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -70,7 +87,7 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceKey || !anonKey) {
       return new Response(JSON.stringify({ error: "Supabase environment is not configured" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -88,7 +105,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -123,7 +140,7 @@ const {
     if (!proposal_id) {
       return new Response(JSON.stringify({ error: "proposal_id is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -139,14 +156,14 @@ const {
     if (proposalError || !proposal) {
       return new Response(JSON.stringify({ error: "Proposal not found" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (proposal.status && !["pending", "selected", "accepted"].includes(String(proposal.status))) {
       return new Response(JSON.stringify({ error: "Proposal is not payable" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -164,21 +181,21 @@ const {
     if (taskError || !task) {
       return new Response(JSON.stringify({ error: "Task not found" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (task.user_id !== userId) {
       return new Response(JSON.stringify({ error: "You do not own this task" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (proposal.task_id !== task.id) {
       return new Response(JSON.stringify({ error: "Proposal does not belong to this task" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -195,7 +212,7 @@ const {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -219,7 +236,7 @@ const {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -232,7 +249,7 @@ const {
     if (!Number.isFinite(safeAmount) || safeAmount <= 0) {
       return new Response(JSON.stringify({ error: "Invalid proposal price" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
@@ -253,7 +270,7 @@ const {
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -278,7 +295,7 @@ const {
         }),
         {
           status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -301,7 +318,7 @@ const {
         }),
         {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -314,7 +331,7 @@ const {
     if (!allpayLogin || !allpayApiKey) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -434,7 +451,7 @@ if (insertError) {
     }),
     {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
     },
   );
 }
@@ -464,7 +481,7 @@ await serviceClient.from("app_events").insert({
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -482,7 +499,7 @@ await serviceClient.from("app_events").insert({
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (err) {
@@ -493,7 +510,7 @@ await serviceClient.from("app_events").insert({
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
       },
     );
   }
