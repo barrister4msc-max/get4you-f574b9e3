@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { getApiSignatureAsync } from "./signature.ts";
+import { getApiSignatureAsync } from "../_shared/allpay-signature.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
