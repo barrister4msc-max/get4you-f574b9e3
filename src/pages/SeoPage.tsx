@@ -233,7 +233,7 @@ export default function SeoPage() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={meta} />
-        {row.faq?.length > 0 && (
+        {effectiveFaq.length > 0 && (
           <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
         )}
       </Helmet>
@@ -290,11 +290,11 @@ export default function SeoPage() {
           </div>
         </section>
 
-        {row.faq?.length > 0 && (
+        {effectiveFaq.length > 0 && (
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">FAQ</h2>
             <Accordion type="single" collapsible className="w-full">
-              {row.faq.map((f, i) => (
+              {effectiveFaq.map((f, i) => (
                 <AccordionItem key={i} value={`q-${i}`}>
                   <AccordionTrigger className="text-left">
                     {f[`question_${lang}`] || f.question_en}
