@@ -56,6 +56,7 @@ import AdminAIUsage from "./pages/admin/AdminAIUsage";
 import AdminLegalEditor from "./pages/admin/AdminLegalEditor";
 import AdminPayments from "./pages/admin/AdminPayments";
 import SeoPage from "./pages/SeoPage";
+import AdminReconciliation from "./pages/admin/AdminReconciliation";
 
 const queryClient = new QueryClient();
 
