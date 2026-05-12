@@ -171,6 +171,71 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ======================================================
+    // RATE LIMITING (spam / accidental retry protection)
+    // ======================================================
+    // 1) USER RATE LIMIT — max 5 orders per user per hour
+    {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: userOrderCount } = await serviceClient
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", oneHourAgo);
+
+      if ((userOrderCount ?? 0) >= 5) {
+        console.log("[CREATE-PAYMENT] USER RATE LIMIT", { userId, count: userOrderCount });
+        await serviceClient.from("app_events").insert({
+          actor_id: userId,
+          event_type: "payment.rate_limit_user",
+          entity_type: "order",
+          metadata: {
+            user_id: userId,
+            task_id: task.id,
+            proposal_id: proposal.id,
+            count: userOrderCount,
+          },
+        });
+        return new Response(
+          JSON.stringify({ error: "Too many payment attempts. Please try again later." }),
+          { status: 429, headers: { ...requestCorsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    // 2) TASK/PROPOSAL PENDING LIMIT — max 3 pending orders for same proposal
+    {
+      const { count: pendingCount } = await serviceClient
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("task_id", task.id)
+        .eq("proposal_id", proposal.id)
+        .eq("status", "pending");
+
+      if ((pendingCount ?? 0) >= 3) {
+        console.log("[CREATE-PAYMENT] PENDING RATE LIMIT", {
+          task_id: task.id,
+          proposal_id: proposal.id,
+          count: pendingCount,
+        });
+        await serviceClient.from("app_events").insert({
+          actor_id: userId,
+          event_type: "payment.rate_limit_pending",
+          entity_type: "order",
+          metadata: {
+            user_id: userId,
+            task_id: task.id,
+            proposal_id: proposal.id,
+            count: pendingCount,
+          },
+        });
+        return new Response(
+          JSON.stringify({ error: "Too many pending payment attempts for this proposal" }),
+          { status: 409, headers: { ...requestCorsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // Hard guard: task must still be in a payable state.
     // Once a task moves to in_progress / completed / cancelled / closed,
     // no new payment may be initiated for it.
