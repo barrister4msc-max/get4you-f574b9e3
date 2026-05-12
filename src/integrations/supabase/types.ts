@@ -293,6 +293,13 @@ export type Database = {
             foreignKeyName: "chat_messages_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
@@ -337,6 +344,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "complaints_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
+          },
           {
             foreignKeyName: "complaints_task_id_fkey"
             columns: ["task_id"]
@@ -485,6 +499,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "escrow_transactions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["escrow_id"]
+          },
+          {
+            foreignKeyName: "disputes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "disputes_task_id_fkey"
@@ -760,11 +788,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["order_id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["proposal_id"]
+          },
+          {
             foreignKeyName: "escrow_transactions_proposal_id_fkey"
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transactions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "escrow_transactions_task_id_fkey"
@@ -944,8 +993,22 @@ export type Database = {
             foreignKeyName: "notifications_proposal_id_fkey"
             columns: ["proposal_id"]
             isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["proposal_id"]
+          },
+          {
+            foreignKeyName: "notifications_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "notifications_task_id_fkey"
@@ -1005,6 +1068,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders_safe"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["order_id"]
           },
         ]
       }
@@ -1096,8 +1166,22 @@ export type Database = {
             foreignKeyName: "orders_proposal_id_fkey"
             columns: ["proposal_id"]
             isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["proposal_id"]
+          },
+          {
+            foreignKeyName: "orders_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "orders_task_id_fkey"
@@ -1172,6 +1256,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "escrow_transactions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["escrow_id"]
+          },
+          {
+            foreignKeyName: "payouts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "payouts_task_id_fkey"
@@ -1390,6 +1488,13 @@ export type Database = {
             foreignKeyName: "proposals_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
+          },
+          {
+            foreignKeyName: "proposals_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
@@ -1449,6 +1554,13 @@ export type Database = {
           task_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
+          },
           {
             foreignKeyName: "reviews_task_id_fkey"
             columns: ["task_id"]
@@ -1669,8 +1781,22 @@ export type Database = {
             foreignKeyName: "task_assignments_proposal_id_fkey"
             columns: ["proposal_id"]
             isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["proposal_id"]
+          },
+          {
+            foreignKeyName: "task_assignments_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_assignments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: true
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "task_assignments_task_id_fkey"
@@ -1975,8 +2101,22 @@ export type Database = {
             foreignKeyName: "orders_proposal_id_fkey"
             columns: ["proposal_id"]
             isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["proposal_id"]
+          },
+          {
+            foreignKeyName: "orders_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
           },
           {
             foreignKeyName: "orders_task_id_fkey"
@@ -1993,6 +2133,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_reconciliation: {
+        Row: {
+          assigned_to: string | null
+          escrow_amount: number | null
+          escrow_count_for_task: number | null
+          escrow_id: string | null
+          escrow_net_amount: number | null
+          escrow_released_at: string | null
+          escrow_status: string | null
+          mismatch_reason: string | null
+          order_amount: number | null
+          order_created_at: string | null
+          order_currency: string | null
+          order_id: string | null
+          order_status: string | null
+          paid_order_count_for_task: number | null
+          payout_amount: number | null
+          payout_id: string | null
+          payout_net_amount: number | null
+          payout_status: string | null
+          proposal_id: string | null
+          proposal_status: Database["public"]["Enums"]["proposal_status"] | null
+          task_id: string | null
+          task_status: Database["public"]["Enums"]["task_status"] | null
+        }
+        Relationships: []
       }
       profiles_public: {
         Row: {
@@ -2509,6 +2676,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_payment_reconciliation_summary: { Args: never; Returns: Json }
       get_proposal_funnel: {
         Args: { _since?: string }
         Returns: {
