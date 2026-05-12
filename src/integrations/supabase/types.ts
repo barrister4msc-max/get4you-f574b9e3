@@ -2277,6 +2277,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_stale_orders: { Args: never; Returns: undefined }
       complete_task: { Args: { _task_id: string }; Returns: undefined }
       create_order_for_assignment: {
         Args: { p_assignment_id: string }

@@ -172,6 +172,7 @@ const DashboardPage = () => {
   >([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({});
 
   const { activeRole, setActiveRole, isClient, isTasker, hasBothRoles } = useActiveRole();
   const switchRole = (r: "client" | "tasker") => setActiveRole(r);
@@ -216,6 +217,25 @@ const DashboardPage = () => {
       ]);
       setMyTasks((tasksRes.data as MyTaskRow[]) || []);
       setAssignedTasks((assignedRes.data as MyTaskRow[]) || []);
+
+      // Fetch pending proposal counts for tasks owned by client (badge in My Tasks)
+      const ownedTaskIds = ((tasksRes.data as MyTaskRow[]) || []).map((t) => t.id);
+      if (ownedTaskIds.length > 0) {
+        const { data: propRows } = await supabase
+          .from("proposals")
+          .select("task_id, status")
+          .in("task_id", ownedTaskIds);
+        const counts: Record<string, number> = {};
+        (propRows || []).forEach((p: any) => {
+          if (p.status === "pending" || p.status === "accepted") {
+            counts[p.task_id] = (counts[p.task_id] || 0) + 1;
+          }
+        });
+        setProposalCounts(counts);
+      } else {
+        setProposalCounts({});
+      }
+
       setMyProposals(
         (proposalsRes.data as any[])?.map((p) => ({ ...p, task: Array.isArray(p.tasks) ? p.tasks[0] : p.tasks })) || [],
       );
@@ -583,6 +603,12 @@ const DashboardPage = () => {
                         <span className="text-xs text-muted-foreground">
                           {new Date(task.created_at).toLocaleDateString()}
                         </span>
+                        {isClient && proposalCounts[task.id] > 0 && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            <Briefcase className="w-3 h-3" />
+                            {proposalCounts[task.id]} {t("dashboard.client.proposals")}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-primary font-bold text-sm">
