@@ -96,7 +96,7 @@ export default function AdminChat() {
       if (!otherId) continue;
       allUserIds.add(otherId);
       if (!directLastByUser.has(otherId)) {
-        directLastByUser.set(otherId, { content: m.content ?? '', created_at: m.created_at });
+        directLastByUser.set(otherId, { content: m.content ?? '', created_at: m.created_at ?? '' });
       }
     }
 
