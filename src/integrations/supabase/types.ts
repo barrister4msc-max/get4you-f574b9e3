@@ -2136,6 +2136,7 @@ export type Database = {
       }
       payment_reconciliation: {
         Row: {
+          active_escrow_count_for_task: number | null
           assigned_to: string | null
           escrow_amount: number | null
           escrow_count_for_task: number | null
