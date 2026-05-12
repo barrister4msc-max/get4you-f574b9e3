@@ -1193,6 +1193,7 @@ export type Database = {
         Row: {
           active_role: Database["public"]["Enums"]["app_role"] | null
           avatar_url: string | null
+          average_rating: number | null
           bio: string | null
           city: string | null
           completed_orders_count: number | null
@@ -1219,6 +1220,7 @@ export type Database = {
           profile_embedding: string | null
           rating: number | null
           response_time_avg: number | null
+          reviews_count: number | null
           skills: string[] | null
           tariff_priority: number | null
           updated_at: string
@@ -1228,6 +1230,7 @@ export type Database = {
         Insert: {
           active_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
+          average_rating?: number | null
           bio?: string | null
           city?: string | null
           completed_orders_count?: number | null
@@ -1254,6 +1257,7 @@ export type Database = {
           profile_embedding?: string | null
           rating?: number | null
           response_time_avg?: number | null
+          reviews_count?: number | null
           skills?: string[] | null
           tariff_priority?: number | null
           updated_at?: string
@@ -1263,6 +1267,7 @@ export type Database = {
         Update: {
           active_role?: Database["public"]["Enums"]["app_role"] | null
           avatar_url?: string | null
+          average_rating?: number | null
           bio?: string | null
           city?: string | null
           completed_orders_count?: number | null
@@ -1289,6 +1294,7 @@ export type Database = {
           profile_embedding?: string | null
           rating?: number | null
           response_time_avg?: number | null
+          reviews_count?: number | null
           skills?: string[] | null
           tariff_priority?: number | null
           updated_at?: string
