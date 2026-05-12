@@ -360,6 +360,54 @@ Deno.serve(async (req) => {
     console.log("[CREATE-PAYMENT] safeCurrency:", safeCurrency);
 
     // ======================================================
+    // 8.5 ORDER-FIRST: persist a pending order BEFORE calling Allpay.
+    // Guarantees a local row exists even if upstream fails or webhook
+    // races our response. amount/currency are server-side safe values.
+    // ======================================================
+    const initialOrderPayload: Record<string, unknown> = {
+      user_id: userId,
+      task_id: task.id,
+      proposal_id: proposal.id,
+      amount: safeAmount,
+      currency: safeCurrency,
+      allpay_order_id: orderId,
+      provider: "allpay",
+      provider_order_id: orderId,
+      status: "pending",
+      payment_url: null,
+      allpay_response: null,
+      provider_status: null,
+      title: safeItemName,
+    };
+    if (assignment_id) {
+      initialOrderPayload.assignment_id = assignment_id;
+    }
+
+    const { data: insertedOrder, error: insertError } = await serviceClient
+      .from("orders")
+      .insert(initialOrderPayload)
+      .select("id, allpay_order_id")
+      .single();
+
+    if (insertError || !insertedOrder) {
+      console.error("[CREATE-PAYMENT] Pre-insert order error:", insertError);
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.order_insert_failed",
+        entity_type: "order",
+        metadata: {
+          provider_order_id: orderId,
+          error: insertError?.message ?? "unknown",
+        },
+      });
+      return new Response(
+        JSON.stringify({ error: "Failed to create order", details: insertError?.message }),
+        { status: 500, headers: { ...requestCorsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const localOrderId = insertedOrder.id as string;
+
+    // ======================================================
     // 9. BUILD ALLPAY REQUEST
     // ======================================================
     const allpayRequest: Record<string, unknown> = {
@@ -403,90 +451,102 @@ Deno.serve(async (req) => {
     // ======================================================
     // 11. CALL ALLPAY
     // ======================================================
-    const allpayResponse = await fetch("https://allpay.to/app/?show=getpayment&mode=api11", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(allpayRequest),
-    });
-
-    const allpayData = await allpayResponse.json();
-    console.log("[CREATE-PAYMENT] Allpay response:", JSON.stringify(allpayData));
-
-    // ======================================================
-    // 12. SAVE ORDER IN DB
-    // IMPORTANT: use server-side safeAmount, not client amount
-    // orders table remains backward-compatible
-    // ======================================================
-    const insertPayload: Record<string, unknown> = {
-      user_id: userId,
-      task_id: task.id,
-      proposal_id: proposal.id,
-      amount: safeAmount,
-      currency: safeCurrency,
-      allpay_order_id: orderId,
-      status: "pending",
-      payment_url: allpayData.payment_url || null,
-      allpay_response: allpayData,
-      title: safeItemName,
-      provider: "allpay",
-      provider_order_id: orderId,
-      provider_status: allpayData?.status || null,
-    };
-
-    // Optional future compatibility if column already exists
-    if (assignment_id) {
-      insertPayload.assignment_id = assignment_id;
+    let allpayData: any;
+    try {
+      const allpayResponse = await fetch("https://allpay.to/app/?show=getpayment&mode=api11", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(allpayRequest),
+      });
+      allpayData = await allpayResponse.json();
+      console.log("[CREATE-PAYMENT] Allpay response:", JSON.stringify(allpayData));
+    } catch (fetchErr) {
+      const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+      console.error("[CREATE-PAYMENT] Allpay fetch failed:", errMsg);
+      await serviceClient
+        .from("orders")
+        .update({
+          status: "failed",
+          allpay_response: { error: errMsg, stage: "fetch" },
+          provider_status: "fetch_error",
+        })
+        .eq("id", localOrderId);
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.fetch_failed",
+        entity_type: "order",
+        entity_id: localOrderId,
+        metadata: { provider_order_id: orderId, error: errMsg },
+      });
+      return new Response(
+        JSON.stringify({ error: "Payment provider unreachable", order_id: orderId }),
+        { status: 502, headers: { ...requestCorsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    const { data: insertedOrder, error: insertError } = await serviceClient
+    // ======================================================
+    // 12. UPDATE ORDER WITH ALLPAY RESPONSE
+    // ======================================================
+    const isAllpayError = !!allpayData?.error_code;
+    const { error: updateError } = await serviceClient
       .from("orders")
-      .insert(insertPayload)
-      .select("id, allpay_order_id")
-      .single();
+      .update({
+        status: isAllpayError ? "failed" : "pending",
+        payment_url: allpayData?.payment_url || null,
+        allpay_response: allpayData,
+        provider_status: allpayData?.status || (isAllpayError ? "error" : null),
+      })
+      .eq("id", localOrderId);
 
-    console.log("[CREATE-PAYMENT] DB insert result:", JSON.stringify(insertedOrder));
-
-    if (insertError) {
-      console.error("[CREATE-PAYMENT] Insert error:", insertError);
+    if (updateError) {
+      console.error("[CREATE-PAYMENT] Order update error:", updateError);
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.order_update_failed",
+        entity_type: "order",
+        entity_id: localOrderId,
+        metadata: {
+          provider_order_id: orderId,
+          error: updateError.message,
+          had_payment_url: !!allpayData?.payment_url,
+        },
+      });
       return new Response(
         JSON.stringify({
-          error: "Failed to create order",
-          details: insertError.message,
+          error: "Failed to persist payment response",
+          order_id: orderId,
         }),
-        {
-          status: 500,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 500, headers: { ...requestCorsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     await serviceClient.from("app_events").insert({
       actor_id: userId,
-      event_type: "payment.created",
+      event_type: isAllpayError ? "payment.allpay_error" : "payment.created",
       entity_type: "order",
-      entity_id: insertedOrder?.id || null,
+      entity_id: localOrderId,
       metadata: {
         amount: safeAmount,
         currency: safeCurrency,
         provider: "allpay",
         provider_order_id: orderId,
+        ...(isAllpayError
+          ? { error_code: allpayData?.error_code, error_msg: allpayData?.error_msg }
+          : {}),
       },
     });
 
     // ======================================================
     // 13. HANDLE ALLPAY ERROR
     // ======================================================
-    if (allpayData.error_code) {
+    if (isAllpayError) {
       return new Response(
         JSON.stringify({
           error: allpayData.error_msg || "Payment creation failed",
           error_code: allpayData.error_code,
           order_id: orderId,
         }),
-        {
-          status: 400,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 400, headers: { ...requestCorsHeaders, "Content-Type": "application/json" } },
       );
     }
 
