@@ -3,17 +3,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 const allowedOrigins = [
   "https://4you.ai",
   "https://www.4you.ai",
+  "https://lovable.dev",
   "http://localhost:5173",
   "http://localhost:3000",
 ];
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("origin") || "";
-  const allowOrigin = allowedOrigins.includes(origin)
-    ? origin
-    : "https://4you.ai";
+
+  const isAllowed =
+    allowedOrigins.includes(origin) || origin.endsWith(".lovable.app") || origin.endsWith(".lovable.dev");
+
   return {
-    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Origin": isAllowed ? origin : "https://4you.ai",
     "Access-Control-Allow-Headers":
       "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -54,11 +56,10 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: getCorsHeaders(req) });
-  }
-
   const requestCorsHeaders = getCorsHeaders(req);
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: requestCorsHeaders });
+  }
 
   try {
     console.log("[CREATE-PAYMENT] >>> invoked", req.method, new Date().toISOString());
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceKey || !anonKey) {
       return new Response(JSON.stringify({ error: "Supabase environment is not configured" }), {
         status: 500,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -105,7 +106,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -115,32 +116,32 @@ Deno.serve(async (req) => {
     // 2. INPUT
     // IMPORTANT: do NOT trust amount/item_name from client
     // ======================================================
-const body = await req.json();
+    const body = await req.json();
 
-await serviceClient.from("app_events").insert({
-  actor_id: userId,
-  event_type: "payment.create_started",
-  entity_type: "order",
-  metadata: {
-    task_id: body?.task_id,
-    proposal_id: body?.proposal_id,
-  },
-});
+    await serviceClient.from("app_events").insert({
+      actor_id: userId,
+      event_type: "payment.create_started",
+      entity_type: "order",
+      metadata: {
+        task_id: body?.task_id,
+        proposal_id: body?.proposal_id,
+      },
+    });
 
-const {
-  task_id,
-  proposal_id,
-  success_url,
-  cancel_url,
-  lang,
-  currency: requestedCurrency,
-  assignment_id,
-} = body ?? {};
+    const {
+      task_id,
+      proposal_id,
+      success_url,
+      cancel_url,
+      lang,
+      currency: requestedCurrency,
+      assignment_id,
+    } = body ?? {};
 
     if (!proposal_id) {
       return new Response(JSON.stringify({ error: "proposal_id is required" }), {
         status: 400,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -156,14 +157,14 @@ const {
     if (proposalError || !proposal) {
       return new Response(JSON.stringify({ error: "Proposal not found" }), {
         status: 404,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (proposal.status && !["pending", "selected", "accepted"].includes(String(proposal.status))) {
       return new Response(JSON.stringify({ error: "Proposal is not payable" }), {
         status: 400,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -181,21 +182,21 @@ const {
     if (taskError || !task) {
       return new Response(JSON.stringify({ error: "Task not found" }), {
         status: 404,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (task.user_id !== userId) {
       return new Response(JSON.stringify({ error: "You do not own this task" }), {
         status: 403,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (proposal.task_id !== task.id) {
       return new Response(JSON.stringify({ error: "Proposal does not belong to this task" }), {
         status: 400,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -212,7 +213,7 @@ const {
         }),
         {
           status: 409,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -236,7 +237,7 @@ const {
         }),
         {
           status: 409,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -249,7 +250,7 @@ const {
     if (!Number.isFinite(safeAmount) || safeAmount <= 0) {
       return new Response(JSON.stringify({ error: "Invalid proposal price" }), {
         status: 400,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
@@ -270,7 +271,7 @@ const {
         }),
         {
           status: 400,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -295,7 +296,7 @@ const {
         }),
         {
           status: 409,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -318,7 +319,7 @@ const {
         }),
         {
           status: 200,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -331,7 +332,7 @@ const {
     if (!allpayLogin || !allpayApiKey) {
       return new Response(JSON.stringify({ error: "Payment service not configured" }), {
         status: 500,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -440,34 +441,34 @@ const {
       .select("id, allpay_order_id")
       .single();
 
-console.log("[CREATE-PAYMENT] DB insert result:", JSON.stringify(insertedOrder));
+    console.log("[CREATE-PAYMENT] DB insert result:", JSON.stringify(insertedOrder));
 
-if (insertError) {
-  console.error("[CREATE-PAYMENT] Insert error:", insertError);
-  return new Response(
-    JSON.stringify({
-      error: "Failed to create order",
-      details: insertError.message,
-    }),
-    {
-      status: 500,
-      headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
-    },
-  );
-}
+    if (insertError) {
+      console.error("[CREATE-PAYMENT] Insert error:", insertError);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to create order",
+          details: insertError.message,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
-await serviceClient.from("app_events").insert({
-  actor_id: userId,
-  event_type: "payment.created",
-  entity_type: "order",
-  entity_id: insertedOrder?.id || null,
-  metadata: {
-    amount: safeAmount,
-    currency: safeCurrency,
-    provider: "allpay",
-    provider_order_id: orderId,
-  },
-});
+    await serviceClient.from("app_events").insert({
+      actor_id: userId,
+      event_type: "payment.created",
+      entity_type: "order",
+      entity_id: insertedOrder?.id || null,
+      metadata: {
+        amount: safeAmount,
+        currency: safeCurrency,
+        provider: "allpay",
+        provider_order_id: orderId,
+      },
+    });
 
     // ======================================================
     // 13. HANDLE ALLPAY ERROR
@@ -481,7 +482,7 @@ await serviceClient.from("app_events").insert({
         }),
         {
           status: 400,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -499,7 +500,7 @@ await serviceClient.from("app_events").insert({
       }),
       {
         status: 200,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   } catch (err) {
@@ -510,7 +511,7 @@ await serviceClient.from("app_events").insert({
       }),
       {
         status: 500,
-        headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   }
