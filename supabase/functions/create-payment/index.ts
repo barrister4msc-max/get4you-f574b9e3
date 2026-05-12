@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getApiSignatureAsync } from "../_shared/allpay-signature.ts";
 
 const allowedOrigins = [
   "https://4you.ai",
@@ -23,39 +24,6 @@ function getCorsHeaders(req: Request) {
       "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
-}
-
-async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: string): Promise<string> {
-  const sortedKeys = Object.keys(params).sort();
-  const chunks: string[] = [];
-
-  for (const key of sortedKeys) {
-    if (key === "sign") continue;
-    const value = params[key];
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (typeof item === "object" && item !== null) {
-          const itemKeys = Object.keys(item as Record<string, unknown>).sort();
-          for (const name of itemKeys) {
-            const val = (item as Record<string, unknown>)[name];
-            if (typeof val === "string" && val.trim() !== "") {
-              chunks.push(val);
-            }
-          }
-        }
-      }
-    } else if (typeof value === "string" && value.trim() !== "") {
-      chunks.push(value);
-    }
-  }
-
-  const signatureString = chunks.join(":") + ":" + apiKey;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(signatureString);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 Deno.serve(async (req) => {

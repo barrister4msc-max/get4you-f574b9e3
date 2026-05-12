@@ -3,7 +3,7 @@ import {
   assertEquals,
   assertStringIncludes,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { buildSignatureString, getApiSignatureAsync } from "./signature.ts";
+import { buildSignatureString, getApiSignatureAsync } from "../_shared/allpay-signature.ts";
 
 const API_KEY = "test-api-key";
 
