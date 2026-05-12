@@ -372,8 +372,8 @@ const DashboardPage = () => {
       icon: <Briefcase className="w-4 h-4" />,
     });
     tabs.push({ key: "earnings", label: t("balance.title"), icon: <Wallet className="w-4 h-4" /> });
-    tabs.push({ key: "rating", label: t("dashboard.rating"), icon: <Star className="w-4 h-4" /> });
   }
+  tabs.push({ key: "rating", label: t("dashboard.rating"), icon: <Star className="w-4 h-4" /> });
 
   const displayedTasks = showTaskerBlocks ? assignedTasks : myTasks;
 
@@ -486,7 +486,7 @@ const DashboardPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => (showTaskerBlocks ? setTab("rating") : setTab("myTasks"))}
+            onClick={() => setTab("rating")}
             className="p-3 rounded-2xl border border-border bg-card text-center hover:border-primary hover:shadow-card-hover transition-all"
           >
             <p className="text-xl font-bold text-primary">{avgRating || "—"}</p>
