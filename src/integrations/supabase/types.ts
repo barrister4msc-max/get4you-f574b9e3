@@ -2682,6 +2682,7 @@ export type Database = {
       }
       is_admin: { Args: { p_user_id: string }; Returns: boolean }
       is_admin_or_superadmin: { Args: { _user_id: string }; Returns: boolean }
+      is_current_user_banned: { Args: never; Returns: boolean }
       is_order_participant: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
