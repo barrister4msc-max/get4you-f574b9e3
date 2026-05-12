@@ -266,6 +266,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.address': 'Haifa, Brenner 20, 4',
     'footer.terms': 'Terms',
     'footer.privacy': 'Privacy',
+    'footer.cookies': 'Cookies',
+    'footer.refunds': 'Refunds',
     'footer.support': 'Support',
 
     // Support
@@ -1074,6 +1076,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.address': 'Хайфа, Бреннер 20, 4',
     'footer.terms': 'Условия',
     'footer.privacy': 'Конфиденциальность',
+    'footer.cookies': 'Cookies',
+    'footer.refunds': 'Возвраты',
     'footer.support': 'Служба поддержки',
 
     'support.title': 'Служба поддержки',
@@ -1868,6 +1872,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.address': 'חיפה, ברנר 20, 4',
     'footer.terms': 'תנאים',
     'footer.privacy': 'פרטיות',
+    'footer.cookies': 'עוגיות',
+    'footer.refunds': 'החזרים',
     'footer.support': 'תמיכה',
 
     'support.title': 'תמיכה',
@@ -2662,6 +2668,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     'footer.address': 'حيفا، برينر 20، 4',
     'footer.terms': 'الشروط',
     'footer.privacy': 'الخصوصية',
+    'footer.cookies': 'ملفات تعريف الارتباط',
+    'footer.refunds': 'المبالغ المستردة',
     'footer.support': 'الدعم',
 
     'support.title': 'الدعم',
