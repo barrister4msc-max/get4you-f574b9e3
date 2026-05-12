@@ -24,6 +24,7 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
     const value = params[key];
 
     if (Array.isArray(value)) {
+      // Outgoing-request shape (create-payment): items is a real array of objects.
       for (const item of value) {
         if (typeof item === "object" && item !== null) {
           const itemKeys = Object.keys(item as Record<string, unknown>).sort();
@@ -31,12 +32,20 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
             const val = (item as Record<string, unknown>)[name];
             if (typeof val === "string" && val.trim() !== "") {
               chunks.push(val);
+            } else if (typeof val === "number" && Number.isFinite(val)) {
+              chunks.push(String(val));
             }
           }
         }
       }
     } else if (typeof value === "string" && value.trim() !== "") {
+      // Incoming webhook: `items` arrives as a JSON-stringified array.
+      // Allpay signs it as the raw string at the top level, NOT parsed.
       chunks.push(value);
+    } else if (typeof value === "number" && Number.isFinite(value)) {
+      // Webhook sends amount/status/inst as JSON numbers; Allpay signs them
+      // as their string form (including 0).
+      chunks.push(String(value));
     }
   }
 
