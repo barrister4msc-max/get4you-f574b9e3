@@ -21,25 +21,10 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
 
   for (const key of sortedKeys) {
     if (key === "sign") continue;
-    let value = params[key];
-
-    // Allpay webhook encodes `items` as a JSON-stringified array.
-    // Parse it so we can sign its inner fields the same way the outgoing
-    // request was signed (where items was a real array).
-    if (
-      typeof value === "string" &&
-      value.trim().startsWith("[") &&
-      value.trim().endsWith("]")
-    ) {
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) value = parsed;
-      } catch {
-        // keep as string
-      }
-    }
+    const value = params[key];
 
     if (Array.isArray(value)) {
+      // Outgoing-request shape (create-payment): items is a real array of objects.
       for (const item of value) {
         if (typeof item === "object" && item !== null) {
           const itemKeys = Object.keys(item as Record<string, unknown>).sort();
@@ -54,9 +39,12 @@ async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: str
         }
       }
     } else if (typeof value === "string" && value.trim() !== "") {
+      // Incoming webhook: `items` arrives as a JSON-stringified array.
+      // Allpay signs it as the raw string at the top level, NOT parsed.
       chunks.push(value);
     } else if (typeof value === "number" && Number.isFinite(value)) {
-      // Allpay webhook sends amount/status/inst as JSON numbers; they are part of the signature
+      // Webhook sends amount/status/inst as JSON numbers; Allpay signs them
+      // as their string form (including 0).
       chunks.push(String(value));
     }
   }
