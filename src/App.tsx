@@ -182,6 +182,7 @@ const App = () => (
                     <Route path="employment" element={<AdminEmployment />} />
                     <Route path="legal" element={<AdminLegalEditor />} />
                     <Route path="payments" element={<AdminPayments />} />
+                    <Route path="reconciliation" element={<AdminReconciliation />} />
                   </Route>
                   {/* Public SEO landing pages (must be last inside Layout) */}
                   <Route path="/israel" element={<SeoPage />} />
