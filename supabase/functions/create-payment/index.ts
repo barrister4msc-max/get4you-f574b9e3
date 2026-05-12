@@ -26,39 +26,6 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-async function getApiSignatureAsync(params: Record<string, unknown>, apiKey: string): Promise<string> {
-  const sortedKeys = Object.keys(params).sort();
-  const chunks: string[] = [];
-
-  for (const key of sortedKeys) {
-    if (key === "sign") continue;
-    const value = params[key];
-
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        if (typeof item === "object" && item !== null) {
-          const itemKeys = Object.keys(item as Record<string, unknown>).sort();
-          for (const name of itemKeys) {
-            const val = (item as Record<string, unknown>)[name];
-            if (typeof val === "string" && val.trim() !== "") {
-              chunks.push(val);
-            }
-          }
-        }
-      }
-    } else if (typeof value === "string" && value.trim() !== "") {
-      chunks.push(value);
-    }
-  }
-
-  const signatureString = chunks.join(":") + ":" + apiKey;
-  const encoder = new TextEncoder();
-  const data = encoder.encode(signatureString);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 Deno.serve(async (req) => {
   const requestCorsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
