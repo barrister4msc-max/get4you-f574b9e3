@@ -168,10 +168,42 @@ export default function SeoPage() {
         : `Popular services in ${cityName}`
     : "";
 
+  // Default FAQ fallback — guarantees every SEO page has a FAQ block + JSON-LD,
+  // even if the seo_pages.faq column is empty. Existing FAQs are preserved.
+  const catName = row.category_slug ? t(`seo.cat.${row.category_slug}`) || row.category_slug : "";
+  const catLower = row.category_slug
+    ? (t(`seo.catLower.${row.category_slug}`) || catName).toString().toLowerCase()
+    : "";
+  const subject = catLower || (locale === "ru" ? "услуги" : locale === "he" ? "שירותים" : "services");
+  const place = cityName || (locale === "ru" ? "Израиле" : locale === "he" ? "ישראל" : "Israel");
+  const defaultFaq: Array<Record<string, string>> =
+    locale === "ru"
+      ? [
+          { question_ru: `Как работают ${subject} в ${place}?`, answer_ru: `Опубликуйте задачу с описанием и адресом — исполнители из ${place} пришлют предложения, а вы выберете подходящего по цене и рейтингу.` },
+          { question_ru: `Как быстро можно найти исполнителя?`, answer_ru: `Большинство клиентов получают первые отклики в течение 15–60 минут после публикации задачи.` },
+          { question_ru: `Проверены ли исполнители?`, answer_ru: `Каждый исполнитель проходит верификацию профиля, а отзывы и рейтинг помогают выбрать надёжного.` },
+          { question_ru: `Поддерживается ли оплата через escrow?`, answer_ru: `Да. Деньги удерживаются на escrow и переводятся исполнителю только после завершения задачи.` },
+        ]
+      : locale === "he"
+        ? [
+            { question_he: `איך עובדים ${subject} ב${place}?`, answer_he: `פרסמו משימה עם תיאור וכתובת — נותני שירות מ${place} ישלחו הצעות, ותוכלו לבחור לפי מחיר ודירוג.` },
+            { question_he: `כמה מהר אפשר למצוא בעל מקצוע?`, answer_he: `רוב הלקוחות מקבלים את ההצעות הראשונות תוך 15–60 דקות מרגע פרסום המשימה.` },
+            { question_he: `האם בעלי המקצוע מאומתים?`, answer_he: `כל בעל מקצוע עובר אימות פרופיל, ודירוג וביקורות עוזרים לבחור את המתאים ביותר.` },
+            { question_he: `האם נתמך תשלום בנאמנות (escrow)?`, answer_he: `כן. הכסף מוחזק בנאמנות ומועבר לבעל המקצוע רק לאחר סיום העבודה.` },
+          ]
+        : [
+            { question_en: `How do ${subject} work in ${place}?`, answer_en: `Post a task with the details and address — taskers in ${place} will send offers and you pick the best one by price and rating.` },
+            { question_en: `How fast can I find a tasker?`, answer_en: `Most clients receive their first offers within 15–60 minutes after posting a task.` },
+            { question_en: `Are taskers verified?`, answer_en: `Every tasker passes profile verification, and ratings and reviews help you pick a trusted one.` },
+            { question_en: `Is escrow payment supported?`, answer_en: `Yes. Funds are held in escrow and released to the tasker only after the task is completed.` },
+          ];
+  const effectiveFaq: Array<Record<string, string>> =
+    row.faq && row.faq.length > 0 ? row.faq : defaultFaq;
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: (row.faq || []).map((f) => ({
+    mainEntity: effectiveFaq.map((f) => ({
       "@type": "Question",
       name: f[`question_${lang}`] || f.question_en,
       acceptedAnswer: {
@@ -201,7 +233,7 @@ export default function SeoPage() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={meta} />
-        {row.faq?.length > 0 && (
+        {effectiveFaq.length > 0 && (
           <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
         )}
       </Helmet>
@@ -258,11 +290,11 @@ export default function SeoPage() {
           </div>
         </section>
 
-        {row.faq?.length > 0 && (
+        {effectiveFaq.length > 0 && (
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">FAQ</h2>
             <Accordion type="single" collapsible className="w-full">
-              {row.faq.map((f, i) => (
+              {effectiveFaq.map((f, i) => (
                 <AccordionItem key={i} value={`q-${i}`}>
                   <AccordionTrigger className="text-left">
                     {f[`question_${lang}`] || f.question_en}
