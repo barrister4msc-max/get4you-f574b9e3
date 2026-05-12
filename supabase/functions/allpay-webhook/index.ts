@@ -231,11 +231,6 @@ Deno.serve(async (req) => {
         expectedSign,
         incomingSign,
       });
-      try {
-        await debugFindSignatureVariant(payload, allpayApiKey, incomingSign);
-      } catch (e) {
-        console.error("[ALLPAY-WEBHOOK][DEBUG] variant search threw", e);
-      }
 
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
         status: 401,
