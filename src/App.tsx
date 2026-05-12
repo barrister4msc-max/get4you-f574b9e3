@@ -56,6 +56,7 @@ import AdminAIUsage from "./pages/admin/AdminAIUsage";
 import AdminLegalEditor from "./pages/admin/AdminLegalEditor";
 import AdminPayments from "./pages/admin/AdminPayments";
 import SeoPage from "./pages/SeoPage";
+import AdminReconciliation from "./pages/admin/AdminReconciliation";
 
 const queryClient = new QueryClient();
 
@@ -181,6 +182,7 @@ const App = () => (
                     <Route path="employment" element={<AdminEmployment />} />
                     <Route path="legal" element={<AdminLegalEditor />} />
                     <Route path="payments" element={<AdminPayments />} />
+                    <Route path="reconciliation" element={<AdminReconciliation />} />
                   </Route>
                   {/* Public SEO landing pages (must be last inside Layout) */}
                   <Route path="/israel" element={<SeoPage />} />
