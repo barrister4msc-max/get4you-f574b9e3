@@ -18,6 +18,7 @@ export const AdminLayout = () => {
     { to: '/admin', icon: LayoutDashboard, label: t('admin.dashboard'), end: true },
     { to: '/admin/orders', icon: ClipboardList, label: t('admin.orders') },
     { to: '/admin/payments', icon: CreditCard, label: 'Платежи' },
+    { to: '/admin/reconciliation', icon: Scale, label: 'Сверка' },
     { to: '/admin/users', icon: Users, label: t('admin.users') },
     { to: '/admin/taskers', icon: Wrench, label: t('admin.taskers') },
     { to: '/admin/reviews', icon: Star, label: t('admin.reviews') },
