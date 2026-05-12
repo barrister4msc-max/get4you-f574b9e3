@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getApiSignatureAsync } from "../_shared/allpay-signature.ts";
+
+const allowedOrigins = [
   "https://4you.ai",
   "https://www.4you.ai",
   "https://lovable.dev",
