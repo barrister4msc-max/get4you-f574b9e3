@@ -21,6 +21,8 @@ export const Footer = () => {
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy')}</Link>
+            <Link to="/cookies" className="hover:text-foreground transition-colors">{t('footer.cookies')}</Link>
+            <Link to="/refunds" className="hover:text-foreground transition-colors">{t('footer.refunds')}</Link>
             <button
               onClick={() => setSupportOpen(true)}
               className="flex items-center gap-1.5 hover:text-foreground transition-colors"

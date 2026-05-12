@@ -23,6 +23,8 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Cookies from "./pages/Cookies";
+import Refunds from "./pages/Refunds";
 import NotFound from "./pages/NotFound";
 import EsekPatur from "./pages/EsekPatur";
 import AdminEsekPatur from "./pages/AdminEsekPatur";
@@ -160,6 +162,8 @@ const App = () => (
                   <Route path="/payment-cancel" element={<PaymentCancel />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/cookies" element={<Cookies />} />
+                  <Route path="/refunds" element={<Refunds />} />
                   <Route path="/settings" element={<Settings />} />
 
                   {/* Admin panel with sidebar */}
