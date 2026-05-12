@@ -34,7 +34,10 @@ type SeoRow = {
 };
 
 type Lang = "en" | "ru" | "he";
-const langKey = (l: string): Lang => (l === "ru" || l === "he" ? l : "en");
+// Arabic falls back to Hebrew so RTL pages stay consistent with SeoLegalPage
+// and avoid mixed-language rendering (DB has en/ru/he columns only).
+const langKey = (l: string): Lang =>
+  l === "ru" ? "ru" : l === "he" || l === "ar" ? "he" : "en";
 
 function fillTemplate(s: string, vars: Record<string, string>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
@@ -161,9 +164,9 @@ export default function SeoPage() {
   const isCityOnlyPage = !!row.city_slug && !row.category_slug;
   const cityName = row.city_slug ? t(`seo.city.${row.city_slug}`) || row.city_slug : "";
   const popularServicesTitle = isCityOnlyPage
-    ? locale === "ru"
+    ? lang === "ru"
       ? `Популярные услуги в ${cityName}`
-      : locale === "he"
+      : lang === "he"
         ? `שירותים פופולריים ב${cityName}`
         : `Popular services in ${cityName}`
     : "";
@@ -174,17 +177,17 @@ export default function SeoPage() {
   const catLower = row.category_slug
     ? (t(`seo.catLower.${row.category_slug}`) || catName).toString().toLowerCase()
     : "";
-  const subject = catLower || (locale === "ru" ? "услуги" : locale === "he" ? "שירותים" : "services");
-  const place = cityName || (locale === "ru" ? "Израиле" : locale === "he" ? "ישראל" : "Israel");
+  const subject = catLower || (lang === "ru" ? "услуги" : lang === "he" ? "שירותים" : "services");
+  const place = cityName || (lang === "ru" ? "Израиле" : lang === "he" ? "ישראל" : "Israel");
   const defaultFaq: Array<Record<string, string>> =
-    locale === "ru"
+    lang === "ru"
       ? [
           { question_ru: `Как работают ${subject} в ${place}?`, answer_ru: `Опубликуйте задачу с описанием и адресом — исполнители из ${place} пришлют предложения, а вы выберете подходящего по цене и рейтингу.` },
           { question_ru: `Как быстро можно найти исполнителя?`, answer_ru: `Большинство клиентов получают первые отклики в течение 15–60 минут после публикации задачи.` },
           { question_ru: `Проверены ли исполнители?`, answer_ru: `Каждый исполнитель проходит верификацию профиля, а отзывы и рейтинг помогают выбрать надёжного.` },
           { question_ru: `Поддерживается ли оплата через escrow?`, answer_ru: `Да. Деньги удерживаются на escrow и переводятся исполнителю только после завершения задачи.` },
         ]
-      : locale === "he"
+      : lang === "he"
         ? [
             { question_he: `איך עובדים ${subject} ב${place}?`, answer_he: `פרסמו משימה עם תיאור וכתובת — נותני שירות מ${place} ישלחו הצעות, ותוכלו לבחור לפי מחיר ודירוג.` },
             { question_he: `כמה מהר אפשר למצוא בעל מקצוע?`, answer_he: `רוב הלקוחות מקבלים את ההצעות הראשונות תוך 15–60 דקות מרגע פרסום המשימה.` },
@@ -320,7 +323,7 @@ export default function SeoPage() {
                       to={`/${row.city_slug}/${service}`}
                       className="text-primary hover:underline"
                     >
-                      {label} {locale === "he" ? `ב${cityName}` : locale === "ru" ? `в ${cityName}` : `in ${cityName}`}
+                      {label} {lang === "he" ? `ב${cityName}` : lang === "ru" ? `в ${cityName}` : `in ${cityName}`}
                     </Link>
                   </li>
                 );
@@ -332,7 +335,7 @@ export default function SeoPage() {
         {related.length > 0 && (
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">
-              {locale === "ru" ? "Похожие страницы" : locale === "he" ? "דפים קשורים" : "Related pages"}
+              {lang === "ru" ? "Похожие страницы" : lang === "he" ? "דפים קשורים" : "Related pages"}
             </h2>
             <ul className="grid sm:grid-cols-2 gap-2">
               {related.map((r) => (
