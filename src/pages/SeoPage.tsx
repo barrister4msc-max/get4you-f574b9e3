@@ -156,6 +156,18 @@ export default function SeoPage() {
       : ""
   }`;
 
+  // City-only pages get a "Popular services in <City>" internal-link block.
+  const POPULAR_SERVICES = ["cleaning", "repair", "delivery", "moving", "handyman"] as const;
+  const isCityOnlyPage = !!row.city_slug && !row.category_slug;
+  const cityName = row.city_slug ? t(`seo.city.${row.city_slug}`) || row.city_slug : "";
+  const popularServicesTitle = isCityOnlyPage
+    ? locale === "ru"
+      ? `Популярные услуги в ${cityName}`
+      : locale === "he"
+        ? `שירותים פופולריים ב${cityName}`
+        : `Popular services in ${cityName}`
+    : "";
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -261,6 +273,27 @@ export default function SeoPage() {
                 </AccordionItem>
               ))}
             </Accordion>
+          </section>
+        )}
+
+        {isCityOnlyPage && (
+          <section className="mb-10">
+            <h2 className="text-2xl font-semibold mb-4">{popularServicesTitle}</h2>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {POPULAR_SERVICES.map((service) => {
+                const label = t(`seo.cat.${service}`) || service;
+                return (
+                  <li key={service}>
+                    <Link
+                      to={`/${row.city_slug}/${service}`}
+                      className="text-primary hover:underline"
+                    >
+                      {label} {locale === "he" ? `ב${cityName}` : locale === "ru" ? `в ${cityName}` : `in ${cityName}`}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
         )}
 
