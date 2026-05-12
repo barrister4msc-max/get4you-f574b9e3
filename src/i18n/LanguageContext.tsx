@@ -63,7 +63,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           .select('preferred_language')
           .eq('user_id', uid)
           .maybeSingle();
-        const lang = data?.preferred_language;
+        const lang = data?.preferred_language ?? null;
         if (isLocale(lang)) setLocaleState(lang);
       }, 0);
     });

@@ -30,7 +30,7 @@ export default function AdminOrders() {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    const userIds = [...new Set((data || []).flatMap(t => [t.user_id, t.assigned_to].filter(Boolean)))];
+    const userIds = [...new Set((data || []).flatMap(t => [t.user_id, t.assigned_to].filter((x): x is string => Boolean(x))))];
     const { data: profiles } = await supabase.from('profiles').select('user_id, display_name').in('user_id', userIds);
     const nameMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.display_name]));
 

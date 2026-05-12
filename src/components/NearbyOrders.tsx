@@ -210,7 +210,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
             distance_km: null,
           } satisfies NearbyTask;
         })
-        .filter((row): row is NearbyTask => Boolean(row));
+        .filter((row): row is typeof row => Boolean(row));
     };
 
     (async () => {

@@ -124,7 +124,7 @@ export default function SeoPage() {
           _category_slug: r.category_slug,
           _result_limit: 10,
         } as never);
-        if (!cancelled) setPublicTasks((pt as any[]) || []);
+        if (!cancelled) setPublicTasks(((pt as unknown) as any[]) || []);
       } else {
         setRelated([]);
         setPublicTasks([]);
