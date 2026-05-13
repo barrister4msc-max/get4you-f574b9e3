@@ -84,7 +84,7 @@ export default function SeoPage() {
   const [loading, setLoading] = useState(() => getCachedSeo(slug) === undefined);
   const [notFound, setNotFound] = useState(false);
   const [publicTasks, setPublicTasks] = useState<
-    Array<{ id: string; title: string; city: string | null; category_name: string | null; created_at: string }>
+    Array<{ id: string; title: string; description: string | null; city: string | null; category_name: string | null; created_at: string }>
   >([]);
 
   useEffect(() => {
