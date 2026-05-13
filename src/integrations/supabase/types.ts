@@ -170,6 +170,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          is_public: boolean
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          is_public?: boolean
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          is_public?: boolean
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       banned_users: {
         Row: {
           banned_by: string
@@ -1975,6 +1996,75 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_logs: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          phone: string | null
+          provider: string
+          provider_message_id: string | null
+          status: string
+          target_user_id: string | null
+          task_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          phone?: string | null
+          provider?: string
+          provider_message_id?: string | null
+          status?: string
+          target_user_id?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          phone?: string | null
+          provider?: string
+          provider_message_id?: string | null
+          status?: string
+          target_user_id?: string | null
+          task_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_rate_limits: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          phone: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          phone?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       geography_columns: {
@@ -2445,6 +2535,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_whatsapp_rate_limit: {
+        Args: {
+          p_actor_id: string
+          p_event_type: string
+          p_limit?: number
+          p_phone: string
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
       cleanup_stale_orders: { Args: never; Returns: undefined }
       complete_task: { Args: { _task_id: string }; Returns: undefined }
       create_order_for_assignment: {
@@ -2775,6 +2875,7 @@ export type Database = {
           category_name: string
           city: string
           created_at: string
+          description: string
           id: string
           title: string
         }[]
@@ -2889,6 +2990,7 @@ export type Database = {
           rating: number
         }[]
       }
+      normalize_phone_e164: { Args: { p_phone: string }; Returns: string }
       open_dispute: {
         Args: { p_assignment_id: string; p_details?: string; p_reason: string }
         Returns: string
