@@ -2875,6 +2875,7 @@ export type Database = {
           category_name: string
           city: string
           created_at: string
+          description: string
           id: string
           title: string
         }[]
