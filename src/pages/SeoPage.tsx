@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import NotFound from "./NotFound";
 import {
   slugFromPath,
@@ -34,9 +35,14 @@ type SeoRow = {
 };
 
 type Lang = "en" | "ru" | "he";
-// Arabic falls back to Hebrew so RTL pages stay consistent with SeoLegalPage
-// and avoid mixed-language rendering (DB has en/ru/he columns only).
-const langKey = (l: string): Lang =>
+type UiLocale = Lang | "ar";
+
+const isSupportedLocale = (locale: string): locale is UiLocale =>
+  locale === "en" || locale === "ru" || locale === "he" || locale === "ar";
+
+// SEO content in the database exists for en/ru/he only.
+// Arabic UI gets Arabic chrome via translations.ts, while page body falls back to Hebrew.
+const contentLangKey = (l: string): Lang =>
   l === "ru" ? "ru" : l === "he" || l === "ar" ? "he" : "en";
 
 function fillTemplate(s: string, vars: Record<string, string>): string {
@@ -69,7 +75,8 @@ function buildTasksBlockStrings(
 export default function SeoPage() {
   const { pathname } = useLocation();
   const { locale, t } = useLanguage();
-  const lang = langKey(locale);
+  const lang = contentLangKey(locale);
+  const uiLocale: UiLocale = isSupportedLocale(locale) ? locale : "en";
   const slug = useMemo(() => slugFromPath(pathname), [pathname]);
 
   const [row, setRow] = useState<SeoRow | null>(null);
@@ -148,6 +155,7 @@ export default function SeoPage() {
   const content = (row as any)[`content_${lang}`] || row.content_en;
   const canonical = buildCanonical(row.canonical_path || row.slug);
   const tasksStrings = buildTasksBlockStrings(row.city_slug, row.category_slug, t);
+  const { getDisplayCopy: getTaskDisplayCopy } = useTaskTranslations(uiLocale, publicTasks);
   const createTaskHref = `/create-task${
     row.category_slug || row.city_slug
       ? `?${[
@@ -164,11 +172,13 @@ export default function SeoPage() {
   const isCityOnlyPage = !!row.city_slug && !row.category_slug;
   const cityName = row.city_slug ? t(`seo.city.${row.city_slug}`) || row.city_slug : "";
   const popularServicesTitle = isCityOnlyPage
-    ? lang === "ru"
+    ? uiLocale === "ru"
       ? `Популярные услуги в ${cityName}`
-      : lang === "he"
+      : uiLocale === "he"
         ? `שירותים פופולריים ב${cityName}`
-        : `Popular services in ${cityName}`
+        : uiLocale === "ar"
+          ? `الخدمات الشائعة في ${cityName}`
+          : `Popular services in ${cityName}`
     : "";
 
   // Default FAQ fallback — guarantees every SEO page has a FAQ block + JSON-LD,
@@ -265,25 +275,28 @@ export default function SeoPage() {
             <p className="text-muted-foreground mb-4">{tasksStrings.empty}</p>
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2">
-              {publicTasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2"
-                >
-                  <div className="font-medium line-clamp-2">{task.title}</div>
-                  <div className="text-sm text-muted-foreground flex flex-wrap gap-x-2">
-                    {task.city && <span>{task.city}</span>}
-                    {task.category_name && <span>· {task.category_name}</span>}
-                    <span>· {new Date(task.created_at).toLocaleDateString(locale)}</span>
-                  </div>
-                  <Link
-                    to={`/task/${task.id}`}
-                    className="text-sm text-primary hover:underline mt-auto"
+              {publicTasks.map((task) => {
+                const displayTask = getTaskDisplayCopy(task);
+                return (
+                  <li
+                    key={task.id}
+                    className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2"
                   >
-                    {t("seo.tasks.viewTask") || "View task"}
-                  </Link>
-                </li>
-              ))}
+                    <div className="font-medium line-clamp-2">{displayTask.title}</div>
+                    <div className="text-sm text-muted-foreground flex flex-wrap gap-x-2">
+                      {task.city && <span>{task.city}</span>}
+                      {task.category_name && <span>· {task.category_name}</span>}
+                      <span>· {new Date(task.created_at).toLocaleDateString(uiLocale)}</span>
+                    </div>
+                    <Link
+                      to={`/task/${task.id}`}
+                      className="text-sm text-primary hover:underline mt-auto"
+                    >
+                      {t("seo.tasks.viewTask") || "View task"}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
           <div className="mt-6">
@@ -295,7 +308,9 @@ export default function SeoPage() {
 
         {effectiveFaq.length > 0 && (
           <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-4">FAQ</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              {uiLocale === "ru" ? "FAQ" : uiLocale === "he" ? "שאלות נפוצות" : uiLocale === "ar" ? "الأسئلة الشائعة" : "FAQ"}
+            </h2>
             <Accordion type="single" collapsible className="w-full">
               {effectiveFaq.map((f, i) => (
                 <AccordionItem key={i} value={`q-${i}`}>
@@ -323,7 +338,7 @@ export default function SeoPage() {
                       to={`/${row.city_slug}/${service}`}
                       className="text-primary hover:underline"
                     >
-                      {label} {lang === "he" ? `ב${cityName}` : lang === "ru" ? `в ${cityName}` : `in ${cityName}`}
+                      {label} {uiLocale === "he" ? `ב${cityName}` : uiLocale === "ar" ? `في ${cityName}` : uiLocale === "ru" ? `в ${cityName}` : `in ${cityName}`}
                     </Link>
                   </li>
                 );
@@ -335,7 +350,7 @@ export default function SeoPage() {
         {related.length > 0 && (
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">
-              {lang === "ru" ? "Похожие страницы" : lang === "he" ? "דפים קשורים" : "Related pages"}
+              {uiLocale === "ru" ? "Похожие страницы" : uiLocale === "he" ? "דפים קשורים" : uiLocale === "ar" ? "صفحات ذات صلة" : "Related pages"}
             </h2>
             <ul className="grid sm:grid-cols-2 gap-2">
               {related.map((r) => (
