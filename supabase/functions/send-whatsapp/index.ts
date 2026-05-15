@@ -8,7 +8,11 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 // Twilio sender. Defaults to Twilio Sandbox sender when TWILIO_WHATSAPP_FROM is not set.
-const TWILIO_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
+// Always normalize to `whatsapp:` channel — Twilio rejects mixed channels (error 21910).
+const RAW_TWILIO_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM") || "+14155238886";
+const TWILIO_FROM = RAW_TWILIO_FROM.startsWith("whatsapp:")
+  ? RAW_TWILIO_FROM
+  : `whatsapp:${RAW_TWILIO_FROM}`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
