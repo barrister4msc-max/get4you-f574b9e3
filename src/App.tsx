@@ -182,6 +182,7 @@ const App = () => (
                     <Route path="audit-log" element={<AdminAuditLog />} />
                     <Route path="proposal-attempts" element={<AdminProposalAttempts />} />
                     <Route path="ai-usage" element={<AdminAIUsage />} />
+                    <Route path="whatsapp-logs" element={<AdminWhatsappLogs />} />
                     <Route path="esek-patur" element={<AdminEsekPatur />} />
                     <Route path="broadcast" element={<AdminBroadcast />} />
                     <Route path="employment" element={<AdminEmployment />} />
