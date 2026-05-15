@@ -55,6 +55,7 @@ import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminProposalAttempts from "./pages/admin/AdminProposalAttempts";
 import AdminAIUsage from "./pages/admin/AdminAIUsage";
+import AdminWhatsappLogs from "./pages/admin/AdminWhatsappLogs";
 import AdminLegalEditor from "./pages/admin/AdminLegalEditor";
 import AdminPayments from "./pages/admin/AdminPayments";
 import SeoPage from "./pages/SeoPage";
