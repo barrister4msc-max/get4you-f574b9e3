@@ -1999,45 +1999,63 @@ export type Database = {
       whatsapp_logs: {
         Row: {
           actor_id: string | null
+          claimed_at: string | null
           created_at: string
           error_message: string | null
           event_type: string
+          failed_at: string | null
           id: string
           metadata: Json
+          next_retry_at: string | null
           phone: string | null
           provider: string
           provider_message_id: string | null
+          retry_count: number
+          sent_at: string | null
           status: string
           target_user_id: string | null
           task_id: string | null
+          updated_at: string
         }
         Insert: {
           actor_id?: string | null
+          claimed_at?: string | null
           created_at?: string
           error_message?: string | null
           event_type: string
+          failed_at?: string | null
           id?: string
           metadata?: Json
+          next_retry_at?: string | null
           phone?: string | null
           provider?: string
           provider_message_id?: string | null
+          retry_count?: number
+          sent_at?: string | null
           status?: string
           target_user_id?: string | null
           task_id?: string | null
+          updated_at?: string
         }
         Update: {
           actor_id?: string | null
+          claimed_at?: string | null
           created_at?: string
           error_message?: string | null
           event_type?: string
+          failed_at?: string | null
           id?: string
           metadata?: Json
+          next_retry_at?: string | null
           phone?: string | null
           provider?: string
           provider_message_id?: string | null
+          retry_count?: number
+          sent_at?: string | null
           status?: string
           target_user_id?: string | null
           task_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2545,6 +2563,35 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_pending_whatsapp_messages: {
+        Args: { p_limit?: number }
+        Returns: {
+          actor_id: string | null
+          claimed_at: string | null
+          created_at: string
+          error_message: string | null
+          event_type: string
+          failed_at: string | null
+          id: string
+          metadata: Json
+          next_retry_at: string | null
+          phone: string | null
+          provider: string
+          provider_message_id: string | null
+          retry_count: number
+          sent_at: string | null
+          status: string
+          target_user_id: string | null
+          task_id: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_stale_orders: { Args: never; Returns: undefined }
       complete_task: { Args: { _task_id: string }; Returns: undefined }
       create_order_for_assignment: {
@@ -2968,6 +3015,14 @@ export type Database = {
       longtransactionsenabled: { Args: never; Returns: boolean }
       mark_assignment_funded: {
         Args: { p_order_id: string }
+        Returns: undefined
+      }
+      mark_whatsapp_failed: {
+        Args: { p_error_message: string; p_log_id: string }
+        Returns: undefined
+      }
+      mark_whatsapp_sent: {
+        Args: { p_log_id: string; p_provider_message_id: string }
         Returns: undefined
       }
       move_to_dlq: {
