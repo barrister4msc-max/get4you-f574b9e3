@@ -20,7 +20,9 @@ interface AttachedFile {
 
 const pickLang = (locale: string): LangKey => {
   if (locale === 'ru') return 'ru';
-  if (locale === 'he' || locale === 'ar') return 'he';
+  if (locale === 'he') return 'he';
+  // Arabic UI falls back to English content (Latin) rather than Hebrew
+  // so an AR user never sees Hebrew script mixed with Arabic chrome.
   return 'en';
 };
 
