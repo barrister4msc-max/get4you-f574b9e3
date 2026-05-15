@@ -119,6 +119,8 @@ Deno.serve(async (req) => {
     const sendWhatsApp = async (to: string, text: string) => {
       // Ensure whatsapp: prefix
       const toNumber = to.startsWith("whatsapp:") ? to : `whatsapp:${to}`;
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+      const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status-webhook`;
 
       const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
         method: "POST",
@@ -131,6 +133,7 @@ Deno.serve(async (req) => {
           To: toNumber,
           From: TWILIO_FROM,
           Body: text,
+          StatusCallback: STATUS_CALLBACK_URL,
         }),
       });
 
