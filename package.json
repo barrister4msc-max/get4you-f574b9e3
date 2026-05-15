@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:seo-language": "node scripts/check-seo-language.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.0",
