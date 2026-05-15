@@ -41,9 +41,32 @@ const isSupportedLocale = (locale: string): locale is UiLocale =>
   locale === "en" || locale === "ru" || locale === "he" || locale === "ar";
 
 // SEO content in the database exists for en/ru/he only.
-// Arabic UI gets Arabic chrome via translations.ts, while page body falls back to Hebrew.
+// Arabic UI gets Arabic chrome via translations.ts. Page body falls back to
+// English (not Hebrew) so an AR user never sees Hebrew script mixed with
+// Arabic chrome — Latin fallback is the cleanest non-mixing option.
 const contentLangKey = (l: string): Lang =>
-  l === "ru" ? "ru" : l === "he" || l === "ar" ? "he" : "en";
+  l === "ru" ? "ru" : l === "he" ? "he" : "en";
+
+// Per-locale script matchers used to detect mixing in dynamic task fields
+// (city/category_name from the DB are stored in the original task author's
+// language). When the script doesn't match the active UI locale, we hide the
+// raw value rather than show e.g. Russian text on an English/Arabic page.
+const localeScriptMatchers: Record<UiLocale, RegExp> = {
+  en: /[A-Za-z]/,
+  ru: /[\u0400-\u04FF]/,
+  he: /[\u0590-\u05FF]/,
+  ar: /[\u0600-\u06FF]/,
+};
+function matchesLocaleScript(value: string | null, locale: UiLocale): boolean {
+  if (!value) return false;
+  const matcher = localeScriptMatchers[locale];
+  if (!matcher) return true;
+  const alpha = value.replace(/[\d\s\p{P}\p{S}]/gu, "");
+  if (alpha.length === 0) return true;
+  const re = new RegExp(matcher.source, "g");
+  const matched = alpha.match(re);
+  return (matched ? matched.join("").length : 0) / alpha.length >= 0.5;
+}
 
 function fillTemplate(s: string, vars: Record<string, string>): string {
   return s.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? "");
