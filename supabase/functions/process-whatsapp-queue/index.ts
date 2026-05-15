@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
     );
 
     const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://4you.ai";
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status-webhook`;
 
     let limit = 20;
     try {
@@ -158,7 +160,12 @@ Deno.serve(async (req) => {
             "X-Connection-Api-Key": TWILIO_API_KEY,
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: new URLSearchParams({ To: to, From: TWILIO_FROM, Body: text }),
+          body: new URLSearchParams({
+            To: to,
+            From: TWILIO_FROM,
+            Body: text,
+            StatusCallback: STATUS_CALLBACK_URL,
+          }),
         });
         const data = await resp.json();
         if (!resp.ok) {
