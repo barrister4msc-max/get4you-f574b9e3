@@ -55,6 +55,7 @@ import AdminDisputes from "./pages/admin/AdminDisputes";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminProposalAttempts from "./pages/admin/AdminProposalAttempts";
 import AdminAIUsage from "./pages/admin/AdminAIUsage";
+import AdminWhatsappLogs from "./pages/admin/AdminWhatsappLogs";
 import AdminLegalEditor from "./pages/admin/AdminLegalEditor";
 import AdminPayments from "./pages/admin/AdminPayments";
 import SeoPage from "./pages/SeoPage";
@@ -181,6 +182,7 @@ const App = () => (
                     <Route path="audit-log" element={<AdminAuditLog />} />
                     <Route path="proposal-attempts" element={<AdminProposalAttempts />} />
                     <Route path="ai-usage" element={<AdminAIUsage />} />
+                    <Route path="whatsapp-logs" element={<AdminWhatsappLogs />} />
                     <Route path="esek-patur" element={<AdminEsekPatur />} />
                     <Route path="broadcast" element={<AdminBroadcast />} />
                     <Route path="employment" element={<AdminEmployment />} />
