@@ -2001,60 +2001,78 @@ export type Database = {
           actor_id: string | null
           claimed_at: string | null
           created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
           error_message: string | null
           event_type: string
           failed_at: string | null
           id: string
+          last_callback_at: string | null
           metadata: Json
           next_retry_at: string | null
           phone: string | null
           provider: string
+          provider_error_code: string | null
           provider_message_id: string | null
+          read_at: string | null
           retry_count: number
           sent_at: string | null
           status: string
           target_user_id: string | null
           task_id: string | null
+          undelivered_at: string | null
           updated_at: string
         }
         Insert: {
           actor_id?: string | null
           claimed_at?: string | null
           created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
           error_message?: string | null
           event_type: string
           failed_at?: string | null
           id?: string
+          last_callback_at?: string | null
           metadata?: Json
           next_retry_at?: string | null
           phone?: string | null
           provider?: string
+          provider_error_code?: string | null
           provider_message_id?: string | null
+          read_at?: string | null
           retry_count?: number
           sent_at?: string | null
           status?: string
           target_user_id?: string | null
           task_id?: string | null
+          undelivered_at?: string | null
           updated_at?: string
         }
         Update: {
           actor_id?: string | null
           claimed_at?: string | null
           created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string | null
           error_message?: string | null
           event_type?: string
           failed_at?: string | null
           id?: string
+          last_callback_at?: string | null
           metadata?: Json
           next_retry_at?: string | null
           phone?: string | null
           provider?: string
+          provider_error_code?: string | null
           provider_message_id?: string | null
+          read_at?: string | null
           retry_count?: number
           sent_at?: string | null
           status?: string
           target_user_id?: string | null
           task_id?: string | null
+          undelivered_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2542,20 +2560,26 @@ export type Database = {
           actor_id: string | null
           claimed_at: string | null
           created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
           error_message: string | null
           event_type: string
           failed_at: string | null
           id: string
+          last_callback_at: string | null
           metadata: Json
           next_retry_at: string | null
           phone: string | null
           provider: string
+          provider_error_code: string | null
           provider_message_id: string | null
+          read_at: string | null
           retry_count: number
           sent_at: string | null
           status: string
           target_user_id: string | null
           task_id: string | null
+          undelivered_at: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -2598,20 +2622,26 @@ export type Database = {
           actor_id: string | null
           claimed_at: string | null
           created_at: string
+          delivered_at: string | null
+          delivery_status: string | null
           error_message: string | null
           event_type: string
           failed_at: string | null
           id: string
+          last_callback_at: string | null
           metadata: Json
           next_retry_at: string | null
           phone: string | null
           provider: string
+          provider_error_code: string | null
           provider_message_id: string | null
+          read_at: string | null
           retry_count: number
           sent_at: string | null
           status: string
           target_user_id: string | null
           task_id: string | null
+          undelivered_at: string | null
           updated_at: string
         }[]
         SetofOptions: {
@@ -3053,6 +3083,15 @@ export type Database = {
       longtransactionsenabled: { Args: never; Returns: boolean }
       mark_assignment_funded: {
         Args: { p_order_id: string }
+        Returns: undefined
+      }
+      mark_whatsapp_delivery: {
+        Args: {
+          p_error_code?: string
+          p_error_message?: string
+          p_provider_message_id: string
+          p_status: string
+        }
         Returns: undefined
       }
       mark_whatsapp_failed: {

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Send } from "lucide-react";
+import { RefreshCw, Send, CheckCheck, Check, AlertTriangle, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "pending" | "sent" | "failed" | "dead" | "processing";
@@ -24,6 +24,12 @@ interface Row {
   sent_at: string | null;
   failed_at: string | null;
   next_retry_at: string | null;
+  delivery_status: string | null;
+  delivered_at: string | null;
+  read_at: string | null;
+  undelivered_at: string | null;
+  last_callback_at: string | null;
+  provider_error_code: string | null;
 }
 
 const STATUS_FILTERS: Array<{ value: "all" | Status; label: string }> = [
@@ -65,7 +71,7 @@ export default function AdminWhatsappLogs() {
     let q = supabase
       .from("whatsapp_logs")
       .select(
-        "id,status,event_type,phone,target_user_id,task_id,retry_count,error_message,provider_message_id,created_at,sent_at,failed_at,next_retry_at",
+        "id,status,event_type,phone,target_user_id,task_id,retry_count,error_message,provider_message_id,created_at,sent_at,failed_at,next_retry_at,delivery_status,delivered_at,read_at,undelivered_at,last_callback_at,provider_error_code",
       )
       .order("created_at", { ascending: false })
       .limit(500);
@@ -91,12 +97,61 @@ export default function AdminWhatsappLogs() {
   }, [rows, search]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { pending: 0, sent: 0, failed: 0, dead: 0 };
+    const c: Record<string, number> = {
+      pending: 0,
+      sent: 0,
+      delivered: 0,
+      read: 0,
+      failed: 0,
+      dead: 0,
+    };
     rows.forEach((r) => {
       c[r.status] = (c[r.status] || 0) + 1;
+      const d = (r.delivery_status || "").toLowerCase();
+      if (d === "delivered") c.delivered = (c.delivered || 0) + 1;
+      if (d === "read") c.read = (c.read || 0) + 1;
     });
     return c;
   }, [rows]);
+
+  const renderDelivery = (r: Row) => {
+    const d = (r.delivery_status || "").toLowerCase();
+    if (d === "read") {
+      return (
+        <Badge variant="default" className="bg-emerald-600 hover:bg-emerald-600 gap-1">
+          <Eye className="w-3 h-3" />
+          read
+        </Badge>
+      );
+    }
+    if (d === "delivered") {
+      return (
+        <Badge variant="default" className="bg-blue-600 hover:bg-blue-600 gap-1">
+          <CheckCheck className="w-3 h-3" />
+          delivered
+        </Badge>
+      );
+    }
+    if (d === "sent") {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Check className="w-3 h-3" />
+          sent
+        </Badge>
+      );
+    }
+    if (d === "undelivered" || d === "failed") {
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <AlertTriangle className="w-3 h-3" />
+          {d}
+          {r.provider_error_code ? ` · ${r.provider_error_code}` : ""}
+        </Badge>
+      );
+    }
+    if (d) return <Badge variant="outline">{d}</Badge>;
+    return <span className="text-muted-foreground text-xs">—</span>;
+  };
 
   const resend = async (id: string) => {
     setResendingId(id);
@@ -135,8 +190,8 @@ export default function AdminWhatsappLogs() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {(["pending", "sent", "failed", "dead"] as const).map((s) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {(["pending", "sent", "delivered", "read", "failed", "dead"] as const).map((s) => (
           <Card key={s}>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs uppercase text-muted-foreground">{s}</CardTitle>
@@ -163,12 +218,13 @@ export default function AdminWhatsappLogs() {
               <TableRow>
                 <TableHead>Created</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Delivery</TableHead>
                 <TableHead>Event</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead className="text-right">Retry</TableHead>
                 <TableHead>Provider SID</TableHead>
                 <TableHead>Error</TableHead>
-                <TableHead>Sent / Failed</TableHead>
+                <TableHead>Sent / Delivered / Read</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
@@ -179,6 +235,7 @@ export default function AdminWhatsappLogs() {
                   <TableCell>
                     <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
                   </TableCell>
+                  <TableCell>{renderDelivery(r)}</TableCell>
                   <TableCell className="text-xs font-mono">{r.event_type}</TableCell>
                   <TableCell className="text-xs">{r.phone || "—"}</TableCell>
                   <TableCell className="text-right text-xs">{r.retry_count}</TableCell>
@@ -188,8 +245,18 @@ export default function AdminWhatsappLogs() {
                   <TableCell className="text-xs text-destructive max-w-[260px] truncate" title={r.error_message || ""}>
                     {r.error_message || "—"}
                   </TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">
-                    {r.sent_at ? `✓ ${fmt(r.sent_at)}` : r.failed_at ? `✗ ${fmt(r.failed_at)}` : "—"}
+                  <TableCell className="text-xs whitespace-nowrap space-y-0.5">
+                    {r.sent_at && <div>✓ sent {fmt(r.sent_at)}</div>}
+                    {r.delivered_at && (
+                      <div className="text-blue-600">✓✓ delivered {fmt(r.delivered_at)}</div>
+                    )}
+                    {r.read_at && (
+                      <div className="text-emerald-600">👁 read {fmt(r.read_at)}</div>
+                    )}
+                    {r.failed_at && !r.delivered_at && (
+                      <div className="text-destructive">✗ failed {fmt(r.failed_at)}</div>
+                    )}
+                    {!r.sent_at && !r.failed_at && "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
@@ -206,7 +273,7 @@ export default function AdminWhatsappLogs() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground">
                     {loading ? "Loading…" : "No messages"}
                   </TableCell>
                 </TableRow>
