@@ -2638,6 +2638,15 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      enqueue_whatsapp: {
+        Args: {
+          p_event_type: string
+          p_metadata?: Json
+          p_task_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       finalize_paid_order: {
         Args: {
