@@ -2536,6 +2536,35 @@ export type Database = {
             }
             Returns: string
           }
+      admin_resend_whatsapp: {
+        Args: { p_log_id: string }
+        Returns: {
+          actor_id: string | null
+          claimed_at: string | null
+          created_at: string
+          error_message: string | null
+          event_type: string
+          failed_at: string | null
+          id: string
+          metadata: Json
+          next_retry_at: string | null
+          phone: string | null
+          provider: string
+          provider_message_id: string | null
+          retry_count: number
+          sent_at: string | null
+          status: string
+          target_user_id: string | null
+          task_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_logs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_resolve_dispute_refund: {
         Args: { p_dispute_id: string }
         Returns: undefined
