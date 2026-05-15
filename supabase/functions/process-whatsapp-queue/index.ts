@@ -24,10 +24,18 @@ Deno.serve(async (req) => {
     const INTERNAL_SECRET = Deno.env.get("INTERNAL_FUNCTION_SECRET");
     const incoming = req.headers.get("x-internal-secret") ?? "";
     const auth = req.headers.get("Authorization") ?? "";
-    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const isInternal = !!INTERNAL_SECRET && safeEqual(incoming, INTERNAL_SECRET);
-    const isServiceRole =
-      !!SERVICE_ROLE && auth === `Bearer ${SERVICE_ROLE}`;
+    let isServiceRole = false;
+    if (!isInternal && auth.startsWith("Bearer ")) {
+      try {
+        const token = auth.slice("Bearer ".length);
+        const payloadB64 = token.split(".")[1] ?? "";
+        const padded = payloadB64 + "=".repeat((4 - (payloadB64.length % 4)) % 4);
+        const json = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
+        const claims = JSON.parse(json);
+        if (claims?.role === "service_role") isServiceRole = true;
+      } catch (_) { /* ignore */ }
+    }
     if (!isInternal && !isServiceRole) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
