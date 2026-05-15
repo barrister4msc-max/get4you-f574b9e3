@@ -330,6 +330,8 @@ export default function SeoPage() {
             <ul className="grid gap-3 sm:grid-cols-2">
               {publicTasks.map((task) => {
                 const displayTask = getTaskDisplayCopy(task);
+                const showCity = matchesLocaleScript(task.city, uiLocale);
+                const showCategory = matchesLocaleScript(task.category_name, uiLocale);
                 return (
                   <li
                     key={task.id}
@@ -337,8 +339,8 @@ export default function SeoPage() {
                   >
                     <div className="font-medium line-clamp-2">{displayTask.title}</div>
                     <div className="text-sm text-muted-foreground flex flex-wrap gap-x-2">
-                      {task.city && <span>{task.city}</span>}
-                      {task.category_name && <span>· {task.category_name}</span>}
+                      {showCity && <span>{task.city}</span>}
+                      {showCategory && <span>{showCity ? "· " : ""}{task.category_name}</span>}
                       <span>· {new Date(task.created_at).toLocaleDateString(uiLocale)}</span>
                     </div>
                     <Link
@@ -368,10 +370,10 @@ export default function SeoPage() {
               {effectiveFaq.map((f, i) => (
                 <AccordionItem key={i} value={`q-${i}`}>
                   <AccordionTrigger className="text-left">
-                    {f[`question_${lang}`] || f.question_en}
+                    {f[`question_${uiLocale}`] || f[`question_${lang}`] || f.question_en}
                   </AccordionTrigger>
                   <AccordionContent>
-                    {f[`answer_${lang}`] || f.answer_en}
+                    {f[`answer_${uiLocale}`] || f[`answer_${lang}`] || f.answer_en}
                   </AccordionContent>
                 </AccordionItem>
               ))}
