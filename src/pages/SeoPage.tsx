@@ -217,29 +217,52 @@ export default function SeoPage() {
   const catLower = row.category_slug
     ? (t(`seo.catLower.${row.category_slug}`) || catName).toString().toLowerCase()
     : "";
-  const subject = catLower || (lang === "ru" ? "услуги" : lang === "he" ? "שירותים" : "services");
-  const place = cityName || (lang === "ru" ? "Израиле" : lang === "he" ? "ישראל" : "Israel");
+  const subject =
+    catLower ||
+    (uiLocale === "ru"
+      ? "услуги"
+      : uiLocale === "he"
+        ? "שירותים"
+        : uiLocale === "ar"
+          ? "خدمات"
+          : "services");
+  const place =
+    cityName ||
+    (uiLocale === "ru"
+      ? "Израиле"
+      : uiLocale === "he"
+        ? "ישראל"
+        : uiLocale === "ar"
+          ? "إسرائيل"
+          : "Israel");
   const defaultFaq: Array<Record<string, string>> =
-    lang === "ru"
+    uiLocale === "ru"
       ? [
           { question_ru: `Как работают ${subject} в ${place}?`, answer_ru: `Опубликуйте задачу с описанием и адресом — исполнители из ${place} пришлют предложения, а вы выберете подходящего по цене и рейтингу.` },
           { question_ru: `Как быстро можно найти исполнителя?`, answer_ru: `Большинство клиентов получают первые отклики в течение 15–60 минут после публикации задачи.` },
           { question_ru: `Проверены ли исполнители?`, answer_ru: `Каждый исполнитель проходит верификацию профиля, а отзывы и рейтинг помогают выбрать надёжного.` },
           { question_ru: `Поддерживается ли оплата через escrow?`, answer_ru: `Да. Деньги удерживаются на escrow и переводятся исполнителю только после завершения задачи.` },
         ]
-      : lang === "he"
+      : uiLocale === "he"
         ? [
             { question_he: `איך עובדים ${subject} ב${place}?`, answer_he: `פרסמו משימה עם תיאור וכתובת — נותני שירות מ${place} ישלחו הצעות, ותוכלו לבחור לפי מחיר ודירוג.` },
             { question_he: `כמה מהר אפשר למצוא בעל מקצוע?`, answer_he: `רוב הלקוחות מקבלים את ההצעות הראשונות תוך 15–60 דקות מרגע פרסום המשימה.` },
             { question_he: `האם בעלי המקצוע מאומתים?`, answer_he: `כל בעל מקצוע עובר אימות פרופיל, ודירוג וביקורות עוזרים לבחור את המתאים ביותר.` },
             { question_he: `האם נתמך תשלום בנאמנות (escrow)?`, answer_he: `כן. הכסף מוחזק בנאמנות ומועבר לבעל המקצוע רק לאחר סיום העבודה.` },
           ]
-        : [
-            { question_en: `How do ${subject} work in ${place}?`, answer_en: `Post a task with the details and address — taskers in ${place} will send offers and you pick the best one by price and rating.` },
-            { question_en: `How fast can I find a tasker?`, answer_en: `Most clients receive their first offers within 15–60 minutes after posting a task.` },
-            { question_en: `Are taskers verified?`, answer_en: `Every tasker passes profile verification, and ratings and reviews help you pick a trusted one.` },
-            { question_en: `Is escrow payment supported?`, answer_en: `Yes. Funds are held in escrow and released to the tasker only after the task is completed.` },
-          ];
+        : uiLocale === "ar"
+          ? [
+              { question_ar: `كيف تعمل ${subject} في ${place}؟`, answer_ar: `انشر مهمة مع الوصف والعنوان — سيرسل مقدمو الخدمة من ${place} عروضهم، وتختار الأنسب بالسعر والتقييم.` },
+              { question_ar: `ما السرعة التي يمكن بها إيجاد مختص؟`, answer_ar: `يحصل معظم العملاء على أول العروض خلال 15–60 دقيقة من نشر المهمة.` },
+              { question_ar: `هل مقدمو الخدمة موثقون؟`, answer_ar: `يجتاز كل مقدم خدمة التحقق من الملف، وتساعد التقييمات والمراجعات على اختيار الموثوق.` },
+              { question_ar: `هل الدفع عبر الضمان (escrow) مدعوم؟`, answer_ar: `نعم. تُحتجز الأموال في الضمان وتُحوَّل لمقدم الخدمة فقط بعد إنهاء المهمة.` },
+            ]
+          : [
+              { question_en: `How do ${subject} work in ${place}?`, answer_en: `Post a task with the details and address — taskers in ${place} will send offers and you pick the best one by price and rating.` },
+              { question_en: `How fast can I find a tasker?`, answer_en: `Most clients receive their first offers within 15–60 minutes after posting a task.` },
+              { question_en: `Are taskers verified?`, answer_en: `Every tasker passes profile verification, and ratings and reviews help you pick a trusted one.` },
+              { question_en: `Is escrow payment supported?`, answer_en: `Yes. Funds are held in escrow and released to the tasker only after the task is completed.` },
+            ];
   const effectiveFaq: Array<Record<string, string>> =
     row.faq && row.faq.length > 0 ? row.faq : defaultFaq;
 
@@ -248,10 +271,10 @@ export default function SeoPage() {
     "@type": "FAQPage",
     mainEntity: effectiveFaq.map((f) => ({
       "@type": "Question",
-      name: f[`question_${lang}`] || f.question_en,
+      name: f[`question_${uiLocale}`] || f[`question_${lang}`] || f.question_en,
       acceptedAnswer: {
         "@type": "Answer",
-        text: f[`answer_${lang}`] || f.answer_en,
+        text: f[`answer_${uiLocale}`] || f[`answer_${lang}`] || f.answer_en,
       },
     })),
   };
