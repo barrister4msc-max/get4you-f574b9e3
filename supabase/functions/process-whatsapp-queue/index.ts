@@ -46,7 +46,11 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     // Twilio Sandbox WhatsApp default sender; override via TWILIO_WHATSAPP_FROM env.
-    const TWILIO_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
+    // Normalize: ensure the WhatsApp channel prefix is present (Twilio rejects mixed channels).
+    const RAW_TWILIO_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM") || "whatsapp:+14155238886";
+    const TWILIO_FROM = RAW_TWILIO_FROM.startsWith("whatsapp:")
+      ? RAW_TWILIO_FROM
+      : `whatsapp:${RAW_TWILIO_FROM}`;
     if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
       return new Response(
         JSON.stringify({ error: "Twilio env not configured" }),
