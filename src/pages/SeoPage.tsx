@@ -109,6 +109,7 @@ export default function SeoPage() {
   const [publicTasks, setPublicTasks] = useState<
     Array<{ id: string; title: string; description: string | null; city: string | null; category_name: string | null; created_at: string }>
   >([]);
+  const [relatedCities, setRelatedCities] = useState<SeoRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +152,21 @@ export default function SeoPage() {
           : await q;
         if (!cancelled) setRelated((rel as unknown as SeoRow[]) || []);
 
+        // Related cities: same category, different city (city+category pages only)
+        if (r.city_slug && r.category_slug) {
+          const { data: rc } = await supabase
+            .from("seo_pages")
+            .select("*")
+            .eq("is_published", true)
+            .eq("category_slug", r.category_slug)
+            .neq("city_slug", r.city_slug)
+            .not("city_slug", "is", null)
+            .limit(12);
+          if (!cancelled) setRelatedCities((rc as unknown as SeoRow[]) || []);
+        } else if (!cancelled) {
+          setRelatedCities([]);
+        }
+
         // Fetch live public tasks for this city/category combo
         const { data: pt } = await supabase.rpc("get_seo_public_tasks" as never, {
           _city_slug: r.city_slug,
@@ -168,6 +184,7 @@ export default function SeoPage() {
       } else {
         setRelated([]);
         setPublicTasks([]);
+        setRelatedCities([]);
       }
       setLoading(false);
     })();
@@ -421,6 +438,47 @@ export default function SeoPage() {
             </ul>
           </section>
         )}
+
+        {row.city_slug && row.category_slug && relatedCities.length > 0 && (() => {
+          const catLabel = t(`seo.cat.${row.category_slug}`) || row.category_slug;
+          const sectionTitle =
+            uiLocale === "ru"
+              ? `${catLabel} в других городах`
+              : uiLocale === "he"
+                ? `${catLabel} בערים אחרות`
+                : uiLocale === "ar"
+                  ? `${catLabel} في مدن أخرى`
+                  : `${catLabel} services in other cities`;
+          return (
+            <section className="mb-10">
+              <h2 className="text-2xl font-semibold mb-4">{sectionTitle}</h2>
+              <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {relatedCities.map((rc) => {
+                  const otherCity =
+                    rc.city_slug ? t(`seo.city.${rc.city_slug}`) || rc.city_slug : rc.city_slug;
+                  const label =
+                    uiLocale === "ru"
+                      ? `${catLabel} в ${otherCity}`
+                      : uiLocale === "he"
+                        ? `${catLabel} ב${otherCity}`
+                        : uiLocale === "ar"
+                          ? `${catLabel} في ${otherCity}`
+                          : `${catLabel} in ${otherCity}`;
+                  return (
+                    <li key={rc.id}>
+                      <Link
+                        to={`/${rc.slug}`}
+                        className="text-primary hover:underline"
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })()}
       </article>
     </>
   );
