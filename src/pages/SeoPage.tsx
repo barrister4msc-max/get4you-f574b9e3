@@ -191,6 +191,10 @@ export default function SeoPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
+  // Hook must be called unconditionally on every render — keep it BEFORE any
+  // early return below to satisfy the Rules of Hooks (fixes React error #310).
+  const { getDisplayCopy: getTaskDisplayCopy } = useTaskTranslations(uiLocale, publicTasks);
+
   if (loading) {
     return <div className="container py-16 text-center text-muted-foreground">Loading…</div>;
   }
@@ -202,7 +206,6 @@ export default function SeoPage() {
   const content = (row as any)[`content_${lang}`] || row.content_en;
   const canonical = buildCanonical(row.canonical_path || row.slug);
   const tasksStrings = buildTasksBlockStrings(row.city_slug, row.category_slug, t);
-  const { getDisplayCopy: getTaskDisplayCopy } = useTaskTranslations(uiLocale, publicTasks);
   const createTaskHref = `/create-task${
     row.category_slug || row.city_slug
       ? `?${[
