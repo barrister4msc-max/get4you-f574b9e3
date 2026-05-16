@@ -109,6 +109,7 @@ export default function SeoPage() {
   const [publicTasks, setPublicTasks] = useState<
     Array<{ id: string; title: string; description: string | null; city: string | null; category_name: string | null; created_at: string }>
   >([]);
+  const [relatedCities, setRelatedCities] = useState<SeoRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +152,21 @@ export default function SeoPage() {
           : await q;
         if (!cancelled) setRelated((rel as unknown as SeoRow[]) || []);
 
+        // Related cities: same category, different city (city+category pages only)
+        if (r.city_slug && r.category_slug) {
+          const { data: rc } = await supabase
+            .from("seo_pages")
+            .select("*")
+            .eq("is_published", true)
+            .eq("category_slug", r.category_slug)
+            .neq("city_slug", r.city_slug)
+            .not("city_slug", "is", null)
+            .limit(12);
+          if (!cancelled) setRelatedCities((rc as unknown as SeoRow[]) || []);
+        } else if (!cancelled) {
+          setRelatedCities([]);
+        }
+
         // Fetch live public tasks for this city/category combo
         const { data: pt } = await supabase.rpc("get_seo_public_tasks" as never, {
           _city_slug: r.city_slug,
@@ -168,6 +184,7 @@ export default function SeoPage() {
       } else {
         setRelated([]);
         setPublicTasks([]);
+        setRelatedCities([]);
       }
       setLoading(false);
     })();
