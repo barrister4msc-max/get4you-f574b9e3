@@ -438,6 +438,47 @@ export default function SeoPage() {
             </ul>
           </section>
         )}
+
+        {row.city_slug && row.category_slug && relatedCities.length > 0 && (() => {
+          const catLabel = t(`seo.cat.${row.category_slug}`) || row.category_slug;
+          const sectionTitle =
+            uiLocale === "ru"
+              ? `${catLabel} в других городах`
+              : uiLocale === "he"
+                ? `${catLabel} בערים אחרות`
+                : uiLocale === "ar"
+                  ? `${catLabel} في مدن أخرى`
+                  : `${catLabel} services in other cities`;
+          return (
+            <section className="mb-10">
+              <h2 className="text-2xl font-semibold mb-4">{sectionTitle}</h2>
+              <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {relatedCities.map((rc) => {
+                  const otherCity =
+                    rc.city_slug ? t(`seo.city.${rc.city_slug}`) || rc.city_slug : rc.city_slug;
+                  const label =
+                    uiLocale === "ru"
+                      ? `${catLabel} в ${otherCity}`
+                      : uiLocale === "he"
+                        ? `${catLabel} ב${otherCity}`
+                        : uiLocale === "ar"
+                          ? `${catLabel} في ${otherCity}`
+                          : `${catLabel} in ${otherCity}`;
+                  return (
+                    <li key={rc.id}>
+                      <Link
+                        to={`/${rc.slug}`}
+                        className="text-primary hover:underline"
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })()}
       </article>
     </>
   );
