@@ -108,10 +108,18 @@ const SignupPage = () => {
               onChange={(e) => setWhatsappOptIn(e.target.checked)}
               className="mt-1"
             />
-            <span>
-              Получать уведомления в WhatsApp
+            <span className="flex-1">
+              <span className="font-medium">{t("whatsapp.optin.label")}</span>
               <span className="block text-xs text-muted-foreground mt-1">
-                Мы будем отправлять только важные уведомления по вашим задачам, заказам и оплатам.
+                {t("whatsapp.optin.helper")}
+              </span>
+              <ul className="mt-1 ps-4 text-xs text-muted-foreground list-disc space-y-0.5">
+                <li>{t("whatsapp.optin.bullet.messages")}</li>
+                <li>{t("whatsapp.optin.bullet.proposals")}</li>
+                <li>{t("whatsapp.optin.bullet.payments")}</li>
+              </ul>
+              <span className="block text-[11px] text-muted-foreground mt-1 italic">
+                {t("whatsapp.no_marketing")}
               </span>
             </span>
           </label>
