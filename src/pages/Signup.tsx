@@ -1,49 +1,51 @@
-import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '@/i18n/LanguageContext';
-import { useAuth } from '@/hooks/useAuth';
-import { Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
+import { Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
-type Role = 'client' | 'tasker' | 'both';
+type Role = "client" | "tasker" | "both";
 
 const SignupPage = () => {
   const { t } = useLanguage();
   const { signUp } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<Role>('client');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<Role>("client");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast.error(t('auth.passwordMin'));
+      toast.error(t("auth.passwordMin"));
       return;
     }
     if (password !== confirmPassword) {
-      toast.error(t('auth.passwordMismatch'));
+      toast.error(t("auth.passwordMismatch"));
       return;
     }
     setLoading(true);
-    const { error } = await signUp(email, password, name, role);
+    const { error } = await signUp(email, password, name, role, phone, whatsappOptIn);
     setLoading(false);
     if (error) {
       toast.error(error);
     } else {
-      toast.success(t('auth.checkEmail'));
-      const returnTo = searchParams.get('returnTo');
-      navigate(returnTo || '/login');
+      toast.success(t("auth.checkEmail"));
+      const returnTo = searchParams.get("returnTo");
+      navigate(returnTo || "/login");
     }
   };
 
   const roles: { value: Role; label: string }[] = [
-    { value: 'client', label: t('auth.role.client') },
-    { value: 'tasker', label: t('auth.role.tasker') },
+    { value: "client", label: t("auth.role.client") },
+    { value: "tasker", label: t("auth.role.tasker") },
   ];
 
   return (
@@ -53,12 +55,12 @@ const SignupPage = () => {
           <div className="w-12 h-12 rounded-xl bg-gradient-emerald flex items-center justify-center mx-auto mb-4">
             <span className="text-primary-foreground font-bold text-lg">4</span>
           </div>
-          <h1 className="text-2xl font-bold">{t('auth.signup')}</h1>
+          <h1 className="text-2xl font-bold">{t("auth.signup")}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5">{t('auth.name')}</label>
+            <label className="block text-sm font-medium mb-1.5">{t("auth.name")}</label>
             <div className="relative">
               <User className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -72,7 +74,7 @@ const SignupPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5">{t('auth.email')}</label>
+            <label className="block text-sm font-medium mb-1.5">{t("auth.email")}</label>
             <div className="relative">
               <Mail className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -85,9 +87,36 @@ const SignupPage = () => {
               />
             </div>
           </div>
-
           <div>
-            <label className="block text-sm font-medium mb-1.5">{t('auth.password')}</label>
+            <label className="block text-sm font-medium mb-1.5">Телефон</label>
+            <div className="relative">
+              <Phone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                placeholder="+972501234567"
+              />
+            </div>
+          </div>
+
+          <label className="flex items-start gap-2 text-sm rounded-xl border border-border bg-card p-3">
+            <input
+              type="checkbox"
+              checked={whatsappOptIn}
+              onChange={(e) => setWhatsappOptIn(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              Получать уведомления в WhatsApp
+              <span className="block text-xs text-muted-foreground mt-1">
+                Мы будем отправлять только важные уведомления по вашим задачам, заказам и оплатам.
+              </span>
+            </span>
+          </label>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">{t("auth.password")}</label>
             <div className="relative">
               <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -103,7 +132,7 @@ const SignupPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5">{t('auth.confirmPassword')}</label>
+            <label className="block text-sm font-medium mb-1.5">{t("auth.confirmPassword")}</label>
             <div className="relative">
               <Lock className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -119,7 +148,7 @@ const SignupPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">{t('auth.role')}</label>
+            <label className="block text-sm font-medium mb-2">{t("auth.role")}</label>
             <div className="grid grid-cols-2 gap-2">
               {roles.map((r) => (
                 <button
@@ -128,8 +157,8 @@ const SignupPage = () => {
                   onClick={() => setRole(r.value)}
                   className={`py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
                     role === r.value
-                      ? 'border-primary bg-emerald-50 text-primary'
-                      : 'border-border text-muted-foreground hover:border-primary/30'
+                      ? "border-primary bg-emerald-50 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/30"
                   }`}
                 >
                   {role === r.value && <CheckCircle2 className="w-3 h-3 inline me-1" />}
@@ -137,9 +166,9 @@ const SignupPage = () => {
                 </button>
               ))}
             </div>
-            {(role === 'tasker' || role === 'both') && (
+            {(role === "tasker" || role === "both") && (
               <div className="mt-2 p-3 rounded-xl bg-emerald-50 border border-primary/30 text-center">
-                <p className="text-xs font-semibold text-primary">{t('esek.promo.title')}</p>
+                <p className="text-xs font-semibold text-primary">{t("esek.promo.title")}</p>
               </div>
             )}
           </div>
@@ -149,14 +178,16 @@ const SignupPage = () => {
             disabled={loading}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loading ? '...' : t('auth.signup')}
+            {loading ? "..." : t("auth.signup")}
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          {t('auth.hasAccount')}{' '}
-          <Link to="/login" className="text-primary font-medium hover:underline">{t('auth.login')}</Link>
+          {t("auth.hasAccount")}{" "}
+          <Link to="/login" className="text-primary font-medium hover:underline">
+            {t("auth.login")}
+          </Link>
         </p>
       </div>
     </div>
