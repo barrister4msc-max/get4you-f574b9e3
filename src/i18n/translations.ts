@@ -242,6 +242,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.skills': 'Skills',
     'profile.portfolio': 'Portfolio',
     'profile.phone': 'Phone',
+    'profile.phone.taken': 'This phone number is already linked to another account. Please contact support.',
     'profile.city': 'City',
     'profile.save': 'Save',
     'profile.saved': 'Profile saved!',
