@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
   // Claim rows: status pending/retry AND next_attempt_at <= now
   const { data: candidates, error: selErr } = await admin
     .from("telegram_queue")
-    .select("id, user_id, chat_id, event, payload, attempts")
+    .select("id, user_id, chat_id, event, payload, attempts, dedupe_key")
     .in("status", ["pending", "retry"])
     .lte("next_attempt_at", nowIso)
     .order("next_attempt_at", { ascending: true })
@@ -115,6 +115,7 @@ Deno.serve(async (req) => {
           chat_id: row.chat_id ?? undefined,
           text: payload.text,
           event: row.event ?? undefined,
+          dedupe_key: (row as { dedupe_key?: string | null }).dedupe_key ?? undefined,
         }),
       });
       const data = await resp.json().catch(() => ({} as Record<string, unknown>));
