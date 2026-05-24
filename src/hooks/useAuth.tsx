@@ -22,7 +22,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isSuperAdmin: boolean;
-  signUp: (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both') => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both', phone?: string, whatsappOptIn?: boolean) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -165,12 +165,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isSuperAdmin = roles.includes('super_admin') || roles.includes('superadmin');
   const isAdmin = isSuperAdmin || roles.includes('admin');
 
-  const signUp = async (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both') => {
+  const signUp = async (email: string, password: string, name: string, role: 'client' | 'tasker' | 'both', phone?: string, whatsappOptIn?: boolean) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { display_name: name, role },
+        data: { display_name: name, role, phone, whatsapp_opt_in: whatsappOptIn },
         emailRedirectTo: window.location.origin,
       },
     });
