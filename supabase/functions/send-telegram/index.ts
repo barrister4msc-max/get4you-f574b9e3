@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    chat_id = Number(prof.telegram_chat_id);
+    chat_id = prof.telegram_chat_id;
   }
 
   const enabled = !!flag.enabled;
