@@ -68,6 +68,9 @@ function normalizeCY(cleaned: string): NormalizeResult {
 function detectCountry(cleaned: string): SupportedCountry | null {
   if (cleaned.startsWith('+972') || cleaned.startsWith('972')) return 'IL';
   if (cleaned.startsWith('+357') || cleaned.startsWith('357')) return 'CY';
+  // Bare 8-digit local Cyprus mobile (no country code, no leading 0).
+  const digits = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned;
+  if (/^(94|95|96|97|99)\d{6}$/.test(digits)) return 'CY';
   return null;
 }
 
