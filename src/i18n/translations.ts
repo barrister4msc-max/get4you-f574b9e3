@@ -256,6 +256,15 @@ export const translations: Record<Locale, Record<string, string>> = {
     'profile.payment.subtitle': 'Default: Escrow. Choose an additional option if needed.',
     'profile.payment.cash': 'Cash',
     'profile.payment.check': 'Check',
+    'whatsapp.section.title': 'WhatsApp notifications',
+    'whatsapp.optin.label': 'Receive notifications on WhatsApp',
+    'whatsapp.optin.helper': 'We only send important notifications:',
+    'whatsapp.optin.bullet.messages': 'new messages',
+    'whatsapp.optin.bullet.proposals': 'proposals on your tasks',
+    'whatsapp.optin.bullet.payments': 'payments and order status',
+    'whatsapp.phone.label': 'WhatsApp phone',
+    'whatsapp.phone.placeholder': '+972501234567',
+    'whatsapp.no_marketing': 'No marketing messages, ever.',
 
     // General
     'currency.usd': 'USD',
