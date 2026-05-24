@@ -1342,6 +1342,12 @@ export type Database = {
           reviews_count: number | null
           skills: string[] | null
           tariff_priority: number | null
+          telegram_chat_id: number | null
+          telegram_linked_at: string | null
+          telegram_opt_in: boolean
+          telegram_opt_in_at: string | null
+          telegram_opt_out_at: string | null
+          telegram_username: string | null
           updated_at: string
           user_id: string
           user_number: number
@@ -1383,6 +1389,12 @@ export type Database = {
           reviews_count?: number | null
           skills?: string[] | null
           tariff_priority?: number | null
+          telegram_chat_id?: number | null
+          telegram_linked_at?: string | null
+          telegram_opt_in?: boolean
+          telegram_opt_in_at?: string | null
+          telegram_opt_out_at?: string | null
+          telegram_username?: string | null
           updated_at?: string
           user_id: string
           user_number?: number
@@ -1424,6 +1436,12 @@ export type Database = {
           reviews_count?: number | null
           skills?: string[] | null
           tariff_priority?: number | null
+          telegram_chat_id?: number | null
+          telegram_linked_at?: string | null
+          telegram_opt_in?: boolean
+          telegram_opt_in_at?: string | null
+          telegram_opt_out_at?: string | null
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string
           user_number?: number
@@ -1971,6 +1989,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      telegram_link_codes: {
+        Row: {
+          code: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_logs: {
+        Row: {
+          chat_id: number | null
+          created_at: string
+          error: string | null
+          event: string
+          id: string
+          message_id: number | null
+          metadata: Json
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          chat_id?: number | null
+          created_at?: string
+          error?: string | null
+          event: string
+          id?: string
+          message_id?: number | null
+          metadata?: Json
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          chat_id?: number | null
+          created_at?: string
+          error?: string | null
+          event?: string
+          id?: string
+          message_id?: number | null
+          metadata?: Json
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      telegram_queue: {
+        Row: {
+          attempts: number
+          chat_id: number | null
+          created_at: string
+          event: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          payload: Json
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          chat_id?: number | null
+          created_at?: string
+          event: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          chat_id?: number | null
+          created_at?: string
+          event?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
