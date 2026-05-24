@@ -1345,6 +1345,10 @@ export type Database = {
           updated_at: string
           user_id: string
           user_number: number
+          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
+          whatsapp_opt_out_at: string | null
+          whatsapp_phone: string | null
         }
         Insert: {
           active_role?: Database["public"]["Enums"]["app_role"] | null
@@ -1382,6 +1386,10 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_number?: number
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_out_at?: string | null
+          whatsapp_phone?: string | null
         }
         Update: {
           active_role?: Database["public"]["Enums"]["app_role"] | null
@@ -1419,6 +1427,10 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_number?: number
+          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
+          whatsapp_opt_out_at?: string | null
+          whatsapp_phone?: string | null
         }
         Relationships: []
       }
