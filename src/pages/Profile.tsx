@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag, Send } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -29,7 +29,13 @@ const ProfilePage = () => {
   const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPopoverOpen, setAvatarPopoverOpen] = useState(false);
-  
+
+  // Telegram linking
+  const [tgGenerating, setTgGenerating] = useState(false);
+  const [tgUnlinking, setTgUnlinking] = useState(false);
+  const [tgCode, setTgCode] = useState<string | null>(null);
+  const [tgDeepLink, setTgDeepLink] = useState<string | null>(null);
+  const telegramLinked = !!(profile as any)?.telegram_chat_id && !!(profile as any)?.telegram_opt_in;
 
   const [form, setForm] = useState({
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
@@ -171,6 +177,58 @@ const ProfilePage = () => {
   };
 
   const handleLogout = async () => { await signOut(); navigate('/'); };
+
+  const handleGenerateTelegramCode = async () => {
+    setTgGenerating(true);
+    setTgCode(null);
+    setTgDeepLink(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('telegram-link-code', { body: {} });
+      if (error) {
+        const status = (error as any)?.context?.status;
+        toast.error(status === 429 ? t('telegram.error.rate_limited') : t('telegram.error.generic'));
+        return;
+      }
+      const code = (data as any)?.code as string | undefined;
+      const link = (data as any)?.deep_link as string | null | undefined;
+      if (!code) {
+        toast.error(t('telegram.error.generic'));
+        return;
+      }
+      setTgCode(code);
+      setTgDeepLink(link ?? null);
+    } catch (e: any) {
+      toast.error(friendlyErrorMessage(e, 'Could not generate code'));
+    } finally {
+      setTgGenerating(false);
+    }
+  };
+
+  const handleUnlinkTelegram = async () => {
+    if (!user) return;
+    if (!confirm(t('telegram.unlink.confirm'))) return;
+    setTgUnlinking(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          telegram_opt_in: false,
+          telegram_opt_out_at: new Date().toISOString(),
+          telegram_chat_id: null,
+        } as any)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await refreshProfile();
+      setTgCode(null);
+      setTgDeepLink(null);
+      toast.success(t('telegram.unlinked'));
+    } catch (e: any) {
+      toast.error(friendlyErrorMessage(e, 'Failed to unlink Telegram'));
+    } finally {
+      setTgUnlinking(false);
+    }
+  };
+
   const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...roles].sort());
 
   const roleOptions = [
