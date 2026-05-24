@@ -1342,7 +1342,7 @@ export type Database = {
           reviews_count: number | null
           skills: string[] | null
           tariff_priority: number | null
-          telegram_chat_id: number | null
+          telegram_chat_id: string | null
           telegram_linked_at: string | null
           telegram_opt_in: boolean
           telegram_opt_in_at: string | null
@@ -1389,7 +1389,7 @@ export type Database = {
           reviews_count?: number | null
           skills?: string[] | null
           tariff_priority?: number | null
-          telegram_chat_id?: number | null
+          telegram_chat_id?: string | null
           telegram_linked_at?: string | null
           telegram_opt_in?: boolean
           telegram_opt_in_at?: string | null
@@ -1436,7 +1436,7 @@ export type Database = {
           reviews_count?: number | null
           skills?: string[] | null
           tariff_priority?: number | null
-          telegram_chat_id?: number | null
+          telegram_chat_id?: string | null
           telegram_linked_at?: string | null
           telegram_opt_in?: boolean
           telegram_opt_in_at?: string | null
@@ -2034,7 +2034,7 @@ export type Database = {
       }
       telegram_logs: {
         Row: {
-          chat_id: number | null
+          chat_id: string | null
           created_at: string
           error: string | null
           event: string
@@ -2046,7 +2046,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          chat_id?: number | null
+          chat_id?: string | null
           created_at?: string
           error?: string | null
           event: string
@@ -2058,7 +2058,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          chat_id?: number | null
+          chat_id?: string | null
           created_at?: string
           error?: string | null
           event?: string
@@ -2074,7 +2074,7 @@ export type Database = {
       telegram_queue: {
         Row: {
           attempts: number
-          chat_id: number | null
+          chat_id: string | null
           created_at: string
           dedupe_key: string | null
           event: string
@@ -2088,7 +2088,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number
-          chat_id?: number | null
+          chat_id?: string | null
           created_at?: string
           dedupe_key?: string | null
           event: string
@@ -2102,7 +2102,7 @@ export type Database = {
         }
         Update: {
           attempts?: number
-          chat_id?: number | null
+          chat_id?: string | null
           created_at?: string
           dedupe_key?: string | null
           event?: string
