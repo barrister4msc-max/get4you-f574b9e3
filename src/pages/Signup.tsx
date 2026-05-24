@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import { Mail, Lock, User, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 type Role = "client" | "tasker" | "both";
