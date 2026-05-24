@@ -2853,6 +2853,16 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      enqueue_telegram_event: {
+        Args: {
+          p_dedupe_key: string
+          p_event: string
+          p_payload?: Json
+          p_text: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       enqueue_whatsapp: {
         Args: {
           p_event_type: string
