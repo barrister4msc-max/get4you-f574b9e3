@@ -1990,6 +1990,24 @@ export type Database = {
           },
         ]
       }
+      telegram_link_code_rl: {
+        Row: {
+          attempts: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       telegram_link_codes: {
         Row: {
           code: string
@@ -2058,6 +2076,7 @@ export type Database = {
           attempts: number
           chat_id: number | null
           created_at: string
+          dedupe_key: string | null
           event: string
           id: string
           last_error: string | null
@@ -2071,6 +2090,7 @@ export type Database = {
           attempts?: number
           chat_id?: number | null
           created_at?: string
+          dedupe_key?: string | null
           event: string
           id?: string
           last_error?: string | null
@@ -2084,6 +2104,7 @@ export type Database = {
           attempts?: number
           chat_id?: number | null
           created_at?: string
+          dedupe_key?: string | null
           event?: string
           id?: string
           last_error?: string | null
