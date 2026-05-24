@@ -190,6 +190,24 @@ const ProfilePage = () => {
         ? existingPhone
         : normalizedPhone;
 
+    // Phone-ownership pre-check: a phone/whatsapp_phone may not belong to another user.
+    const orFilters: string[] = [];
+    if (phoneToSave) orFilters.push(`phone.eq.${phoneToSave}`);
+    if (normalizedWa) orFilters.push(`whatsapp_phone.eq.${normalizedWa}`);
+    if (orFilters.length) {
+      const { data: clash } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .or(orFilters.join(','))
+        .neq('user_id', user.id)
+        .limit(1);
+      if (clash && clash.length > 0) {
+        toast.error(t('profile.phone.taken'));
+        setSaving(false);
+        return;
+      }
+    }
+
     const updateData: any = { display_name: form.display_name, phone: phoneToSave, city: form.city, bio: form.bio };
     if (isTasker) updateData.payment_method = form.payment_method || null;
     // WhatsApp notification preferences (opt-in is never enabled by default)
@@ -202,7 +220,11 @@ const ProfilePage = () => {
       updateData.whatsapp_opt_out_at = new Date().toISOString();
     }
     const { error } = await supabase.from('profiles').update(updateData).eq('user_id', user.id);
-    if (error) toast.error(friendlyErrorMessage(error, 'Failed to save profile'));
+    if (error) {
+      // 23505 = unique_violation. Race fallback for the DB unique partial index.
+      if ((error as any)?.code === '23505') toast.error(t('profile.phone.taken'));
+      else toast.error(friendlyErrorMessage(error, 'Failed to save profile'));
+    }
     else { toast.success(t('profile.saved')); await refreshProfile(); }
     setSaving(false);
   };
