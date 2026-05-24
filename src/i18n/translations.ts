@@ -266,6 +266,25 @@ export const translations: Record<Locale, Record<string, string>> = {
     'whatsapp.phone.placeholder': '+972501234567',
     'whatsapp.no_marketing': 'No marketing messages, ever.',
 
+    // Telegram
+    'telegram.section.title': 'Telegram notifications',
+    'telegram.section.subtitle': 'We only send important notifications:',
+    'telegram.bullet.messages': 'new messages',
+    'telegram.bullet.proposals': 'proposals on your tasks',
+    'telegram.bullet.payments': 'payments and order status',
+    'telegram.status.not_linked': 'Telegram is not linked yet.',
+    'telegram.status.linked': 'Telegram is linked.',
+    'telegram.button.link': 'Link Telegram',
+    'telegram.button.generating': 'Generating code...',
+    'telegram.button.unlink': 'Unlink Telegram',
+    'telegram.code.label': 'Your one-time link code (valid 15 min):',
+    'telegram.code.instructions': 'Open Telegram and send /start {code} to the bot.',
+    'telegram.code.open_bot': 'Open bot in Telegram',
+    'telegram.unlink.confirm': 'Are you sure you want to unlink Telegram?',
+    'telegram.unlinked': 'Telegram unlinked.',
+    'telegram.error.generic': 'Could not generate code. Please try again.',
+    'telegram.error.rate_limited': 'Too many requests. Please try again later.',
+
     // General
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
