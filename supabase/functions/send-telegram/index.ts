@@ -61,14 +61,14 @@ Deno.serve(async (req) => {
     enabled?: boolean; test_user_ids?: string[];
   };
 
-  let body: { user_id?: string; chat_id?: number; text?: string; event?: string } = {};
+  let body: { user_id?: string; chat_id?: string | number; text?: string; event?: string; dedupe_key?: string } = {};
   try { body = await req.json(); } catch (_) {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  const { user_id, text, event } = body;
-  let { chat_id } = body;
+  const { user_id, text, event, dedupe_key } = body;
+  let chat_id: string | null = body.chat_id != null ? String(body.chat_id) : null;
 
   if (!text || typeof text !== "string" || text.length > 4000) {
     return new Response(JSON.stringify({ error: "Invalid text" }), {
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let resolvedUserId = user_id ?? null;
+  const resolvedUserId = user_id ?? null;
 
   if (!chat_id) {
     if (!user_id) {
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    chat_id = Number(prof.telegram_chat_id);
+    chat_id = String(prof.telegram_chat_id);
   }
 
   const enabled = !!flag.enabled;
@@ -105,12 +105,39 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Dedupe: reject if a recent (5 min) send with same dedupe_key already succeeded
+  if (dedupe_key) {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60_000).toISOString();
+    const { data: dup } = await admin
+      .from("telegram_logs")
+      .select("id")
+      .eq("status", "sent")
+      .contains("metadata", { dedupe_key })
+      .gte("sent_at", fiveMinAgo)
+      .limit(1)
+      .maybeSingle();
+    if (dup) {
+      await logEvent("telegram.send_skipped_dedupe", { user_id: resolvedUserId, event, dedupe_key });
+      return new Response(JSON.stringify({ ok: false, skipped: "duplicate" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   try {
-    const resp = await fetch(`${BOT_API}${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
-    });
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 9000);
+    let resp: Response;
+    try {
+      resp = await fetch(`${BOT_API}${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
+        signal: ctl.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
     const data = await resp.json().catch(() => ({} as Record<string, unknown>));
     if (!resp.ok || !(data as { ok?: boolean }).ok) {
       const errMsg = `telegram ${resp.status}: ${JSON.stringify(data)}`;
@@ -123,7 +150,7 @@ Deno.serve(async (req) => {
     await admin.from("telegram_logs").insert({
       user_id: resolvedUserId, chat_id, event: event ?? null, status: "sent",
       message_id: messageId, sent_at: new Date().toISOString(),
-      metadata: { text_len: text.length },
+      metadata: { text_len: text.length, dedupe_key: dedupe_key ?? null },
     });
     await logEvent("telegram.sent", { user_id: resolvedUserId, chat_id, event, message_id: messageId });
     return new Response(JSON.stringify({ ok: true, message_id: messageId }), {
