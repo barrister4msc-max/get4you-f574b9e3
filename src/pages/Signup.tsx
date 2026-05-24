@@ -4,6 +4,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, User, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { normalizePhone } from "@/lib/phone";
 
 type Role = "client" | "tasker" | "both";
 
@@ -32,7 +33,17 @@ const SignupPage = () => {
       return;
     }
     setLoading(true);
-    const { error } = await signUp(email, password, name, role, phone, whatsappOptIn);
+    let normalizedPhone: string | undefined = undefined;
+    if (phone.trim()) {
+      const res = normalizePhone(phone);
+      if (!res.ok) {
+        toast.error(res.error || "Invalid phone number");
+        setLoading(false);
+        return;
+      }
+      normalizedPhone = res.e164;
+    }
+    const { error } = await signUp(email, password, name, role, normalizedPhone, whatsappOptIn);
     setLoading(false);
     if (error) {
       toast.error(error);
