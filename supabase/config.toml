@@ -27,3 +27,9 @@ verify_jwt = true
     verify_jwt = false
   [functions.twilio-status-webhook]
     verify_jwt = false
+  [functions.telegram-webhook]
+    verify_jwt = false
+  [functions.send-telegram]
+    verify_jwt = false
+  [functions.process-telegram-queue]
+    verify_jwt = false
