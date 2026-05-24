@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,12 +23,20 @@ const getPasswordStrength = (pw: string): { level: 'weak' | 'medium' | 'strong';
 
 const LoginPage = () => {
   const { t } = useLanguage();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const isSignupRoute = location.pathname === '/signup';
   const initialTab = isSignupRoute || searchParams.get('tab') === 'signup' ? 'signup' : 'login';
+
+  // If user is already authenticated, redirect to start page (or returnTo)
+  useEffect(() => {
+    if (!authLoading && user) {
+      const returnTo = searchParams.get('returnTo') || '/';
+      navigate(returnTo, { replace: true });
+    }
+  }, [authLoading, user, navigate, searchParams]);
 
   const [tab, setTab] = useState<'login' | 'signup'>(initialTab);
   const [email, setEmail] = useState('');
