@@ -321,6 +321,48 @@ const ProfilePage = () => {
             </div>
           )}
 
+          {/* WhatsApp notifications */}
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <h2 className="text-sm font-semibold">{t('whatsapp.section.title')}</h2>
+            <label className="flex items-start gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.whatsapp_opt_in}
+                onChange={(e) => setForm({ ...form, whatsapp_opt_in: e.target.checked })}
+                className="mt-1"
+              />
+              <span className="flex-1">
+                <span className="font-medium">{t('whatsapp.optin.label')}</span>
+                <span className="block text-xs text-muted-foreground mt-1">
+                  {t('whatsapp.optin.helper')}
+                </span>
+                <ul className="mt-1 ps-4 text-xs text-muted-foreground list-disc space-y-0.5">
+                  <li>{t('whatsapp.optin.bullet.messages')}</li>
+                  <li>{t('whatsapp.optin.bullet.proposals')}</li>
+                  <li>{t('whatsapp.optin.bullet.payments')}</li>
+                </ul>
+                <span className="block text-[11px] text-muted-foreground mt-1 italic">
+                  {t('whatsapp.no_marketing')}
+                </span>
+              </span>
+            </label>
+            {form.whatsapp_opt_in && (
+              <div>
+                <label className="block text-xs font-medium mb-1.5">{t('whatsapp.phone.label')}</label>
+                <div className="relative">
+                  <Phone className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="tel"
+                    value={form.whatsapp_phone}
+                    onChange={(e) => setForm({ ...form, whatsapp_phone: e.target.value })}
+                    placeholder={t('whatsapp.phone.placeholder')}
+                    className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <button onClick={handleSave} disabled={saving}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50">
             <Save className="w-4 h-4" />
