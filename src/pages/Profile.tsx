@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag } from 'lucide-react';
+import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag, Send } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -29,7 +29,13 @@ const ProfilePage = () => {
   const [hasEmploymentAgreement, setHasEmploymentAgreement] = useState<boolean | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPopoverOpen, setAvatarPopoverOpen] = useState(false);
-  
+
+  // Telegram linking
+  const [tgGenerating, setTgGenerating] = useState(false);
+  const [tgUnlinking, setTgUnlinking] = useState(false);
+  const [tgCode, setTgCode] = useState<string | null>(null);
+  const [tgDeepLink, setTgDeepLink] = useState<string | null>(null);
+  const telegramLinked = !!(profile as any)?.telegram_chat_id && !!(profile as any)?.telegram_opt_in;
 
   const [form, setForm] = useState({
     display_name: '', phone: '', city: '', bio: '', payment_method: '',
@@ -171,6 +177,58 @@ const ProfilePage = () => {
   };
 
   const handleLogout = async () => { await signOut(); navigate('/'); };
+
+  const handleGenerateTelegramCode = async () => {
+    setTgGenerating(true);
+    setTgCode(null);
+    setTgDeepLink(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('telegram-link-code', { body: {} });
+      if (error) {
+        const status = (error as any)?.context?.status;
+        toast.error(status === 429 ? t('telegram.error.rate_limited') : t('telegram.error.generic'));
+        return;
+      }
+      const code = (data as any)?.code as string | undefined;
+      const link = (data as any)?.deep_link as string | null | undefined;
+      if (!code) {
+        toast.error(t('telegram.error.generic'));
+        return;
+      }
+      setTgCode(code);
+      setTgDeepLink(link ?? null);
+    } catch (e: any) {
+      toast.error(friendlyErrorMessage(e, 'Could not generate code'));
+    } finally {
+      setTgGenerating(false);
+    }
+  };
+
+  const handleUnlinkTelegram = async () => {
+    if (!user) return;
+    if (!confirm(t('telegram.unlink.confirm'))) return;
+    setTgUnlinking(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          telegram_opt_in: false,
+          telegram_opt_out_at: new Date().toISOString(),
+          telegram_chat_id: null,
+        } as any)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      await refreshProfile();
+      setTgCode(null);
+      setTgDeepLink(null);
+      toast.success(t('telegram.unlinked'));
+    } catch (e: any) {
+      toast.error(friendlyErrorMessage(e, 'Failed to unlink Telegram'));
+    } finally {
+      setTgUnlinking(false);
+    }
+  };
+
   const rolesChanged = JSON.stringify([...selectedRoles].sort()) !== JSON.stringify([...roles].sort());
 
   const roleOptions = [
@@ -359,6 +417,69 @@ const ProfilePage = () => {
                     className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                   />
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Telegram notifications */}
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <Send className="w-4 h-4 text-primary" />
+              {t('telegram.section.title')}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t('telegram.section.subtitle')}</p>
+            <ul className="ps-4 text-xs text-muted-foreground list-disc space-y-0.5">
+              <li>{t('telegram.bullet.messages')}</li>
+              <li>{t('telegram.bullet.proposals')}</li>
+              <li>{t('telegram.bullet.payments')}</li>
+            </ul>
+
+            {telegramLinked ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-primary">
+                  {t('telegram.status.linked')}
+                  {(profile as any)?.telegram_username && ` @${(profile as any).telegram_username}`}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleUnlinkTelegram}
+                  disabled={tgUnlinking}
+                  className="w-full py-2 rounded-xl text-xs font-semibold border border-destructive text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                >
+                  {tgUnlinking ? '...' : t('telegram.button.unlink')}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">{t('telegram.status.not_linked')}</p>
+                <button
+                  type="button"
+                  onClick={handleGenerateTelegramCode}
+                  disabled={tgGenerating}
+                  className="w-full py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {tgGenerating ? t('telegram.button.generating') : t('telegram.button.link')}
+                </button>
+                {tgCode && (
+                  <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">{t('telegram.code.label')}</p>
+                    <code className="block text-sm font-mono font-semibold break-all">{tgCode}</code>
+                    <p className="text-xs text-muted-foreground">
+                      {t('telegram.code.instructions').replace('{code}', tgCode)}
+                    </p>
+                    {tgDeepLink && (
+                      <a
+                        href={tgDeepLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        {t('telegram.code.open_bot')}
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
