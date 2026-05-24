@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
+import { normalizePhone } from '@/lib/phone';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -159,11 +160,41 @@ const ProfilePage = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const updateData: any = { display_name: form.display_name, phone: form.phone, city: form.city, bio: form.bio };
+    // Normalize phone numbers to E.164 (IL or CY). Reject invalid input.
+    let normalizedPhone: string | null = form.phone?.trim() ? null : null;
+    if (form.phone?.trim()) {
+      const res = normalizePhone(form.phone);
+      if (!res.ok) {
+        toast.error(res.error || 'Invalid phone number');
+        setSaving(false);
+        return;
+      }
+      normalizedPhone = res.e164!;
+    }
+    let normalizedWa: string | null = null;
+    if (form.whatsapp_phone?.trim()) {
+      const res = normalizePhone(form.whatsapp_phone);
+      if (!res.ok) {
+        toast.error(res.error || 'Invalid WhatsApp phone');
+        setSaving(false);
+        return;
+      }
+      normalizedWa = res.e164!;
+    }
+
+    // Do not overwrite an existing verified phone automatically.
+    const isVerified = !!(profile as any)?.is_verified;
+    const existingPhone = profile?.phone || null;
+    const phoneToSave =
+      isVerified && existingPhone && normalizedPhone && normalizedPhone !== existingPhone
+        ? existingPhone
+        : normalizedPhone;
+
+    const updateData: any = { display_name: form.display_name, phone: phoneToSave, city: form.city, bio: form.bio };
     if (isTasker) updateData.payment_method = form.payment_method || null;
     // WhatsApp notification preferences (opt-in is never enabled by default)
     updateData.whatsapp_opt_in = form.whatsapp_opt_in;
-    updateData.whatsapp_phone = form.whatsapp_phone || null;
+    updateData.whatsapp_phone = normalizedWa;
     if (form.whatsapp_opt_in && !(profile as any)?.whatsapp_opt_in) {
       updateData.whatsapp_opt_in_at = new Date().toISOString();
       updateData.whatsapp_opt_out_at = null;
