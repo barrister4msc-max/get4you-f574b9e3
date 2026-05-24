@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
   const message = (update.message ?? update.edited_message) as
     | { chat?: { id?: number }; from?: { id?: number; username?: string }; text?: string }
     | undefined;
-  const chatId = message?.chat?.id;
+  const chatIdRaw = message?.chat?.id;
+  const chatId = chatIdRaw != null ? String(chatIdRaw) : null;
   const text = (message?.text ?? "").trim();
 
   if (!chatId) {
@@ -79,14 +80,19 @@ Deno.serve(async (req) => {
   }
 
   const sendReply = async (body: string) => {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 9000);
     try {
       await fetch(`${BOT_API}${BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chatId, text: body, parse_mode: "HTML" }),
+        signal: ctl.signal,
       });
     } catch (e) {
       await logEvent("telegram.reply_error", { error: String(e), chat_id: chatId });
+    } finally {
+      clearTimeout(timer);
     }
   };
 
