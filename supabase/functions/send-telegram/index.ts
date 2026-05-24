@@ -106,11 +106,26 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const resp = await fetch(`${BOT_API}${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id, text, parse_mode: "HTML", disable_web_page_preview: true }),
-    });
+    const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+let resp: Response;
+
+try {
+  resp = await fetch(`${BOT_API}${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: controller.signal,
+    body: JSON.stringify({
+      chat_id,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+    }),
+  });
+} finally {
+  clearTimeout(timeoutId);
+}
     const data = await resp.json().catch(() => ({} as Record<string, unknown>));
     if (!resp.ok || !(data as { ok?: boolean }).ok) {
       const errMsg = `telegram ${resp.status}: ${JSON.stringify(data)}`;
