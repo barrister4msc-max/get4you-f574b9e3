@@ -9,6 +9,7 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { TaskAIAssistant } from "@/components/TaskAIAssistant";
+import { PriceEstimator, PriceFeedback } from "@/components/PriceEstimator";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -61,6 +62,7 @@ const CreateTaskPage = () => {
   const [categorizing, setCategorizing] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [priceEstimate, setPriceEstimate] = useState<{ min_price: number; max_price: number; recommended_price: number } | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState(() => {
@@ -656,7 +658,7 @@ const CreateTaskPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">{t("task.budget")}</label>
+                  <label className="block text-sm font-medium mb-1.5">{t("task.yourPrice")}</label>
                   <div className="relative">
                     <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
@@ -669,6 +671,7 @@ const CreateTaskPage = () => {
                   <p className="text-xs text-muted-foreground mt-1">
                     ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD")}
                   </p>
+                  <PriceFeedback price={form.budget} estimate={priceEstimate} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">{t("task.urgency")}</label>
