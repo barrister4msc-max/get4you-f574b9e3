@@ -20,9 +20,10 @@ interface Props {
   title: string;
   description: string;
   onUseSuggested: (price: number) => void;
+  onEstimate?: (e: Estimate | null) => void;
 }
 
-export const PriceEstimator = ({ city, category, title, description, onUseSuggested }: Props) => {
+export const PriceEstimator = ({ city, category, title, description, onUseSuggested, onEstimate }: Props) => {
   const { t, locale } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [estimate, setEstimate] = useState<Estimate | null>(null);
@@ -43,11 +44,17 @@ export const PriceEstimator = ({ city, category, title, description, onUseSugges
           body: { city, category, title, description, userLocale: locale },
         });
         if (err) throw err;
-        if (data && (data.recommended_price ?? 0) > 0) setEstimate(data as Estimate);
-        else setEstimate(null);
+        if (data && (data.recommended_price ?? 0) > 0) {
+          setEstimate(data as Estimate);
+          onEstimate?.(data as Estimate);
+        } else {
+          setEstimate(null);
+          onEstimate?.(null);
+        }
       } catch {
         setError(true);
         setEstimate(null);
+        onEstimate?.(null);
       } finally {
         setLoading(false);
       }
