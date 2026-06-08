@@ -656,6 +656,15 @@ const CreateTaskPage = () => {
                 </div>
               </div>
 
+              <PriceEstimator
+                city={form.location}
+                category={form.category}
+                title={form.title}
+                description={form.description}
+                onUseSuggested={(p) => update({ budget: p })}
+                onEstimate={(e) => setPriceEstimate(e)}
+              />
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">{t("task.yourPrice")}</label>
