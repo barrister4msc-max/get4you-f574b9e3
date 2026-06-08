@@ -53,7 +53,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.step5.desc': 'Approve the work, funds are released, and leave a review.',
 
     // Task form
-    'task.create.title': 'Create a New Task',
+    'task.create.title': 'How can we help?',
     'task.title': 'Task Title',
     'task.title.placeholder': 'e.g., Deep clean a 2-bedroom apartment',
     'task.description': 'Description',
@@ -899,7 +899,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.step5.title': 'Готово и отзыв',
     'how.step5.desc': 'Подтвердите выполнение, средства переводятся исполнителю.',
 
-    'task.create.title': 'Создать задачу',
+    'task.create.title': 'Чем помочь?',
     'task.title': 'Заголовок',
     'task.title.placeholder': 'напр., Генеральная уборка квартиры',
     'task.description': 'Описание',
@@ -1723,7 +1723,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.step5.title': 'בוצע וביקורת',
     'how.step5.desc': 'אשר את העבודה, הכספים משוחררים, והשאר ביקורת.',
 
-    'task.create.title': 'צור משימה חדשה',
+    'task.create.title': 'במה לעזור?',
     'task.title': 'כותרת',
     'task.title.placeholder': 'לדוג., ניקיון יסודי דירת 3 חדרים',
     'task.description': 'תיאור',
@@ -2547,7 +2547,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'how.step5.title': 'تم والتقييم',
     'how.step5.desc': 'وافق على العمل، يتم تحويل الأموال، واترك تقييماً.',
 
-    'task.create.title': 'إنشاء مهمة جديدة',
+    'task.create.title': 'كيف نساعدك؟',
     'task.title': 'العنوان',
     'task.title.placeholder': 'مثال: تنظيف شامل لشقة 3 غرف',
     'task.description': 'الوصف',
