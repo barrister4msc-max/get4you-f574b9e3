@@ -335,7 +335,7 @@ export default function SeoPage() {
 
         <div className="flex flex-wrap gap-3 mb-10">
           <Button asChild size="lg">
-            <Link to="/create-task">{t("hero.cta") || "Post a Task"}</Link>
+            <Link to="/create-task">{t("hero.cta") || "How can we help?"}</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/for-taskers">{t("nav.forTaskers") || "Become a Tasker"}</Link>
