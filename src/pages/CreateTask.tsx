@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 
 const DRAFT_KEY = "task_draft";
+const DRAFT_PENDING_KEY = "task_draft_pending_submit";
 const categories = ["cleaning", "moving", "repair", "digital", "consulting", "delivery", "beauty", "tutoring"];
 
 const CreateTaskPage = () => {
@@ -235,6 +236,7 @@ const CreateTaskPage = () => {
   };
 
   const [showMotivation, setShowMotivation] = useState(false);
+  const autoSubmitTriedRef = useRef(false);
 
   const [geoAutoTried, setGeoAutoTried] = useState(false);
   // Choice dialog: "use my current location" vs. "enter manually"
@@ -321,6 +323,14 @@ const CreateTaskPage = () => {
     if (hasError) return;
 
     if (!user) {
+      // Persist a flag so that after the user signs in / signs up we can
+      // resume the publish action automatically.
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+        localStorage.setItem(DRAFT_PENDING_KEY, "1");
+      } catch {
+        /* ignore */
+      }
       setShowMotivation(true);
       return;
     }
