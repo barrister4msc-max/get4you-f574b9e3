@@ -114,6 +114,10 @@ const LoginPage = () => {
     if (error) {
       toast.error(error);
     } else {
+      if (hasPendingTaskDraft()) {
+        toast.success('Аккаунт создан. Публикуем заявку…');
+        return;
+      }
       setSignupEmail(email);
       setSignupComplete(true);
       // Send welcome email
