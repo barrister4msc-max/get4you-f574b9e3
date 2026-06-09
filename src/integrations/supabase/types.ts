@@ -1220,6 +1220,69 @@ export type Database = {
           },
         ]
       }
+      payout_accounts: {
+        Row: {
+          account_holder_name: string
+          account_number: string | null
+          bank_name: string | null
+          bank_number: string | null
+          branch_number: string | null
+          country: string
+          created_at: string
+          currency: string
+          iban: string | null
+          id: string
+          id_number: string
+          provider: string
+          provider_recipient_id: string | null
+          rejection_reason: string | null
+          status: string
+          swift_bic: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_holder_name: string
+          account_number?: string | null
+          bank_name?: string | null
+          bank_number?: string | null
+          branch_number?: string | null
+          country?: string
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          id_number: string
+          provider?: string
+          provider_recipient_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          swift_bic?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string | null
+          bank_name?: string | null
+          bank_number?: string | null
+          branch_number?: string | null
+          country?: string
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          id_number?: string
+          provider?: string
+          provider_recipient_id?: string | null
+          rejection_reason?: string | null
+          status?: string
+          swift_bic?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payouts: {
         Row: {
           amount: number
@@ -2256,6 +2319,99 @@ export type Database = {
           phone?: string | null
         }
         Relationships: []
+      }
+      withdrawal_request_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payout_id: string
+          withdrawal_request_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          payout_id: string
+          withdrawal_request_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payout_id?: string
+          withdrawal_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_request_payouts_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["payout_id"]
+          },
+          {
+            foreignKeyName: "withdrawal_request_payouts_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "withdrawal_request_payouts_withdrawal_request_id_fkey"
+            columns: ["withdrawal_request_id"]
+            isOneToOne: false
+            referencedRelation: "withdrawal_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      withdrawal_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          payout_account_id: string
+          processed_at: string | null
+          rejection_reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          payout_account_id: string
+          processed_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          payout_account_id?: string
+          processed_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_payout_account_id_fkey"
+            columns: ["payout_account_id"]
+            isOneToOne: false
+            referencedRelation: "payout_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
