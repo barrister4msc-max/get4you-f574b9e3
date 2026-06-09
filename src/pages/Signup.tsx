@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
+import { hasPendingTaskDraft } from "@/lib/pendingTaskDraft";
 import { Mail, Lock, User, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { normalizePhone } from "@/lib/phone";
@@ -50,9 +51,7 @@ const SignupPage = () => {
     } else {
       toast.success(t("auth.checkEmail"));
       const returnTo = searchParams.get("returnTo");
-      // After successful signup the user is signed in automatically — send them
-      // to their personal dashboard (or the page they came from, e.g. an application).
-      navigate(returnTo || "/dashboard");
+      navigate(hasPendingTaskDraft() ? "/auth/callback" : (returnTo || "/dashboard"));
     }
   };
 
