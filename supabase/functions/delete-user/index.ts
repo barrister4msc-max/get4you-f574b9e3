@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       console.error("[delete-user] auth.admin.deleteUser failed, attempting SQL fallback", delErr);
       // Fallback: direct DELETE FROM auth.users via SECURITY DEFINER RPC.
       const { error: rpcErr } = await adminClient.rpc("admin_force_delete_auth_user", {
+        _actor: user.id,
         _target: target_user_id,
       });
       if (rpcErr) {
