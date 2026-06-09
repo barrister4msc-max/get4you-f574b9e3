@@ -529,16 +529,21 @@ const TaskDetailPage = () => {
 
   const handleSaveProposalEdit = async () => {
     if (!editingProposalId || !editProposalPrice) return;
+    const numericPrice = Number(editProposalPrice);
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      toast.error(t('proposal.error.INVALID_PRICE'));
+      return;
+    }
     setSubmitting(true);
     try {
       const { error } = await supabase.from('proposals').update({
-        price: Number(editProposalPrice),
+        price: numericPrice,
         comment: editProposalComment.trim() || null,
       }).eq('id', editingProposalId);
       if (error) throw error;
       setProposals(prev => prev.map(p =>
         p.id === editingProposalId
-          ? { ...p, price: Number(editProposalPrice), comment: editProposalComment.trim() || null }
+          ? { ...p, price: numericPrice, comment: editProposalComment.trim() || null }
           : p
       ));
       setEditingProposalId(null);
