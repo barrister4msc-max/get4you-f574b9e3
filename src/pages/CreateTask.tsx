@@ -850,7 +850,24 @@ const CreateTaskPage = () => {
           )}
           {step < 3 ? (
             <button
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                if (step === 2) {
+                  let bad = false;
+                  if (!form.title.trim()) {
+                    setTitleError(t("task.title.required") || "Please enter a task title");
+                    bad = true;
+                  }
+                  if (!form.budget || form.budget <= 0) {
+                    setPriceError(t("task.price.required") || "Please enter a price greater than 0");
+                    bad = true;
+                  }
+                  if (bad) {
+                    toast.error(t("task.fix.errors") || "Please fix the highlighted fields");
+                    return;
+                  }
+                }
+                setStep(step + 1);
+              }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
             >
               {t("task.next")}
