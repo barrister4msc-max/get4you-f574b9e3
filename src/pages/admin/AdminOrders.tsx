@@ -31,10 +31,16 @@ export default function AdminOrders() {
       .limit(100);
 
     const userIds = [...new Set((data || []).flatMap(t => [t.user_id, t.assigned_to].filter((x): x is string => Boolean(x))))];
-    const { data: profiles } = await supabase.from('profiles').select('user_id, display_name').in('user_id', userIds);
-    const nameMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p.display_name]));
+    const { data: profiles } = await supabase.from('profiles').select('user_id, display_name, email').in('user_id', userIds);
+    const nameMap = Object.fromEntries(
+      (profiles || []).map(p => [p.user_id, p.display_name || p.email || null])
+    );
 
-    setTasks((data || []).map(t => ({ ...t, ownerName: nameMap[t.user_id] || '—', performerName: t.assigned_to ? (nameMap[t.assigned_to] || '—') : '—' })));
+    setTasks((data || []).map(t => ({
+      ...t,
+      ownerName: nameMap[t.user_id] || '—',
+      performerName: t.assigned_to ? (nameMap[t.assigned_to] || '—') : '—',
+    })));
 
     const taskIds = (data || []).map(t => t.id);
     if (taskIds.length) {
