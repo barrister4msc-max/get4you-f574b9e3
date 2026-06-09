@@ -26,7 +26,7 @@ import {
 import { NearbyOrders } from "@/components/NearbyOrders";
 import { ProfileMap } from "@/components/ProfileMap";
 import { useTaskTranslations } from "@/hooks/useTaskTranslations";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useActiveRole } from "@/contexts/ActiveRoleContext";
 
@@ -93,6 +93,7 @@ const DashboardPage = () => {
   const { t, currency, locale } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user, profile, roles } = useAuth();
+  const navigate = useNavigate();
 
   const {
     latitude,
@@ -398,7 +399,7 @@ const DashboardPage = () => {
   const displayedTasks = showTaskerBlocks ? assignedTasks : myTasks;
 
   const handleWithdraw = () => {
-    toast.success(t("balance.withdraw.success"));
+    navigate("/contractor-payments");
   };
 
   return (

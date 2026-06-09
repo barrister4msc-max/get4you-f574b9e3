@@ -60,6 +60,8 @@ import AdminLegalEditor from "./pages/admin/AdminLegalEditor";
 import AdminPayments from "./pages/admin/AdminPayments";
 import SeoPage from "./pages/SeoPage";
 import AdminReconciliation from "./pages/admin/AdminReconciliation";
+import AdminPayouts from "./pages/admin/AdminPayouts";
+import ContractorPayments from "./pages/ContractorPayments";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +106,14 @@ const App = () => (
                     element={
                       <ProtectedRoute>
                         <EmploymentAgreement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/contractor-payments"
+                    element={
+                      <ProtectedRoute>
+                        <ContractorPayments />
                       </ProtectedRoute>
                     }
                   />
@@ -189,6 +199,7 @@ const App = () => (
                     <Route path="legal" element={<AdminLegalEditor />} />
                     <Route path="payments" element={<AdminPayments />} />
                     <Route path="reconciliation" element={<AdminReconciliation />} />
+                    <Route path="payouts" element={<AdminPayouts />} />
                   </Route>
                   {/* Public SEO landing pages (must be last inside Layout) */}
                   <Route path="/israel" element={<SeoPage />} />
