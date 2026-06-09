@@ -36,23 +36,25 @@ serve(async (req) => {
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id ?? null;
     }
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Per-type rate limit
+    // Per-type rate limit (only enforced for authenticated users; guests are
+    // allowed to use create-task AI helpers without an account).
     const fnKey = `task-assistant:${type || "assist"}`;
     const limit = LIMITS[type] ?? DEFAULT_LIMIT;
-    const { data: allowed } = await supabase.rpc("check_ai_rate_limit", {
-      _user_id: userId,
-      _function_name: fnKey,
-      _max_requests: limit,
-    });
-    if (!allowed) {
-      return new Response(JSON.stringify({ error: "daily_limit", limit, type }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (userId) {
+      const { data: allowed } = await supabase.rpc("check_ai_rate_limit", {
+        _user_id: userId,
+        _function_name: fnKey,
+        _max_requests: limit,
+      });
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "daily_limit", limit, type }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (type === "translate_tasks") {
+      // Translation cache writes require a known user; keep that auth-only.
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -102,7 +104,9 @@ serve(async (req) => {
     }
 
     // Log usage (after passing rate limit, before billable AI call)
-    await supabase.from("ai_usage").insert({ user_id: userId, function_name: fnKey });
+    if (userId) {
+      await supabase.from("ai_usage").insert({ user_id: userId, function_name: fnKey });
+    }
 
     const localeNames: Record<string, string> = {
       en: 'English',

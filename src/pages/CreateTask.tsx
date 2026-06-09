@@ -51,7 +51,7 @@ const CreateTaskPage = () => {
     clearLocation,
     reverseGeocode,
   } = useGeolocation();
-  const { t, currency, locale } = useLanguage();
+  const { t, currency, locale, rates } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -147,6 +147,17 @@ const CreateTaskPage = () => {
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  /** Convert an ILS amount returned by the AI into the user's selected display currency. */
+  const ilsToDisplay = useCallback(
+    (ils: number) => {
+      if (!Number.isFinite(ils) || ils <= 0) return 0;
+      const ilsRate = rates?.ILS ?? 3.7;
+      const usd = ils / ilsRate;
+      return currency === "ILS" ? Math.round(usd * ilsRate) : Math.round(usd);
+    },
+    [currency, rates],
+  );
+
   const handleAutoCategorize = async () => {
     if (!form.description && !form.title) {
       toast.error(t("task.ai.needDescription"));
@@ -154,34 +165,31 @@ const CreateTaskPage = () => {
     }
     setCategorizing(true);
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task-assistant`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke("ai-task-assistant", {
+        body: {
           type: "categorize",
           userLocale: locale,
-          messages: [{ role: "user", content: `Task title: ${form.title}\nDescription: ${form.description}` }],
-        }),
+          messages: [
+            { role: "user", content: `Task title: ${form.title}\nDescription: ${form.description}` },
+          ],
+        },
       });
-      if (!resp.ok) throw new Error("Failed");
-      const data = await resp.json();
+      if (error) throw error;
+      if (!data || (data as { error?: string }).error) throw new Error((data as { error?: string })?.error || "Failed");
+      const min = ilsToDisplay(Number((data as { budget_min?: number }).budget_min) || 0);
+      const max = ilsToDisplay(Number((data as { budget_max?: number }).budget_max) || 0);
       update({
-        category: data.category || form.category,
-        taskType: data.task_type || form.taskType,
-        // Only apply AI budget when it's a positive number; never overwrite with 0
-        // (AI returns ILS — if the user is on USD this would mismatch the currency,
-        // so we leave the user's manual price alone).
-        budget: currency === "ILS" && Number(data.budget_min) > 0 ? Number(data.budget_min) : form.budget,
-        budgetMax: currency === "ILS" && Number(data.budget_max) > 0 ? Number(data.budget_max) : form.budgetMax,
-        urgency: data.urgency || form.urgency,
-        title: data.improved_title || form.title,
+        category: (data as { category?: string }).category || form.category,
+        taskType: (data as { task_type?: string }).task_type as "onsite" | "remote" || form.taskType,
+        budget: min > 0 ? min : form.budget,
+        budgetMax: max > 0 ? max : form.budgetMax,
+        urgency: (data as { urgency?: string }).urgency as "flexible" | "soon" | "urgent" || form.urgency,
+        // Don't overwrite a title the user already typed.
+        title: form.title.trim() ? form.title : ((data as { improved_title?: string }).improved_title || form.title),
       });
       toast.success(t("task.ai.categorized"));
-    } catch {
+    } catch (e) {
+      console.error("AI categorize error:", e);
       toast.error(t("task.ai.error"));
     } finally {
       setCategorizing(false);
@@ -198,32 +206,28 @@ const CreateTaskPage = () => {
 
     setVoiceProcessing(true);
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-task-assistant`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke("ai-task-assistant", {
+        body: {
           type: "voice_to_task",
           userLocale: locale,
           messages: [{ role: "user", content: text }],
-        }),
+        },
       });
-      if (!resp.ok) throw new Error("Failed");
-      const data = await resp.json();
+      if (error) throw error;
+      if (!data || (data as { error?: string }).error) throw new Error((data as { error?: string })?.error || "Failed");
+      const budget = ilsToDisplay(Number((data as { budget?: number }).budget) || 0);
       update({
-        title: data.title || form.title,
-        description: data.description || form.description,
-        category: data.category || form.category,
-        budget: currency === "ILS" && Number(data.budget) > 0 ? Number(data.budget) : form.budget,
-        taskType: data.task_type || form.taskType,
-        location: data.location || form.location,
+        title: (data as { title?: string }).title || form.title,
+        description: (data as { description?: string }).description || form.description,
+        category: (data as { category?: string }).category || form.category,
+        budget: budget > 0 ? budget : form.budget,
+        taskType: (data as { task_type?: string }).task_type as "onsite" | "remote" || form.taskType,
+        location: (data as { location?: string }).location || form.location,
       });
       toast.success(t("task.voice.taskCreated") || "Task structured from voice!");
-      setStep(2); // Jump to details step to review
-    } catch {
+      setStep(2);
+    } catch (e) {
+      console.error("AI voice error:", e);
       toast.error(t("task.ai.error"));
     } finally {
       setVoiceProcessing(false);
