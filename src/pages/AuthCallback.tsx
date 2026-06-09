@@ -32,11 +32,15 @@ const AuthCallbackPage = () => {
       window.sessionStorage.removeItem('oauth_return_to');
       // Safety net: ensure profile + default role exist (e.g. Apple OAuth
       // without email, or trigger failure). Idempotent on the server.
-      supabase.rpc('ensure_profile').catch((e) => {
-        console.warn('[auth] ensure_profile failed', e);
-      }).finally(() => {
+      (async () => {
+        try {
+          const { error } = await supabase.rpc('ensure_profile');
+          if (error) console.warn('[auth] ensure_profile failed', error);
+        } catch (e) {
+          console.warn('[auth] ensure_profile threw', e);
+        }
         navigate(returnTo, { replace: true });
-      });
+      })();
       return;
     }
 
