@@ -38,7 +38,7 @@ export default function AdminOrders() {
 
     setTasks((data || []).map(t => ({
       ...t,
-      ownerName: nameMap[t.user_id] || '—',
+      ownerName: t.user_id ? (nameMap[t.user_id] || '—') : '—',
       performerName: t.assigned_to ? (nameMap[t.assigned_to] || '—') : '—',
     })));
 

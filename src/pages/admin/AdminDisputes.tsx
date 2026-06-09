@@ -84,7 +84,7 @@ const AdminDisputes = () => {
     // Get all user IDs for profiles
     const userIds = new Set<string>();
     complaints.forEach(c => userIds.add(c.user_id));
-    tasks.forEach(t => { userIds.add(t.user_id); if (t.assigned_to) userIds.add(t.assigned_to); });
+    tasks.forEach(t => { if (t.user_id) userIds.add(t.user_id); if (t.assigned_to) userIds.add(t.assigned_to); });
 
     const { data: profiles } = await supabase.rpc('get_public_profiles', {
       target_user_ids: [...userIds],
@@ -106,9 +106,9 @@ const AdminDisputes = () => {
       return {
         ...c,
         task_title: task?.title || '—',
-        client_name: task ? profilesMap.get(task.user_id) || 'User' : '—',
+        client_name: task && task.user_id ? profilesMap.get(task.user_id) || 'User' : '—',
         tasker_name: task?.assigned_to ? profilesMap.get(task.assigned_to) || 'User' : '—',
-        client_id: task?.user_id,
+        client_id: task?.user_id ?? undefined,
         tasker_id: task?.assigned_to || undefined,
         escrow_id: c.task_id ? escrowMap.get(c.task_id) : undefined,
       };

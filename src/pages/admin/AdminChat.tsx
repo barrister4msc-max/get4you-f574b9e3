@@ -80,7 +80,7 @@ export default function AdminChat() {
     }
 
     const allUserIds = new Set<string>();
-    (tasks ?? []).forEach(t => { allUserIds.add(t.user_id); });
+    (tasks ?? []).forEach(t => { if (t.user_id) allUserIds.add(t.user_id); });
     taskTaskersMap.forEach(set => set.forEach(id => allUserIds.add(id)));
 
     // ----- Direct messages (admin <-> user) -----
@@ -147,6 +147,7 @@ export default function AdminChat() {
     }
 
     for (const task of tasks ?? []) {
+      if (!task.user_id) continue;
       const clientKey = `task__${task.id}__${task.user_id}`;
       const clientLastMsg = lastMsgMap.get(`${task.id}__${task.user_id}`);
       convos.push({
