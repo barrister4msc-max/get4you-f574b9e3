@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable/index';
+// Direct Supabase OAuth — no Lovable proxy (avoids oauth.lovable.app consent screen)
 import { Mail, Lock, User, ArrowRight, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import PasswordInput from '@/components/PasswordInput';
 import { toast } from 'sonner';
@@ -147,19 +147,19 @@ const LoginPage = () => {
     try {
       const returnTo = searchParams.get('returnTo') || '/dashboard';
       window.sessionStorage.setItem('oauth_return_to', returnTo);
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
-      if (result.error) {
-        toast.error(String(result.error));
+      if (error) {
+        toast.error(error.message);
         window.sessionStorage.removeItem('oauth_return_to');
         setSocialLoading(null);
         return;
       }
-      if (result.redirected) {
-        return;
-      }
-      navigate(returnTo);
+      // Browser will redirect to provider; nothing else to do.
     } catch (err: any) {
       window.sessionStorage.removeItem('oauth_return_to');
       toast.error(err?.message || 'OAuth error');
