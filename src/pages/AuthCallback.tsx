@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { createTaskFromPendingDraft, hasPendingTaskDraft } from '@/lib/pendingTaskDraft';
 
 const FALLBACK_RETURN_TO = '/dashboard';
 
@@ -66,7 +67,26 @@ const AuthCallbackPage = () => {
         } catch (e) {
           console.warn('[auth] welcome email send failed', e);
         }
-        navigate(returnTo, { replace: true });
+        if (hasPendingTaskDraft()) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('preferred_currency')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            const createdTaskId = await createTaskFromPendingDraft({
+              userId: user.id,
+              currency: profile?.preferred_currency || 'ILS',
+            });
+            toast.success('Заявка опубликована');
+            navigate(createdTaskId ? `/tasks/${createdTaskId}` : '/dashboard', { replace: true });
+            return;
+          } catch (e) {
+            console.error('[auth] pending task creation failed', e);
+            toast.error('Не удалось автоматически создать заявку. Черновик сохранён.');
+          }
+        }
+        navigate(returnTo === '/create-task?continueDraft=1' ? FALLBACK_RETURN_TO : returnTo, { replace: true });
       })();
       return;
     }
