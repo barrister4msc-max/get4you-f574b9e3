@@ -140,19 +140,29 @@ interface FeedbackProps {
 }
 
 export const PriceFeedback = ({ price, estimate }: { price: number; estimate: Pick<Estimate, "min_price" | "max_price"> | null }) => {
-  const { t } = useLanguage();
+  const { t, currency, rates } = useLanguage();
+  const fp = useFormatPrice();
   if (!estimate || !price) return null;
-  if (price < estimate.min_price) {
+  const ilsRate = rates?.ILS ?? 3.7;
+  const toDisplay = (v: number) => {
+    const inUsd = v / ilsRate; // estimator returns ILS
+    return currency === "ILS" ? Math.round(inUsd * ilsRate) : Math.round(inUsd);
+  };
+  const minD = toDisplay(estimate.min_price);
+  const maxD = toDisplay(estimate.max_price);
+  if (price < minD) {
     return (
       <p className="text-xs text-amber-600 mt-1.5 flex items-start gap-1">
         <span>⚠</span>
         <span>
-          {t("price.feedback.low").replace("{min}", `₪${estimate.min_price}`).replace("{max}", `₪${estimate.max_price}`)}
+          {t("price.feedback.low")
+            .replace("{min}", fp(minD, currency, currency))
+            .replace("{max}", fp(maxD, currency, currency))}
         </span>
       </p>
     );
   }
-  if (price > estimate.max_price) {
+  if (price > maxD) {
     return (
       <p className="text-xs text-primary mt-1.5 flex items-start gap-1">
         <span>✓</span>
