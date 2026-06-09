@@ -223,7 +223,9 @@ const IndexPage = () => {
     }
   }, [searchParams]);
   const isTaskerOnly = user && roles.length > 0 && roles.every((r) => r === "tasker");
-  const postTaskHref = user ? "/create-task" : "/login?redirect=/create-task";
+  // Always allow visitors to start creating a task without login.
+  // Registration is prompted on publish (motivation modal in CreateTask).
+  const postTaskHref = "/create-task";
   const becomeTaskerHref = user ? "/for-taskers" : "/signup?role=tasker";
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
