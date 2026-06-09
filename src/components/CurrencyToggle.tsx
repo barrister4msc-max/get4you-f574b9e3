@@ -1,5 +1,4 @@
 import { useLanguage } from '@/i18n/LanguageContext';
-import { DollarSign } from 'lucide-react';
 
 export const CurrencyToggle = () => {
   const { currency, setCurrency } = useLanguage();
@@ -9,7 +8,9 @@ export const CurrencyToggle = () => {
       onClick={() => setCurrency(currency === 'USD' ? 'ILS' : 'USD')}
       className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-semibold text-muted-foreground hover:bg-secondary transition-colors"
     >
-      <DollarSign className="w-3.5 h-3.5" />
+      <span className="w-3.5 h-3.5 flex items-center justify-center text-sm font-semibold">
+        {currency === 'ILS' ? '₪' : '$'}
+      </span>
       {currency}
     </button>
   );
