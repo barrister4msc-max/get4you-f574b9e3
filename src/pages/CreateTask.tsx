@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { TaskAIAssistant } from "@/components/TaskAIAssistant";
 import { PriceEstimator, PriceFeedback } from "@/components/PriceEstimator";
+import {
+  TASK_DRAFT_KEY,
+  savePendingTaskDraft,
+  hasPendingTaskDraft,
+} from "@/lib/pendingTaskDraft";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -33,8 +38,6 @@ import {
   Rocket,
 } from "lucide-react";
 
-const DRAFT_KEY = "task_draft";
-const DRAFT_PENDING_KEY = "task_draft_pending_submit";
 const categories = ["cleaning", "moving", "repair", "digital", "consulting", "delivery", "beauty", "tutoring"];
 
 const CreateTaskPage = () => {
@@ -326,8 +329,7 @@ const CreateTaskPage = () => {
       // Persist a flag so that after the user signs in / signs up we can
       // resume the publish action automatically.
       try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
-        localStorage.setItem(DRAFT_PENDING_KEY, "1");
+        savePendingTaskDraft(form);
       } catch {
         /* ignore */
       }
@@ -453,35 +455,17 @@ const CreateTaskPage = () => {
     }
   };
 
-  // After OAuth / signup the user lands back here with continueDraft=1 (or
-  // simply with the pending-submit flag set). Auto-publish the saved draft
-  // once, then redirect to the task / dashboard. Prevents the "draft shown,
-  // task not created" bug for guests who started the form before signing in.
+  // If auth returns the user to /create-task directly for any reason,
+  // bounce them into the central callback flow instead of showing the draft.
   useEffect(() => {
     if (!user) return;
     if (autoSubmitTriedRef.current) return;
     if (submitting) return;
-    const pending = (() => {
-      try {
-        return localStorage.getItem(DRAFT_PENDING_KEY) === "1";
-      } catch {
-        return false;
-      }
-    })();
+    const pending = hasPendingTaskDraft();
     if (!pending) return;
-    if (!form.title.trim() || !form.budget) return;
     autoSubmitTriedRef.current = true;
-    try {
-      localStorage.removeItem(DRAFT_PENDING_KEY);
-    } catch {
-      /* ignore */
-    }
-    // Defer to next tick so dependent state (geo, etc.) is ready.
-    setTimeout(() => {
-      handleSubmit();
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, form.title, form.budget]);
+    navigate("/auth/callback", { replace: true });
+  }, [user, submitting, navigate]);
 
   return (
     <div className="min-h-[80vh] py-12">
