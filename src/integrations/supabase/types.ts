@@ -430,8 +430,8 @@ export type Database = {
           created_at: string | null
           id: string
           is_read: boolean | null
-          recipient_id: string
-          sender_id: string
+          recipient_id: string | null
+          sender_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -439,8 +439,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
-          recipient_id: string
-          sender_id: string
+          recipient_id?: string | null
+          sender_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -448,8 +448,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
-          recipient_id?: string
-          sender_id?: string
+          recipient_id?: string | null
+          sender_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1239,7 +1239,7 @@ export type Database = {
           status: string
           swift_bic: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           account_holder_name: string
@@ -1259,7 +1259,7 @@ export type Database = {
           status?: string
           swift_bic?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           account_holder_name?: string
@@ -1279,7 +1279,7 @@ export type Database = {
           status?: string
           swift_bic?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1571,7 +1571,7 @@ export type Database = {
           status: Database["public"]["Enums"]["proposal_status"] | null
           task_id: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           comment?: string | null
@@ -1583,7 +1583,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["proposal_status"] | null
           task_id: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           comment?: string | null
@@ -1595,7 +1595,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["proposal_status"] | null
           task_id?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1645,8 +1645,8 @@ export type Database = {
           created_at: string
           id: string
           rating: number
-          reviewee_id: string
-          reviewer_id: string
+          reviewee_id: string | null
+          reviewer_id: string | null
           task_id: string
         }
         Insert: {
@@ -1654,8 +1654,8 @@ export type Database = {
           created_at?: string
           id?: string
           rating: number
-          reviewee_id: string
-          reviewer_id: string
+          reviewee_id?: string | null
+          reviewer_id?: string | null
           task_id: string
         }
         Update: {
@@ -1663,8 +1663,8 @@ export type Database = {
           created_at?: string
           id?: string
           rating?: number
-          reviewee_id?: string
-          reviewer_id?: string
+          reviewee_id?: string | null
+          reviewer_id?: string | null
           task_id?: string
         }
         Relationships: [
@@ -1986,7 +1986,7 @@ export type Database = {
           task_type: Database["public"]["Enums"]["task_type"] | null
           title: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           voice_note_url: string | null
         }
         Insert: {
@@ -2013,7 +2013,7 @@ export type Database = {
           task_type?: Database["public"]["Enums"]["task_type"] | null
           title: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           voice_note_url?: string | null
         }
         Update: {
@@ -2040,7 +2040,7 @@ export type Database = {
           task_type?: Database["public"]["Enums"]["task_type"] | null
           title?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           voice_note_url?: string | null
         }
         Relationships: [
@@ -2377,7 +2377,7 @@ export type Database = {
           processed_at: string | null
           rejection_reason: string | null
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           admin_note?: string | null
@@ -2389,7 +2389,7 @@ export type Database = {
           processed_at?: string | null
           rejection_reason?: string | null
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           admin_note?: string | null
@@ -2401,7 +2401,7 @@ export type Database = {
           processed_at?: string | null
           rejection_reason?: string | null
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2866,6 +2866,10 @@ export type Database = {
             }
             Returns: string
           }
+      admin_force_delete_auth_user: {
+        Args: { _actor: string; _target: string }
+        Returns: undefined
+      }
       admin_resend_whatsapp: {
         Args: { p_log_id: string }
         Returns: {

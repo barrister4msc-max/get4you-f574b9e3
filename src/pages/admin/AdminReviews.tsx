@@ -14,11 +14,15 @@ export default function AdminReviews() {
   const load = async () => {
     const { data } = await supabase.from('reviews').select('*').order('created_at', { ascending: false });
     // Fetch profile names
-    const userIds = [...new Set((data || []).flatMap((r) => [r.reviewer_id, r.reviewee_id]))];
+    const userIds = [...new Set((data || []).flatMap((r) => [r.reviewer_id, r.reviewee_id]).filter((x): x is string => !!x))];
     const { data: profiles } = await supabase.from('profiles').select('user_id, display_name').in('user_id', userIds);
     const nameMap = Object.fromEntries((profiles || []).map((p) => [p.user_id, p.display_name]));
 
-    setReviews((data || []).map((r) => ({ ...r, reviewerName: nameMap[r.reviewer_id] || '—', revieweeName: nameMap[r.reviewee_id] || '—' })));
+    setReviews((data || []).map((r) => ({
+      ...r,
+      reviewerName: r.reviewer_id ? nameMap[r.reviewer_id] || '—' : '—',
+      revieweeName: r.reviewee_id ? nameMap[r.reviewee_id] || '—' : '—',
+    })));
     setLoading(false);
   };
 

@@ -50,7 +50,9 @@ const SignupPage = () => {
     } else {
       toast.success(t("auth.checkEmail"));
       const returnTo = searchParams.get("returnTo");
-      navigate(returnTo || "/login");
+      // After successful signup the user is signed in automatically — send them
+      // to their personal dashboard (or the page they came from, e.g. an application).
+      navigate(returnTo || "/dashboard");
     }
   };
 
