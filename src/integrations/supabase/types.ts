@@ -3403,6 +3403,15 @@ export type Database = {
       }
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
       is_valid_languages: { Args: { langs: string[] }; Returns: boolean }
+      log_admin_payout_action: {
+        Args: {
+          _action: string
+          _details?: Json
+          _target_id: string
+          _target_type: string
+        }
+        Returns: undefined
+      }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mark_assignment_funded: {
         Args: { p_order_id: string }
@@ -3507,6 +3516,7 @@ export type Database = {
         Args: { p_assignment_id: string }
         Returns: undefined
       }
+      request_withdrawal: { Args: never; Returns: Json }
       search_nearby: {
         Args: { lat: number; lng: number; radius_meters: number }
         Returns: {
@@ -4106,6 +4116,13 @@ export type Database = {
           _task_id: string
         }
         Returns: string
+      }
+      tasker_available_balance: {
+        Args: { _user_id: string }
+        Returns: {
+          available: number
+          currency: string
+        }[]
       }
       track_event: {
         Args: {
