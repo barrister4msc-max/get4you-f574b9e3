@@ -224,7 +224,7 @@ const TaskDetailPage = () => {
         .order('created_at', { ascending: false });
 
       if (data) {
-        const userIds = [...new Set(data.map(p => p.user_id))];
+        const userIds = [...new Set(data.map(p => p.user_id).filter((x): x is string => !!x))];
         const [profilesRes, reviewsRes, lastSeenRes, completedRes] = await Promise.all([
           supabase.rpc('get_public_profiles', { target_user_ids: userIds }),
           supabase.from('reviews').select('reviewee_id, rating').in('reviewee_id', userIds),
@@ -242,18 +242,20 @@ const TaskDetailPage = () => {
         // Calculate avg rating per user
         const ratingMap = new Map<string, { sum: number; count: number }>();
         reviewsRes.data?.forEach(r => {
+          if (!r.reviewee_id) return;
           const existing = ratingMap.get(r.reviewee_id) || { sum: 0, count: 0 };
           ratingMap.set(r.reviewee_id, { sum: existing.sum + r.rating, count: existing.count + 1 });
         });
 
         const enriched = data.map(p => ({
           ...p,
+          user_id: p.user_id ?? '',
           status: p.status as 'pending' | 'accepted' | 'rejected',
-          profile: profileMap.get(p.user_id) || null,
-          avgRating: ratingMap.has(p.user_id) ? ratingMap.get(p.user_id)!.sum / ratingMap.get(p.user_id)!.count : null,
-          reviewCount: ratingMap.get(p.user_id)?.count || 0,
-          lastSeenAt: lastSeenMap.get(p.user_id) || null,
-          completedOrders: completedMap.get(p.user_id) || 0,
+          profile: p.user_id ? profileMap.get(p.user_id) || null : null,
+          avgRating: p.user_id && ratingMap.has(p.user_id) ? ratingMap.get(p.user_id)!.sum / ratingMap.get(p.user_id)!.count : null,
+          reviewCount: p.user_id ? ratingMap.get(p.user_id)?.count || 0 : 0,
+          lastSeenAt: p.user_id ? lastSeenMap.get(p.user_id) || null : null,
+          completedOrders: p.user_id ? completedMap.get(p.user_id) || 0 : 0,
         }));
         setProposals(enriched);
       }
