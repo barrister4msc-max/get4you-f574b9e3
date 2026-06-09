@@ -62,7 +62,11 @@ const CreateTaskPage = () => {
   const [categorizing, setCategorizing] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [priceEstimate, setPriceEstimate] = useState<{ min_price: number; max_price: number; recommended_price: number } | null>(null);
+  const [priceEstimate, setPriceEstimate] = useState<{
+    min_price: number;
+    max_price: number;
+    recommended_price: number;
+  } | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState(() => {
@@ -253,7 +257,7 @@ const CreateTaskPage = () => {
         setAddressGeocoding(false);
       }
     },
-    [geocodedFor, searchAddress]
+    [geocodedFor, searchAddress],
   );
 
   // On entering step 2 (address step) — ask the user how they want to set the address
@@ -299,10 +303,6 @@ const CreateTaskPage = () => {
     }
     if (!form.title.trim()) {
       toast.error(t("task.title.required") || "Title is required");
-      return;
-    }
-    if (!form.budget || form.budget <= 0) {
-      toast.error(t("task.price.required") || "Please enter a price greater than 0");
       return;
     }
 
@@ -374,30 +374,39 @@ const CreateTaskPage = () => {
         }
       }
 
-      const { error } = await supabase.from("tasks").insert({
-        latitude: finalLat,
-        longitude: finalLng,
-        user_id: user.id,
-        title: form.title.trim(),
-        description: form.description.trim() || null,
-        category_id: categoryId,
-        task_type: form.taskType as "onsite" | "remote",
-        budget_fixed: form.budget,
-        budget_min: form.budget,
-        budget_max: form.budgetMax,
-        is_urgent: form.urgency === "urgent",
-        address: form.location.trim() || null,
-        photos: photoUrls.length > 0 ? photoUrls : null,
-        voice_note_url: voiceNoteUrl,
-        status: "open",
-        currency,
-      });
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert({
+          latitude: finalLat,
+          longitude: finalLng,
+          user_id: user.id,
+          title: form.title.trim(),
+          description: form.description.trim() || null,
+          category_id: categoryId,
+          task_type: form.taskType as "onsite" | "remote",
+          budget_fixed: form.budget,
+          budget_min: form.budget,
+          budget_max: form.budgetMax,
+          is_urgent: form.urgency === "urgent",
+          address: form.location.trim() || null,
+          photos: photoUrls.length > 0 ? photoUrls : null,
+          voice_note_url: voiceNoteUrl,
+          status: "open",
+          currency,
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
 
       localStorage.removeItem(DRAFT_KEY);
       toast.success(t("task.published") || "Task published!");
-      navigate("/tasks");
+
+      if (data?.id) {
+        navigate(`/tasks/${data.id}`);
+      } else {
+        navigate("/tasks");
+      }
     } catch (err: unknown) {
       console.error("Submit error:", err);
       const message =
@@ -665,7 +674,7 @@ const CreateTaskPage = () => {
                 category={form.category}
                 title={form.title}
                 description={form.description}
-                onUseSuggested={(p) => { if (p && p > 0) update({ budget: p }); }}
+                onUseSuggested={(p) => update({ budget: p })}
                 onEstimate={(e) => setPriceEstimate(e)}
               />
 
@@ -676,13 +685,8 @@ const CreateTaskPage = () => {
                     <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
-                      min={1}
-                      value={form.budget ? form.budget : ""}
-                      placeholder={t("price.estimate.empty") || "Enter your price"}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        update({ budget: raw === "" ? 0 : Number(raw) });
-                      }}
+                      value={form.budget}
+                      onChange={(e) => update({ budget: Number(e.target.value) })}
                       className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
@@ -845,8 +849,7 @@ const CreateTaskPage = () => {
                   {t("task.geo.chooseTitle") || "Адрес выполнения задачи"}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {t("task.geo.chooseDesc") ||
-                    "Использовать вашу текущую геолокацию как адрес или ввести его вручную?"}
+                  {t("task.geo.chooseDesc") || "Использовать вашу текущую геолокацию как адрес или ввести его вручную?"}
                 </p>
                 <div className="flex flex-col gap-2">
                   <button
@@ -876,9 +879,7 @@ const CreateTaskPage = () => {
                     {t("task.geo.enterManually") || "Ввести вручную"}
                   </button>
                 </div>
-                {geoError && geoChoice.resolving && (
-                  <p className="text-xs text-destructive">{geoError}</p>
-                )}
+                {geoError && geoChoice.resolving && <p className="text-xs text-destructive">{geoError}</p>}
               </motion.div>
             </motion.div>
           )}
