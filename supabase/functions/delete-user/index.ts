@@ -54,7 +54,16 @@ Deno.serve(async (req) => {
     await adminClient.from("profiles").delete().eq("user_id", target_user_id);
 
     const { error: delErr } = await adminClient.auth.admin.deleteUser(target_user_id);
-    if (delErr) return json({ error: delErr.message }, 500);
+    if (delErr) {
+      console.error("[delete-user] auth.admin.deleteUser failed, attempting SQL fallback", delErr);
+      // Fallback: direct DELETE FROM auth.users via SECURITY DEFINER RPC.
+      const { error: rpcErr } = await adminClient.rpc("admin_force_delete_auth_user", {
+        _target: target_user_id,
+      });
+      if (rpcErr) {
+        return json({ error: `auth delete failed: ${delErr.message}; fallback: ${rpcErr.message}` }, 500);
+      }
+    }
 
     await adminClient.from("admin_audit_log").insert({
       actor_id: user.id,
