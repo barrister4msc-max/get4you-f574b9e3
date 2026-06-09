@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const FALLBACK_RETURN_TO = '/dashboard';
 
@@ -29,7 +30,17 @@ const AuthCallbackPage = () => {
     if (user) {
       const returnTo = window.sessionStorage.getItem('oauth_return_to') || FALLBACK_RETURN_TO;
       window.sessionStorage.removeItem('oauth_return_to');
-      navigate(returnTo, { replace: true });
+      // Safety net: ensure profile + default role exist (e.g. Apple OAuth
+      // without email, or trigger failure). Idempotent on the server.
+      (async () => {
+        try {
+          const { error } = await supabase.rpc('ensure_profile');
+          if (error) console.warn('[auth] ensure_profile failed', error);
+        } catch (e) {
+          console.warn('[auth] ensure_profile threw', e);
+        }
+        navigate(returnTo, { replace: true });
+      })();
       return;
     }
 
