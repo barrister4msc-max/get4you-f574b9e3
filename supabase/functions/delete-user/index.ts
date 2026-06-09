@@ -48,6 +48,8 @@ Deno.serve(async (req) => {
     if (targetIsSuperAdmin) return json({ error: "Cannot delete a super admin" }, 403);
 
     // Best-effort cleanup of rows that may not have ON DELETE CASCADE
+    // tasks.assigned_to FK has no ON DELETE action and will block auth deletion.
+    await adminClient.from("tasks").update({ assigned_to: null }).eq("assigned_to", target_user_id);
     await adminClient.from("user_roles").delete().eq("user_id", target_user_id);
     await adminClient.from("profiles").delete().eq("user_id", target_user_id);
 
