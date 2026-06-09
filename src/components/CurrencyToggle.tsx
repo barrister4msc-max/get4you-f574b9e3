@@ -30,6 +30,10 @@ export const formatPrice = (
   sourceCurrency?: string | null,
   rates?: Record<string, number>,
 ) => {
+  // Fallback for legacy/unspecified prices — avoid showing ₪0 / $0
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 'Price not specified';
+  }
   const ilsRate = rates?.ILS ?? FALLBACK_RATE;
   const src = (sourceCurrency || 'USD').toUpperCase();
 
