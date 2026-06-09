@@ -301,6 +301,10 @@ const CreateTaskPage = () => {
       toast.error(t("task.title.required") || "Title is required");
       return;
     }
+    if (!form.budget || form.budget <= 0) {
+      toast.error(t("task.price.required") || "Please enter a price greater than 0");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -661,7 +665,7 @@ const CreateTaskPage = () => {
                 category={form.category}
                 title={form.title}
                 description={form.description}
-                onUseSuggested={(p) => update({ budget: p })}
+                onUseSuggested={(p) => { if (p && p > 0) update({ budget: p }); }}
                 onEstimate={(e) => setPriceEstimate(e)}
               />
 
@@ -672,8 +676,13 @@ const CreateTaskPage = () => {
                     <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
-                      value={form.budget}
-                      onChange={(e) => update({ budget: Number(e.target.value) })}
+                      min={1}
+                      value={form.budget ? form.budget : ""}
+                      placeholder={t("price.estimate.empty") || "Enter your price"}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        update({ budget: raw === "" ? 0 : Number(raw) });
+                      }}
                       className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
