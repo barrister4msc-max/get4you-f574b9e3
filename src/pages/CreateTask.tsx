@@ -62,6 +62,8 @@ const CreateTaskPage = () => {
   const [categorizing, setCategorizing] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [priceEstimate, setPriceEstimate] = useState<{
     min_price: number;
     max_price: number;
@@ -170,8 +172,11 @@ const CreateTaskPage = () => {
       update({
         category: data.category || form.category,
         taskType: data.task_type || form.taskType,
-        budget: data.budget_min || form.budget,
-        budgetMax: data.budget_max || form.budgetMax,
+        // Only apply AI budget when it's a positive number; never overwrite with 0
+        // (AI returns ILS — if the user is on USD this would mismatch the currency,
+        // so we leave the user's manual price alone).
+        budget: currency === "ILS" && Number(data.budget_min) > 0 ? Number(data.budget_min) : form.budget,
+        budgetMax: currency === "ILS" && Number(data.budget_max) > 0 ? Number(data.budget_max) : form.budgetMax,
         urgency: data.urgency || form.urgency,
         title: data.improved_title || form.title,
       });
@@ -212,7 +217,7 @@ const CreateTaskPage = () => {
         title: data.title || form.title,
         description: data.description || form.description,
         category: data.category || form.category,
-        budget: data.budget || form.budget,
+        budget: currency === "ILS" && Number(data.budget) > 0 ? Number(data.budget) : form.budget,
         taskType: data.task_type || form.taskType,
         location: data.location || form.location,
       });
@@ -297,12 +302,22 @@ const CreateTaskPage = () => {
   }, [geoChoice.resolving, latitude, longitude, geoSource, geoError, reverseGeocode, locale, t]);
 
   const handleSubmit = async () => {
+    // Validate first (works for both guests and authed users)
+    let hasError = false;
+    if (!form.title.trim()) {
+      setTitleError(t("task.title.required") || "Please enter a task title");
+      toast.error(t("task.title.required") || "Please enter a task title");
+      hasError = true;
+    }
+    if (!form.budget || form.budget <= 0) {
+      setPriceError(t("task.price.required") || "Please enter a price greater than 0");
+      toast.error(t("task.price.required") || "Please enter a price greater than 0");
+      hasError = true;
+    }
+    if (hasError) return;
+
     if (!user) {
       setShowMotivation(true);
-      return;
-    }
-    if (!form.title.trim()) {
-      toast.error(t("task.title.required") || "Title is required");
       return;
     }
 
