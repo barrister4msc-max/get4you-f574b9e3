@@ -2872,6 +2872,7 @@ export type Database = {
         }
         Returns: string
       }
+      ensure_profile: { Args: never; Returns: undefined }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       finalize_paid_order: {
         Args: {
