@@ -999,7 +999,7 @@ const CreateTaskPage = () => {
                 <button
                   onClick={() => {
                     setShowMotivation(false);
-                    navigate("/login?tab=signup&returnTo=/create-task");
+                    navigate(`/login?tab=signup&returnTo=${encodeURIComponent("/create-task?continueDraft=1")}`);
                   }}
                   className="w-full py-3 rounded-xl font-bold text-base bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                 >
