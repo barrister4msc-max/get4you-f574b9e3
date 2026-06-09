@@ -586,6 +586,24 @@ Deno.serve(async (req) => {
     // ======================================================
     // 14. SUCCESS
     // ======================================================
+    // Notify the tasker that the client has accepted their offer and
+    // initiated payment. Fire-and-forget — never block the payment flow.
+    try {
+      if (proposal.user_id && proposal.user_id !== userId) {
+        await serviceClient.from("notifications").insert({
+          user_id: proposal.user_id,
+          type: "proposal_accepted",
+          title: "Your offer was accepted",
+          message: "The client accepted your offer",
+          task_id: task.id,
+          proposal_id: proposal.id,
+          is_read: false,
+        });
+      }
+    } catch (notifyErr) {
+      console.error("[CREATE-PAYMENT] notify tasker failed:", notifyErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
