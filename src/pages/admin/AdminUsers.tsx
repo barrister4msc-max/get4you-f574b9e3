@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare, ShieldAlert, Ban } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, Download, Search, MessageSquare, ShieldAlert, Ban, Trash2 } from 'lucide-react';
 import { exportToCsv } from '@/lib/exportCsv';
 import { Link } from 'react-router-dom';
 
@@ -96,6 +96,24 @@ export default function AdminUsers() {
       return;
     }
     toast.success(isBanned ? 'Пользователь разблокирован' : 'Пользователь заблокирован');
+    load();
+  };
+
+  const deleteUser = async (userId: string, email: string | null | undefined) => {
+    if (!isSuperAdmin) {
+      toast.error('Только super admin может удалять пользователей');
+      return;
+    }
+    if (!confirm(`Удалить пользователя ${email || userId} полностью? Это действие необратимо.`)) return;
+    const { data, error } = await supabase.functions.invoke('delete-user', {
+      body: { target_user_id: userId },
+    });
+    const errMsg = (data as any)?.error || error?.message;
+    if (errMsg) {
+      toast.error(`Не удалось удалить: ${errMsg}`);
+      return;
+    }
+    toast.success('Пользователь удалён');
     load();
   };
 
@@ -230,6 +248,17 @@ export default function AdminUsers() {
                         >
                           <Ban className="w-3.5 h-3.5 mr-1" />
                           {isBanned ? 'Unban' : 'Ban'}
+                        </Button>
+                      )}
+                      {isSuperAdmin && !isTargetSuperAdmin && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => deleteUser(u.user_id, u.email)}
+                          title="Удалить пользователя полностью"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       )}
                       <Button variant="ghost" size="sm" className="text-xs h-7" asChild>
