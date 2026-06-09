@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Lightbulb, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useFormatPrice } from "@/hooks/useFormatPrice";
 
 interface Estimate {
   source: "history" | "ai" | "none";
@@ -19,24 +20,27 @@ interface Props {
   category: string;
   title: string;
   description: string;
+  /** Receives the suggested price already converted to the user's display currency. */
   onUseSuggested: (price: number) => void;
   onEstimate?: (e: Estimate | null) => void;
 }
 
 export const PriceEstimator = ({ city, category, title, description, onUseSuggested, onEstimate }: Props) => {
-  const { t, locale } = useLanguage();
+  const { t, locale, currency, rates } = useLanguage();
+  const fp = useFormatPrice();
   const [loading, setLoading] = useState(false);
   const [estimate, setEstimate] = useState<Estimate | null>(null);
-  const [error, setError] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   // Debounce inputs
   useEffect(() => {
     const ready = (title.trim().length >= 3 || description.trim().length >= 10) && !!category;
     if (!ready) {
       setEstimate(null);
+      setUnavailable(false);
       return;
     }
-    setError(false);
+    setUnavailable(false);
     const handle = setTimeout(async () => {
       setLoading(true);
       try {
@@ -50,11 +54,12 @@ export const PriceEstimator = ({ city, category, title, description, onUseSugges
         } else {
           setEstimate(null);
           onEstimate?.(null);
+          setUnavailable(true);
         }
       } catch {
-        setError(true);
         setEstimate(null);
         onEstimate?.(null);
+        setUnavailable(true);
       } finally {
         setLoading(false);
       }
@@ -62,7 +67,20 @@ export const PriceEstimator = ({ city, category, title, description, onUseSugges
     return () => clearTimeout(handle);
   }, [city, category, title, description, locale]);
 
-  if (!estimate && !loading) return null;
+  if (!estimate && !loading && !unavailable) return null;
+
+  // Convert ILS-sourced estimate to the user's display currency.
+  const srcCurrency = estimate?.currency || "ILS";
+  const ilsRate = rates?.ILS ?? 3.7;
+  const toDisplay = (amountInSrc: number) => {
+    if (!estimate) return 0;
+    const inUsd = srcCurrency.toUpperCase() === "ILS" ? amountInSrc / ilsRate : amountInSrc;
+    if (currency === "ILS") return Math.round(inUsd * ilsRate);
+    return Math.round(inUsd);
+  };
+  const displayMin = estimate ? toDisplay(estimate.min_price) : 0;
+  const displayMax = estimate ? toDisplay(estimate.max_price) : 0;
+  const displayRec = estimate ? toDisplay(estimate.recommended_price) : 0;
 
   return (
     <div className="rounded-2xl border border-primary/20 bg-emerald-50/50 p-4 sm:p-5 space-y-3">
@@ -78,15 +96,21 @@ export const PriceEstimator = ({ city, category, title, description, onUseSugges
         </div>
       )}
 
-      {estimate && !loading && (
+      {!loading && unavailable && !estimate && (
+        <p className="text-sm text-muted-foreground">
+          {t("price.estimate.unavailable") || "Suggested price is not available yet"}
+        </p>
+      )}
+
+      {estimate && !loading && displayRec > 0 && (
         <>
           <div className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            ₪{estimate.min_price.toLocaleString()} – ₪{estimate.max_price.toLocaleString()}
+            {fp(displayMin, currency, currency)} – {fp(displayMax, currency, currency)}
           </div>
           <div className="text-sm text-foreground">
             <span className="font-medium">{t("price.estimate.recommended")}: </span>
             <span className="font-bold text-primary">
-              ₪{estimate.recommended_price.toLocaleString()}
+              {fp(displayRec, currency, currency)}
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -94,14 +118,16 @@ export const PriceEstimator = ({ city, category, title, description, onUseSugges
               ? t("price.estimate.basedOn").replace("{n}", String(estimate.sample_size))
               : t("price.estimate.aiBased")}
           </p>
-          <button
-            type="button"
-            onClick={() => onUseSuggested(estimate.recommended_price)}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity text-sm"
-          >
-            <Sparkles className="w-4 h-4" />
-            {t("price.estimate.useSuggested")}
-          </button>
+          {displayRec > 0 && (
+            <button
+              type="button"
+              onClick={() => onUseSuggested(displayRec)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity text-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              {t("price.estimate.useSuggested")}
+            </button>
+          )}
         </>
       )}
     </div>
@@ -114,19 +140,29 @@ interface FeedbackProps {
 }
 
 export const PriceFeedback = ({ price, estimate }: { price: number; estimate: Pick<Estimate, "min_price" | "max_price"> | null }) => {
-  const { t } = useLanguage();
+  const { t, currency, rates } = useLanguage();
+  const fp = useFormatPrice();
   if (!estimate || !price) return null;
-  if (price < estimate.min_price) {
+  const ilsRate = rates?.ILS ?? 3.7;
+  const toDisplay = (v: number) => {
+    const inUsd = v / ilsRate; // estimator returns ILS
+    return currency === "ILS" ? Math.round(inUsd * ilsRate) : Math.round(inUsd);
+  };
+  const minD = toDisplay(estimate.min_price);
+  const maxD = toDisplay(estimate.max_price);
+  if (price < minD) {
     return (
       <p className="text-xs text-amber-600 mt-1.5 flex items-start gap-1">
         <span>⚠</span>
         <span>
-          {t("price.feedback.low").replace("{min}", `₪${estimate.min_price}`).replace("{max}", `₪${estimate.max_price}`)}
+          {t("price.feedback.low")
+            .replace("{min}", fp(minD, currency, currency))
+            .replace("{max}", fp(maxD, currency, currency))}
         </span>
       </p>
     );
   }
-  if (price > estimate.max_price) {
+  if (price > maxD) {
     return (
       <p className="text-xs text-primary mt-1.5 flex items-start gap-1">
         <span>✓</span>

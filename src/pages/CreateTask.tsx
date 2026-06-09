@@ -62,6 +62,8 @@ const CreateTaskPage = () => {
   const [categorizing, setCategorizing] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [priceEstimate, setPriceEstimate] = useState<{
     min_price: number;
     max_price: number;
@@ -170,8 +172,11 @@ const CreateTaskPage = () => {
       update({
         category: data.category || form.category,
         taskType: data.task_type || form.taskType,
-        budget: data.budget_min || form.budget,
-        budgetMax: data.budget_max || form.budgetMax,
+        // Only apply AI budget when it's a positive number; never overwrite with 0
+        // (AI returns ILS — if the user is on USD this would mismatch the currency,
+        // so we leave the user's manual price alone).
+        budget: currency === "ILS" && Number(data.budget_min) > 0 ? Number(data.budget_min) : form.budget,
+        budgetMax: currency === "ILS" && Number(data.budget_max) > 0 ? Number(data.budget_max) : form.budgetMax,
         urgency: data.urgency || form.urgency,
         title: data.improved_title || form.title,
       });
@@ -212,7 +217,7 @@ const CreateTaskPage = () => {
         title: data.title || form.title,
         description: data.description || form.description,
         category: data.category || form.category,
-        budget: data.budget || form.budget,
+        budget: currency === "ILS" && Number(data.budget) > 0 ? Number(data.budget) : form.budget,
         taskType: data.task_type || form.taskType,
         location: data.location || form.location,
       });
@@ -297,12 +302,22 @@ const CreateTaskPage = () => {
   }, [geoChoice.resolving, latitude, longitude, geoSource, geoError, reverseGeocode, locale, t]);
 
   const handleSubmit = async () => {
+    // Validate first (works for both guests and authed users)
+    let hasError = false;
+    if (!form.title.trim()) {
+      setTitleError(t("task.title.required") || "Please enter a task title");
+      toast.error(t("task.title.required") || "Please enter a task title");
+      hasError = true;
+    }
+    if (!form.budget || form.budget <= 0) {
+      setPriceError(t("task.price.required") || "Please enter a price greater than 0");
+      toast.error(t("task.price.required") || "Please enter a price greater than 0");
+      hasError = true;
+    }
+    if (hasError) return;
+
     if (!user) {
       setShowMotivation(true);
-      return;
-    }
-    if (!form.title.trim()) {
-      toast.error(t("task.title.required") || "Title is required");
       return;
     }
 
@@ -577,13 +592,25 @@ const CreateTaskPage = () => {
           {step === 2 && (
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1.5">{t("task.title")}</label>
+                <label className="block text-sm font-medium mb-1.5">
+                  {t("task.title")} <span className="text-destructive">*</span>
+                </label>
                 <input
                   value={form.title}
-                  onChange={(e) => update({ title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  onChange={(e) => {
+                    update({ title: e.target.value });
+                    if (titleError && e.target.value.trim()) setTitleError(null);
+                  }}
+                  aria-invalid={!!titleError}
+                  required
+                  className={`w-full px-4 py-2.5 rounded-xl border bg-card text-sm focus:outline-none focus:ring-2 ${
+                    titleError
+                      ? "border-destructive ring-destructive/20 focus:ring-destructive/30 focus:border-destructive"
+                      : "border-input focus:ring-primary/20 focus:border-primary"
+                  }`}
                   placeholder={t("task.title.placeholder")}
                 />
+                {titleError && <p className="text-xs text-destructive mt-1">{titleError}</p>}
               </div>
 
               <div>
@@ -680,19 +707,35 @@ const CreateTaskPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">{t("task.yourPrice")}</label>
+                  <label className="block text-sm font-medium mb-1.5">
+                    {t("task.yourPrice")} <span className="text-destructive">*</span>
+                  </label>
                   <div className="relative">
                     <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
-                      value={form.budget}
-                      onChange={(e) => update({ budget: Number(e.target.value) })}
-                      className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      min={1}
+                      value={form.budget || ""}
+                      onChange={(e) => {
+                        const v = e.target.value === "" ? 0 : Number(e.target.value);
+                        update({ budget: Number.isFinite(v) ? v : 0 });
+                        if (priceError && v > 0) setPriceError(null);
+                      }}
+                      placeholder={currency === "ILS" ? "₪" : "$"}
+                      aria-invalid={!!priceError}
+                      className={`w-full ps-10 pe-4 py-2.5 rounded-xl border bg-card text-sm focus:outline-none focus:ring-2 ${
+                        priceError
+                          ? "border-destructive ring-destructive/20 focus:ring-destructive/30 focus:border-destructive"
+                          : "border-input focus:ring-primary/20 focus:border-primary"
+                      }`}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD")}
-                  </p>
+                  {form.budget > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD", currency)}
+                    </p>
+                  )}
+                  {priceError && <p className="text-xs text-destructive mt-1">{priceError}</p>}
                   <PriceFeedback price={form.budget} estimate={priceEstimate} />
                 </div>
                 <div>
@@ -766,7 +809,7 @@ const CreateTaskPage = () => {
                     {t(`task.type.${form.taskType}`)}
                   </span>
                   <span className="bg-secondary text-foreground px-3 py-1 rounded-full">
-                    {formatPrice(form.budget, currency)}
+                    {form.budget > 0 ? formatPrice(form.budget, currency, currency) : "—"}
                   </span>
                 </div>
                 {form.location && (
@@ -807,7 +850,24 @@ const CreateTaskPage = () => {
           )}
           {step < 3 ? (
             <button
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                if (step === 2) {
+                  let bad = false;
+                  if (!form.title.trim()) {
+                    setTitleError(t("task.title.required") || "Please enter a task title");
+                    bad = true;
+                  }
+                  if (!form.budget || form.budget <= 0) {
+                    setPriceError(t("task.price.required") || "Please enter a price greater than 0");
+                    bad = true;
+                  }
+                  if (bad) {
+                    toast.error(t("task.fix.errors") || "Please fix the highlighted fields");
+                    return;
+                  }
+                }
+                setStep(step + 1);
+              }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
             >
               {t("task.next")}
