@@ -715,7 +715,9 @@ const CreateTaskPage = () => {
                     {t("task.yourPrice")} <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <span className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground flex items-center justify-center text-sm font-semibold">
+                      {currency === "ILS" ? "₪" : "$"}
+                    </span>
                     <input
                       type="number"
                       min={1}
