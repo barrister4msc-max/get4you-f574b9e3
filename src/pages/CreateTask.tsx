@@ -592,13 +592,25 @@ const CreateTaskPage = () => {
           {step === 2 && (
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium mb-1.5">{t("task.title")}</label>
+                <label className="block text-sm font-medium mb-1.5">
+                  {t("task.title")} <span className="text-destructive">*</span>
+                </label>
                 <input
                   value={form.title}
-                  onChange={(e) => update({ title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  onChange={(e) => {
+                    update({ title: e.target.value });
+                    if (titleError && e.target.value.trim()) setTitleError(null);
+                  }}
+                  aria-invalid={!!titleError}
+                  required
+                  className={`w-full px-4 py-2.5 rounded-xl border bg-card text-sm focus:outline-none focus:ring-2 ${
+                    titleError
+                      ? "border-destructive ring-destructive/20 focus:ring-destructive/30 focus:border-destructive"
+                      : "border-input focus:ring-primary/20 focus:border-primary"
+                  }`}
                   placeholder={t("task.title.placeholder")}
                 />
+                {titleError && <p className="text-xs text-destructive mt-1">{titleError}</p>}
               </div>
 
               <div>
@@ -695,19 +707,35 @@ const CreateTaskPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5">{t("task.yourPrice")}</label>
+                  <label className="block text-sm font-medium mb-1.5">
+                    {t("task.yourPrice")} <span className="text-destructive">*</span>
+                  </label>
                   <div className="relative">
                     <DollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
-                      value={form.budget}
-                      onChange={(e) => update({ budget: Number(e.target.value) })}
-                      className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      min={1}
+                      value={form.budget || ""}
+                      onChange={(e) => {
+                        const v = e.target.value === "" ? 0 : Number(e.target.value);
+                        update({ budget: Number.isFinite(v) ? v : 0 });
+                        if (priceError && v > 0) setPriceError(null);
+                      }}
+                      placeholder={currency === "ILS" ? "₪" : "$"}
+                      aria-invalid={!!priceError}
+                      className={`w-full ps-10 pe-4 py-2.5 rounded-xl border bg-card text-sm focus:outline-none focus:ring-2 ${
+                        priceError
+                          ? "border-destructive ring-destructive/20 focus:ring-destructive/30 focus:border-destructive"
+                          : "border-input focus:ring-primary/20 focus:border-primary"
+                      }`}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD")}
-                  </p>
+                  {form.budget > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD", currency)}
+                    </p>
+                  )}
+                  {priceError && <p className="text-xs text-destructive mt-1">{priceError}</p>}
                   <PriceFeedback price={form.budget} estimate={priceEstimate} />
                 </div>
                 <div>
@@ -781,7 +809,7 @@ const CreateTaskPage = () => {
                     {t(`task.type.${form.taskType}`)}
                   </span>
                   <span className="bg-secondary text-foreground px-3 py-1 rounded-full">
-                    {formatPrice(form.budget, currency)}
+                    {form.budget > 0 ? formatPrice(form.budget, currency, currency) : "—"}
                   </span>
                 </div>
                 {form.location && (
