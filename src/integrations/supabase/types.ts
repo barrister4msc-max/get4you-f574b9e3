@@ -2867,7 +2867,7 @@ export type Database = {
             Returns: string
           }
       admin_force_delete_auth_user: {
-        Args: { _target: string }
+        Args: { _actor: string; _target: string }
         Returns: undefined
       }
       admin_resend_whatsapp: {
