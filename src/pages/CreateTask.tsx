@@ -76,7 +76,7 @@ const CreateTaskPage = () => {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState(() => {
-    const saved = localStorage.getItem(DRAFT_KEY);
+    const saved = localStorage.getItem(TASK_DRAFT_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -115,7 +115,7 @@ const CreateTaskPage = () => {
 
   // Save draft to localStorage on form changes
   useEffect(() => {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    localStorage.setItem(TASK_DRAFT_KEY, JSON.stringify(form));
   }, [form]);
 
   const aiContext = `Title: ${form.title}, Description: ${form.description}, Category: ${form.category}, Type: ${form.taskType}`;
@@ -430,7 +430,7 @@ const CreateTaskPage = () => {
 
       if (error) throw error;
 
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(TASK_DRAFT_KEY);
       toast.success(t("task.published") || "Task published!");
 
       if (data?.id) {
@@ -1013,7 +1013,7 @@ const CreateTaskPage = () => {
                 <button
                   onClick={() => {
                     setShowMotivation(false);
-                    navigate(`/login?tab=signup&returnTo=${encodeURIComponent("/create-task?continueDraft=1")}`);
+                    navigate(`/login?tab=signup&returnTo=${encodeURIComponent("/dashboard")}`);
                   }}
                   className="w-full py-3 rounded-xl font-bold text-base bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                 >
