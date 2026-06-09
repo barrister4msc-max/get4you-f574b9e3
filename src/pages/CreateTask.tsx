@@ -453,6 +453,36 @@ const CreateTaskPage = () => {
     }
   };
 
+  // After OAuth / signup the user lands back here with continueDraft=1 (or
+  // simply with the pending-submit flag set). Auto-publish the saved draft
+  // once, then redirect to the task / dashboard. Prevents the "draft shown,
+  // task not created" bug for guests who started the form before signing in.
+  useEffect(() => {
+    if (!user) return;
+    if (autoSubmitTriedRef.current) return;
+    if (submitting) return;
+    const pending = (() => {
+      try {
+        return localStorage.getItem(DRAFT_PENDING_KEY) === "1";
+      } catch {
+        return false;
+      }
+    })();
+    if (!pending) return;
+    if (!form.title.trim() || !form.budget) return;
+    autoSubmitTriedRef.current = true;
+    try {
+      localStorage.removeItem(DRAFT_PENDING_KEY);
+    } catch {
+      /* ignore */
+    }
+    // Defer to next tick so dependent state (geo, etc.) is ready.
+    setTimeout(() => {
+      handleSubmit();
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, form.title, form.budget]);
+
   return (
     <div className="min-h-[80vh] py-12">
       <div className="container max-w-2xl">
