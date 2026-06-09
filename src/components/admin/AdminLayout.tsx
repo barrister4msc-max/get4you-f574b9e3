@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Users, Wrench, Star,
-  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield, Bug, Activity, CreditCard, Scale, Send
+  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield, Bug, Activity, CreditCard, Scale, Send, Banknote
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ export const AdminLayout = () => {
     { to: '/admin', icon: LayoutDashboard, label: t('admin.dashboard'), end: true },
     { to: '/admin/orders', icon: ClipboardList, label: t('admin.orders') },
     { to: '/admin/payments', icon: CreditCard, label: 'Платежи' },
+    { to: '/admin/payouts', icon: Banknote, label: 'Payouts / Withdrawals' },
     { to: '/admin/reconciliation', icon: Scale, label: 'Сверка' },
     { to: '/admin/users', icon: Users, label: t('admin.users') },
     { to: '/admin/taskers', icon: Wrench, label: t('admin.taskers') },
