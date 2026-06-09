@@ -39,6 +39,33 @@ const AuthCallbackPage = () => {
         } catch (e) {
           console.warn('[auth] ensure_profile threw', e);
         }
+        // Send welcome email for new OAuth users (idempotent on user.id).
+        // For repeat logins the email API dedupes by idempotency_key, so no
+        // duplicate is sent. We additionally gate by recent profile creation
+        // to avoid touching the email queue on every login.
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('created_at, display_name')
+            .eq('user_id', user.id)
+            .single();
+          const createdAt = profile?.created_at ? new Date(profile.created_at).getTime() : 0;
+          const isNew = createdAt && (Date.now() - createdAt) < 10 * 60 * 1000;
+          if (isNew && user.email) {
+            await supabase.functions.invoke('send-transactional-email', {
+              body: {
+                templateName: 'welcome',
+                recipientEmail: user.email,
+                idempotencyKey: `welcome-${user.id}`,
+                templateData: {
+                  name: profile?.display_name || user.user_metadata?.full_name || user.user_metadata?.name || '',
+                },
+              },
+            });
+          }
+        } catch (e) {
+          console.warn('[auth] welcome email send failed', e);
+        }
         navigate(returnTo, { replace: true });
       })();
       return;
