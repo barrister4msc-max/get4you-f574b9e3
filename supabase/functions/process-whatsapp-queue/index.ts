@@ -51,9 +51,17 @@ Deno.serve(async (req) => {
     const TWILIO_FROM = RAW_TWILIO_FROM.startsWith("whatsapp:")
       ? RAW_TWILIO_FROM
       : `whatsapp:${RAW_TWILIO_FROM}`;
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
+    const WHATSAPP_PROVIDER = (Deno.env.get("WHATSAPP_PROVIDER") || "chatbotisrael").toLowerCase();
+    const CHATBOTISRAEL_URL = Deno.env.get("CHATBOTISRAEL_WHATSAPP_WEBHOOK_URL") || "";
+    if (WHATSAPP_PROVIDER === "twilio" && (!LOVABLE_API_KEY || !TWILIO_API_KEY)) {
       return new Response(
         JSON.stringify({ error: "Twilio env not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (WHATSAPP_PROVIDER === "chatbotisrael" && !CHATBOTISRAEL_URL) {
+      return new Response(
+        JSON.stringify({ error: "CHATBOTISRAEL_WHATSAPP_WEBHOOK_URL not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -136,13 +144,22 @@ Deno.serve(async (req) => {
 
     const sendOne = async (row: typeof rows[number]) => {
       let targetPhone = row.phone;
+      let targetLang = "en";
       if (!targetPhone && row.target_user_id) {
         const { data: prof } = await admin
           .from("profiles")
-          .select("phone")
+          .select("phone, preferred_language")
           .eq("user_id", row.target_user_id)
           .maybeSingle();
         targetPhone = prof?.phone ?? null;
+        targetLang = (prof?.preferred_language as string) || "en";
+      } else if (row.target_user_id) {
+        const { data: prof } = await admin
+          .from("profiles")
+          .select("preferred_language")
+          .eq("user_id", row.target_user_id)
+          .maybeSingle();
+        targetLang = (prof?.preferred_language as string) || "en";
       }
       if (!targetPhone) {
         await admin.rpc("mark_whatsapp_failed", { p_log_id: row.id, p_error_message: "no phone" });
@@ -150,7 +167,48 @@ Deno.serve(async (req) => {
         return { id: row.id, ok: false, error: "no phone" };
       }
       const to = targetPhone.startsWith("whatsapp:") ? targetPhone : `whatsapp:${targetPhone}`;
+      const e164 = targetPhone.startsWith("whatsapp:") ? targetPhone.slice("whatsapp:".length) : targetPhone;
       const text = buildText(row);
+
+      // ===== ChatbotIsrael provider (primary) =====
+      if (WHATSAPP_PROVIDER === "chatbotisrael") {
+        try {
+          const meta = (row.metadata || {}) as Record<string, unknown>;
+          const payload = {
+            phone: e164,
+            event_type: row.event_type,
+            language: targetLang,
+            target_user_id: row.target_user_id,
+            task_id: row.task_id,
+            proposal_id: (meta.proposal_id as string) ?? null,
+            message: text,
+            metadata: meta,
+          };
+          const resp = await fetch(CHATBOTISRAEL_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const bodyText = await resp.text().catch(() => "");
+          if (!resp.ok) {
+            const err = `ChatbotIsrael ${resp.status}: ${bodyText.slice(0, 500)}`;
+            await admin.rpc("mark_whatsapp_failed", { p_log_id: row.id, p_error_message: err });
+            await audit(row.retry_count + 1 >= 5 ? "failed" : "retry", row, { error: err, status: resp.status, provider: "chatbotisrael" });
+            return { id: row.id, ok: false, error: err };
+          }
+          await admin.rpc("mark_whatsapp_sent", { p_log_id: row.id, p_provider_message_id: null });
+          await admin.from("whatsapp_logs").update({ provider: "chatbotisrael" }).eq("id", row.id);
+          await audit("sent", row, { provider: "chatbotisrael", response: bodyText.slice(0, 200) });
+          return { id: row.id, ok: true };
+        } catch (e) {
+          const err = e instanceof Error ? e.message : String(e);
+          await admin.rpc("mark_whatsapp_failed", { p_log_id: row.id, p_error_message: err });
+          await audit(row.retry_count + 1 >= 5 ? "failed" : "retry", row, { error: err, provider: "chatbotisrael" });
+          return { id: row.id, ok: false, error: err };
+        }
+      }
+
+      // ===== Twilio fallback =====
 
       try {
         const resp = await fetch(`${GATEWAY_URL}/Messages.json`, {
