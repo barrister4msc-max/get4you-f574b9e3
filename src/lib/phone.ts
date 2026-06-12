@@ -23,8 +23,9 @@ function cleanInput(input: string): string {
 }
 
 /**
- * Israel mobile prefixes: 050,051,052,053,054,055,056,058,059.
- * Local form: 0XXXXXXXXX (10 digits). E.164: +972 + 9 digits (drop leading 0).
+ * Israel numbers (mobile + landline).
+ * Mobile prefixes: 050-059 (10 digits local, drop leading 0 → +972 + 9).
+ * Landline prefixes: 02,03,04,08,09 (9 digits local, drop leading 0 → +972 + 8).
  */
 function normalizeIL(cleaned: string): NormalizeResult {
   let digits = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned;
@@ -35,18 +36,20 @@ function normalizeIL(cleaned: string): NormalizeResult {
     digits = digits.slice(1);
   }
 
-  if (!/^\d{9}$/.test(digits)) {
-    return { ok: false, error: 'Invalid Israel phone length' };
+  // Mobile: 9 digits starting with 5X
+  if (/^5\d{8}$/.test(digits)) {
+    return { ok: true, e164: `+972${digits}`, country: 'IL' };
   }
-  if (!/^5[0-9]/.test(digits)) {
-    return { ok: false, error: 'Invalid Israel mobile prefix' };
+  // Landline: 8 digits starting with 2,3,4,8,9
+  if (/^[23489]\d{7}$/.test(digits)) {
+    return { ok: true, e164: `+972${digits}`, country: 'IL' };
   }
-  return { ok: true, e164: `+972${digits}`, country: 'IL' };
+  return { ok: false, error: 'Invalid Israel phone number' };
 }
 
 /**
- * Cyprus mobile prefixes: 94,95,96,97,99 (8 digits local).
- * E.164: +357 + 8 digits.
+ * Cyprus numbers (mobile + landline). 8 digits local.
+ * Mobile starts with 9. Landline starts with 2.
  */
 function normalizeCY(cleaned: string): NormalizeResult {
   let digits = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned;
@@ -55,22 +58,19 @@ function normalizeCY(cleaned: string): NormalizeResult {
     digits = digits.slice(3);
   }
 
-  if (!/^\d{8}$/.test(digits)) {
-    return { ok: false, error: 'Invalid Cyprus phone length' };
+  if (/^9\d{7}$/.test(digits) || /^2\d{7}$/.test(digits)) {
+    return { ok: true, e164: `+357${digits}`, country: 'CY' };
   }
-  if (!/^(94|95|96|97|99)/.test(digits)) {
-    return { ok: false, error: 'Invalid Cyprus mobile prefix' };
-  }
-  return { ok: true, e164: `+357${digits}`, country: 'CY' };
+  return { ok: false, error: 'Invalid Cyprus phone number' };
 }
 
 /** Detect country from E.164/plus prefix. Returns null when ambiguous. */
 function detectCountry(cleaned: string): SupportedCountry | null {
   if (cleaned.startsWith('+972') || cleaned.startsWith('972')) return 'IL';
   if (cleaned.startsWith('+357') || cleaned.startsWith('357')) return 'CY';
-  // Bare 8-digit local Cyprus mobile (no country code, no leading 0).
   const digits = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned;
-  if (/^(94|95|96|97|99)\d{6}$/.test(digits)) return 'CY';
+  // Bare 8-digit local Cyprus number (mobile 9X or landline 2X), no leading 0.
+  if (/^[29]\d{7}$/.test(digits)) return 'CY';
   return null;
 }
 

@@ -470,6 +470,7 @@ const ProfilePage = () => {
                     className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground mt-1 whitespace-pre-line">{t('whatsapp.phone.hint')}</p>
               </div>
             )}
           </div>

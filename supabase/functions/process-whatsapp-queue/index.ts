@@ -8,6 +8,28 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
+function normalizeE164(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const raw = input.startsWith("whatsapp:") ? input.slice("whatsapp:".length) : input;
+  const hasPlus = raw.trim().startsWith("+");
+  let digits = raw.replace(/[^0-9]/g, "");
+  if (!digits) return null;
+  // Israel
+  let local: string | null = null;
+  if ((hasPlus && digits.startsWith("972")) || digits.startsWith("972")) local = digits.slice(3);
+  else if (digits.startsWith("0")) local = digits.slice(1);
+  else if (digits.length === 9 && digits.startsWith("5")) local = digits;
+  if (local) {
+    if (/^5\d{8}$/.test(local) || /^[23489]\d{7}$/.test(local)) return `+972${local}`;
+  }
+  // Cyprus
+  let cy: string | null = null;
+  if ((hasPlus && digits.startsWith("357")) || digits.startsWith("357")) cy = digits.slice(3);
+  else if (digits.length === 8) cy = digits;
+  if (cy && /^[29]\d{7}$/.test(cy)) return `+357${cy}`;
+  return null;
+}
+
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let m = 0;
@@ -166,8 +188,15 @@ Deno.serve(async (req) => {
         await audit("failed", row, { error: "no phone" });
         return { id: row.id, ok: false, error: "no phone" };
       }
-      const to = targetPhone.startsWith("whatsapp:") ? targetPhone : `whatsapp:${targetPhone}`;
-      const e164 = targetPhone.startsWith("whatsapp:") ? targetPhone.slice("whatsapp:".length) : targetPhone;
+      const e164 = normalizeE164(targetPhone);
+      if (!e164) {
+        await admin.rpc("mark_whatsapp_failed", { p_log_id: row.id, p_error_message: "invalid_phone" });
+        await audit("failed", row, { error: "invalid_phone", raw: targetPhone });
+        return { id: row.id, ok: false, error: "invalid_phone" };
+      }
+      // Persist normalized phone back to the log for auditability.
+      await admin.from("whatsapp_logs").update({ phone: e164 }).eq("id", row.id);
+      const to = `whatsapp:${e164}`;
       const text = buildText(row);
 
       // ===== ChatbotIsrael provider (primary) =====
