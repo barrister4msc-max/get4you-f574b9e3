@@ -188,8 +188,15 @@ Deno.serve(async (req) => {
         await audit("failed", row, { error: "no phone" });
         return { id: row.id, ok: false, error: "no phone" };
       }
-      const to = targetPhone.startsWith("whatsapp:") ? targetPhone : `whatsapp:${targetPhone}`;
-      const e164 = targetPhone.startsWith("whatsapp:") ? targetPhone.slice("whatsapp:".length) : targetPhone;
+      const e164 = normalizeE164(targetPhone);
+      if (!e164) {
+        await admin.rpc("mark_whatsapp_failed", { p_log_id: row.id, p_error_message: "invalid_phone" });
+        await audit("failed", row, { error: "invalid_phone", raw: targetPhone });
+        return { id: row.id, ok: false, error: "invalid_phone" };
+      }
+      // Persist normalized phone back to the log for auditability.
+      await admin.from("whatsapp_logs").update({ phone: e164 }).eq("id", row.id);
+      const to = `whatsapp:${e164}`;
       const text = buildText(row);
 
       // ===== ChatbotIsrael provider (primary) =====
