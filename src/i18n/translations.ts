@@ -274,6 +274,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'whatsapp.optin.bullet.payments': 'payments and order status',
     'whatsapp.phone.label': 'WhatsApp phone',
     'whatsapp.phone.placeholder': '+972501234567',
+    'whatsapp.phone.hint': 'Enter your WhatsApp number.\nIsrael and Cyprus numbers are supported.\nExamples: +972501234567, +35799123456',
     'whatsapp.no_marketing': 'No marketing messages, ever.',
 
     // Telegram
@@ -1123,6 +1124,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'whatsapp.optin.bullet.payments': 'оплаты и статус заказов',
     'whatsapp.phone.label': 'Номер WhatsApp',
     'whatsapp.phone.placeholder': '+972501234567',
+    'whatsapp.phone.hint': 'Введите номер WhatsApp.\nПоддерживаются Израиль и Кипр.\nПримеры: +972501234567, +35799123456',
     'whatsapp.no_marketing': 'Без рекламных рассылок.',
 
     'telegram.section.title': 'Уведомления в Telegram',
@@ -1956,6 +1958,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'whatsapp.optin.bullet.payments': 'תשלומים וסטטוס הזמנות',
     'whatsapp.phone.label': 'מספר וואטסאפ',
     'whatsapp.phone.placeholder': '+972501234567',
+    'whatsapp.phone.hint': 'הזן את מספר ה-WhatsApp שלך.\nנתמכים מספרים מישראל וקפריסין.\nלדוגמה: +972501234567, +35799123456',
     'whatsapp.no_marketing': 'ללא הודעות שיווקיות.',
 
     'telegram.section.title': 'התראות בטלגרם',
@@ -2789,6 +2792,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'whatsapp.optin.bullet.payments': 'المدفوعات وحالة الطلبات',
     'whatsapp.phone.label': 'رقم واتساب',
     'whatsapp.phone.placeholder': '+972501234567',
+    'whatsapp.phone.hint': 'أدخل رقم واتساب الخاص بك.\nالأرقام المدعومة من إسرائيل وقبرص.\nأمثلة: +972501234567, +35799123456',
     'whatsapp.no_marketing': 'لا توجد رسائل تسويقية.',
 
     'telegram.section.title': 'إشعارات تيليجرام',
