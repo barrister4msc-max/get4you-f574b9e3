@@ -111,6 +111,7 @@ const SignupPage = () => {
                 placeholder="+972501234567"
               />
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1 whitespace-pre-line">{t('whatsapp.phone.hint')}</p>
           </div>
 
           <label className="flex items-start gap-2 text-sm rounded-xl border border-border bg-card p-3">
