@@ -203,16 +203,35 @@ Deno.serve(async (req) => {
       if (WHATSAPP_PROVIDER === "chatbotisrael") {
         try {
           const meta = (row.metadata || {}) as Record<string, unknown>;
-          const payload = {
+          // Welcome event uses the approved English template `account_created`.
+          // Other events keep their existing localized free-form text.
+          const isWelcome = row.event_type === "welcome";
+          const ACCOUNT_CREATED_EN =
+            "Your 4You.AI account registration was completed successfully. " +
+            "This message confirms that your account has been created. " +
+            "You can now log in using the email address used during registration.";
+          const outboundLang = isWelcome ? "en" : targetLang;
+          const outboundMessage = isWelcome ? ACCOUNT_CREATED_EN : text;
+          const outboundMeta: Record<string, unknown> = { ...meta };
+          if (isWelcome) {
+            outboundMeta.template = "account_created";
+            outboundMeta.template_language = "en";
+            outboundMeta.final_message = ACCOUNT_CREATED_EN;
+            if (!outboundMeta.original_language) {
+              outboundMeta.original_language = targetLang;
+            }
+          }
+          const payload: Record<string, unknown> = {
             phone: e164,
             event_type: row.event_type,
-            language: targetLang,
+            language: outboundLang,
             target_user_id: row.target_user_id,
             task_id: row.task_id,
             proposal_id: (meta.proposal_id as string) ?? null,
-            message: text,
-            metadata: meta,
+            message: outboundMessage,
+            metadata: outboundMeta,
           };
+          if (isWelcome) payload.template = "account_created";
           const resp = await fetch(CHATBOTISRAEL_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -226,7 +245,10 @@ Deno.serve(async (req) => {
             return { id: row.id, ok: false, error: err };
           }
           await admin.rpc("mark_whatsapp_sent", { p_log_id: row.id, p_provider_message_id: null });
-          await admin.from("whatsapp_logs").update({ provider: "chatbotisrael" }).eq("id", row.id);
+          await admin
+            .from("whatsapp_logs")
+            .update({ provider: "chatbotisrael", metadata: outboundMeta })
+            .eq("id", row.id);
           await audit("sent", row, { provider: "chatbotisrael", response: bodyText.slice(0, 200) });
           return { id: row.id, ok: true };
         } catch (e) {
