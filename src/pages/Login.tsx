@@ -493,6 +493,8 @@ const LoginPage = () => {
                 onToggle={() => setShowPassword(!showPassword)}
                 minLength={8}
               />
+            </div>
+            <div className="hidden" />
 
               {/* Password requirements */}
               {password.length > 0 && (
