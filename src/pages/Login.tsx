@@ -588,6 +588,18 @@ const LoginPage = () => {
               )}
             </div>
 
+            <label className="flex items-start gap-2 text-sm rounded-xl border border-border bg-card p-3">
+              <input
+                type="checkbox"
+                checked={whatsappOptIn}
+                onChange={(e) => setWhatsappOptIn(e.target.checked)}
+                className="mt-1"
+              />
+              <span className="flex-1 text-xs text-foreground">
+                I agree to receive service notifications from Flow4You via WhatsApp.
+              </span>
+            </label>
+
             <button
               type="submit"
               disabled={loading || !hasMinLength || !hasLettersAndDigits}
