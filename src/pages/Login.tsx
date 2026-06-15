@@ -485,6 +485,28 @@ const LoginPage = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1.5">Phone number *</label>
+              <div className="flex gap-2">
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value as SupportedCountry)}
+                  className="px-3 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                >
+                  <option value="IL">🇮🇱 Israel +972</option>
+                  <option value="CY">🇨🇾 Cyprus +357</option>
+                </select>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  placeholder={country === 'IL' ? '0501234567' : '99123456'}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-1.5">{t('auth.password')}</label>
               <PasswordInput
                 value={password}
@@ -493,8 +515,6 @@ const LoginPage = () => {
                 onToggle={() => setShowPassword(!showPassword)}
                 minLength={8}
               />
-            </div>
-            <div className="hidden" />
 
               {/* Password requirements */}
               {password.length > 0 && (
