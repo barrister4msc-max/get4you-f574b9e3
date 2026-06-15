@@ -8,6 +8,7 @@ import { hasPendingTaskDraft } from '@/lib/pendingTaskDraft';
 import { Mail, Lock, User, ArrowRight, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import PasswordInput from '@/components/PasswordInput';
 import { toast } from 'sonner';
+import { normalizePhone, type SupportedCountry } from '@/lib/phone';
 
 type Role = 'client' | 'tasker' | 'both';
 
@@ -44,6 +45,9 @@ const LoginPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('client');
+  const [phone, setPhone] = useState('');
+  const [country, setCountry] = useState<SupportedCountry>('IL');
+  const [whatsappOptIn, setWhatsappOptIn] = useState(true);
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -108,8 +112,17 @@ const LoginPage = () => {
       toast.error(t('auth.passwordMismatch'));
       return;
     }
+    if (!phone.trim()) {
+      toast.error('Введите номер телефона');
+      return;
+    }
+    const normalized = normalizePhone(phone, country);
+    if (!normalized.ok || !normalized.e164) {
+      toast.error(normalized.error || 'Invalid phone number');
+      return;
+    }
     setLoading(true);
-    const { error } = await signUp(email, password, name, role);
+    const { error } = await signUp(email, password, name, role, normalized.e164, whatsappOptIn);
     setLoading(false);
     if (error) {
       toast.error(error);
