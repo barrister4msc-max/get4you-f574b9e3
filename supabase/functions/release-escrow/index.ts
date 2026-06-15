@@ -245,6 +245,51 @@ Deno.serve(async (req: Request) => {
     console.error("[release-escrow] app_events insert error", eventErr);
   }
 
+  // 8. Notify the tasker (in-app + WhatsApp). Best-effort; never blocks the release.
+  if (escrow.tasker_id) {
+    let taskTitle: string | null = null;
+    try {
+      const { data: t } = await admin
+        .from("tasks")
+        .select("title")
+        .eq("id", escrow.task_id)
+        .maybeSingle();
+      taskTitle = (t?.title as string) ?? null;
+    } catch (_) { /* ignore */ }
+
+    try {
+      await admin.from("notifications").insert({
+        user_id: escrow.tasker_id,
+        type: "task_completed",
+        title: "Task completed — payment released",
+        message: taskTitle
+          ? `The client confirmed completion of "${taskTitle}". Funds are now available per platform payout rules.`
+          : "The client confirmed task completion. Funds are now available per platform payout rules.",
+        task_id: escrow.task_id,
+      });
+    } catch (e) {
+      console.error("[release-escrow] notification insert failed", e);
+    }
+
+    try {
+      await admin.rpc("enqueue_whatsapp", {
+        p_user_id: escrow.tasker_id,
+        p_event_type: "task_completed",
+        p_task_id: escrow.task_id,
+        p_metadata: {
+          escrow_id: escrow.id,
+          assignment_id: escrow.assignment_id,
+          payout_id: payout?.id ?? null,
+          net_amount: escrow.net_amount,
+          currency: escrow.currency,
+          task_title: taskTitle,
+        },
+      });
+    } catch (e) {
+      console.error("[release-escrow] enqueue_whatsapp failed", e);
+    }
+  }
+
   return jsonResponse({
     success: true,
     escrow_id: escrow.id,

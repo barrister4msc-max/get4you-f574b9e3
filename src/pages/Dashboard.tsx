@@ -439,6 +439,29 @@ const DashboardPage = () => {
           </Link>
         </div>
 
+        {/* Onboarding nudge: phone missing (typical for Google/Apple sign-ups) */}
+        {profile && !profile.phone && (
+          <Link
+            to="/profile"
+            className="block mb-5 p-3 rounded-2xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100/70 transition-colors"
+          >
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+              {locale === "ru"
+                ? "Заполните номер телефона для сервисных уведомлений"
+                : locale === "he"
+                ? "השלם את הגדרות ההתראות"
+                : "Complete your notification settings"}
+            </p>
+            <p className="text-xs text-amber-800/80 dark:text-amber-200/80 mt-1">
+              {locale === "ru"
+                ? "Укажите номер телефона и выберите каналы уведомлений, чтобы получать сообщения о регистрации, откликах, статусе заказов и оплате."
+                : locale === "he"
+                ? "הוסף מספר טלפון כדי לקבל התראות שירות על הזמנות, הצעות ותשלומים."
+                : "Add your phone number and choose notification channels to receive updates about registration, offers, task status and payments."}
+            </p>
+          </Link>
+        )}
+
         {/* Role indicator / switcher */}
         {isTasker || isClient ? (
           <div className="mb-5 p-3 rounded-2xl border border-border bg-card">
