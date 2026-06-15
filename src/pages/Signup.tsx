@@ -17,7 +17,7 @@ const SignupPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [whatsappOptIn, setWhatsappOptIn] = useState(false);
+  const [whatsappOptIn, setWhatsappOptIn] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<Role>("client");
@@ -34,16 +34,18 @@ const SignupPage = () => {
       return;
     }
     setLoading(true);
-    let normalizedPhone: string | undefined = undefined;
-    if (phone.trim()) {
-      const res = normalizePhone(phone);
-      if (!res.ok) {
-        toast.error(res.error || "Invalid phone number");
-        setLoading(false);
-        return;
-      }
-      normalizedPhone = res.e164;
+    if (!phone.trim()) {
+      toast.error("Введите номер телефона");
+      setLoading(false);
+      return;
     }
+    const res = normalizePhone(phone);
+    if (!res.ok) {
+      toast.error(res.error || "Invalid phone number");
+      setLoading(false);
+      return;
+    }
+    const normalizedPhone = res.e164;
     const { error } = await signUp(email, password, name, role, normalizedPhone, whatsappOptIn);
     setLoading(false);
     if (error) {
@@ -109,6 +111,7 @@ const SignupPage = () => {
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-input bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 placeholder="+972501234567"
+                required
               />
             </div>
             <p className="text-[11px] text-muted-foreground mt-1 whitespace-pre-line">{t('whatsapp.phone.hint')}</p>
