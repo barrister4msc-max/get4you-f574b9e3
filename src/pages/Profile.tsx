@@ -4,8 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag, Send } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
