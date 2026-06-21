@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Send, CheckCheck, Check, AlertTriangle, Eye } from "lucide-react";
+import { RefreshCw, Send, CheckCheck, Check, AlertTriangle, Eye, Play } from "lucide-react";
 import { toast } from "sonner";
 
 type Status = "pending" | "sent" | "failed" | "dead" | "processing";
@@ -65,6 +65,7 @@ export default function AdminWhatsappLogs() {
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [search, setSearch] = useState("");
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [runningQueue, setRunningQueue] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -165,6 +166,30 @@ export default function AdminWhatsappLogs() {
     load();
   };
 
+  const runQueue = async () => {
+    setRunningQueue(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-run-whatsapp-queue", {
+        body: {},
+      });
+      if (error) {
+        toast.error(error.message || "Failed to run queue");
+        return;
+      }
+      const processed = (data as { processed?: number } | null)?.processed;
+      toast.success(
+        typeof processed === "number"
+          ? `WhatsApp queue processed (${processed} message${processed === 1 ? "" : "s"})`
+          : "WhatsApp queue processed",
+      );
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRunningQueue(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -186,6 +211,10 @@ export default function AdminWhatsappLogs() {
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             <RefreshCw className={`w-4 h-4 me-1 ${loading ? "animate-spin" : ""}`} />
             Refresh
+          </Button>
+          <Button size="sm" onClick={runQueue} disabled={runningQueue}>
+            <Play className={`w-4 h-4 me-1 ${runningQueue ? "animate-pulse" : ""}`} />
+            {runningQueue ? "Running…" : "Run WhatsApp Queue"}
           </Button>
         </div>
       </div>
