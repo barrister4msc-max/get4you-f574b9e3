@@ -1,0 +1,1 @@
+UPDATE public.whatsapp_logs SET status='pending', error_message=NULL, retry_count=0, provider='chatbotisrael' WHERE status='failed' AND error_message LIKE '%Invalid URL%CHATBOTISRAEL_WHATSAPP_WEBHOOK_URL%';
