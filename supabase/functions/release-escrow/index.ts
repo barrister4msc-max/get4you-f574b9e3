@@ -257,6 +257,17 @@ Deno.serve(async (req: Request) => {
       taskTitle = (t?.title as string) ?? null;
     } catch (_) { /* ignore */ }
 
+    // Check if the tasker has a payout account set up
+    let payoutAccountMissing = false;
+    try {
+      const { data: pa } = await admin
+        .from("payout_accounts")
+        .select("id, status")
+        .eq("user_id", escrow.tasker_id)
+        .maybeSingle();
+      payoutAccountMissing = !pa;
+    } catch (_) { /* ignore */ }
+
     try {
       await admin.from("notifications").insert({
         user_id: escrow.tasker_id,
@@ -287,6 +298,37 @@ Deno.serve(async (req: Request) => {
       });
     } catch (e) {
       console.error("[release-escrow] enqueue_whatsapp failed", e);
+    }
+
+    // If no payout account exists, prompt the tasker to add their details
+    if (payoutAccountMissing) {
+      try {
+        await admin.from("notifications").insert({
+          user_id: escrow.tasker_id,
+          type: "payout_details_missing",
+          title: "Add payout details to receive your payment",
+          message:
+            "Your payment is ready, but we need your bank details to send it. Add your payout details in your profile.",
+          task_id: escrow.task_id,
+        });
+      } catch (e) {
+        console.error("[release-escrow] missing-payout notification failed", e);
+      }
+      try {
+        await admin.rpc("enqueue_whatsapp", {
+          p_user_id: escrow.tasker_id,
+          p_event_type: "payout_details_missing",
+          p_task_id: escrow.task_id,
+          p_metadata: {
+            escrow_id: escrow.id,
+            net_amount: escrow.net_amount,
+            currency: escrow.currency,
+            task_title: taskTitle,
+          },
+        });
+      } catch (e) {
+        console.error("[release-escrow] missing-payout whatsapp failed", e);
+      }
     }
   }
 

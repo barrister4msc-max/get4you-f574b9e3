@@ -238,6 +238,8 @@ const ContractorAgreementPage = () => {
 
       toast.success(t('contract.success'));
       setAlreadySigned(true);
+      // Auto-advance to next onboarding step (payment details)
+      setTimeout(() => navigate('/contractor-payments'), 800);
     } catch (err: any) {
       toast.error(err.message || t('contract.error.submit'));
     } finally {
@@ -261,10 +263,17 @@ const ContractorAgreementPage = () => {
             <CheckCircle2 className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">{t('contract.signed.title')}</h1>
-          <p className="text-muted-foreground">{t('contract.signed.description')}</p>
-          <Button onClick={() => navigate('/for-taskers')} variant="outline">
-            {t('contract.signed.back')}
-          </Button>
+          <p className="text-muted-foreground">
+            Agreement signed ✓ — next step: add your payout details to receive payments.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Button onClick={() => navigate('/contractor-payments')}>
+              Add payment details
+            </Button>
+            <Button onClick={() => navigate('/dashboard')} variant="outline">
+              Skip for now
+            </Button>
+          </div>
         </div>
       </div>
     );

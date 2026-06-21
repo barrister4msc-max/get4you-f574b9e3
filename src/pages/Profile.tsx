@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedWrites';
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 import { normalizePhone } from '@/lib/phone';
+import TaskerPayoutSetup from '@/components/TaskerPayoutSetup';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -306,6 +307,11 @@ const ProfilePage = () => {
               Укажите номер телефона и подтвердите согласие на уведомления через
               WhatsApp, чтобы получать сообщения о заявках, откликах и оплатах.
             </p>
+          </div>
+        )}
+        {isTasker && (
+          <div className="mb-6">
+            <TaskerPayoutSetup />
           </div>
         )}
         {/* Avatar + Name */}
