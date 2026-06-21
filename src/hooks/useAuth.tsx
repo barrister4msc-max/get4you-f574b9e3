@@ -171,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password,
       options: {
         data: { display_name: name, role, phone, whatsapp_opt_in: whatsappOptIn },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     if (error) return { error: error.message };
