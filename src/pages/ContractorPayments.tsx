@@ -121,8 +121,16 @@ const ContractorPayments = () => {
   const handleSubmitAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!form.account_holder_name.trim() || !form.id_number.trim() || !form.account_number.trim()) {
-      toast.error("Please fill in account holder, ID number, and account number.");
+    if (!form.account_holder_name.trim() || !form.id_number.trim()) {
+      toast.error("Please fill in account holder and ID number.");
+      return;
+    }
+    if (form.country === "IL" && !form.account_number.trim()) {
+      toast.error("Please fill in your Israeli bank account number.");
+      return;
+    }
+    if (form.country === "CY" && (!form.iban.trim() || !form.swift_bic.trim())) {
+      toast.error("Please fill in IBAN and SWIFT/BIC for Cyprus accounts.");
       return;
     }
     setSubmitting(true);
