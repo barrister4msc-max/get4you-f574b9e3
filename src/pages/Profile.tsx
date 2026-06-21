@@ -4,7 +4,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useActiveRole } from '@/contexts/ActiveRoleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Phone, MapPin, FileText, Save, LogOut, CheckCircle2, Banknote, Camera, LayoutDashboard, Trash2, Briefcase, ShoppingBag, Send } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -22,6 +22,8 @@ const ProfilePage = () => {
   const { user, profile, roles, signOut, refreshProfile } = useAuth();
   const { activeRole, setActiveRole, hasBothRoles, isClient, isTasker } = useActiveRole();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const onboarding = searchParams.get('onboarding') === '1';
 
   const [saving, setSaving] = useState(false);
   const [savingRoles, setSavingRoles] = useState(false);
@@ -295,6 +297,17 @@ const ProfilePage = () => {
   return (
     <div className="min-h-[80vh] py-12">
       <div className="container max-w-lg mx-auto px-4">
+        {onboarding && (
+          <div className="mb-6 p-4 rounded-2xl border border-primary/30 bg-primary/5">
+            <p className="text-sm font-semibold text-primary mb-1">
+              Завершите настройку профиля
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Укажите номер телефона и подтвердите согласие на уведомления через
+              WhatsApp, чтобы получать сообщения о заявках, откликах и оплатах.
+            </p>
+          </div>
+        )}
         {/* Avatar + Name */}
         <div className="text-center mb-6">
           <div className="relative w-20 h-20 mx-auto mb-4">

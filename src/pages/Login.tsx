@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { hasPendingTaskDraft } from '@/lib/pendingTaskDraft';
+import { rememberPostAuthReturnTo, resolvePostAuthRedirect } from '@/lib/postAuthRedirect';
 import { Mail, Lock, User, ArrowRight, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import PasswordInput from '@/components/PasswordInput';
 import { toast } from 'sonner';
@@ -35,7 +36,11 @@ const LoginPage = () => {
   // If user is already authenticated, redirect to start page (or returnTo)
   useEffect(() => {
     if (!authLoading && user) {
-      navigate(hasPendingTaskDraft() ? '/auth/callback' : (searchParams.get('returnTo') || '/'), { replace: true });
+      (async () => {
+        const returnTo = searchParams.get('returnTo');
+        const { path } = await resolvePostAuthRedirect(supabase, user.id, { returnTo });
+        navigate(path, { replace: true });
+      })();
     }
   }, [authLoading, user, navigate, searchParams]);
 
@@ -88,13 +93,25 @@ const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const returnTo = searchParams.get('returnTo');
+    rememberPostAuthReturnTo(returnTo);
     const { error } = await signIn(email, password);
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast.error(error);
-    } else {
-      const returnTo = searchParams.get('returnTo');
-      navigate(hasPendingTaskDraft() ? '/auth/callback' : (returnTo || '/'));
+      return;
+    }
+    // Resolve unified post-auth destination (draft / onboarding / returnTo / dashboard).
+    try {
+      const { data: { user: signedIn } } = await supabase.auth.getUser();
+      if (signedIn) {
+        const { path } = await resolvePostAuthRedirect(supabase, signedIn.id, { returnTo });
+        navigate(path);
+      } else {
+        navigate('/');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,6 +144,9 @@ const LoginPage = () => {
     if (error) {
       toast.error(error);
     } else {
+      // Persist returnTo so it survives the email-confirmation roundtrip
+      // back to /auth/callback.
+      rememberPostAuthReturnTo(searchParams.get('returnTo'));
       if (hasPendingTaskDraft()) {
         toast.success('Аккаунт создан. Публикуем заявку…');
         return;
@@ -162,8 +182,9 @@ const LoginPage = () => {
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     setSocialLoading(provider);
     try {
-      const returnTo = searchParams.get('returnTo') || '/dashboard';
-      window.sessionStorage.setItem('oauth_return_to', returnTo);
+      const returnTo = searchParams.get('returnTo');
+      if (returnTo) window.sessionStorage.setItem('oauth_return_to', returnTo);
+      rememberPostAuthReturnTo(returnTo);
       const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: `${window.location.origin}/auth/callback`,
       });

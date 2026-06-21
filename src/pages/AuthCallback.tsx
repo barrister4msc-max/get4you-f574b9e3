@@ -4,9 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { createTaskFromPendingDraft, hasPendingTaskDraft } from '@/lib/pendingTaskDraft';
-
-const FALLBACK_RETURN_TO = '/dashboard';
+import { resolvePostAuthRedirect, consumePostAuthReturnTo } from '@/lib/postAuthRedirect';
 
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
@@ -29,8 +27,9 @@ const AuthCallbackPage = () => {
     if (loading) return;
 
     if (user) {
-      const returnTo = window.sessionStorage.getItem('oauth_return_to') || FALLBACK_RETURN_TO;
+      const sessionReturnTo = window.sessionStorage.getItem('oauth_return_to');
       window.sessionStorage.removeItem('oauth_return_to');
+      const storedReturnTo = consumePostAuthReturnTo();
       // Safety net: ensure profile + default role exist (e.g. Apple OAuth
       // without email, or trigger failure). Idempotent on the server.
       (async () => {
@@ -41,9 +40,6 @@ const AuthCallbackPage = () => {
           console.warn('[auth] ensure_profile threw', e);
         }
         // Send welcome email for new OAuth users (idempotent on user.id).
-        // For repeat logins the email API dedupes by idempotency_key, so no
-        // duplicate is sent. We additionally gate by recent profile creation
-        // to avoid touching the email queue on every login.
         try {
           const { data: profile } = await supabase
             .from('profiles')
@@ -67,26 +63,19 @@ const AuthCallbackPage = () => {
         } catch (e) {
           console.warn('[auth] welcome email send failed', e);
         }
-        if (hasPendingTaskDraft()) {
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('preferred_currency')
-              .eq('user_id', user.id)
-              .maybeSingle();
-            const createdTaskId = await createTaskFromPendingDraft({
-              userId: user.id,
-              currency: profile?.preferred_currency || 'ILS',
-            });
-            toast.success('Заявка опубликована');
-            navigate(createdTaskId ? `/tasks/${createdTaskId}` : '/dashboard', { replace: true });
-            return;
-          } catch (e) {
-            console.error('[auth] pending task creation failed', e);
-            toast.error('Не удалось автоматически создать заявку. Черновик сохранён.');
-          }
+        try {
+          const returnToCandidate =
+            (sessionReturnTo && sessionReturnTo !== '/create-task?continueDraft=1' ? sessionReturnTo : null) ||
+            storedReturnTo ||
+            null;
+          const { path } = await resolvePostAuthRedirect(supabase, user.id, {
+            returnTo: returnToCandidate,
+          });
+          navigate(path, { replace: true });
+        } catch (e) {
+          console.error('[auth] post-auth redirect failed', e);
+          navigate('/dashboard', { replace: true });
         }
-        navigate(returnTo === '/create-task?continueDraft=1' ? FALLBACK_RETURN_TO : returnTo, { replace: true });
       })();
       return;
     }

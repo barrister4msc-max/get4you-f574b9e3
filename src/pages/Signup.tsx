@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { hasPendingTaskDraft } from "@/lib/pendingTaskDraft";
+import { rememberPostAuthReturnTo } from "@/lib/postAuthRedirect";
 import { Mail, Lock, User, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { normalizePhone } from "@/lib/phone";
@@ -51,9 +52,14 @@ const SignupPage = () => {
     if (error) {
       toast.error(error);
     } else {
+      // Remember the desired post-auth destination so it survives the email
+      // confirmation roundtrip into /auth/callback.
+      rememberPostAuthReturnTo(searchParams.get("returnTo"));
       toast.success(t("auth.checkEmail"));
-      const returnTo = searchParams.get("returnTo");
-      navigate(hasPendingTaskDraft() ? "/auth/callback" : (returnTo || "/dashboard"));
+      // No session yet (email confirmation required) - send back to login
+      // where the resend / status UI lives. After confirmation the user
+      // lands on /auth/callback and is routed by the unified resolver.
+      navigate("/login");
     }
   };
 
