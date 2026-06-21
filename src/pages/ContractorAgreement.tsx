@@ -238,6 +238,8 @@ const ContractorAgreementPage = () => {
 
       toast.success(t('contract.success'));
       setAlreadySigned(true);
+      // Auto-advance to next onboarding step (payment details)
+      setTimeout(() => navigate('/contractor-payments'), 800);
     } catch (err: any) {
       toast.error(err.message || t('contract.error.submit'));
     } finally {
