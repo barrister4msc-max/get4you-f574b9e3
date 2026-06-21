@@ -7,8 +7,7 @@ import { Send, Loader2, Users, MessageSquare } from 'lucide-react';
 
 const AdminBroadcast = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState('');
@@ -16,17 +15,12 @@ const AdminBroadcast = () => {
   const [selectedTaskers, setSelectedTaskers] = useState<string[]>([]);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-      setIsAdmin(!!data);
-
-      // Fetch taskers with phones
+    if (authLoading) return;
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
+    const loadTaskers = async () => {
       const { data: roles } = await supabase
         .from('user_roles')
         .select('user_id')
@@ -42,8 +36,8 @@ const AdminBroadcast = () => {
       }
       setLoading(false);
     };
-    checkAdmin();
-  }, [user]);
+    loadTaskers();
+  }, [authLoading, isAdmin]);
 
   const toggleTasker = (userId: string) => {
     setSelectedTaskers(prev =>
@@ -87,7 +81,7 @@ const AdminBroadcast = () => {
     }
   };
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">{t('dashboard.loading')}</div>;
+  if (authLoading || loading) return <div className="container py-20 text-center text-muted-foreground">{t('dashboard.loading')}</div>;
   if (!isAdmin) return <div className="container py-20 text-center text-muted-foreground">{t('admin.esek.accessDenied')}</div>;
 
   return (
