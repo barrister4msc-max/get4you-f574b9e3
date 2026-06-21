@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, FileSignature, Wallet, ShieldCheck, ArrowDownToLine, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type PayoutAccount = {
   id: string;
@@ -286,16 +287,39 @@ const ContractorPayments = () => {
               ) : (
                 <form onSubmit={handleSubmitAccount} className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Country *</Label>
+                      <Select
+                        value={form.country}
+                        onValueChange={(v) =>
+                          setForm({ ...form, country: v, currency: v === "CY" ? "EUR" : "ILS" })
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="IL">Israel (ILS)</SelectItem>
+                          <SelectItem value="CY">Cyprus (EUR)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Field label="Currency" value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} />
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
                     <Field label="Account holder name *" value={form.account_holder_name} onChange={(v) => setForm({ ...form, account_holder_name: v })} />
                     <Field label="ID number *" value={form.id_number} onChange={(v) => setForm({ ...form, id_number: v })} />
                     <Field label="Bank name" value={form.bank_name} onChange={(v) => setForm({ ...form, bank_name: v })} />
-                    <Field label="Bank number" value={form.bank_number} onChange={(v) => setForm({ ...form, bank_number: v })} />
-                    <Field label="Branch number" value={form.branch_number} onChange={(v) => setForm({ ...form, branch_number: v })} />
-                    <Field label="Account number *" value={form.account_number} onChange={(v) => setForm({ ...form, account_number: v })} />
-                    <Field label="IBAN (optional)" value={form.iban} onChange={(v) => setForm({ ...form, iban: v })} />
-                    <Field label="SWIFT/BIC (optional)" value={form.swift_bic} onChange={(v) => setForm({ ...form, swift_bic: v })} />
-                    <Field label="Country" value={form.country} onChange={(v) => setForm({ ...form, country: v })} />
-                    <Field label="Currency" value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} />
+                    {form.country === "IL" ? (
+                      <>
+                        <Field label="Bank number" value={form.bank_number} onChange={(v) => setForm({ ...form, bank_number: v })} />
+                        <Field label="Branch number *" value={form.branch_number} onChange={(v) => setForm({ ...form, branch_number: v })} />
+                        <Field label="Account number *" value={form.account_number} onChange={(v) => setForm({ ...form, account_number: v })} />
+                      </>
+                    ) : (
+                      <>
+                        <Field label="IBAN *" value={form.iban} onChange={(v) => setForm({ ...form, iban: v })} />
+                        <Field label="SWIFT/BIC *" value={form.swift_bic} onChange={(v) => setForm({ ...form, swift_bic: v })} />
+                      </>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" disabled={submitting}>
