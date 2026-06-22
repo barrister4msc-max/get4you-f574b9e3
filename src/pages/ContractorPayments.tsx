@@ -345,6 +345,11 @@ const ContractorPayments = () => {
                         <Field label="SWIFT/BIC *" value={form.swift_bic} onChange={(v) => setForm({ ...form, swift_bic: v })} />
                       </>
                     )}
+                    <Field
+                      label={form.country === "IL" ? "Tax number / Esek Patur" : "Tax / VAT number"}
+                      value={form.tax_id}
+                      onChange={(v) => setForm({ ...form, tax_id: v })}
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" disabled={submitting}>
