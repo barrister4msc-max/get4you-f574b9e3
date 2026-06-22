@@ -175,6 +175,7 @@ const DashboardPage = () => {
   >([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
   const [proposalCounts, setProposalCounts] = useState<Record<string, number>>({});
 
   const { activeRole, setActiveRole, isClient, isTasker, hasBothRoles } = useActiveRole();
@@ -870,14 +871,48 @@ const DashboardPage = () => {
                     </span>
                   </div>
                   {order.status?.toLowerCase() === "pending" && order.payment_url && (
-                    <a
-                      href={order.payment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 flex items-center justify-center gap-2 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                    <button
+                      type="button"
+                      disabled={payingOrderId === order.id}
+                      onClick={async () => {
+                        // Always re-invoke create-payment instead of opening
+                        // the stored payment_url — Allpay invalidates the
+                        // hosted page after the first close/cancel. The
+                        // backend expires the old pending order and returns
+                        // a fresh payment_url.
+                        if (!order.task_id || !order.proposal_id) {
+                          toast.error(t("payment.error") || "Cannot retry payment");
+                          return;
+                        }
+                        setPayingOrderId(order.id);
+                        try {
+                          const baseUrl = window.location.origin;
+                          const { data, error } = await supabase.functions.invoke("create-payment", {
+                            body: {
+                              task_id: order.task_id,
+                              proposal_id: order.proposal_id,
+                              currency: order.currency || "ILS",
+                              success_url: `${baseUrl}/payment-success`,
+                              cancel_url: `${baseUrl}/payment-cancel`,
+                              lang: locale === "ru" ? "RU" : locale === "he" ? "HE" : "EN",
+                            },
+                          });
+                          if (error) throw error;
+                          if (data?.payment_url) {
+                            window.location.href = data.payment_url;
+                            return;
+                          }
+                          throw new Error(data?.error || "No payment URL");
+                        } catch (err: any) {
+                          toast.error(err?.message || t("payment.error") || "Payment failed");
+                        } finally {
+                          setPayingOrderId(null);
+                        }
+                      }}
+                      className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
                     >
                       {t("payment.pay")} <ArrowRight className="w-4 h-4" />
-                    </a>
+                    </button>
                   )}
                 </div>
               ))
