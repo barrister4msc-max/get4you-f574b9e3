@@ -33,7 +33,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log("[CREATE-PAYMENT] >>> invoked", req.method, new Date().toISOString());
+    const traceId = crypto.randomUUID();
+    console.log("[CREATE-PAYMENT] function entered", { traceId, method: req.method, at: new Date().toISOString() });
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
@@ -108,6 +109,13 @@ Deno.serve(async (req) => {
       currency: requestedCurrency,
       assignment_id,
     } = body ?? {};
+
+    console.log("[CREATE-PAYMENT] create-payment called", {
+      traceId,
+      task_id: task_id ?? null,
+      proposal_id: proposal_id ?? null,
+      user_id: userId,
+    });
 
     if (!proposal_id) {
       return new Response(JSON.stringify({ error: "proposal_id is required" }), {
@@ -324,6 +332,8 @@ Deno.serve(async (req) => {
       .eq("status", "paid")
       .maybeSingle();
 
+    console.log("[CREATE-PAYMENT] existing paid order", { traceId, id: existingPaidOrder?.id ?? null });
+
     if (existingPaidOrder) {
       return new Response(
         JSON.stringify({
@@ -343,7 +353,11 @@ Deno.serve(async (req) => {
       .eq("task_id", task.id)
       .eq("proposal_id", proposal.id)
       .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
+
+    console.log("[CREATE-PAYMENT] existing pending order", { traceId, id: existingPendingOrder?.id ?? null });
 
     // Re-payment policy: every fresh click of "Pay" must yield a brand-new
     // Allpay session, because Allpay invalidates payment_url after the user
@@ -352,14 +366,25 @@ Deno.serve(async (req) => {
     // `expired` and fall through to create a new orders row + Allpay order.
     // The old row is preserved (not deleted) for audit/history.
     if (existingPendingOrder?.id) {
-      const { error: expireErr } = await serviceClient
+      console.log("[CREATE-PAYMENT] expiring pending order", { traceId, id: existingPendingOrder.id });
+      const { data: expiredRows, error: expireErr, count: expiredCount } = await serviceClient
         .from("orders")
-        .update({
-          status: "expired",
-          provider_status: "superseded_by_new_attempt",
-        })
+        .update(
+          {
+            status: "expired",
+            provider_status: "superseded_by_new_attempt",
+          },
+          { count: "exact" },
+        )
         .eq("id", existingPendingOrder.id)
-        .eq("status", "pending"); // guard against race with webhook
+        .eq("status", "pending") // guard against race with webhook
+        .select("id, status, provider_status, updated_at");
+      console.log("[CREATE-PAYMENT] expired pending order result", {
+        traceId,
+        count: expiredCount ?? expiredRows?.length ?? 0,
+        rows: expiredRows ?? [],
+        error: expireErr?.message ?? null,
+      });
       if (expireErr) {
         console.error("[CREATE-PAYMENT] Failed to expire old pending order:", expireErr);
       }
