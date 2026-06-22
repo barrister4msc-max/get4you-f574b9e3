@@ -70,6 +70,8 @@ interface OrderRow {
   status: string;
   created_at: string;
   payment_url: string | null;
+  task_id: string | null;
+  proposal_id: string | null;
   task?: { title: string } | null;
 }
 
@@ -280,7 +282,7 @@ const DashboardPage = () => {
       // Fetch orders
       const { data: ordersData } = await supabase
         .from("orders_safe")
-        .select("id, amount, currency, status, created_at, payment_url, tasks:task_id(title)")
+        .select("id, amount, currency, status, created_at, payment_url, task_id, proposal_id, tasks:task_id(title)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       setOrders(
