@@ -184,6 +184,11 @@ const ProfilePage = () => {
       }
       normalizedWa = res.e164!;
     }
+    // If the user opted in to WhatsApp but didn't provide a separate WA number,
+    // default it to the main phone so enqueue_whatsapp() can fire welcome.
+    if (form.whatsapp_opt_in && !normalizedWa && normalizedPhone) {
+      normalizedWa = normalizedPhone;
+    }
 
     // Do not overwrite an existing verified phone automatically.
     const isVerified = !!(profile as any)?.is_verified;
