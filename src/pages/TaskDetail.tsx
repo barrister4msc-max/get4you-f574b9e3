@@ -100,6 +100,7 @@ const TaskDetailPage = () => {
     payment_url: string | null;
     provider_status: string | null;
     created_at?: string | null;
+    proposal_id?: string | null;
   } | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
@@ -1147,13 +1148,29 @@ const handlePaymentConfirm = async () => {
                   )}
 
                   {paymentOrder?.payment_url && paymentOrder.status !== 'paid' && !escrow && (
-                    <a
-                      href={paymentOrder.payment_url}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                    <button
+                      type="button"
+                      disabled={paymentProcessing}
+                      onClick={async () => {
+                        // Re-mint Allpay session every click. The stored
+                        // payment_url goes stale once Allpay's hosted page
+                        // is closed/cancelled, so we always re-invoke
+                        // create-payment which expires the old pending
+                        // order and returns a fresh payment_url.
+                        const proposalId = paymentOrder?.proposal_id;
+                        if (!proposalId) {
+                          toast.error(t('payment.error'));
+                          return;
+                        }
+                        setPendingAcceptProposalId(proposalId);
+                        // Defer to next tick so state is committed before confirm reads it.
+                        setTimeout(() => { void handlePaymentConfirm(); }, 0);
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                     >
-                      <CreditCard className="w-4 h-4" />
+                      {paymentProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                       {t('payment.openPaymentPage')}
-                    </a>
+                    </button>
                   )}
 
                   <button
