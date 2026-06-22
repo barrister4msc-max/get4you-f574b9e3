@@ -14,16 +14,18 @@ const TaskerPayoutSetup = () => {
   const [loading, setLoading] = useState(true);
   const [hasAgreement, setHasAgreement] = useState(false);
   const [accountStatus, setAccountStatus] = useState<"missing" | "pending" | "verified" | "rejected">("missing");
+  const [hasTax, setHasTax] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const [a, p] = await Promise.all([
         supabase.from("contractor_agreements").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
-        supabase.from("payout_accounts").select("status").eq("user_id", user.id).maybeSingle(),
+        supabase.from("payout_accounts").select("status, tax_id").eq("user_id", user.id).maybeSingle(),
       ]);
       setHasAgreement(!!a.data);
       const s = (p.data as any)?.status as string | undefined;
+      setHasTax(!!(p.data as any)?.tax_id);
       setAccountStatus(s === "verified" ? "verified" : s === "rejected" ? "rejected" : s === "pending" ? "pending" : "missing");
       setLoading(false);
     })();
@@ -62,8 +64,9 @@ const TaskerPayoutSetup = () => {
           label="2. Payment Details"
           hint={accountStatus === "pending" ? "Pending verification" : accountStatus === "rejected" ? "Rejected — please update" : undefined}
         />
-        <StepRow done={accountStatus === "verified"} label="3. Admin verification" />
-        <StepRow done={ready} label="4. Ready to receive payouts" />
+        <StepRow done={hasTax} label="3. Tax / Esek Patur status" hint={!hasTax ? "Add your tax or Esek Patur number" : undefined} />
+        <StepRow done={accountStatus === "verified"} label="4. Admin verification" />
+        <StepRow done={ready && hasTax} label="5. Ready to receive payouts" />
 
         <div className="pt-2">
           {!hasAgreement ? (
