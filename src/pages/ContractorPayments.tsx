@@ -21,6 +21,7 @@ type PayoutAccount = {
   account_number: string | null;
   iban: string | null;
   swift_bic: string | null;
+  tax_id: string | null;
   country: string;
   currency: string;
   status: "pending" | "verified" | "rejected";
@@ -75,6 +76,7 @@ const ContractorPayments = () => {
     account_number: "",
     iban: "",
     swift_bic: "",
+    tax_id: "",
     country: "IL",
     currency: "ILS",
   });
@@ -102,6 +104,7 @@ const ContractorPayments = () => {
         account_number: acc.account_number || "",
         iban: acc.iban || "",
         swift_bic: acc.swift_bic || "",
+        tax_id: acc.tax_id || "",
         country: acc.country || "IL",
         currency: acc.currency || "ILS",
       });
@@ -144,6 +147,7 @@ const ContractorPayments = () => {
       account_number: form.account_number.trim() || null,
       iban: form.iban.trim() || null,
       swift_bic: form.swift_bic.trim() || null,
+      tax_id: form.tax_id.trim() || null,
       country: form.country || "IL",
       currency: form.currency || "ILS",
       status: "pending",
@@ -157,6 +161,20 @@ const ContractorPayments = () => {
       return;
     }
     toast.success("Payout account submitted. Pending admin verification.");
+    // Fire-and-forget notification + WhatsApp (uses existing infrastructure)
+    try {
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        type: "payout_details_saved",
+        title: "Payment details saved",
+        message: "Your payout details have been saved and are pending admin verification.",
+      });
+      await supabase.rpc("enqueue_whatsapp", {
+        p_user_id: user.id,
+        p_event_type: "payout_details_saved",
+        p_metadata: { country: form.country, currency: form.currency },
+      });
+    } catch (_) { /* non-blocking */ }
     setEditing(false);
     await load();
   };
