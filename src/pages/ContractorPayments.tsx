@@ -172,8 +172,9 @@ const ContractorPayments = () => {
       await supabase.rpc("enqueue_whatsapp", {
         p_user_id: user.id,
         p_event_type: "payout_details_saved",
+        p_task_id: "00000000-0000-0000-0000-000000000000",
         p_metadata: { country: form.country, currency: form.currency },
-      });
+      } as any);
     } catch (_) { /* non-blocking */ }
     setEditing(false);
     await load();
