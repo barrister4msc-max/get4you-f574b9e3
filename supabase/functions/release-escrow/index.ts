@@ -258,6 +258,7 @@ Deno.serve(async (req: Request) => {
       payout_id: payout?.id ?? null,
       payout_account_id: payoutAccountId,
       payout_status: payoutStatus,
+      payout_account_status: payoutAccountStatus,
       payout_error: payoutErr?.message ?? null,
     },
   });
