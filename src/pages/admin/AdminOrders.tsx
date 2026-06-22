@@ -106,7 +106,7 @@ export default function AdminOrders() {
       category_id: task.category_id || '',
       address: task.address || '',
       city: task.city || '',
-      scheduled_at: task.scheduled_at ? task.scheduled_at.slice(0, 16) : '',
+      due_date: task.due_date ? String(task.due_date).slice(0, 10) : '',
       status: task.status || 'open',
       currency: task.currency || 'USD',
       budget_fixed: task.budget_fixed ?? task.budget_min ?? 0,
@@ -152,14 +152,25 @@ export default function AdminOrders() {
       description: editForm.description?.trim() || null,
       address: editForm.address?.trim() || null,
       city: editForm.city?.trim() || null,
-      scheduled_at: editForm.scheduled_at ? new Date(editForm.scheduled_at).toISOString() : null,
       status: editForm.status,
       currency: newCurrency,
       budget_fixed: newPrice || null,
       admin_notes: editForm.admin_notes?.trim() || null,
     };
+    if (editForm.due_date) patch.due_date = editForm.due_date;
+    else patch.due_date = null;
     if (editForm.category_id) patch.category_id = editForm.category_id;
     if (editForm.assigned_to) patch.assigned_to = editForm.assigned_to;
+
+    // Guard: strip any keys not present in the tasks table schema.
+    const ALLOWED_TASK_COLUMNS = new Set([
+      'title','description','category_id','task_type','status','budget_min','budget_max','budget_fixed',
+      'currency','city','address','latitude','longitude','radius_km','due_date','is_urgent','photos',
+      'voice_note_url','assigned_to','admin_notes',
+    ]);
+    for (const k of Object.keys(patch)) {
+      if (!ALLOWED_TASK_COLUMNS.has(k) || patch[k] === undefined) delete patch[k];
+    }
 
     const { error } = await supabase.from('tasks').update(patch).eq('id', editing.id);
     if (error) { setSaving(false); toast.error(error.message); return; }
@@ -321,8 +332,8 @@ export default function AdminOrders() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Scheduled at</Label>
-                  <Input type="datetime-local" value={editForm.scheduled_at} onChange={(e) => setEditForm({ ...editForm, scheduled_at: e.target.value })} />
+                  <Label className="text-xs">Due date</Label>
+                  <Input type="date" value={editForm.due_date} onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })} />
                 </div>
                 <div>
                   <Label className="text-xs">Status</Label>
