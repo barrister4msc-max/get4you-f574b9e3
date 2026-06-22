@@ -1538,7 +1538,7 @@ const handlePaymentConfirm = async (overrideProposalId?: string) => {
               })()}
 
               <button
-                onClick={handlePaymentConfirm}
+                onClick={() => { void handlePaymentConfirm(); }}
                 disabled={paymentProcessing}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
               >
