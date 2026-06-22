@@ -18,6 +18,33 @@ function quantile(sorted: number[], q: number): number {
   return sorted[base];
 }
 
+// Platform minimum task price ($50 USD), expressed in the response currency (ILS by default).
+const MIN_USD = 50;
+const USD_ILS_FALLBACK = 3.7;
+
+async function getMinILS(): Promise<number> {
+  try {
+    const r = await fetch("https://open.er-api.com/v6/latest/USD");
+    if (r.ok) {
+      const d = await r.json();
+      const rate = Number(d?.rates?.ILS);
+      if (Number.isFinite(rate) && rate > 0) return Math.ceil(MIN_USD * rate);
+    }
+  } catch (_) {
+    /* ignore — fall back */
+  }
+  return Math.ceil(MIN_USD * USD_ILS_FALLBACK);
+}
+
+function clampEstimateILS(result: {
+  min_price: number; max_price: number; recommended_price: number;
+}, minILS: number) {
+  const min = Math.max(Math.round(result.min_price), minILS);
+  const rec = Math.max(Math.round(result.recommended_price), minILS);
+  const max = Math.max(Math.round(result.max_price), rec);
+  return { min_price: min, recommended_price: rec, max_price: max };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -71,17 +98,20 @@ serve(async (req) => {
 
     if (prices.length >= 5) {
       const sorted = [...prices].sort((a, b) => a - b);
-      const min = Math.round(quantile(sorted, 0.25));
-      const max = Math.round(quantile(sorted, 0.75));
-      const recommended = Math.round(quantile(sorted, 0.5));
+      const minILS = await getMinILS();
+      const clamped = clampEstimateILS({
+        min_price: quantile(sorted, 0.25),
+        max_price: quantile(sorted, 0.75),
+        recommended_price: quantile(sorted, 0.5),
+      }, minILS);
       return new Response(
         JSON.stringify({
           source: "history",
           scope,
           sample_size: prices.length,
-          min_price: min,
-          max_price: max,
-          recommended_price: recommended,
+          min_price: clamped.min_price,
+          max_price: clamped.max_price,
+          recommended_price: clamped.recommended_price,
           currency: "ILS",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -161,14 +191,16 @@ serve(async (req) => {
       });
     }
     const parsed = JSON.parse(args);
+    const minILS = await getMinILS();
+    const clamped = clampEstimateILS(parsed, minILS);
     return new Response(
       JSON.stringify({
         source: "ai",
         scope: "ai",
         sample_size: 0,
-        min_price: Math.round(parsed.min_price),
-        max_price: Math.round(parsed.max_price),
-        recommended_price: Math.round(parsed.recommended_price),
+        min_price: clamped.min_price,
+        max_price: clamped.max_price,
+        recommended_price: clamped.recommended_price,
         confidence: parsed.confidence,
         currency: "ILS",
       }),
