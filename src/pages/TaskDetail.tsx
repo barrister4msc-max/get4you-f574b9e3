@@ -665,8 +665,9 @@ const handleAcceptClick = (proposalId: string) => {
   setShowPaymentDialog(true);
 };
 
-const handlePaymentConfirm = async () => {
-  if (!pendingAcceptProposalId || !id) return;
+const handlePaymentConfirm = async (overrideProposalId?: string) => {
+  const proposalId = overrideProposalId ?? pendingAcceptProposalId;
+  if (!proposalId || !id) return;
   // Hard guard against double-submit (covers double-click before React re-renders).
   if (paymentProcessing) return;
 
@@ -674,8 +675,9 @@ const handlePaymentConfirm = async () => {
   setPaymentError(null);
 
   try {
-    const proposal = proposals.find((p) => p.id === pendingAcceptProposalId);
-    if (!proposal) throw new Error("Proposal not found");
+    const proposal = proposals.find((p) => p.id === proposalId);
+    // Proposal list may not be in memory for a returning user — fall back to bare id.
+    const proposalCurrency = proposal?.currency || currency || "ILS";
 
     const baseUrl = window.location.origin;
 
@@ -683,13 +685,13 @@ const handlePaymentConfirm = async () => {
     const idempotencyKey =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : `${pendingAcceptProposalId}:${Date.now()}`;
+        : `${proposalId}:${Date.now()}`;
 
     const { data, error } = await supabase.functions.invoke("create-payment", {
       body: {
         task_id: id,
-        proposal_id: pendingAcceptProposalId,
-        currency: proposal.currency || currency || "ILS",
+        proposal_id: proposalId,
+        currency: proposalCurrency,
         success_url: `${baseUrl}/payment-success`,
         cancel_url: `${baseUrl}/payment-cancel`,
         lang: locale === "ru" ? "RU" : locale === "he" ? "HE" : "EN",
