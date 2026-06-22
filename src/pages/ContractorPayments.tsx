@@ -169,12 +169,9 @@ const ContractorPayments = () => {
         title: "Payment details saved",
         message: "Your payout details have been saved and are pending admin verification.",
       });
-      await supabase.rpc("enqueue_whatsapp", {
-        p_user_id: user.id,
-        p_event_type: "payout_details_saved",
-        p_task_id: "00000000-0000-0000-0000-000000000000",
-        p_metadata: { country: form.country, currency: form.currency },
-      } as any);
+      // enqueue_whatsapp requires a task_id (uuid). For this profile-level
+      // event we only fire the in-app notification; WhatsApp dispatch for
+      // payout-related task events is handled by release-escrow.
     } catch (_) { /* non-blocking */ }
     setEditing(false);
     await load();
