@@ -766,7 +766,7 @@ const CreateTaskPage = () => {
                     </span>
                     <input
                       type="number"
-                      min={1}
+                      min={minPrice}
                       value={form.budget || ""}
                       onChange={(e) => {
                         const v = e.target.value === "" ? 0 : Number(e.target.value);
@@ -782,6 +782,9 @@ const CreateTaskPage = () => {
                       }`}
                     />
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Min {formatMinPriceLabel(currency, rates)}
+                  </p>
                   {form.budget > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">
                       ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD", currency)}
