@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { TaskAIAssistant } from "@/components/TaskAIAssistant";
 import { PriceEstimator, PriceFeedback } from "@/components/PriceEstimator";
+import { getMinPrice, formatMinPriceMessage, formatMinPriceLabel } from "@/lib/pricing";
 import {
   TASK_DRAFT_KEY,
   savePendingTaskDraft,
@@ -58,6 +59,22 @@ const CreateTaskPage = () => {
   const { t, currency, locale, rates } = useLanguage();
   const formatPrice = useFormatPrice();
   const { user } = useAuth();
+  const minPrice = getMinPrice(currency, rates);
+  const minMessage = formatMinPriceMessage(currency, rates);
+
+  // When currency switches, bump an existing too-low budget up to the new minimum.
+  useEffect(() => {
+    setForm((f) => {
+      if (!f.budget || f.budget <= 0) return f;
+      if (f.budget < minPrice) {
+        toast.message(minMessage);
+        return { ...f, budget: minPrice };
+      }
+      return f;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency]);
+
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const voice = useVoiceInput(locale);
@@ -321,6 +338,11 @@ const CreateTaskPage = () => {
     if (!form.budget || form.budget <= 0) {
       setPriceError(t("task.price.required") || "Please enter a price greater than 0");
       toast.error(t("task.price.required") || "Please enter a price greater than 0");
+      hasError = true;
+    }
+    if (form.budget && form.budget > 0 && form.budget < minPrice) {
+      setPriceError(minMessage);
+      toast.error(minMessage);
       hasError = true;
     }
     if (hasError) return;
@@ -744,7 +766,7 @@ const CreateTaskPage = () => {
                     </span>
                     <input
                       type="number"
-                      min={1}
+                      min={minPrice}
                       value={form.budget || ""}
                       onChange={(e) => {
                         const v = e.target.value === "" ? 0 : Number(e.target.value);
@@ -760,6 +782,9 @@ const CreateTaskPage = () => {
                       }`}
                     />
                   </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Min {formatMinPriceLabel(currency, rates)}
+                  </p>
                   {form.budget > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">
                       ≈ {formatPrice(form.budget, currency === "USD" ? "ILS" : "USD", currency)}

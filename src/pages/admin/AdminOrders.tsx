@@ -7,14 +7,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, Trash2, Download, Search, MessageSquare } from 'lucide-react';
+import { Eye, Trash2, Download, Search, MessageSquare, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { exportToCsv } from '@/lib/exportCsv';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/hooks/useAuth';
+import { getMinPrice, formatMinPriceMessage } from '@/lib/pricing';
 
 export default function AdminOrders() {
   const { t, currency } = useLanguage();
+  const { user } = useAuth();
   const formatPrice = useFormatPrice();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState<any[]>([]);
@@ -22,6 +28,9 @@ export default function AdminOrders() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
   const [escrowMap, setEscrowMap] = useState<Record<string, { net: number; commission: number; total: number }>>({});
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     const { data } = await supabase
@@ -86,6 +95,91 @@ export default function AdminOrders() {
     const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) { toast.error(error.message); return; }
     toast.success(t('admin.deleted'));
+    load();
+  };
+
+  const openEdit = (task: any) => {
+    setEditing(task);
+    setEditForm({
+      title: task.title || '',
+      description: task.description || '',
+      category_id: task.category_id || '',
+      address: task.address || '',
+      city: task.city || '',
+      scheduled_at: task.scheduled_at ? task.scheduled_at.slice(0, 16) : '',
+      status: task.status || 'open',
+      currency: task.currency || 'USD',
+      budget_fixed: task.budget_fixed ?? task.budget_min ?? 0,
+      admin_notes: task.admin_notes || '',
+      assigned_to: task.assigned_to || '',
+      reason: '',
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing || !user) return;
+    const oldPrice = Number(editing.budget_fixed ?? editing.budget_min ?? 0);
+    const oldCurrency = editing.currency || 'USD';
+    const newPrice = Number(editForm.budget_fixed) || 0;
+    const newCurrency = editForm.currency || 'USD';
+    const priceChanged = newPrice !== oldPrice || newCurrency !== oldCurrency;
+
+    // Enforce min price ≥ $50 USD equivalent.
+    const minAllowed = getMinPrice(newCurrency);
+    if (newPrice > 0 && newPrice < minAllowed) {
+      toast.error(formatMinPriceMessage(newCurrency));
+      return;
+    }
+
+    // If the task already has escrow/payment records, warn and require a reason.
+    if (priceChanged) {
+      const hasEscrow = !!(escrowMap as any)[editing.id];
+      if (hasEscrow) {
+        const confirmed = window.confirm(
+          'This task already has payment records. Changing the price may require manual payment adjustment. Continue?'
+        );
+        if (!confirmed) return;
+      }
+      if (!editForm.reason?.trim()) {
+        toast.error('Please provide a reason for the price change.');
+        return;
+      }
+    }
+
+    setSaving(true);
+    const patch: any = {
+      title: editForm.title.trim() || null,
+      description: editForm.description?.trim() || null,
+      address: editForm.address?.trim() || null,
+      city: editForm.city?.trim() || null,
+      scheduled_at: editForm.scheduled_at ? new Date(editForm.scheduled_at).toISOString() : null,
+      status: editForm.status,
+      currency: newCurrency,
+      budget_fixed: newPrice || null,
+      admin_notes: editForm.admin_notes?.trim() || null,
+    };
+    if (editForm.category_id) patch.category_id = editForm.category_id;
+    if (editForm.assigned_to) patch.assigned_to = editForm.assigned_to;
+
+    const { error } = await supabase.from('tasks').update(patch).eq('id', editing.id);
+    if (error) { setSaving(false); toast.error(error.message); return; }
+
+    if (priceChanged) {
+      const { error: auditErr } = await supabase.from('task_price_audit').insert({
+        task_id: editing.id,
+        admin_user_id: user.id,
+        old_price: oldPrice,
+        new_price: newPrice,
+        old_currency: oldCurrency,
+        new_currency: newCurrency,
+        reason: editForm.reason?.trim() || null,
+      });
+      if (auditErr) console.warn('[admin] price audit insert failed', auditErr);
+    }
+
+    setSaving(false);
+    setEditing(null);
+    toast.success('Task updated.');
     load();
   };
 
@@ -186,6 +280,7 @@ export default function AdminOrders() {
                 <TableCell>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" asChild><Link to={`/tasks/${t.id}`}><Eye className="w-4 h-4" /></Link></Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" asChild><Link to={`/admin/chat?task=${t.id}`}><MessageSquare className="w-4 h-4" /></Link></Button>
                     <Button variant="ghost" size="icon" onClick={() => deleteTask(t.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
@@ -198,6 +293,96 @@ export default function AdminOrders() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit task</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <Label className="text-xs">Title</Label>
+                <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">Description</Label>
+                <Textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">City</Label>
+                  <Input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Address</Label>
+                  <Input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Scheduled at</Label>
+                  <Input type="datetime-local" value={editForm.scheduled_at} onChange={(e) => setEditForm({ ...editForm, scheduled_at: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Status</Label>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {['draft','open','awaiting_payment','in_progress','completion_requested','completed','cancelled'].map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Currency</Label>
+                  <Select value={editForm.currency} onValueChange={(v) => setEditForm({ ...editForm, currency: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="ILS">ILS</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Price (min {getMinPrice(editForm.currency || 'USD')} {editForm.currency || 'USD'})</Label>
+                  <Input
+                    type="number"
+                    min={getMinPrice(editForm.currency || 'USD')}
+                    value={editForm.budget_fixed || ''}
+                    onChange={(e) => setEditForm({ ...editForm, budget_fixed: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Assigned tasker (user_id)</Label>
+                <Input value={editForm.assigned_to} onChange={(e) => setEditForm({ ...editForm, assigned_to: e.target.value })} placeholder="optional" />
+              </div>
+              <div>
+                <Label className="text-xs">Admin notes</Label>
+                <Textarea rows={2} value={editForm.admin_notes} onChange={(e) => setEditForm({ ...editForm, admin_notes: e.target.value })} />
+              </div>
+              {(escrowMap as any)[editing.id] && (
+                <div className="text-xs p-3 rounded bg-amber-50 border border-amber-200 text-amber-800">
+                  ⚠ This task already has payment records. Changing the price may require manual payment adjustment.
+                </div>
+              )}
+              <div>
+                <Label className="text-xs">Reason (required for price change)</Label>
+                <Input value={editForm.reason} onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })} placeholder="Why are you changing the price?" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

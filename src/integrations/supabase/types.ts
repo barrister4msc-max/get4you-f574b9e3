@@ -1238,6 +1238,7 @@ export type Database = {
           rejection_reason: string | null
           status: string
           swift_bic: string | null
+          tax_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1258,6 +1259,7 @@ export type Database = {
           rejection_reason?: string | null
           status?: string
           swift_bic?: string | null
+          tax_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1278,6 +1280,7 @@ export type Database = {
           rejection_reason?: string | null
           status?: string
           swift_bic?: string | null
+          tax_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1293,6 +1296,7 @@ export type Database = {
           escrow_id: string
           id: string
           net_amount: number
+          payout_account_id: string | null
           status: string
           task_id: string
           updated_at: string
@@ -1307,6 +1311,7 @@ export type Database = {
           escrow_id: string
           id?: string
           net_amount?: number
+          payout_account_id?: string | null
           status?: string
           task_id: string
           updated_at?: string
@@ -1321,6 +1326,7 @@ export type Database = {
           escrow_id?: string
           id?: string
           net_amount?: number
+          payout_account_id?: string | null
           status?: string
           task_id?: string
           updated_at?: string
@@ -1347,6 +1353,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "payment_reconciliation"
             referencedColumns: ["escrow_id"]
+          },
+          {
+            foreignKeyName: "payouts_payout_account_id_fkey"
+            columns: ["payout_account_id"]
+            isOneToOne: false
+            referencedRelation: "payout_accounts"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payouts_task_id_fkey"
@@ -1928,6 +1941,64 @@ export type Database = {
           },
         ]
       }
+      task_price_audit: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          new_currency: string | null
+          new_price: number | null
+          old_currency: string | null
+          old_price: number | null
+          reason: string | null
+          task_id: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          new_currency?: string | null
+          new_price?: number | null
+          old_currency?: string | null
+          old_price?: number | null
+          reason?: string | null
+          task_id: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          new_currency?: string | null
+          new_price?: number | null
+          old_currency?: string | null
+          old_price?: number | null
+          reason?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_price_audit_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
+          },
+          {
+            foreignKeyName: "task_price_audit_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_price_audit_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_translations: {
         Row: {
           created_at: string
@@ -1964,6 +2035,7 @@ export type Database = {
       tasks: {
         Row: {
           address: string | null
+          admin_notes: string | null
           assigned_to: string | null
           budget_fixed: number | null
           budget_max: number | null
@@ -1991,6 +2063,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          admin_notes?: string | null
           assigned_to?: string | null
           budget_fixed?: number | null
           budget_max?: number | null
@@ -2018,6 +2091,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          admin_notes?: string | null
           assigned_to?: string | null
           budget_fixed?: number | null
           budget_max?: number | null
@@ -4146,6 +4220,14 @@ export type Database = {
           _task_id: string
         }
         Returns: string
+      }
+      task_effective_price: {
+        Args: { p_task_id: string }
+        Returns: {
+          amount: number
+          currency: string
+          source: string
+        }[]
       }
       tasker_available_balance: {
         Args: { _user_id: string }

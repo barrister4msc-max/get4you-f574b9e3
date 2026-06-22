@@ -291,19 +291,19 @@ Deno.serve(async (req) => {
     }
     const safeCurrency = proposal.currency || task.currency || requestedCurrency || "ILS";
 
-    // Allpay requires a minimum charge. Apply per-currency thresholds so
-    // small USD/EUR proposals (e.g. $29) are not falsely rejected by the
-    // ILS-only floor of 50.
+    // Platform minimum task price = $50 USD equivalent. This mirrors the
+    // frontend / DB validation. Updates here must stay in sync with
+    // src/lib/pricing.ts and the validate_task_price() SQL trigger.
     const minByCurrency: Record<string, number> = {
-      ILS: 50,
-      USD: 5,
-      EUR: 5,
+      USD: 50,
+      ILS: 180, // ≈ 50 USD at 3.6
+      EUR: 45,
     };
-    const minAmount = minByCurrency[safeCurrency] ?? 5;
+    const minAmount = minByCurrency[safeCurrency] ?? 50;
     if (safeAmount < minAmount) {
       return new Response(
         JSON.stringify({
-          error: `Minimum payment amount is ${minAmount} ${safeCurrency}`,
+          error: `Minimum task price is ${minAmount} ${safeCurrency} (equivalent of $50).`,
         }),
         {
           status: 400,

@@ -21,6 +21,7 @@ type PayoutAccount = {
   account_number: string | null;
   iban: string | null;
   swift_bic: string | null;
+  tax_id: string | null;
   country: string;
   currency: string;
   status: "pending" | "verified" | "rejected";
@@ -75,6 +76,7 @@ const ContractorPayments = () => {
     account_number: "",
     iban: "",
     swift_bic: "",
+    tax_id: "",
     country: "IL",
     currency: "ILS",
   });
@@ -102,6 +104,7 @@ const ContractorPayments = () => {
         account_number: acc.account_number || "",
         iban: acc.iban || "",
         swift_bic: acc.swift_bic || "",
+        tax_id: acc.tax_id || "",
         country: acc.country || "IL",
         currency: acc.currency || "ILS",
       });
@@ -144,6 +147,7 @@ const ContractorPayments = () => {
       account_number: form.account_number.trim() || null,
       iban: form.iban.trim() || null,
       swift_bic: form.swift_bic.trim() || null,
+      tax_id: form.tax_id.trim() || null,
       country: form.country || "IL",
       currency: form.currency || "ILS",
       status: "pending",
@@ -157,6 +161,18 @@ const ContractorPayments = () => {
       return;
     }
     toast.success("Payout account submitted. Pending admin verification.");
+    // Fire-and-forget notification + WhatsApp (uses existing infrastructure)
+    try {
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        type: "payout_details_saved",
+        title: "Payment details saved",
+        message: "Your payout details have been saved and are pending admin verification.",
+      });
+      // enqueue_whatsapp requires a task_id (uuid). For this profile-level
+      // event we only fire the in-app notification; WhatsApp dispatch for
+      // payout-related task events is handled by release-escrow.
+    } catch (_) { /* non-blocking */ }
     setEditing(false);
     await load();
   };
@@ -285,6 +301,7 @@ const ContractorPayments = () => {
                     <Info label="Currency" value={account.currency} />
                     <Info label="Account number" value={maskAccount(account.account_number)} />
                     {account.iban && <Info label="IBAN" value={maskAccount(account.iban)} />}
+                    {account.tax_id && <Info label="Tax / Esek Patur" value={account.tax_id} />}
                   </div>
                   {(account.status === "rejected" || account.status === "pending") && (
                     <Button variant="outline" onClick={() => setEditing(true)}>
@@ -328,6 +345,11 @@ const ContractorPayments = () => {
                         <Field label="SWIFT/BIC *" value={form.swift_bic} onChange={(v) => setForm({ ...form, swift_bic: v })} />
                       </>
                     )}
+                    <Field
+                      label={form.country === "IL" ? "Tax number / Esek Patur" : "Tax / VAT number"}
+                      value={form.tax_id}
+                      onChange={(v) => setForm({ ...form, tax_id: v })}
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" disabled={submitting}>

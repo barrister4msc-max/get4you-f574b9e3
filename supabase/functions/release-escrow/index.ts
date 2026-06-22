@@ -201,7 +201,24 @@ Deno.serve(async (req: Request) => {
   if (completeTaskErr) {
     console.error("[release-escrow] task complete update error", completeTaskErr);
   }
-  // 6. Create payout row for the tasker
+  // 6. Create payout row for the tasker — link to their active payout account
+  //    if one exists, otherwise mark the payout as missing_payout_details so the
+  //    money is reserved and the tasker is prompted to add bank info.
+  let payoutAccountId: string | null = null;
+  let payoutAccountStatus: string | null = null;
+  if (escrow.tasker_id) {
+    const { data: acc } = await admin
+      .from("payout_accounts")
+      .select("id, status")
+      .eq("user_id", escrow.tasker_id)
+      .maybeSingle();
+    if (acc) {
+      payoutAccountId = acc.id as string;
+      payoutAccountStatus = (acc.status as string) ?? null;
+    }
+  }
+  const payoutStatus = payoutAccountId ? "pending" : "missing_payout_details";
+
   const { data: payout, error: payoutErr } = await admin
     .from("payouts")
     .insert({
@@ -213,7 +230,8 @@ Deno.serve(async (req: Request) => {
       net_amount: escrow.net_amount,
       commission: escrow.commission_amount ?? 0,
       currency: escrow.currency,
-      status: "pending",
+      status: payoutStatus,
+      payout_account_id: payoutAccountId,
     })
     .select("id")
     .maybeSingle();
@@ -238,6 +256,9 @@ Deno.serve(async (req: Request) => {
       net_amount: escrow.net_amount,
       currency: escrow.currency,
       payout_id: payout?.id ?? null,
+      payout_account_id: payoutAccountId,
+      payout_status: payoutStatus,
+      payout_account_status: payoutAccountStatus,
       payout_error: payoutErr?.message ?? null,
     },
   });
@@ -257,16 +278,7 @@ Deno.serve(async (req: Request) => {
       taskTitle = (t?.title as string) ?? null;
     } catch (_) { /* ignore */ }
 
-    // Check if the tasker has a payout account set up
-    let payoutAccountMissing = false;
-    try {
-      const { data: pa } = await admin
-        .from("payout_accounts")
-        .select("id, status")
-        .eq("user_id", escrow.tasker_id)
-        .maybeSingle();
-      payoutAccountMissing = !pa;
-    } catch (_) { /* ignore */ }
+    const payoutAccountMissing = !payoutAccountId;
 
     try {
       await admin.from("notifications").insert({
