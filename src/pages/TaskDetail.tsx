@@ -1165,8 +1165,7 @@ const handlePaymentConfirm = async (overrideProposalId?: string) => {
                           return;
                         }
                         setPendingAcceptProposalId(proposalId);
-                        // Defer to next tick so state is committed before confirm reads it.
-                        setTimeout(() => { void handlePaymentConfirm(); }, 0);
+                        await handlePaymentConfirm(proposalId);
                       }}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
                     >
