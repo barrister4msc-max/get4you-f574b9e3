@@ -293,6 +293,96 @@ export default function AdminOrders() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit task</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-3 text-sm">
+              <div>
+                <Label className="text-xs">Title</Label>
+                <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">Description</Label>
+                <Textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">City</Label>
+                  <Input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Address</Label>
+                  <Input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Scheduled at</Label>
+                  <Input type="datetime-local" value={editForm.scheduled_at} onChange={(e) => setEditForm({ ...editForm, scheduled_at: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="text-xs">Status</Label>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {['draft','open','awaiting_payment','in_progress','completion_requested','completed','cancelled'].map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Currency</Label>
+                  <Select value={editForm.currency} onValueChange={(v) => setEditForm({ ...editForm, currency: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="ILS">ILS</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Price (min {getMinPrice(editForm.currency || 'USD')} {editForm.currency || 'USD'})</Label>
+                  <Input
+                    type="number"
+                    min={getMinPrice(editForm.currency || 'USD')}
+                    value={editForm.budget_fixed || ''}
+                    onChange={(e) => setEditForm({ ...editForm, budget_fixed: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Assigned tasker (user_id)</Label>
+                <Input value={editForm.assigned_to} onChange={(e) => setEditForm({ ...editForm, assigned_to: e.target.value })} placeholder="optional" />
+              </div>
+              <div>
+                <Label className="text-xs">Admin notes</Label>
+                <Textarea rows={2} value={editForm.admin_notes} onChange={(e) => setEditForm({ ...editForm, admin_notes: e.target.value })} />
+              </div>
+              {(escrowMap as any)[editing.id] && (
+                <div className="text-xs p-3 rounded bg-amber-50 border border-amber-200 text-amber-800">
+                  ⚠ This task already has payment records. Changing the price may require manual payment adjustment.
+                </div>
+              )}
+              <div>
+                <Label className="text-xs">Reason (required for price change)</Label>
+                <Input value={editForm.reason} onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })} placeholder="Why are you changing the price?" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
