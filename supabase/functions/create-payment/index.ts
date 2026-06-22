@@ -345,19 +345,36 @@ Deno.serve(async (req) => {
       .eq("status", "pending")
       .maybeSingle();
 
-    if (existingPendingOrder?.payment_url) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          order_id: existingPendingOrder.allpay_order_id || existingPendingOrder.id,
-          payment_url: existingPendingOrder.payment_url,
-          reused: true,
-        }),
-        {
-          status: 200,
-          headers: { ...requestCorsHeaders, "Content-Type": "application/json" },
+    // Re-payment policy: every fresh click of "Pay" must yield a brand-new
+    // Allpay session, because Allpay invalidates payment_url after the user
+    // closes/cancels the hosted page (subsequent visits show "payments are
+    // no longer accepted"). We therefore mark the previous pending order as
+    // `expired` and fall through to create a new orders row + Allpay order.
+    // The old row is preserved (not deleted) for audit/history.
+    if (existingPendingOrder?.id) {
+      const { error: expireErr } = await serviceClient
+        .from("orders")
+        .update({
+          status: "expired",
+          provider_status: "superseded_by_new_attempt",
+        })
+        .eq("id", existingPendingOrder.id)
+        .eq("status", "pending"); // guard against race with webhook
+      if (expireErr) {
+        console.error("[CREATE-PAYMENT] Failed to expire old pending order:", expireErr);
+      }
+      await serviceClient.from("app_events").insert({
+        actor_id: userId,
+        event_type: "payment.pending_expired",
+        entity_type: "order",
+        entity_id: existingPendingOrder.id,
+        metadata: {
+          task_id: task.id,
+          proposal_id: proposal.id,
+          old_allpay_order_id: existingPendingOrder.allpay_order_id,
+          reason: "user_retried_payment",
         },
-      );
+      });
     }
     // ======================================================
     // 6. LOAD ALLPAY CREDENTIALS
