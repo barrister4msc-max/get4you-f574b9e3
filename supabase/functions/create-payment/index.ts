@@ -458,6 +458,8 @@ Deno.serve(async (req) => {
       initialOrderPayload.assignment_id = assignment_id;
     }
 
+    console.log("[CREATE-PAYMENT] creating new Allpay order", { traceId, allpay_order_id: orderId });
+
     const { data: insertedOrder, error: insertError } = await serviceClient
       .from("orders")
       .insert(initialOrderPayload)
@@ -481,6 +483,11 @@ Deno.serve(async (req) => {
       );
     }
     const localOrderId = insertedOrder.id as string;
+    console.log("[CREATE-PAYMENT] new order created", {
+      traceId,
+      id: localOrderId,
+      allpay_order_id: insertedOrder.allpay_order_id,
+    });
 
     // ======================================================
     // 9. BUILD ALLPAY REQUEST
@@ -535,6 +542,7 @@ Deno.serve(async (req) => {
       });
       allpayData = await allpayResponse.json();
       console.log("[CREATE-PAYMENT] Allpay response:", JSON.stringify(allpayData));
+      console.log("[CREATE-PAYMENT] new payment_url", { traceId, payment_url: allpayData?.payment_url ?? null });
     } catch (fetchErr) {
       const errMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
       console.error("[CREATE-PAYMENT] Allpay fetch failed:", errMsg);
@@ -632,6 +640,15 @@ Deno.serve(async (req) => {
     // notify_tasker_on_proposal_accept DB trigger when the proposal's
     // status flips to 'accepted'. Not emitted here to avoid duplicates
     // and premature notifications before payment actually succeeds.
+
+    console.log("[CREATE-PAYMENT] final return", {
+      traceId,
+      success: true,
+      order_id: orderId,
+      payment_url: allpayData.payment_url || null,
+      amount: safeAmount,
+      currency: safeCurrency,
+    });
 
     return new Response(
       JSON.stringify({
