@@ -301,6 +301,7 @@ const ContractorPayments = () => {
                     <Info label="Currency" value={account.currency} />
                     <Info label="Account number" value={maskAccount(account.account_number)} />
                     {account.iban && <Info label="IBAN" value={maskAccount(account.iban)} />}
+                    {account.tax_id && <Info label="Tax / Esek Patur" value={account.tax_id} />}
                   </div>
                   {(account.status === "rejected" || account.status === "pending") && (
                     <Button variant="outline" onClick={() => setEditing(true)}>
