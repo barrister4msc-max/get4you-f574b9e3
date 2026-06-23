@@ -219,26 +219,67 @@ Deno.serve(async (req: Request) => {
   }
   const payoutStatus = payoutAccountId ? "pending" : "missing_payout_details";
 
-  const { data: payout, error: payoutErr } = await admin
+  // Idempotent payout creation. The payouts table has a UNIQUE index on
+  // escrow_id (payouts_escrow_id_unique), so a previous partial run (or
+  // a concurrent release) may have already created the payout. Always
+  // check for an existing row first and reuse it instead of inserting
+  // again — otherwise the second call dies with constraint 23505.
+  let payout: { id: string } | null = null;
+  let payoutErr: { message?: string } | null = null;
+
+  const { data: existingPayout, error: existingPayoutErr } = await admin
     .from("payouts")
-    .insert({
-      user_id: escrow.tasker_id,
-      task_id: escrow.task_id,
-      escrow_id: escrow.id,
-      assignment_id: escrow.assignment_id,
-      amount: escrow.amount,
-      net_amount: escrow.net_amount,
-      commission: escrow.commission_amount ?? 0,
-      currency: escrow.currency,
-      status: payoutStatus,
-      payout_account_id: payoutAccountId,
-    })
     .select("id")
+    .eq("escrow_id", escrow.id)
     .maybeSingle();
 
-  if (payoutErr) {
-    // Don't roll back the escrow release — log loudly so admins can reconcile.
-    console.error("[release-escrow] payout insert error", payoutErr);
+  if (existingPayoutErr) {
+    console.error("[release-escrow] payout lookup error", existingPayoutErr);
+    payoutErr = existingPayoutErr;
+  } else if (existingPayout) {
+    console.log("[release-escrow] reusing existing payout", existingPayout.id);
+    payout = existingPayout as { id: string };
+  } else {
+    const { data: inserted, error: insertErr } = await admin
+      .from("payouts")
+      .insert({
+        user_id: escrow.tasker_id,
+        task_id: escrow.task_id,
+        escrow_id: escrow.id,
+        assignment_id: escrow.assignment_id,
+        amount: escrow.amount,
+        net_amount: escrow.net_amount,
+        commission: escrow.commission_amount ?? 0,
+        currency: escrow.currency,
+        status: payoutStatus,
+        payout_account_id: payoutAccountId,
+      })
+      .select("id")
+      .maybeSingle();
+
+    if (insertErr) {
+      // Race: another concurrent release inserted the payout between our
+      // lookup and insert. Re-fetch and reuse.
+      if ((insertErr as { code?: string }).code === "23505") {
+        const { data: raced } = await admin
+          .from("payouts")
+          .select("id")
+          .eq("escrow_id", escrow.id)
+          .maybeSingle();
+        if (raced) {
+          console.log("[release-escrow] reusing payout after race", raced.id);
+          payout = raced as { id: string };
+        } else {
+          payoutErr = insertErr;
+          console.error("[release-escrow] payout insert race unresolved", insertErr);
+        }
+      } else {
+        payoutErr = insertErr;
+        console.error("[release-escrow] payout insert error", insertErr);
+      }
+    } else {
+      payout = inserted as { id: string } | null;
+    }
   }
 
   // 7. Audit event
