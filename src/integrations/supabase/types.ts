@@ -1288,6 +1288,7 @@ export type Database = {
       }
       payouts: {
         Row: {
+          admin_note: string | null
           amount: number
           assignment_id: string | null
           commission: number
@@ -1296,13 +1297,23 @@ export type Database = {
           escrow_id: string
           id: string
           net_amount: number
+          paid_at: string | null
+          paid_by: string | null
           payout_account_id: string | null
+          payout_method: string
+          payout_provider: string
+          provider_account_id: string | null
+          provider_payout_id: string | null
+          provider_response: Json | null
+          provider_status: string | null
+          rejection_reason: string | null
           status: string
           task_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          admin_note?: string | null
           amount: number
           assignment_id?: string | null
           commission?: number
@@ -1311,13 +1322,23 @@ export type Database = {
           escrow_id: string
           id?: string
           net_amount?: number
+          paid_at?: string | null
+          paid_by?: string | null
           payout_account_id?: string | null
+          payout_method?: string
+          payout_provider?: string
+          provider_account_id?: string | null
+          provider_payout_id?: string | null
+          provider_response?: Json | null
+          provider_status?: string | null
+          rejection_reason?: string | null
           status?: string
           task_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          admin_note?: string | null
           amount?: number
           assignment_id?: string | null
           commission?: number
@@ -1326,7 +1347,16 @@ export type Database = {
           escrow_id?: string
           id?: string
           net_amount?: number
+          paid_at?: string | null
+          paid_by?: string | null
           payout_account_id?: string | null
+          payout_method?: string
+          payout_provider?: string
+          provider_account_id?: string | null
+          provider_payout_id?: string | null
+          provider_response?: Json | null
+          provider_status?: string | null
+          rejection_reason?: string | null
           status?: string
           task_id?: string
           updated_at?: string

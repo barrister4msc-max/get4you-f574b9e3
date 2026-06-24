@@ -40,14 +40,18 @@ type PayoutAccount = {
 type WithdrawalRequest = {
   id: string;
   user_id: string;
-  payout_account_id: string;
+  payout_account_id: string | null;
   amount: number;
+  net_amount: number;
+  commission: number;
   currency: string;
-  status: "pending" | "processing" | "paid" | "rejected";
+  status: "pending" | "missing_payout_details" | "processing" | "paid" | "rejected" | "cancelled";
   admin_note: string | null;
   rejection_reason: string | null;
   created_at: string;
-  processed_at: string | null;
+  paid_at: string | null;
+  task_id: string | null;
+  task_title?: string | null;
   email?: string | null;
   display_name?: string | null;
 };
@@ -56,9 +60,11 @@ const statusBadge = (status: string) => {
   const map: Record<string, string> = {
     verified: "bg-emerald-50 text-emerald-700 border-emerald-200",
     pending: "bg-amber-50 text-amber-700 border-amber-200",
+    missing_payout_details: "bg-orange-50 text-orange-700 border-orange-200",
     processing: "bg-blue-50 text-blue-700 border-blue-200",
     paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
     rejected: "bg-red-50 text-red-700 border-red-200",
+    cancelled: "bg-muted text-muted-foreground",
   };
   return map[status] || "bg-muted text-muted-foreground";
 };
@@ -91,10 +97,18 @@ const AdminPayouts = () => {
     setLoading(true);
     const [accRes, reqRes] = await Promise.all([
       supabase.from("payout_accounts").select("*").order("created_at", { ascending: false }),
-      supabase.from("withdrawal_requests").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("payouts")
+        .select("id, user_id, task_id, payout_account_id, amount, net_amount, commission, currency, status, admin_note, rejection_reason, paid_at, created_at, tasks(title)")
+        .in("status", ["pending", "missing_payout_details", "paid", "rejected"])
+        .order("created_at", { ascending: false }),
     ]);
     const accs = await enrichWithProfiles((accRes.data as PayoutAccount[]) || []);
-    const reqs = await enrichWithProfiles((reqRes.data as WithdrawalRequest[]) || []);
+    const flatReqs = ((reqRes.data as any[]) || []).map((r) => ({
+      ...r,
+      task_title: r.tasks?.title ?? null,
+    })) as WithdrawalRequest[];
+    const reqs = await enrichWithProfiles(flatReqs);
     setAccounts(accs);
     setRequests(reqs);
     setLoading(false);
@@ -145,23 +159,37 @@ const AdminPayouts = () => {
 
   const doMarkPaid = async () => {
     if (!markPaid) return;
+    if (!markPaid.payout_account_id) {
+      toast.error("Contractor has no payout account yet");
+      return;
+    }
     const account = accounts.find((a) => a.id === markPaid.payout_account_id);
     if (!account || account.status !== "verified") {
       toast.error("Payout account must be verified");
       return;
     }
     const { error } = await supabase
-      .from("withdrawal_requests")
-      .update({ status: "paid", processed_at: new Date().toISOString(), admin_note: adminNote.trim() || null })
+      .from("payouts")
+      .update({ status: "paid", paid_at: new Date().toISOString(), admin_note: adminNote.trim() || null })
       .eq("id", markPaid.id)
       .eq("status", "pending");
     if (error) return toast.error(error.message);
-    await auditLog("withdrawal_marked_paid", "withdrawal_request", markPaid.id, {
+    await auditLog("withdrawal_marked_paid", "payout", markPaid.id, {
       user_id: markPaid.user_id,
       amount: markPaid.amount,
       currency: markPaid.currency,
       note: adminNote.trim() || null,
     });
+    // Notify the tasker
+    try {
+      await supabase.from("notifications").insert({
+        user_id: markPaid.user_id,
+        type: "payout_paid",
+        title: "Your payout has been marked as paid",
+        message: `Your payout of ${Number(markPaid.net_amount ?? markPaid.amount).toFixed(2)} ${markPaid.currency} has been marked as paid.`,
+        task_id: markPaid.task_id,
+      });
+    } catch (_) { /* best-effort */ }
     toast.success("Marked as paid");
     setMarkPaid(null);
     setAdminNote("");
@@ -174,15 +202,14 @@ const AdminPayouts = () => {
       return;
     }
     const { error } = await supabase
-      .from("withdrawal_requests")
+      .from("payouts")
       .update({
         status: "rejected",
         rejection_reason: rejectReqReason.trim(),
-        processed_at: new Date().toISOString(),
       })
       .eq("id", rejectRequest.id);
     if (error) return toast.error(error.message);
-    await auditLog("withdrawal_rejected", "withdrawal_request", rejectRequest.id, {
+    await auditLog("withdrawal_rejected", "payout", rejectRequest.id, {
       user_id: rejectRequest.user_id,
       reason: rejectReqReason.trim(),
     });
@@ -193,14 +220,31 @@ const AdminPayouts = () => {
   };
 
   const openDetails = async (r: WithdrawalRequest) => {
-    const [{ data: account }, { data: linked }] = await Promise.all([
-      supabase.from("payout_accounts").select("*").eq("id", r.payout_account_id).maybeSingle(),
-      supabase
-        .from("withdrawal_request_payouts")
-        .select("amount, payout_id, payouts(id, task_id, net_amount, currency, status, created_at)")
-        .eq("withdrawal_request_id", r.id),
-    ]);
-    setDetails({ request: r, account: account as any, payouts: linked || [] });
+    let account: any = null;
+    if (r.payout_account_id) {
+      const { data } = await supabase
+        .from("payout_accounts")
+        .select("*")
+        .eq("id", r.payout_account_id)
+        .maybeSingle();
+      account = data;
+    }
+    // Surface the single underlying payout for parity with the previous UI.
+    const linked = [
+      {
+        amount: r.net_amount ?? r.amount,
+        payout_id: r.id,
+        payouts: {
+          id: r.id,
+          task_id: r.task_id,
+          net_amount: r.net_amount,
+          currency: r.currency,
+          status: r.status,
+          created_at: r.created_at,
+        },
+      },
+    ];
+    setDetails({ request: r, account, payouts: linked });
   };
 
   if (loading) {
@@ -296,7 +340,7 @@ const AdminPayouts = () => {
                     <TableHead>Currency</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead>Processed</TableHead>
+                      <TableHead>Paid at</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -316,12 +360,12 @@ const AdminPayouts = () => {
                         <Badge variant="outline" className={statusBadge(r.status)}>{r.status}</Badge>
                       </TableCell>
                       <TableCell className="text-xs">{new Date(r.created_at).toLocaleString()}</TableCell>
-                      <TableCell className="text-xs">{r.processed_at ? new Date(r.processed_at).toLocaleString() : "—"}</TableCell>
+                      <TableCell className="text-xs">{r.paid_at ? new Date(r.paid_at).toLocaleString() : "—"}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button size="sm" variant="outline" onClick={() => openDetails(r)}>
                           <Eye className="w-4 h-4 mr-1" /> Details
                         </Button>
-                        {r.status === "pending" && (
+                        {r.status === "pending" && r.payout_account_id && (
                           <>
                             <Button size="sm" variant="outline" onClick={() => { setMarkPaid(r); setAdminNote(""); }}>
                               <CheckCircle2 className="w-4 h-4 mr-1" /> Mark as Paid
@@ -330,6 +374,9 @@ const AdminPayouts = () => {
                               <XCircle className="w-4 h-4 mr-1" /> Reject
                             </Button>
                           </>
+                        )}
+                        {r.status === "missing_payout_details" && (
+                          <span className="text-xs text-orange-700">Awaiting contractor bank details</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -407,7 +454,7 @@ const AdminPayouts = () => {
                 <div><div className="text-xs text-muted-foreground">Status</div><Badge variant="outline" className={statusBadge(details.request.status)}>{details.request.status}</Badge></div>
                 <div><div className="text-xs text-muted-foreground">Amount</div><div className="font-semibold">{Number(details.request.amount).toFixed(2)} {details.request.currency}</div></div>
                 <div><div className="text-xs text-muted-foreground">Created</div><div>{new Date(details.request.created_at).toLocaleString()}</div></div>
-                {details.request.processed_at && <div><div className="text-xs text-muted-foreground">Processed</div><div>{new Date(details.request.processed_at).toLocaleString()}</div></div>}
+                {details.request.paid_at && <div><div className="text-xs text-muted-foreground">Paid at</div><div>{new Date(details.request.paid_at).toLocaleString()}</div></div>}
               </div>
               {details.account && (
                 <div className="border-t pt-3">
