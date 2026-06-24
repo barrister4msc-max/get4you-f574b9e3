@@ -209,8 +209,11 @@ Deno.serve(async (req: Request) => {
   if (escrow.tasker_id) {
     const { data: acc } = await admin
       .from("payout_accounts")
-      .select("id, status")
+      .select("id, status, updated_at")
       .eq("user_id", escrow.tasker_id)
+      .eq("status", "verified")
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
     if (acc) {
       payoutAccountId = acc.id as string;
@@ -239,6 +242,25 @@ Deno.serve(async (req: Request) => {
   } else if (existingPayout) {
     console.log("[release-escrow] reusing existing payout", existingPayout.id);
     payout = existingPayout as { id: string };
+    // Backfill payout_account_id if missing and the tasker now has a
+    // verified payout account — fixes legacy rows where the account was
+    // added after escrow release.
+    if (payoutAccountId) {
+      const { error: backfillErr } = await admin
+        .from("payouts")
+        .update({
+          payout_account_id: payoutAccountId,
+          status: "pending",
+          payout_provider: "manual",
+          payout_method: "manual_bank_transfer",
+        })
+        .eq("id", existingPayout.id)
+        .is("payout_account_id", null)
+        .in("status", ["pending", "missing_payout_details"]);
+      if (backfillErr) {
+        console.error("[release-escrow] payout account backfill error", backfillErr);
+      }
+    }
   } else {
     const { data: inserted, error: insertErr } = await admin
       .from("payouts")
@@ -253,6 +275,8 @@ Deno.serve(async (req: Request) => {
         currency: escrow.currency,
         status: payoutStatus,
         payout_account_id: payoutAccountId,
+        payout_provider: "manual",
+        payout_method: "manual_bank_transfer",
       })
       .select("id")
       .maybeSingle();
