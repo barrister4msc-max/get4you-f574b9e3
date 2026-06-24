@@ -454,7 +454,7 @@ const AdminPayouts = () => {
                 <div><div className="text-xs text-muted-foreground">Status</div><Badge variant="outline" className={statusBadge(details.request.status)}>{details.request.status}</Badge></div>
                 <div><div className="text-xs text-muted-foreground">Amount</div><div className="font-semibold">{Number(details.request.amount).toFixed(2)} {details.request.currency}</div></div>
                 <div><div className="text-xs text-muted-foreground">Created</div><div>{new Date(details.request.created_at).toLocaleString()}</div></div>
-                {details.request.processed_at && <div><div className="text-xs text-muted-foreground">Processed</div><div>{new Date(details.request.processed_at).toLocaleString()}</div></div>}
+                {details.request.paid_at && <div><div className="text-xs text-muted-foreground">Paid at</div><div>{new Date(details.request.paid_at).toLocaleString()}</div></div>}
               </div>
               {details.account && (
                 <div className="border-t pt-3">
