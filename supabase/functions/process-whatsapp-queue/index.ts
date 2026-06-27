@@ -75,6 +75,11 @@ Deno.serve(async (req) => {
       : `whatsapp:${RAW_TWILIO_FROM}`;
     const WHATSAPP_PROVIDER = (Deno.env.get("WHATSAPP_PROVIDER") || "chatbotisrael").toLowerCase();
     const CHATBOTISRAEL_URL = Deno.env.get("CHATBOTISRAEL_WHATSAPP_WEBHOOK_URL") || "";
+    // Dedicated ChatbotIsrael workflow webhook for "new_proposal" notifications.
+    // Falls back to the default CHATBOTISRAEL_URL if not configured.
+    const CHATBOTISRAEL_NEW_PROPOSAL_URL =
+      Deno.env.get("CHATBOTISRAEL_NEW_PROPOSAL_WEBHOOK_URL") ||
+      "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397494.1782504370";
     if (WHATSAPP_PROVIDER === "twilio" && (!LOVABLE_API_KEY || !TWILIO_API_KEY)) {
       return new Response(
         JSON.stringify({ error: "Twilio env not configured" }),
@@ -206,6 +211,7 @@ Deno.serve(async (req) => {
           // Welcome event uses the approved English template `account_created`.
           // Other events keep their existing localized free-form text.
           const isWelcome = row.event_type === "welcome";
+          const isNewProposal = row.event_type === "new_proposal";
           const ACCOUNT_CREATED_EN =
             "Your 4You.AI account registration was completed successfully. " +
             "This message confirms that your account has been created. " +
@@ -232,7 +238,13 @@ Deno.serve(async (req) => {
             metadata: outboundMeta,
           };
           if (isWelcome) payload.template = "account_created";
-          const resp = await fetch(CHATBOTISRAEL_URL, {
+          // Route per event_type: new_proposal -> dedicated workflow webhook.
+          const targetUrl = isNewProposal ? CHATBOTISRAEL_NEW_PROPOSAL_URL : CHATBOTISRAEL_URL;
+          if (isNewProposal) {
+            outboundMeta.workflow = "new_proposal";
+            outboundMeta.webhook_url = targetUrl;
+          }
+          const resp = await fetch(targetUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
