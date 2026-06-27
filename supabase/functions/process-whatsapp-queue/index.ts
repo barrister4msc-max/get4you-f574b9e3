@@ -84,6 +84,10 @@ Deno.serve(async (req) => {
     const CHATBOTISRAEL_ACCEPTED_URL =
       Deno.env.get("CHATBOTISRAEL_ACCEPTED_WEBHOOK_URL") ||
       "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397497.1782555008";
+    // Dedicated ChatbotIsrael workflow webhook for "escrow_released" (Approved) notifications.
+    const CHATBOTISRAEL_ESCROW_RELEASED_URL =
+      Deno.env.get("CHATBOTISRAEL_ESCROW_RELEASED_WEBHOOK_URL") ||
+      "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397501.1782556207";
     if (WHATSAPP_PROVIDER === "twilio" && (!LOVABLE_API_KEY || !TWILIO_API_KEY)) {
       return new Response(
         JSON.stringify({ error: "Twilio env not configured" }),
@@ -217,6 +221,7 @@ Deno.serve(async (req) => {
           const isWelcome = row.event_type === "welcome";
           const isNewProposal = row.event_type === "new_proposal";
           const isAccepted = row.event_type === "tasker_hired";
+          const isEscrowReleased = row.event_type === "escrow_released";
           const ACCOUNT_CREATED_EN =
             "Your 4You.AI account registration was completed successfully. " +
             "This message confirms that your account has been created. " +
@@ -248,7 +253,9 @@ Deno.serve(async (req) => {
             ? CHATBOTISRAEL_NEW_PROPOSAL_URL
             : isAccepted
               ? CHATBOTISRAEL_ACCEPTED_URL
-              : CHATBOTISRAEL_URL;
+              : isEscrowReleased
+                ? CHATBOTISRAEL_ESCROW_RELEASED_URL
+                : CHATBOTISRAEL_URL;
           if (isNewProposal) {
             outboundMeta.workflow = "new_proposal";
             outboundMeta.webhook_url = targetUrl;
@@ -266,6 +273,25 @@ Deno.serve(async (req) => {
             payload.source = (meta.source as string) ?? "flow4you";
             if (typeof payload.message !== "string" || !payload.message) {
               payload.message = "Your offer was accepted.";
+            }
+          }
+          if (isEscrowReleased) {
+            outboundMeta.workflow = "approved";
+            outboundMeta.webhook_url = targetUrl;
+            payload.workflow = "approved";
+            payload.event = "escrow_released";
+            payload.task_title = (meta.task_title as string) ?? null;
+            payload.proposal_id = (meta.proposal_id as string) ?? null;
+            payload.client_user_id = (meta.client_user_id as string) ?? null;
+            payload.client_name = (meta.client_name as string) ?? null;
+            payload.tasker_user_id = (meta.tasker_user_id as string) ?? row.target_user_id;
+            payload.tasker_name = (meta.tasker_name as string) ?? null;
+            payload.price = (meta.price as number | string | null) ?? null;
+            payload.currency = (meta.currency as string) ?? null;
+            payload.created_at = (meta.created_at as string) ?? new Date().toISOString();
+            payload.source = (meta.source as string) ?? "flow4you";
+            if (typeof payload.message !== "string" || !payload.message) {
+              payload.message = "Payment released for the completed task.";
             }
           }
           const resp = await fetch(targetUrl, {
