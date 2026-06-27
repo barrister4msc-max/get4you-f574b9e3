@@ -80,6 +80,10 @@ Deno.serve(async (req) => {
     const CHATBOTISRAEL_NEW_PROPOSAL_URL =
       Deno.env.get("CHATBOTISRAEL_NEW_PROPOSAL_WEBHOOK_URL") ||
       "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397494.1782504370";
+    // Dedicated ChatbotIsrael workflow webhook for "tasker_hired" (Accepted) notifications.
+    const CHATBOTISRAEL_ACCEPTED_URL =
+      Deno.env.get("CHATBOTISRAEL_ACCEPTED_WEBHOOK_URL") ||
+      "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397497.1782555008";
     if (WHATSAPP_PROVIDER === "twilio" && (!LOVABLE_API_KEY || !TWILIO_API_KEY)) {
       return new Response(
         JSON.stringify({ error: "Twilio env not configured" }),
@@ -212,6 +216,7 @@ Deno.serve(async (req) => {
           // Other events keep their existing localized free-form text.
           const isWelcome = row.event_type === "welcome";
           const isNewProposal = row.event_type === "new_proposal";
+          const isAccepted = row.event_type === "tasker_hired";
           const ACCOUNT_CREATED_EN =
             "Your 4You.AI account registration was completed successfully. " +
             "This message confirms that your account has been created. " +
@@ -238,11 +243,30 @@ Deno.serve(async (req) => {
             metadata: outboundMeta,
           };
           if (isWelcome) payload.template = "account_created";
-          // Route per event_type: new_proposal -> dedicated workflow webhook.
-          const targetUrl = isNewProposal ? CHATBOTISRAEL_NEW_PROPOSAL_URL : CHATBOTISRAEL_URL;
+          // Route per event_type: dedicated ChatbotIsrael workflow webhooks.
+          const targetUrl = isNewProposal
+            ? CHATBOTISRAEL_NEW_PROPOSAL_URL
+            : isAccepted
+              ? CHATBOTISRAEL_ACCEPTED_URL
+              : CHATBOTISRAEL_URL;
           if (isNewProposal) {
             outboundMeta.workflow = "new_proposal";
             outboundMeta.webhook_url = targetUrl;
+          }
+          if (isAccepted) {
+            outboundMeta.workflow = "accepted";
+            outboundMeta.webhook_url = targetUrl;
+            payload.workflow = "accepted";
+            payload.event = "tasker_hired";
+            payload.task_title = (meta.task_title as string) ?? null;
+            payload.client_name = (meta.client_name as string) ?? null;
+            payload.tasker_name = (meta.tasker_name as string) ?? null;
+            payload.price = (meta.price as number | string | null) ?? null;
+            payload.currency = (meta.currency as string) ?? null;
+            payload.source = (meta.source as string) ?? "flow4you";
+            if (typeof payload.message !== "string" || !payload.message) {
+              payload.message = "Your offer was accepted.";
+            }
           }
           const resp = await fetch(targetUrl, {
             method: "POST",
