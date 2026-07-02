@@ -289,12 +289,18 @@ Deno.serve(async (req) => {
           if (isWelcome) payload.template = "account_created";
           // Route per event_type: dedicated ChatbotIsrael workflow webhooks.
           const targetUrl = isNewProposal
-            ? CHATBOTISRAEL_NEW_PROPOSAL_URL
+            ? RESOLVED_NEW_PROPOSAL_URL
             : isAccepted
-              ? CHATBOTISRAEL_ACCEPTED_URL
+              ? RESOLVED_ACCEPTED_URL
               : isEscrowReleased
-                ? CHATBOTISRAEL_ESCROW_RELEASED_URL
-                : CHATBOTISRAEL_URL;
+                ? RESOLVED_ESCROW_RELEASED_URL
+                : isWelcome
+                  ? RESOLVED_WELCOME_URL
+                  : RESOLVED_WELCOME_URL;
+          if (isWelcome) {
+            outboundMeta.workflow = "welcome";
+            outboundMeta.webhook_url = targetUrl;
+          }
           if (isNewProposal) {
             outboundMeta.workflow = "new_proposal";
             outboundMeta.webhook_url = targetUrl;
