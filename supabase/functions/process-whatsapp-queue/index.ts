@@ -106,6 +106,45 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Load webhook URLs from app_settings (priority) with ENV fallback.
+    let SETTING_NEW_PROPOSAL_URL: string | null = null;
+    let SETTING_ACCEPTED_URL: string | null = null;
+    let SETTING_ESCROW_RELEASED_URL: string | null = null;
+    let SETTING_WELCOME_URL: string | null = null;
+    try {
+      const { data: settingsRows } = await admin
+        .from("app_settings")
+        .select("key, value")
+        .in("key", [
+          "proposal_created_webhook_url",
+          "accepted_webhook_url",
+          "work_approved_webhook_url",
+          "chatbotisrael_webhook_url",
+        ]);
+      const unwrap = (v: unknown): string | null => {
+        if (typeof v === "string") return v || null;
+        if (v && typeof v === "object") {
+          const s = (v as { value?: unknown }).value;
+          if (typeof s === "string") return s || null;
+        }
+        return null;
+      };
+      for (const row of (settingsRows ?? []) as Array<{ key: string; value: unknown }>) {
+        const url = unwrap(row.value);
+        if (!url) continue;
+        if (row.key === "proposal_created_webhook_url") SETTING_NEW_PROPOSAL_URL = url;
+        else if (row.key === "accepted_webhook_url") SETTING_ACCEPTED_URL = url;
+        else if (row.key === "work_approved_webhook_url") SETTING_ESCROW_RELEASED_URL = url;
+        else if (row.key === "chatbotisrael_webhook_url") SETTING_WELCOME_URL = url;
+      }
+    } catch (e) {
+      console.error("app_settings load failed:", e);
+    }
+    const RESOLVED_WELCOME_URL = SETTING_WELCOME_URL || CHATBOTISRAEL_URL;
+    const RESOLVED_NEW_PROPOSAL_URL = SETTING_NEW_PROPOSAL_URL || CHATBOTISRAEL_NEW_PROPOSAL_URL;
+    const RESOLVED_ACCEPTED_URL = SETTING_ACCEPTED_URL || CHATBOTISRAEL_ACCEPTED_URL;
+    const RESOLVED_ESCROW_RELEASED_URL = SETTING_ESCROW_RELEASED_URL || CHATBOTISRAEL_ESCROW_RELEASED_URL;
+
     const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://4you.ai";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status-webhook`;
