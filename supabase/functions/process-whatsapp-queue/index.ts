@@ -339,6 +339,9 @@ Deno.serve(async (req) => {
               payload.message = "Payment released for the completed task.";
             }
           }
+          // Always record final routing in metadata for auditability.
+          if (!outboundMeta.webhook_url) outboundMeta.webhook_url = targetUrl;
+          if (!outboundMeta.workflow) outboundMeta.workflow = row.event_type;
           const resp = await fetch(targetUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
