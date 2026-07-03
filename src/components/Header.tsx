@@ -20,8 +20,11 @@ export const Header = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const localeFlags = { en: '🇺🇸', ru: '🇷🇺', he: '🇮🇱', ar: '🇸🇦' } as const;
 
-  // Hide "Create task" when user is in tasker mode (or has only tasker role)
-  const canCreateTask = !user || (isClient && activeRole === 'client') || (isClient && !isTasker);
+  // Client users can always post a task, regardless of activeRole or whether
+  // they also have a tasker role. Guests see it too — auth is prompted on
+  // publish, never before opening /create-task.
+  const isTaskerOnly = !!user && !isClient && isTasker;
+  const canCreateTask = !isTaskerOnly;
   const isAdmin = user && (roles.includes('admin') || roles.includes('super_admin') || roles.includes('superadmin'));
 
   // Close dropdown on outside click
