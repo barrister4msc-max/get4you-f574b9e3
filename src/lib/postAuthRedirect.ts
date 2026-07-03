@@ -72,6 +72,15 @@ export async function resolvePostAuthRedirect(
   }
 
   // 2) Onboarding gate: phone + WhatsApp decision
+  //    Skip the gate when the user was on their way to /create-task so we
+  //    never bounce a Client to /profile mid-flow. Phone is only required
+  //    at publish time (handled inside CreateTask).
+  const returnCandidate = opts.returnTo || (() => {
+    try { return localStorage.getItem("post_auth_return_to"); } catch { return null; }
+  })();
+  const goingToCreateTask =
+    typeof returnCandidate === "string" && returnCandidate.startsWith("/create-task");
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("phone, whatsapp_phone, whatsapp_opt_in, whatsapp_opt_in_at")
@@ -80,7 +89,7 @@ export async function resolvePostAuthRedirect(
   const p: any = profile || {};
   const hasPhone = !!(p.phone || p.whatsapp_phone);
   const hasDecidedWa = p.whatsapp_opt_in_at != null || p.whatsapp_opt_in === true;
-  if (!hasPhone || !hasDecidedWa) {
+  if ((!hasPhone || !hasDecidedWa) && !goingToCreateTask) {
     return { path: "/profile?onboarding=1" };
   }
 
