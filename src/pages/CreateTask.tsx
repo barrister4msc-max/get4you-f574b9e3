@@ -477,17 +477,12 @@ const CreateTaskPage = () => {
     }
   };
 
-  // If auth returns the user to /create-task directly for any reason,
-  // bounce them into the central callback flow instead of showing the draft.
-  useEffect(() => {
-    if (!user) return;
-    if (autoSubmitTriedRef.current) return;
-    if (submitting) return;
-    const pending = hasPendingTaskDraft();
-    if (!pending) return;
-    autoSubmitTriedRef.current = true;
-    navigate("/auth/callback", { replace: true });
-  }, [user, submitting, navigate]);
+  // Login/Signup already resolve the pending draft.
+// Do not redirect authenticated users back to auth/callback.
+useEffect(() => {
+  if (!user) return;
+  autoSubmitTriedRef.current = true;
+}, [user]);
 
   return (
     <div className="min-h-[80vh] py-12">
