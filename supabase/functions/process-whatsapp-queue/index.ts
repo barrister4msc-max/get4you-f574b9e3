@@ -350,6 +350,22 @@ Deno.serve(async (req) => {
               payload.message = "Payment released for the completed task.";
             }
           }
+          if (isMatching) {
+            outboundMeta.workflow = "matching_task";
+            outboundMeta.webhook_url = targetUrl;
+            payload.workflow = "matching_task";
+            payload.event = "matching_task_published";
+            payload.task_id = row.task_id;
+            payload.task_title = (meta.task_title as string) ?? null;
+            payload.category_name = (meta.category_name as string) ?? null;
+            payload.city = (meta.city as string) ?? null;
+            payload.budget = (meta.budget as number | string | null) ?? null;
+            payload.currency = (meta.currency as string) ?? null;
+            payload.source = (meta.source as string) ?? "flow4you";
+            if (typeof payload.message !== "string" || !payload.message) {
+              payload.message = "A new task matching your profile is available on 4You.";
+            }
+          }
           // Always record final routing in metadata for auditability.
           if (!outboundMeta.webhook_url) outboundMeta.webhook_url = targetUrl;
           if (!outboundMeta.workflow) outboundMeta.workflow = row.event_type;
