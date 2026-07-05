@@ -264,8 +264,6 @@ Deno.serve(async (req) => {
       if (WHATSAPP_PROVIDER === "chatbotisrael") {
         try {
           const meta = (row.metadata || {}) as Record<string, unknown>;
-          // Welcome event uses the approved English template `account_created`.
-          // Other events keep their existing localized free-form text.
           const isWelcome = row.event_type === "welcome";
           const isNewProposal = row.event_type === "new_proposal";
           const isAccepted = row.event_type === "tasker_hired";
@@ -277,26 +275,6 @@ Deno.serve(async (req) => {
             "You can now log in using the email address used during registration.";
           const outboundLang = isWelcome ? "en" : targetLang;
           const outboundMessage = isWelcome ? ACCOUNT_CREATED_EN : text;
-          const outboundMeta: Record<string, unknown> = { ...meta };
-          if (isWelcome) {
-            outboundMeta.template = "account_created";
-            outboundMeta.template_language = "en";
-            outboundMeta.final_message = ACCOUNT_CREATED_EN;
-            if (!outboundMeta.original_language) {
-              outboundMeta.original_language = targetLang;
-            }
-          }
-          const payload: Record<string, unknown> = {
-            phone: e164,
-            event_type: row.event_type,
-            language: outboundLang,
-            target_user_id: row.target_user_id,
-            task_id: row.task_id,
-            proposal_id: (meta.proposal_id as string) ?? null,
-            message: outboundMessage,
-            metadata: outboundMeta,
-          };
-          if (isWelcome) payload.template = "account_created";
           // Route per event_type: dedicated ChatbotIsrael workflow webhooks.
           const targetUrl = isNewProposal
             ? RESOLVED_NEW_PROPOSAL_URL
@@ -309,67 +287,34 @@ Deno.serve(async (req) => {
                   : isWelcome
                     ? RESOLVED_WELCOME_URL
                     : RESOLVED_WELCOME_URL;
+
+          // Welcome-specific template metadata (kept as pre-builder tweaks
+          // so the unified builder picks them up via row.metadata).
           if (isWelcome) {
-            outboundMeta.workflow = "welcome";
-            outboundMeta.webhook_url = targetUrl;
+            row.metadata = {
+              ...(row.metadata || {}),
+              template: "account_created",
+              template_language: "en",
+              final_message: ACCOUNT_CREATED_EN,
+              original_language:
+                (row.metadata as Record<string, unknown> | null)?.original_language ??
+                targetLang,
+            };
           }
-          if (isNewProposal) {
-            outboundMeta.workflow = "new_proposal";
-            outboundMeta.webhook_url = targetUrl;
-          }
-          if (isAccepted) {
-            outboundMeta.workflow = "accepted";
-            outboundMeta.webhook_url = targetUrl;
-            payload.workflow = "accepted";
-            payload.event = "tasker_hired";
-            payload.task_title = (meta.task_title as string) ?? null;
-            payload.client_name = (meta.client_name as string) ?? null;
-            payload.tasker_name = (meta.tasker_name as string) ?? null;
-            payload.price = (meta.price as number | string | null) ?? null;
-            payload.currency = (meta.currency as string) ?? null;
-            payload.source = (meta.source as string) ?? "flow4you";
-            if (typeof payload.message !== "string" || !payload.message) {
-              payload.message = "Your offer was accepted.";
-            }
-          }
-          if (isEscrowReleased) {
-            outboundMeta.workflow = "approved";
-            outboundMeta.webhook_url = targetUrl;
-            payload.workflow = "approved";
-            payload.event = "escrow_released";
-            payload.task_title = (meta.task_title as string) ?? null;
-            payload.proposal_id = (meta.proposal_id as string) ?? null;
-            payload.client_user_id = (meta.client_user_id as string) ?? null;
-            payload.client_name = (meta.client_name as string) ?? null;
-            payload.tasker_user_id = (meta.tasker_user_id as string) ?? row.target_user_id;
-            payload.tasker_name = (meta.tasker_name as string) ?? null;
-            payload.price = (meta.price as number | string | null) ?? null;
-            payload.currency = (meta.currency as string) ?? null;
-            payload.created_at = (meta.created_at as string) ?? new Date().toISOString();
-            payload.source = (meta.source as string) ?? "flow4you";
-            if (typeof payload.message !== "string" || !payload.message) {
-              payload.message = "Payment released for the completed task.";
-            }
-          }
-          if (isMatching) {
-            outboundMeta.workflow = "matching_task";
-            outboundMeta.webhook_url = targetUrl;
-            payload.workflow = "matching_task";
-            payload.event = "matching_task_published";
-            payload.task_id = row.task_id;
-            payload.task_title = (meta.task_title as string) ?? null;
-            payload.category_name = (meta.category_name as string) ?? null;
-            payload.city = (meta.city as string) ?? null;
-            payload.budget = (meta.budget as number | string | null) ?? null;
-            payload.currency = (meta.currency as string) ?? null;
-            payload.source = (meta.source as string) ?? "flow4you";
-            if (typeof payload.message !== "string" || !payload.message) {
-              payload.message = "A new task matching your profile is available on 4You.";
-            }
-          }
-          // Always record final routing in metadata for auditability.
-          if (!outboundMeta.webhook_url) outboundMeta.webhook_url = targetUrl;
-          if (!outboundMeta.workflow) outboundMeta.workflow = row.event_type;
+
+          // SINGLE SOURCE OF TRUTH for every outbound WhatsApp webhook payload.
+          // Base fields (phone, language, user_name, order_id, task_id, event,
+          // event_type, workflow, source, provider, timestamp, metadata) are
+          // always populated by the shared builder. Do not add per-workflow
+          // payload assembly here.
+          const { payload, outboundMeta } = await buildWhatsappWebhookPayload({
+            admin,
+            row,
+            e164Phone: e164,
+            language: outboundLang,
+            message: outboundMessage,
+            webhookUrl: targetUrl,
+          });
           const resp = await fetch(targetUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
