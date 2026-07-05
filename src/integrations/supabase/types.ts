@@ -2062,6 +2062,123 @@ export type Database = {
         }
         Relationships: []
       }
+      tasker_notification_preferences: {
+        Row: {
+          city: string | null
+          created_at: string
+          email_enabled: boolean
+          frequency: string
+          notify_new_matching_tasks: boolean
+          radius_km: number
+          telegram_enabled: boolean
+          updated_at: string
+          user_id: string
+          whatsapp_enabled: boolean
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          email_enabled?: boolean
+          frequency?: string
+          notify_new_matching_tasks?: boolean
+          radius_km?: number
+          telegram_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          whatsapp_enabled?: boolean
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          email_enabled?: boolean
+          frequency?: string
+          notify_new_matching_tasks?: boolean
+          radius_km?: number
+          telegram_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          whatsapp_enabled?: boolean
+        }
+        Relationships: []
+      }
+      tasker_service_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasker_service_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasker_task_notifications: {
+        Row: {
+          channel: string
+          created_at: string
+          event_type: string
+          id: string
+          task_id: string
+          tasker_user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          event_type: string
+          id?: string
+          task_id: string
+          tasker_user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          task_id?: string
+          tasker_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasker_task_notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "payment_reconciliation"
+            referencedColumns: ["task_id"]
+          },
+          {
+            foreignKeyName: "tasker_task_notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasker_task_notifications_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           address: string | null
@@ -3590,6 +3707,10 @@ export type Database = {
         }[]
       }
       normalize_phone_e164: { Args: { p_phone: string }; Returns: string }
+      notify_matching_taskers_for_task: {
+        Args: { p_task_id: string }
+        Returns: number
+      }
       open_dispute: {
         Args: { p_assignment_id: string; p_details?: string; p_reason: string }
         Returns: string

@@ -17,6 +17,7 @@ import { addSelfRole, removeSelfRole, type SelfRole } from '@/lib/api/protectedW
 import { friendlyErrorMessage } from '@/lib/api/friendlyError';
 import { normalizePhone } from '@/lib/phone';
 import TaskerPayoutSetup from '@/components/TaskerPayoutSetup';
+import TaskerPreferences from '@/components/TaskerPreferences';
 
 const ProfilePage = () => {
   const { t } = useLanguage();
@@ -455,6 +456,8 @@ const ProfilePage = () => {
               </div>
             </div>
           )}
+
+          {isTasker && <TaskerPreferences initialCity={form.city} />}
 
           {/* WhatsApp notifications */}
           <div className="rounded-xl border border-border bg-card p-4 space-y-3">
