@@ -93,6 +93,27 @@ export async function resolvePostAuthRedirect(
     return { path: "/profile?onboarding=1" };
   }
 
+  // 2b) Tasker onboarding gate: if the user has a worker role but no
+  //     tasker_service_categories yet, send them through the wizard.
+  try {
+    const { data: rolesRows } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const roleList = (rolesRows ?? []).map((r: any) => r.role);
+    const isTasker = roleList.includes("executor") || roleList.includes("tasker");
+    if (isTasker && !goingToCreateTask) {
+      const { count } = await (supabase.from("tasker_service_categories" as any) as any)
+        .select("user_id", { head: true, count: "exact" })
+        .eq("user_id", userId);
+      if (!count || count === 0) {
+        return { path: "/onboarding/tasker" };
+      }
+    }
+  } catch (e) {
+    console.warn("[postAuth] tasker onboarding gate failed", e);
+  }
+
   // 3) Explicit returnTo
   const stored = consumePostAuthReturnTo();
   const candidate = opts.returnTo || stored;
