@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { NearbyOrders } from "@/components/NearbyOrders";
 import { ProfileMap } from "@/components/ProfileMap";
+import TaskerOnboardingBanner from "@/components/TaskerOnboardingBanner";
 import { useTaskTranslations } from "@/hooks/useTaskTranslations";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -464,6 +465,8 @@ const DashboardPage = () => {
             </p>
           </Link>
         )}
+
+        <TaskerOnboardingBanner />
 
         {/* Role indicator / switcher */}
         {isTasker || isClient ? (
