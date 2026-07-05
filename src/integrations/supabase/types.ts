@@ -2136,6 +2136,7 @@ export type Database = {
           created_at: string
           event_type: string
           id: string
+          matching_score: number
           task_id: string
           tasker_user_id: string
         }
@@ -2144,6 +2145,7 @@ export type Database = {
           created_at?: string
           event_type: string
           id?: string
+          matching_score?: number
           task_id: string
           tasker_user_id: string
         }
@@ -2152,6 +2154,7 @@ export type Database = {
           created_at?: string
           event_type?: string
           id?: string
+          matching_score?: number
           task_id?: string
           tasker_user_id?: string
         }
