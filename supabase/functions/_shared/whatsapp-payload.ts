@@ -124,6 +124,38 @@ async function resolveOrderId(
   return "N/A";
 }
 
+async function resolveTaskId(
+  admin: SupabaseClient,
+  rowTaskId: string | null,
+  meta: Record<string, unknown>,
+): Promise<string | null> {
+  if (rowTaskId) return rowTaskId;
+  const metaTaskId = pickString(
+    meta.task_id,
+    (meta as { task?: { id?: unknown } })?.task?.id,
+    (meta as { escrow?: { task_id?: unknown } })?.escrow?.task_id,
+    (meta as { order?: { task_id?: unknown } })?.order?.task_id,
+  );
+  if (metaTaskId) return metaTaskId;
+
+  const orderId = pickString(
+    meta.order_id,
+    (meta as { escrow?: { order_id?: unknown } })?.escrow?.order_id,
+  );
+  if (orderId) {
+    try {
+      const { data } = await admin
+        .from("orders")
+        .select("task_id")
+        .eq("id", orderId)
+        .maybeSingle();
+      const tid = pickString((data as { task_id?: unknown } | null)?.task_id);
+      if (tid) return tid;
+    } catch (_) { /* ignore */ }
+  }
+  return null;
+}
+
 /**
  * Build the unified webhook payload for ChatbotIsrael.
  * Guarantees the base fields required by every workflow:
@@ -144,7 +176,8 @@ export async function buildWhatsappWebhookPayload(params: {
 
   const workflow = WORKFLOW_MAP[row.event_type] ?? row.event_type;
   const userName = await resolveUserName(admin, row.target_user_id, meta);
-  const orderId = await resolveOrderId(admin, row.task_id, row.target_user_id, meta);
+  const resolvedTaskId = await resolveTaskId(admin, row.task_id, meta);
+  const orderId = await resolveOrderId(admin, resolvedTaskId, row.target_user_id, meta);
   const lang = (typeof language === "string" && language.trim()) ? language : "en";
   const timestamp = new Date().toISOString();
 
@@ -161,7 +194,7 @@ export async function buildWhatsappWebhookPayload(params: {
     language: lang,
     user_name: userName,
     order_id: orderId,
-    task_id: row.task_id,
+    task_id: resolvedTaskId,
     event: row.event_type,
     event_type: row.event_type,
     workflow,
