@@ -230,5 +230,35 @@ export async function buildWhatsappWebhookPayload(params: {
     payload.tasker_user_id = row.target_user_id;
   }
 
-  return { payload, outboundMeta, userName, orderId, language: lang };
+  // ==== Template-safe fallbacks ====
+  // ChatbotIsrael templates reject null / undefined / empty string
+  // for text parameters (#131008). Guarantee non-empty values for
+  // every field that may be bound as a template text parameter.
+  const safeStr = (v: unknown, fallback: string): string => {
+    if (typeof v === "string" && v.trim()) return v;
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+    return fallback;
+  };
+  const safeUserName = safeStr(payload.user_name, "User");
+  const safeTaskId = safeStr(payload.task_id, "N/A");
+  const safeOrderId = safeStr(payload.order_id, safeTaskId);
+  payload.user_name = safeUserName;
+  payload.task_id = safeTaskId;
+  payload.order_id = safeOrderId;
+  payload.task_title = safeStr(payload.task_title, "Task");
+  payload.client_name = safeStr(payload.client_name, "Client");
+  payload.tasker_name = safeStr(payload.tasker_name, safeUserName);
+  const priceFb = safeStr(payload.price, safeStr((meta as { amount?: unknown }).amount, "0"));
+  payload.price = priceFb;
+  payload.budget = safeStr(payload.budget, priceFb);
+  payload.currency = safeStr(payload.currency, "ILS");
+  payload.city = safeStr(payload.city, "Israel");
+  payload.category_name = safeStr(payload.category_name, "Service");
+  payload.message = safeStr(payload.message, "Update from Flow4You");
+
+  // Mirror the safe values back into outboundMeta so persisted logs match.
+  outboundMeta.user_name = payload.user_name;
+  outboundMeta.order_id = payload.order_id;
+
+  return { payload, outboundMeta, userName: safeUserName, orderId: safeOrderId, language: lang };
 }
