@@ -89,7 +89,8 @@ function pickLang(lang: string): keyof typeof L {
 
 export default function TaskerPreferences({ initialCity }: { initialCity?: string | null }) {
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { locale } = useLanguage();
+  const language = locale;
   const t = L[pickLang(language)];
 
   const [loading, setLoading] = useState(true);
@@ -110,14 +111,17 @@ export default function TaskerPreferences({ initialCity }: { initialCity?: strin
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: cats }, { data: tsc }, { data: tnp }] = await Promise.all([
+      const [catsRes, tscRes, tnpRes] = await Promise.all([
         supabase.from('categories').select('id, name_en, name_ru, name_he').order('sort_order', { ascending: true }),
-        supabase.from('tasker_service_categories' as any).select('category_id').eq('user_id', user.id),
-        supabase.from('tasker_notification_preferences' as any).select('*').eq('user_id', user.id).maybeSingle(),
+        (supabase.from('tasker_service_categories' as any) as any).select('category_id').eq('user_id', user.id),
+        (supabase.from('tasker_notification_preferences' as any) as any).select('*').eq('user_id', user.id).maybeSingle(),
       ]);
+      const cats = catsRes.data;
+      const tsc = tscRes.data as { category_id: string }[] | null;
+      const tnp = tnpRes.data as Record<string, unknown> | null;
       if (cancelled) return;
       setCategories((cats as Category[]) ?? []);
-      setSelectedCategoryIds(new Set(((tsc as { category_id: string }[]) ?? []).map(r => r.category_id)));
+      setSelectedCategoryIds(new Set((tsc ?? []).map(r => r.category_id)));
       const p = tnp as any;
       if (p) {
         setCity(p.city ?? (initialCity ?? ''));
@@ -170,11 +174,11 @@ export default function TaskerPreferences({ initialCity }: { initialCity?: strin
       if (upErr) throw upErr;
 
       // Sync categories: read current then diff
-      const { data: existing } = await supabase
-        .from('tasker_service_categories' as any)
+      const existingRes = await (supabase.from('tasker_service_categories' as any) as any)
         .select('category_id')
         .eq('user_id', user.id);
-      const currentIds = new Set(((existing as { category_id: string }[]) ?? []).map(r => r.category_id));
+      const existing = existingRes.data as { category_id: string }[] | null;
+      const currentIds = new Set((existing ?? []).map(r => r.category_id));
       const toAdd: string[] = [];
       const toRemove: string[] = [];
       selectedCategoryIds.forEach(id => { if (!currentIds.has(id)) toAdd.push(id); });
