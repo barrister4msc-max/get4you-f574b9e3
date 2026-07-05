@@ -315,6 +315,51 @@ Deno.serve(async (req) => {
             message: outboundMessage,
             webhookUrl: targetUrl,
           });
+          // Diagnostic: surface any empty template-safe fields before POST.
+          try {
+            const TEMPLATE_SAFE_KEYS = [
+              "user_name", "order_id", "task_id", "task_title",
+              "client_name", "tasker_name", "price", "budget",
+              "currency", "city", "category_name", "message",
+            ];
+            const emptyFields = Object.entries(payload)
+              .filter(([, v]) => v === null || v === undefined || (typeof v === "string" && v.trim() === ""))
+              .map(([k]) => k);
+            const emptyTemplateFields = emptyFields.filter((k) => TEMPLATE_SAFE_KEYS.includes(k));
+            console.log("whatsapp.webhook.dispatch", JSON.stringify({
+              workflow: (payload as { workflow?: unknown }).workflow,
+              webhook_url: targetUrl,
+              event_type: row.event_type,
+              payload_keys: Object.keys(payload),
+              empty_fields: emptyFields,
+              empty_template_fields: emptyTemplateFields,
+            }));
+            // Safety net: if any template-safe field is still empty after the
+            // builder normalization, patch with a hard fallback so ChatbotIsrael
+            // never receives an empty text parameter (#131008).
+            if (emptyTemplateFields.length > 0) {
+              const HARD_FALLBACKS: Record<string, string> = {
+                user_name: "User",
+                order_id: "N/A",
+                task_id: "N/A",
+                task_title: "Task",
+                client_name: "Client",
+                tasker_name: "Tasker",
+                price: "0",
+                budget: "0",
+                currency: "ILS",
+                city: "Israel",
+                category_name: "Service",
+                message: "Update from Flow4You",
+              };
+              for (const k of emptyTemplateFields) {
+                (payload as Record<string, unknown>)[k] = HARD_FALLBACKS[k] ?? "N/A";
+              }
+              console.warn("whatsapp.webhook.fallback_applied", JSON.stringify({
+                event_type: row.event_type, fields: emptyTemplateFields,
+              }));
+            }
+          } catch (_) { /* diagnostic must never break send */ }
           const resp = await fetch(targetUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
