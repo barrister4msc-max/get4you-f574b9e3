@@ -62,6 +62,7 @@ import SeoPage from "./pages/SeoPage";
 import AdminReconciliation from "./pages/admin/AdminReconciliation";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import ContractorPayments from "./pages/ContractorPayments";
+import TaskerOnboarding from "./pages/TaskerOnboarding";
 
 const queryClient = new QueryClient();
 
@@ -176,6 +177,14 @@ const App = () => (
                   <Route path="/cookies" element={<Cookies />} />
                   <Route path="/refunds" element={<Refunds />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route
+                    path="/onboarding/tasker"
+                    element={
+                      <ProtectedRoute>
+                        <TaskerOnboarding />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Admin panel with sidebar */}
                   <Route path="/admin" element={<AdminLayout />}>
