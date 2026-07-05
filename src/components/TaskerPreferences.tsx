@@ -32,6 +32,8 @@ const L = {
     save: 'Save preferences',
     saved: 'Preferences saved',
     loading: 'Loading…',
+    waPhoneMissing: 'Add a WhatsApp phone number in your profile to enable WhatsApp notifications.',
+    waConsentMissing: 'Please give WhatsApp consent in your profile to enable WhatsApp notifications.',
   },
   ru: {
     title: 'Настройки заказов',
@@ -55,6 +57,8 @@ const L = {
     save: 'Сохранить настройки',
     saved: 'Настройки сохранены',
     loading: 'Загрузка…',
+    waPhoneMissing: 'Добавьте номер WhatsApp в профиле, чтобы включить WhatsApp-уведомления.',
+    waConsentMissing: 'Дайте согласие на WhatsApp в профиле, чтобы включить WhatsApp-уведомления.',
   },
   he: {
     title: 'העדפות משימות',
@@ -78,6 +82,8 @@ const L = {
     save: 'שמור העדפות',
     saved: 'ההעדפות נשמרו',
     loading: 'טוען…',
+    waPhoneMissing: 'הוסף מספר WhatsApp בפרופיל כדי להפעיל התראות WhatsApp.',
+    waConsentMissing: 'תן הסכמה ל-WhatsApp בפרופיל כדי להפעיל התראות WhatsApp.',
   },
 };
 
@@ -105,6 +111,8 @@ export default function TaskerPreferences({ initialCity }: { initialCity?: strin
   const [tgEnabled, setTgEnabled] = useState(false);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [frequency, setFrequency] = useState<'instant' | 'daily'>('instant');
+  const [waPhone, setWaPhone] = useState<string | null>(null);
+  const [waOptIn, setWaOptIn] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user) return;
@@ -116,10 +124,18 @@ export default function TaskerPreferences({ initialCity }: { initialCity?: strin
         (supabase.from('tasker_service_categories' as any) as any).select('category_id').eq('user_id', user.id),
         (supabase.from('tasker_notification_preferences' as any) as any).select('*').eq('user_id', user.id).maybeSingle(),
       ]);
+      const profRes = await supabase
+        .from('profiles')
+        .select('whatsapp_phone, whatsapp_opt_in, phone')
+        .eq('user_id', user.id)
+        .maybeSingle();
       const cats = catsRes.data;
       const tsc = tscRes.data as { category_id: string }[] | null;
       const tnp = tnpRes.data as Record<string, unknown> | null;
       if (cancelled) return;
+      const prof = profRes.data as { whatsapp_phone: string | null; whatsapp_opt_in: boolean | null; phone: string | null } | null;
+      setWaPhone(prof?.whatsapp_phone || prof?.phone || null);
+      setWaOptIn(!!prof?.whatsapp_opt_in);
       setCategories((cats as Category[]) ?? []);
       setSelectedCategoryIds(new Set((tsc ?? []).map(r => r.category_id)));
       const p = tnp as any;
@@ -153,7 +169,9 @@ export default function TaskerPreferences({ initialCity }: { initialCity?: strin
     });
   };
 
-  const canSave = selectedCategoryIds.size > 0;
+  const waPhoneMissing = waEnabled && !waPhone;
+  const waConsentMissing = waEnabled && !waOptIn;
+  const canSave = selectedCategoryIds.size > 0 && !waPhoneMissing && !waConsentMissing;
 
   const handleSave = async () => {
     if (!user || !canSave) return;
@@ -285,6 +303,12 @@ export default function TaskerPreferences({ initialCity }: { initialCity?: strin
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={waEnabled} onChange={(e) => setWaEnabled(e.target.checked)} /> {t.whatsapp}
           </label>
+          {waPhoneMissing && (
+            <p className="text-[11px] text-destructive pl-6">{t.waPhoneMissing}</p>
+          )}
+          {!waPhoneMissing && waConsentMissing && (
+            <p className="text-[11px] text-destructive pl-6">{t.waConsentMissing}</p>
+          )}
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={tgEnabled} onChange={(e) => setTgEnabled(e.target.checked)} /> {t.telegram}
           </label>
