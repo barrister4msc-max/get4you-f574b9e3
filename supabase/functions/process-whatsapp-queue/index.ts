@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
     let SETTING_ACCEPTED_URL: string | null = null;
     let SETTING_ESCROW_RELEASED_URL: string | null = null;
     let SETTING_WELCOME_URL: string | null = null;
+    let SETTING_MATCHING_URL: string | null = null;
     try {
       const { data: settingsRows } = await admin
         .from("app_settings")
@@ -120,6 +121,7 @@ Deno.serve(async (req) => {
           "accepted_webhook_url",
           "work_approved_webhook_url",
           "chatbotisrael_webhook_url",
+          "matching_task_webhook_url",
         ]);
       const unwrap = (v: unknown): string | null => {
         if (typeof v === "string") return v || null;
@@ -136,6 +138,7 @@ Deno.serve(async (req) => {
         else if (row.key === "accepted_webhook_url") SETTING_ACCEPTED_URL = url;
         else if (row.key === "work_approved_webhook_url") SETTING_ESCROW_RELEASED_URL = url;
         else if (row.key === "chatbotisrael_webhook_url") SETTING_WELCOME_URL = url;
+        else if (row.key === "matching_task_webhook_url") SETTING_MATCHING_URL = url;
       }
     } catch (e) {
       console.error("app_settings load failed:", e);
@@ -144,6 +147,9 @@ Deno.serve(async (req) => {
     const RESOLVED_NEW_PROPOSAL_URL = SETTING_NEW_PROPOSAL_URL || CHATBOTISRAEL_NEW_PROPOSAL_URL;
     const RESOLVED_ACCEPTED_URL = SETTING_ACCEPTED_URL || CHATBOTISRAEL_ACCEPTED_URL;
     const RESOLVED_ESCROW_RELEASED_URL = SETTING_ESCROW_RELEASED_URL || CHATBOTISRAEL_ESCROW_RELEASED_URL;
+    // Matching-task webhook falls back to the default Welcome/ChatbotIsrael endpoint
+    // when no dedicated URL is configured in app_settings.
+    const RESOLVED_MATCHING_URL = SETTING_MATCHING_URL || CHATBOTISRAEL_URL;
 
     const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://4you.ai";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -211,6 +217,8 @@ Deno.serve(async (req) => {
           return `📩 New proposal on your task! View: ${taskUrl}`;
         case "task_completed":
           return `✅ Task completed on 4You. View: ${taskUrl}`;
+        case "matching_task_published":
+          return `🆕 A new task matching your profile is available on 4You: ${taskUrl}`;
         default:
           return `Update from 4You: ${taskUrl}`;
       }
@@ -261,6 +269,7 @@ Deno.serve(async (req) => {
           const isNewProposal = row.event_type === "new_proposal";
           const isAccepted = row.event_type === "tasker_hired";
           const isEscrowReleased = row.event_type === "escrow_released";
+          const isMatching = row.event_type === "matching_task_published";
           const ACCOUNT_CREATED_EN =
             "Your 4You.AI account registration was completed successfully. " +
             "This message confirms that your account has been created. " +
@@ -294,9 +303,11 @@ Deno.serve(async (req) => {
               ? RESOLVED_ACCEPTED_URL
               : isEscrowReleased
                 ? RESOLVED_ESCROW_RELEASED_URL
-                : isWelcome
-                  ? RESOLVED_WELCOME_URL
-                  : RESOLVED_WELCOME_URL;
+                : isMatching
+                  ? RESOLVED_MATCHING_URL
+                  : isWelcome
+                    ? RESOLVED_WELCOME_URL
+                    : RESOLVED_WELCOME_URL;
           if (isWelcome) {
             outboundMeta.workflow = "welcome";
             outboundMeta.webhook_url = targetUrl;
