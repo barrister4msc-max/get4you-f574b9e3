@@ -113,6 +113,8 @@ Deno.serve(async (req) => {
     let SETTING_ESCROW_RELEASED_URL: string | null = null;
     let SETTING_WELCOME_URL: string | null = null;
     let SETTING_MATCHING_URL: string | null = null;
+    let SETTING_APPLICATION_RESPONSE_URL: string | null = null;
+    let SETTING_WORK_APPROVED_BY_CLIENT_URL: string | null = null;
     try {
       const { data: settingsRows } = await admin
         .from("app_settings")
@@ -123,6 +125,8 @@ Deno.serve(async (req) => {
           "work_approved_webhook_url",
           "chatbotisrael_webhook_url",
           "matching_task_webhook_url",
+          "application_response_received_webhook_url",
+          "work_approved_by_client_webhook_url",
         ]);
       const unwrap = (v: unknown): string | null => {
         if (typeof v === "string") return v || null;
@@ -140,6 +144,8 @@ Deno.serve(async (req) => {
         else if (row.key === "work_approved_webhook_url") SETTING_ESCROW_RELEASED_URL = url;
         else if (row.key === "chatbotisrael_webhook_url") SETTING_WELCOME_URL = url;
         else if (row.key === "matching_task_webhook_url") SETTING_MATCHING_URL = url;
+        else if (row.key === "application_response_received_webhook_url") SETTING_APPLICATION_RESPONSE_URL = url;
+        else if (row.key === "work_approved_by_client_webhook_url") SETTING_WORK_APPROVED_BY_CLIENT_URL = url;
       }
     } catch (e) {
       console.error("app_settings load failed:", e);
@@ -151,6 +157,17 @@ Deno.serve(async (req) => {
     // Matching-task webhook falls back to the default Welcome/ChatbotIsrael endpoint
     // when no dedicated URL is configured in app_settings.
     const RESOLVED_MATCHING_URL = SETTING_MATCHING_URL || CHATBOTISRAEL_URL;
+    // Dedicated workflow webhooks for the new ChatbotIsrael templates.
+    // These MUST NOT fall back to the account_created (welcome) URL — the
+    // templates require their own text parameters and would fail otherwise.
+    const RESOLVED_APPLICATION_RESPONSE_URL =
+      SETTING_APPLICATION_RESPONSE_URL ||
+      Deno.env.get("CHATBOTISRAEL_APPLICATION_RESPONSE_WEBHOOK_URL") ||
+      "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397494.1782833157";
+    const RESOLVED_WORK_APPROVED_BY_CLIENT_URL =
+      SETTING_WORK_APPROVED_BY_CLIENT_URL ||
+      Deno.env.get("CHATBOTISRAEL_WORK_APPROVED_BY_CLIENT_WEBHOOK_URL") ||
+      "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397501.1782833044";
 
     const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://4you.ai";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -269,6 +286,8 @@ Deno.serve(async (req) => {
           const isAccepted = row.event_type === "tasker_hired";
           const isEscrowReleased = row.event_type === "escrow_released";
           const isMatching = row.event_type === "matching_task_published";
+          const isApplicationResponse = row.event_type === "application_response_received";
+          const isWorkApprovedByClient = row.event_type === "work_approved_by_client";
           const ACCOUNT_CREATED_EN =
             "Your 4You.AI account registration was completed successfully. " +
             "This message confirms that your account has been created. " +
@@ -276,17 +295,21 @@ Deno.serve(async (req) => {
           const outboundLang = isWelcome ? "en" : targetLang;
           const outboundMessage = isWelcome ? ACCOUNT_CREATED_EN : text;
           // Route per event_type: dedicated ChatbotIsrael workflow webhooks.
-          const targetUrl = isNewProposal
-            ? RESOLVED_NEW_PROPOSAL_URL
-            : isAccepted
-              ? RESOLVED_ACCEPTED_URL
-              : isEscrowReleased
-                ? RESOLVED_ESCROW_RELEASED_URL
-                : isMatching
-                  ? RESOLVED_MATCHING_URL
-                  : isWelcome
-                    ? RESOLVED_WELCOME_URL
-                    : RESOLVED_WELCOME_URL;
+          const targetUrl = isApplicationResponse
+            ? RESOLVED_APPLICATION_RESPONSE_URL
+            : isWorkApprovedByClient
+              ? RESOLVED_WORK_APPROVED_BY_CLIENT_URL
+              : isNewProposal
+                ? RESOLVED_NEW_PROPOSAL_URL
+                : isAccepted
+                  ? RESOLVED_ACCEPTED_URL
+                  : isEscrowReleased
+                    ? RESOLVED_ESCROW_RELEASED_URL
+                    : isMatching
+                      ? RESOLVED_MATCHING_URL
+                      : isWelcome
+                        ? RESOLVED_WELCOME_URL
+                        : RESOLVED_WELCOME_URL;
 
           // Welcome-specific template metadata (kept as pre-builder tweaks
           // so the unified builder picks them up via row.metadata).
