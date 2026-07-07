@@ -48,7 +48,7 @@ export default function AdminTaskerAgreements() {
         .order('signed_at', { ascending: false })
         .limit(1000);
       if (error) { toast.error(error.message); setLoading(false); return; }
-      const userIds = Array.from(new Set((data ?? []).map((r: any) => r.user_id)));
+      const userIds = Array.from(new Set((data ?? []).map((r: any) => r.user_id))) as string[];
       let profilesById = new Map<string, any>();
       if (userIds.length) {
         const { data: profs } = await supabase
