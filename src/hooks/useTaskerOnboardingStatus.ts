@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveRole } from '@/contexts/ActiveRoleContext';
+import { AGREEMENT_VERSION } from '@/lib/taskerAgreementText';
 
 /**
  * Onboarding is "complete" when the tasker has at least one service category
@@ -12,6 +13,9 @@ export function useTaskerOnboardingStatus() {
   const { isTasker } = useActiveRole();
   const [loading, setLoading] = useState(true);
   const [complete, setComplete] = useState<boolean>(true);
+  const [agreementSigned, setAgreementSigned] = useState<boolean>(true);
+  const [signedAt, setSignedAt] = useState<string | null>(null);
+  const [signedVersion, setSignedVersion] = useState<string | null>(null);
 
   const check = useCallback(async () => {
     if (!user || !isTasker) {
@@ -20,7 +24,7 @@ export function useTaskerOnboardingStatus() {
       return;
     }
     setLoading(true);
-    const [catRes, prefRes] = await Promise.all([
+    const [catRes, prefRes, agrRes] = await Promise.all([
       (supabase.from('tasker_service_categories' as any) as any)
         .select('user_id', { head: true, count: 'exact' })
         .eq('user_id', user.id),
@@ -28,14 +32,25 @@ export function useTaskerOnboardingStatus() {
         .select('user_id')
         .eq('user_id', user.id)
         .maybeSingle(),
+      (supabase.from('tasker_agreements' as any) as any)
+        .select('signed_at, agreement_version')
+        .eq('user_id', user.id)
+        .eq('agreement_version', AGREEMENT_VERSION)
+        .order('signed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
     const hasCats = (catRes.count ?? 0) > 0;
     const hasPrefs = !!prefRes.data;
-    setComplete(hasCats && hasPrefs);
+    const hasAgr = !!agrRes?.data;
+    setAgreementSigned(hasAgr);
+    setSignedAt(agrRes?.data ? (agrRes.data as any).signed_at ?? null : null);
+    setSignedVersion(agrRes?.data ? (agrRes.data as any).agreement_version ?? null : null);
+    setComplete(hasCats && hasPrefs && hasAgr);
     setLoading(false);
   }, [user, isTasker]);
 
   useEffect(() => { check(); }, [check]);
 
-  return { loading, complete, isTasker, refresh: check };
+  return { loading, complete, isTasker, agreementSigned, signedAt, signedVersion, refresh: check };
 }

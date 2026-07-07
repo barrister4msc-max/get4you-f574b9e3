@@ -2062,6 +2062,81 @@ export type Database = {
         }
         Relationships: []
       }
+      tasker_agreements: {
+        Row: {
+          accepted_notifications: boolean
+          accepted_terms: boolean
+          accepted_whatsapp: boolean
+          agreement_type: string
+          agreement_version: string
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          legal_name: string
+          locale: string
+          payout_method: string | null
+          phone: string | null
+          service_categories: Json
+          signed_at: string
+          snapshot_text: string
+          snapshot_text_hash: string
+          tax_status: string | null
+          user_agent: string | null
+          user_id: string
+          whatsapp_phone: string | null
+        }
+        Insert: {
+          accepted_notifications?: boolean
+          accepted_terms?: boolean
+          accepted_whatsapp?: boolean
+          agreement_type?: string
+          agreement_version: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          legal_name: string
+          locale: string
+          payout_method?: string | null
+          phone?: string | null
+          service_categories?: Json
+          signed_at?: string
+          snapshot_text: string
+          snapshot_text_hash: string
+          tax_status?: string | null
+          user_agent?: string | null
+          user_id: string
+          whatsapp_phone?: string | null
+        }
+        Update: {
+          accepted_notifications?: boolean
+          accepted_terms?: boolean
+          accepted_whatsapp?: boolean
+          agreement_type?: string
+          agreement_version?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          legal_name?: string
+          locale?: string
+          payout_method?: string | null
+          phone?: string | null
+          service_categories?: Json
+          signed_at?: string
+          snapshot_text?: string
+          snapshot_text_hash?: string
+          tax_status?: string | null
+          user_agent?: string | null
+          user_id?: string
+          whatsapp_phone?: string | null
+        }
+        Relationships: []
+      }
       tasker_notification_preferences: {
         Row: {
           city: string | null

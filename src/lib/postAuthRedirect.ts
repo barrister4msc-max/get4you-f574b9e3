@@ -109,6 +109,14 @@ export async function resolvePostAuthRedirect(
       if (!count || count === 0) {
         return { path: "/onboarding/tasker" };
       }
+      // Require signed tasker agreement (current version).
+      const { data: agr } = await (supabase.from("tasker_agreements" as any) as any)
+        .select("id")
+        .eq("user_id", userId)
+        .order("signed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!agr) return { path: "/onboarding/tasker/agreement" };
     }
   } catch (e) {
     console.warn("[postAuth] tasker onboarding gate failed", e);
