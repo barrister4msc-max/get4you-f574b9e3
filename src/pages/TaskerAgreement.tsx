@@ -194,7 +194,7 @@ export default function TaskerAgreementPage() {
       setPhone(prof.phone || '');
       setWaPhone(prof.whatsapp_phone || prof.phone || '');
       setCity(pref.city || prof.city || '');
-      setWaEnabled(pref.whatsapp_enabled ?? !!prof.whatsapp_opt_in ?? true);
+      setWaEnabled(pref.whatsapp_enabled ?? prof.whatsapp_opt_in ?? true);
       setCategoryIds(((catsRes?.data as { category_id: string }[]) ?? []).map(r => r.category_id));
       setLoading(false);
     })();
