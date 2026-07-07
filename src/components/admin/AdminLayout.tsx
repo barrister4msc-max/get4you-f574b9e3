@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/i18n/LanguageContext';
 import {
   LayoutDashboard, ClipboardList, Users, Wrench, Star,
-  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield, Bug, Activity, CreditCard, Scale, Send, Banknote
+  AlertTriangle, Grid3X3, FolderOpen, ChevronLeft, ChevronRight, MessageSquare, Shield, Bug, Activity, CreditCard, Scale, Send, Banknote, FileSignature
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,7 @@ export const AdminLayout = () => {
     { to: '/admin/whatsapp-logs', icon: Send, label: 'WhatsApp Logs' },
     { to: '/admin/audit-log', icon: Shield, label: 'Аудит-лог' },
     { to: '/admin/proposal-attempts', icon: Bug, label: 'Попытки откликов' },
+    { to: '/admin/tasker-agreements', icon: FileSignature, label: 'Tasker Agreements' },
   ];
 
   if (loading) {
