@@ -63,6 +63,8 @@ import AdminReconciliation from "./pages/admin/AdminReconciliation";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import ContractorPayments from "./pages/ContractorPayments";
 import TaskerOnboarding from "./pages/TaskerOnboarding";
+import TaskerAgreement from "./pages/TaskerAgreement";
+import AdminTaskerAgreements from "./pages/admin/AdminTaskerAgreements";
 
 const queryClient = new QueryClient();
 
@@ -185,6 +187,14 @@ const App = () => (
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/onboarding/tasker/agreement"
+                    element={
+                      <ProtectedRoute>
+                        <TaskerAgreement />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Admin panel with sidebar */}
                   <Route path="/admin" element={<AdminLayout />}>
@@ -205,6 +215,7 @@ const App = () => (
                     <Route path="esek-patur" element={<AdminEsekPatur />} />
                     <Route path="broadcast" element={<AdminBroadcast />} />
                     <Route path="employment" element={<AdminEmployment />} />
+                    <Route path="tasker-agreements" element={<AdminTaskerAgreements />} />
                     <Route path="legal" element={<AdminLegalEditor />} />
                     <Route path="payments" element={<AdminPayments />} />
                     <Route path="reconciliation" element={<AdminReconciliation />} />
