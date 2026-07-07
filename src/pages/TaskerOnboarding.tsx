@@ -238,7 +238,9 @@ export default function TaskerOnboarding() {
       }
 
       toast.success(t.saved);
-      setStep(5);
+      // Redirect to the mandatory agreement signing step.
+      navigate('/onboarding/tasker/agreement', { replace: true });
+      return;
     } catch (e: any) {
       toast.error(e?.message || 'Save failed');
     } finally {
