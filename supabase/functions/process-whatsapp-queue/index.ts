@@ -115,6 +115,7 @@ Deno.serve(async (req) => {
     let SETTING_MATCHING_URL: string | null = null;
     let SETTING_APPLICATION_RESPONSE_URL: string | null = null;
     let SETTING_WORK_APPROVED_BY_CLIENT_URL: string | null = null;
+    let SETTING_NEW_MATCHING_REQUEST_URL: string | null = null;
     try {
       const { data: settingsRows } = await admin
         .from("app_settings")
@@ -127,6 +128,7 @@ Deno.serve(async (req) => {
           "matching_task_webhook_url",
           "application_response_received_webhook_url",
           "work_approved_by_client_webhook_url",
+          "new_matching_request_webhook_url",
         ]);
       const unwrap = (v: unknown): string | null => {
         if (typeof v === "string") return v || null;
@@ -146,6 +148,7 @@ Deno.serve(async (req) => {
         else if (row.key === "matching_task_webhook_url") SETTING_MATCHING_URL = url;
         else if (row.key === "application_response_received_webhook_url") SETTING_APPLICATION_RESPONSE_URL = url;
         else if (row.key === "work_approved_by_client_webhook_url") SETTING_WORK_APPROVED_BY_CLIENT_URL = url;
+        else if (row.key === "new_matching_request_webhook_url") SETTING_NEW_MATCHING_REQUEST_URL = url;
       }
     } catch (e) {
       console.error("app_settings load failed:", e);
@@ -168,6 +171,12 @@ Deno.serve(async (req) => {
       SETTING_WORK_APPROVED_BY_CLIENT_URL ||
       Deno.env.get("CHATBOTISRAEL_WORK_APPROVED_BY_CLIENT_WEBHOOK_URL") ||
       "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.397501.1782833044";
+    // Dedicated webhook for the new_matching_request workflow.
+    // MUST NOT fall back to welcome/account_created — has its own template.
+    const RESOLVED_NEW_MATCHING_REQUEST_URL =
+      SETTING_NEW_MATCHING_REQUEST_URL ||
+      Deno.env.get("CHATBOTISRAEL_NEW_MATCHING_REQUEST_WEBHOOK_URL") ||
+      "https://ai.chatbotisrael.com/webhook/whatsapp-workflow/293200.421763.403795.1783517028";
 
     const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://4you.ai";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -237,6 +246,8 @@ Deno.serve(async (req) => {
           return `✅ Task completed on 4You. View: ${taskUrl}`;
         case "matching_task_published":
           return `🆕 A new task matching your profile is available on 4You: ${taskUrl}`;
+        case "new_matching_request":
+          return `📢 New task available on 4You: ${taskUrl}`;
         default:
           return `Update from 4You: ${taskUrl}`;
       }
@@ -288,6 +299,7 @@ Deno.serve(async (req) => {
           const isMatching = row.event_type === "matching_task_published";
           const isApplicationResponse = row.event_type === "application_response_received";
           const isWorkApprovedByClient = row.event_type === "work_approved_by_client";
+          const isNewMatchingRequest = row.event_type === "new_matching_request";
           const ACCOUNT_CREATED_EN =
             "Your 4You.AI account registration was completed successfully. " +
             "This message confirms that your account has been created. " +
@@ -295,7 +307,9 @@ Deno.serve(async (req) => {
           const outboundLang = isWelcome ? "en" : targetLang;
           const outboundMessage = isWelcome ? ACCOUNT_CREATED_EN : text;
           // Route per event_type: dedicated ChatbotIsrael workflow webhooks.
-          const targetUrl = isApplicationResponse
+          const targetUrl = isNewMatchingRequest
+            ? RESOLVED_NEW_MATCHING_REQUEST_URL
+            : isApplicationResponse
             ? RESOLVED_APPLICATION_RESPONSE_URL
             : isWorkApprovedByClient
               ? RESOLVED_WORK_APPROVED_BY_CLIENT_URL
