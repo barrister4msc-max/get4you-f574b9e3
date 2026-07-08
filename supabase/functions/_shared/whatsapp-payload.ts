@@ -33,6 +33,7 @@ const WORKFLOW_MAP: Record<string, string> = {
   matching_task_published: "matching_task",
   work_approved_by_client: "work_approved_by_client",
   application_response_received: "application_response_received",
+  new_matching_request: "new_matching_request",
 };
 
 function pickString(...vals: unknown[]): string | null {
@@ -211,6 +212,7 @@ export async function buildWhatsappWebhookPayload(params: {
     "task_title",
     "category_name",
     "city",
+    "address",
     "budget",
     "price",
     "currency",
@@ -218,6 +220,8 @@ export async function buildWhatsappWebhookPayload(params: {
     "client_name",
     "tasker_user_id",
     "tasker_name",
+    "customer_name",
+    "task_url",
     "created_at",
     "template",
   ];
@@ -255,6 +259,17 @@ export async function buildWhatsappWebhookPayload(params: {
   payload.city = safeStr(payload.city, "Israel");
   payload.category_name = safeStr(payload.category_name, "Service");
   payload.message = safeStr(payload.message, "Update from Flow4You");
+
+  // new_matching_request template-safe fields.
+  const fallbackTaskUrl = payload.task_id && payload.task_id !== "N/A"
+    ? `https://4you.ai/tasks/${payload.task_id}`
+    : "https://4you.ai/dashboard";
+  payload.task_url = safeStr(payload.task_url, fallbackTaskUrl);
+  payload.address = safeStr(payload.address, safeStr(payload.city, "Israel"));
+  payload.customer_name = safeStr(payload.customer_name, safeStr(payload.client_name, "Client"));
+  outboundMeta.task_url = payload.task_url;
+  outboundMeta.address = payload.address;
+  outboundMeta.customer_name = payload.customer_name;
 
   // Mirror the safe values back into outboundMeta so persisted logs match.
   outboundMeta.user_name = payload.user_name;
