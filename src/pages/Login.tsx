@@ -201,14 +201,28 @@ const LoginPage = () => {
       const returnTo = searchParams.get('returnTo');
       if (returnTo) window.sessionStorage.setItem('oauth_return_to', returnTo);
       rememberPostAuthReturnTo(returnTo);
+      try { window.sessionStorage.setItem('oauth_pending', provider); } catch { /* noop */ }
+      console.log('[oauth-flow] start signInWithOAuth', {
+        provider,
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        returnTo,
+      });
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+        // Use the bare origin (public, same-origin) — this is the documented
+        // default that always sits in the Lovable OAuth broker allow-list for
+        // both `.lovable.app` and custom domains. Adding a path like
+        // `/auth/callback` can be rejected by the broker on custom domains and
+        // causes the generic "failed to sign in with vendor" server error.
+        // The tokens arrive in the URL hash on return; `OAuthReturnHandler`
+        // performs the post-auth routing.
+        redirect_uri: window.location.origin,
       });
       if (result?.error) {
         // Log the full error so the actual provider/broker failure is visible
         // in console (Supabase/Lovable often returns "failed to sign in with
         // vendor" for provider-side config errors).
-        console.error('[oauth] signInWithOAuth failed', {
+        console.error('[oauth-flow] signInWithOAuth failed', {
           provider,
           name: (result.error as any)?.name,
           message: (result.error as any)?.message,
@@ -221,13 +235,15 @@ const LoginPage = () => {
           : raw;
         toast.error(friendly);
         window.sessionStorage.removeItem('oauth_return_to');
+        try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
         setSocialLoading(null);
         return;
       }
       // Browser will redirect to provider; nothing else to do.
     } catch (err: any) {
       window.sessionStorage.removeItem('oauth_return_to');
-      console.error('[oauth] signInWithOAuth threw', err);
+      try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
+      console.error('[oauth-flow] signInWithOAuth threw', err);
       toast.error(err?.message || 'OAuth error');
       setSocialLoading(null);
     }
