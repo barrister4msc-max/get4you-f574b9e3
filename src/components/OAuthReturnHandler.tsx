@@ -26,6 +26,7 @@ export const OAuthReturnHandler = () => {
   const handledRef = useRef(false);
   const errorReportedRef = useRef(false);
   const diagLoggedRef = useRef(false);
+  const codeExchangedRef = useRef(false);
 
   // One-time diagnostic dump on mount so we can see exactly what came back
   // from the OAuth provider even when no `error` param is present.
@@ -67,6 +68,44 @@ export const OAuthReturnHandler = () => {
       console.error('[oauth-flow] mount diagnostics failed', e);
     }
   }, []);
+
+  // The managed OAuth broker can return to the bare origin with a PKCE
+  // `?code=...` instead of `/auth/callback`. Exchange it here too so Google
+  // and Apple share one robust callback path.
+  useEffect(() => {
+    if (codeExchangedRef.current) return;
+    const searchParams = new URLSearchParams(window.location.search || '');
+    const code = searchParams.get('code');
+    if (!code) return;
+    codeExchangedRef.current = true;
+    console.log('[oauth-flow] OAuthReturnHandler found code on origin callback', {
+      path: location.pathname,
+      hasCode: true,
+      oauth_pending: (() => { try { return window.sessionStorage.getItem('oauth_pending'); } catch { return null; } })(),
+    });
+    (async () => {
+      try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        console.log('[oauth-flow] origin exchangeCodeForSession result', {
+          ok: !error,
+          hasSession: !!data?.session,
+          userId: data?.session?.user?.id,
+          err: error?.message,
+          error,
+        });
+        if (error) {
+          toast.error(error.message, { duration: 10000 });
+        }
+      } catch (e) {
+        console.error('[oauth-flow] origin exchangeCodeForSession threw', e);
+        toast.error(e instanceof Error ? e.message : String(e), { duration: 10000 });
+      } finally {
+        searchParams.delete('code');
+        const cleanSearch = searchParams.toString();
+        window.history.replaceState(null, '', location.pathname + (cleanSearch ? `?${cleanSearch}` : ''));
+      }
+    })();
+  }, [location.pathname]);
 
   // Report OAuth errors from the URL fragment ASAP (independent of session).
   useEffect(() => {
