@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,35 +9,77 @@ import { resolvePostAuthRedirect, consumePostAuthReturnTo } from '@/lib/postAuth
 const AuthCallbackPage = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const handledRef = useRef(false);
+  const codeExchangedRef = useRef(false);
 
   useEffect(() => {
+    console.log('[oauth-flow] AuthCallback mount', {
+      url: window.location.href,
+      hasHash: !!window.location.hash,
+      hasCode: new URLSearchParams(window.location.search).has('code'),
+      loading,
+      hasUser: !!user,
+    });
+
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.replace('#', '?'));
     const errorDesc = params.get('error_description') || params.get('error');
 
     if (errorDesc) {
+      console.error('[oauth-flow] AuthCallback error in hash', errorDesc);
       window.sessionStorage.removeItem('oauth_return_to');
+      try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
       toast.error(errorDesc.includes('initial state')
         ? 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.'
-        : errorDesc);
+        : /vendor|provider/i.test(errorDesc)
+          ? 'Не удалось войти через провайдера. Попробуйте ещё раз или используйте email/пароль.'
+          : errorDesc);
       navigate('/login', { replace: true });
       return;
     }
 
+    // PKCE / magic-link: URL has `?code=...`. Exchange it explicitly (idempotent
+    // guard). Supabase's detectSessionInUrl handles this too, but calling it
+    // explicitly gives us a real error to log instead of a silent failure.
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+    if (code && !codeExchangedRef.current) {
+      codeExchangedRef.current = true;
+      (async () => {
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          console.log('[oauth-flow] exchangeCodeForSession result', {
+            ok: !error,
+            hasSession: !!data?.session,
+            err: error?.message,
+          });
+          if (error) console.warn('[oauth-flow] code exchange failed', error);
+          // Clean the ?code= param so a refresh doesn't retry.
+          window.history.replaceState(null, '', window.location.pathname);
+        } catch (e) {
+          console.warn('[oauth-flow] exchangeCodeForSession threw', e);
+        }
+      })();
+      return;
+    }
+
     if (loading) return;
+    if (handledRef.current) return;
 
     if (user) {
+      handledRef.current = true;
       const sessionReturnTo = window.sessionStorage.getItem('oauth_return_to');
       window.sessionStorage.removeItem('oauth_return_to');
+      try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
       const storedReturnTo = consumePostAuthReturnTo();
       // Safety net: ensure profile + default role exist (e.g. Apple OAuth
       // without email, or trigger failure). Idempotent on the server.
       (async () => {
         try {
           const { error } = await supabase.rpc('ensure_profile');
-          if (error) console.warn('[auth] ensure_profile failed', error);
+          if (error) console.warn('[oauth-flow] ensure_profile failed', error);
         } catch (e) {
-          console.warn('[auth] ensure_profile threw', e);
+          console.warn('[oauth-flow] ensure_profile threw', e);
         }
         // Send welcome email for new OAuth users (idempotent on user.id).
         try {
@@ -61,7 +103,7 @@ const AuthCallbackPage = () => {
             });
           }
         } catch (e) {
-          console.warn('[auth] welcome email send failed', e);
+          console.warn('[oauth-flow] welcome email send failed', e);
         }
         try {
           const returnToCandidate =
@@ -71,19 +113,28 @@ const AuthCallbackPage = () => {
           const { path } = await resolvePostAuthRedirect(supabase, user.id, {
             returnTo: returnToCandidate,
           });
+          console.log('[oauth-flow] AuthCallback navigate ->', path);
           navigate(path, { replace: true });
         } catch (e) {
-          console.error('[auth] post-auth redirect failed', e);
+          console.error('[oauth-flow] post-auth redirect failed, fallback /dashboard', e);
           navigate('/dashboard', { replace: true });
         }
       })();
       return;
     }
 
+    // No user yet, no explicit error. Wait a bit for the Supabase client to
+    // finish consuming any URL tokens; if still no session, send home (NOT to
+    // /login) so the user isn't spammed with a login prompt after a valid
+    // provider return.
     const timeoutId = window.setTimeout(() => {
+      if (handledRef.current) return;
+      handledRef.current = true;
+      console.warn('[oauth-flow] AuthCallback timeout without session — fallback to /');
       window.sessionStorage.removeItem('oauth_return_to');
-      navigate('/login', { replace: true });
-    }, 1500);
+      try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
+      navigate('/', { replace: true });
+    }, 3000);
 
     return () => window.clearTimeout(timeoutId);
   }, [user, loading, navigate]);

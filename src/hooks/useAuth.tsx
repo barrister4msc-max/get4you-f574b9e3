@@ -84,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[oauth-flow] onAuthStateChange', { event: _event, hasSession: !!session, userId: session?.user?.id });
       if (cancelled) return;
       if (session?.user) {
         // Defer to avoid deadlocks inside the auth callback. Check

@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ActiveRoleProvider } from "@/contexts/ActiveRoleContext";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { OAuthReturnHandler } from "@/components/OAuthReturnHandler";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { GeocodeChoiceDialog } from "@/components/GeocodeChoiceDialog";
 import Index from "./pages/Index";
@@ -79,6 +80,7 @@ const App = () => (
             <Sonner />
             <GeocodeChoiceDialog />
             <BrowserRouter>
+              <OAuthReturnHandler />
               <Routes>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Index />} />
