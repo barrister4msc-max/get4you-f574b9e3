@@ -29,12 +29,8 @@ const AuthCallbackPage = () => {
       console.error('[oauth-flow] AuthCallback error in hash', errorDesc);
       window.sessionStorage.removeItem('oauth_return_to');
       try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
-      toast.error(errorDesc.includes('initial state')
-        ? 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.'
-        : /vendor|provider/i.test(errorDesc)
-          ? 'Не удалось войти через провайдера. Попробуйте ещё раз или используйте email/пароль.'
-          : errorDesc);
-      navigate('/login', { replace: true });
+      toast.error(errorDesc, { duration: 10000 });
+      navigate('/', { replace: true });
       return;
     }
 
