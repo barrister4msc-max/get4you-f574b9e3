@@ -78,7 +78,9 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
-  // Handle OAuth error returned in URL
+  // Handle OAuth errors that land directly on /login (for example a user
+  // manually navigates there after a failed provider round-trip). Keep the raw
+  // provider message visible while OAuth is being debugged.
   useState(() => {
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.replace('#', '?'));
@@ -86,9 +88,16 @@ const LoginPage = () => {
     const error = params.get('error') || searchParams.get('error');
     if (error || errorDesc) {
       const msg = errorDesc || error || 'OAuth error';
-      setTimeout(() => toast.error(msg.includes('initial state') 
-        ? 'Ошибка авторизации. Попробуйте использовать другой браузер или отключить блокировку трекеров в настройках.'
-        : msg), 100);
+      console.error('[oauth-flow] Login received OAuth error', {
+        href: window.location.href,
+        hash,
+        search: window.location.search,
+        error,
+        error_description: errorDesc,
+        hashParams: Object.fromEntries(params),
+        searchParams: Object.fromEntries(searchParams),
+      });
+      setTimeout(() => toast.error(msg), 100);
       // Clean up URL
       window.history.replaceState(null, '', window.location.pathname);
     }
@@ -229,11 +238,8 @@ const LoginPage = () => {
           status: (result.error as any)?.status,
           error: result.error,
         });
-        const raw = (result.error as any)?.message || 'OAuth error';
-        const friendly = /vendor|provider|invalid.*grant|access_denied/i.test(raw)
-          ? 'Не удалось войти через Google. Попробуйте ещё раз или используйте email/пароль.'
-          : raw;
-        toast.error(friendly);
+        const raw = (result.error as any)?.message || String(result.error) || 'OAuth error';
+        toast.error(raw, { duration: 10000 });
         window.sessionStorage.removeItem('oauth_return_to');
         try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
         setSocialLoading(null);
