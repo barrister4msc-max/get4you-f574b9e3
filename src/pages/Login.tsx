@@ -24,6 +24,14 @@ const getPasswordStrength = (pw: string): { level: 'weak' | 'medium' | 'strong';
   return { level: 'strong', score: 3 };
 };
 
+// Basic RFC-lite email check. Rejects phone numbers, whitespace, missing @.
+const isValidEmail = (v: string): boolean => {
+  const s = v.trim();
+  if (!s) return false;
+  // Must contain a single @, a dot in the domain, no spaces, and TLD >= 2 chars.
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+};
+
 const LoginPage = () => {
   const { t } = useLanguage();
   const { signIn, signUp, user, loading: authLoading } = useAuth();
@@ -92,6 +100,10 @@ const LoginPage = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidEmail(email)) {
+      toast.error(t('auth.invalidEmail') || 'Enter a valid email address');
+      return;
+    }
     setLoading(true);
     const returnTo = searchParams.get('returnTo');
     rememberPostAuthReturnTo(returnTo);
@@ -117,6 +129,10 @@ const LoginPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidEmail(email)) {
+      toast.error(t('auth.invalidEmail') || 'Enter a valid email address');
+      return;
+    }
     if (password.length < 8) {
       toast.error(t('auth.passwordMin'));
       return;
@@ -189,7 +205,21 @@ const LoginPage = () => {
         redirect_uri: `${window.location.origin}/auth/callback`,
       });
       if (result?.error) {
-        toast.error(result.error.message || 'OAuth error');
+        // Log the full error so the actual provider/broker failure is visible
+        // in console (Supabase/Lovable often returns "failed to sign in with
+        // vendor" for provider-side config errors).
+        console.error('[oauth] signInWithOAuth failed', {
+          provider,
+          name: (result.error as any)?.name,
+          message: (result.error as any)?.message,
+          status: (result.error as any)?.status,
+          error: result.error,
+        });
+        const raw = (result.error as any)?.message || 'OAuth error';
+        const friendly = /vendor|provider|invalid.*grant|access_denied/i.test(raw)
+          ? 'Не удалось войти через Google. Попробуйте ещё раз или используйте email/пароль.'
+          : raw;
+        toast.error(friendly);
         window.sessionStorage.removeItem('oauth_return_to');
         setSocialLoading(null);
         return;
@@ -197,6 +227,7 @@ const LoginPage = () => {
       // Browser will redirect to provider; nothing else to do.
     } catch (err: any) {
       window.sessionStorage.removeItem('oauth_return_to');
+      console.error('[oauth] signInWithOAuth threw', err);
       toast.error(err?.message || 'OAuth error');
       setSocialLoading(null);
     }
