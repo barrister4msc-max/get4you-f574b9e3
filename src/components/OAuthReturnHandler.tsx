@@ -25,29 +25,80 @@ export const OAuthReturnHandler = () => {
   const location = useLocation();
   const handledRef = useRef(false);
   const errorReportedRef = useRef(false);
+  const diagLoggedRef = useRef(false);
+
+  // One-time diagnostic dump on mount so we can see exactly what came back
+  // from the OAuth provider even when no `error` param is present.
+  useEffect(() => {
+    if (diagLoggedRef.current) return;
+    diagLoggedRef.current = true;
+    try {
+      const href = window.location.href;
+      const hash = window.location.hash;
+      const search = window.location.search;
+      const hashParams = hash && hash.length > 1
+        ? Object.fromEntries(new URLSearchParams(hash.replace('#', '?')))
+        : {};
+      const searchParams = search
+        ? Object.fromEntries(new URLSearchParams(search))
+        : {};
+      console.log('[oauth-flow] OAuthReturnHandler mount', {
+        href, hash, search, hashParams, searchParams,
+        oauth_pending: (() => { try { return window.sessionStorage.getItem('oauth_pending'); } catch { return null; } })(),
+        oauth_return_to: (() => { try { return window.sessionStorage.getItem('oauth_return_to'); } catch { return null; } })(),
+      });
+      // Async dumps of the current session/user for post-return diagnostics.
+      supabase.auth.getSession().then(({ data, error }) => {
+        console.log('[oauth-flow] getSession()', {
+          hasSession: !!data?.session,
+          userId: data?.session?.user?.id,
+          expires_at: data?.session?.expires_at,
+          error,
+        });
+      }).catch((e) => console.error('[oauth-flow] getSession threw', e));
+      supabase.auth.getUser().then(({ data, error }) => {
+        console.log('[oauth-flow] getUser()', {
+          userId: data?.user?.id,
+          email: data?.user?.email,
+          error,
+        });
+      }).catch((e) => console.error('[oauth-flow] getUser threw', e));
+    } catch (e) {
+      console.error('[oauth-flow] mount diagnostics failed', e);
+    }
+  }, []);
 
   // Report OAuth errors from the URL fragment ASAP (independent of session).
   useEffect(() => {
     if (errorReportedRef.current) return;
     try {
       const hash = window.location.hash;
-      if (!hash || hash.length < 2) return;
-      const params = new URLSearchParams(hash.replace('#', '?'));
-      const err = params.get('error');
-      const desc = params.get('error_description');
+      const search = window.location.search;
+      const hashParams = hash && hash.length > 1
+        ? new URLSearchParams(hash.replace('#', '?'))
+        : new URLSearchParams();
+      const searchParams = new URLSearchParams(search || '');
+      const err = hashParams.get('error') || searchParams.get('error');
+      const desc = hashParams.get('error_description') || searchParams.get('error_description');
+      const code = hashParams.get('error_code') || searchParams.get('error_code');
       if (!err && !desc) return;
       errorReportedRef.current = true;
-      console.error('[oauth-flow] provider error', { err, desc, path: location.pathname });
+      console.error('[oauth-flow] provider error', {
+        error: err,
+        error_code: code,
+        error_description: desc,
+        path: location.pathname,
+        hash,
+        search,
+        hashParams: Object.fromEntries(hashParams),
+        searchParams: Object.fromEntries(searchParams),
+      });
+      // TEMPORARY: surface the raw provider message so we can see the real
+      // cause instead of the generic Russian fallback. Remove after root cause
+      // is fixed.
       const raw = desc || err || 'OAuth error';
-      let msg = raw;
-      if (/vendor|provider/i.test(raw)) {
-        msg = 'Не удалось войти через провайдера. Попробуйте ещё раз или используйте email/пароль.';
-      } else if (/access_denied/i.test(raw)) {
-        msg = 'Вход отменён.';
-      } else if (/initial state/i.test(raw)) {
-        msg = 'Ошибка авторизации. Попробуйте другой браузер или отключите блокировку трекеров.';
-      }
-      toast.error(msg);
+      const shown = code ? `${code}: ${raw}` : raw;
+      toast.error(shown, { duration: 10000 });
       try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
       try { window.sessionStorage.removeItem('oauth_return_to'); } catch { /* noop */ }
       // Clean the hash so the toast doesn't re-fire on next navigation.
