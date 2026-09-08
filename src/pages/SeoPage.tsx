@@ -11,6 +11,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { useTaskTranslations } from "@/hooks/useTaskTranslations";
+import GeoPriceIntelligence from "@/components/GeoPriceIntelligence";
 import NotFound from "./NotFound";
 import {
   slugFromPath,
@@ -332,6 +333,16 @@ export default function SeoPage() {
         >
           {content}
         </div>
+
+        {row.city_slug && row.category_slug && (
+          <GeoPriceIntelligence
+            citySlug={row.city_slug}
+            categorySlug={row.category_slug}
+            cityName={cityName}
+            categoryName={catName}
+            locale={uiLocale}
+          />
+        )}
 
         <div className="flex flex-wrap gap-3 mb-10">
           <Button asChild size="lg">
