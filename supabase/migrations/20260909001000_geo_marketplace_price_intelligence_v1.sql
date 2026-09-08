@@ -1,10 +1,9 @@
 -- GEO Marketplace Price Intelligence v1
--- Public, aggregate-only statistics for city x category SEO/GEO pages.
--- IMPORTANT:
---   * Uses marketplace history only (accepted proposals).
---   * Never calls AI and never returns AI-derived estimates.
---   * Returns no row when the local sample is below the publication threshold.
---   * Exposes no task, proposal, user, address, or other row-level identifiers.
+--
+-- Public pages read ONLY pre-aggregated statistics from
+-- public.geo_marketplace_price_statistics. Raw tasks/proposals remain private.
+-- A private SECURITY DEFINER refresh function may be invoked only by service_role.
+-- AI estimates are deliberately excluded from this pipeline.
 
 CREATE OR REPLACE FUNCTION public.geo_slugify(value text)
 RETURNS text
@@ -16,8 +15,135 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.geo_slugify(text) IS
-  'Deterministic slug normalization used to join public SEO/GEO slugs to marketplace city/category names without fuzzy matching.';
+  'Deterministic GEO slug normalization. No fuzzy matching is used for marketplace price claims.';
 
+CREATE TABLE IF NOT EXISTS public.geo_marketplace_price_statistics (
+  city_slug text NOT NULL,
+  category_slug text NOT NULL,
+  lookback_days integer NOT NULL DEFAULT 180 CHECK (lookback_days BETWEEN 30 AND 730),
+  sample_size integer NOT NULL CHECK (sample_size >= 10),
+  p25_price numeric NOT NULL CHECK (p25_price > 0),
+  median_price numeric NOT NULL CHECK (median_price > 0),
+  p75_price numeric NOT NULL CHECK (p75_price > 0),
+  currency text NOT NULL DEFAULT 'ILS' CHECK (currency = 'ILS'),
+  period_start timestamptz NOT NULL,
+  period_end timestamptz NOT NULL,
+  confidence text NOT NULL CHECK (confidence IN ('limited', 'medium', 'high')),
+  source text NOT NULL DEFAULT 'marketplace_history' CHECK (source = 'marketplace_history'),
+  scope text NOT NULL DEFAULT 'city_category' CHECK (scope = 'city_category'),
+  calculated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (city_slug, category_slug, lookback_days),
+  CHECK (city_slug <> ''),
+  CHECK (category_slug <> ''),
+  CHECK (p25_price <= median_price),
+  CHECK (median_price <= p75_price),
+  CHECK (period_start <= period_end)
+);
+
+COMMENT ON TABLE public.geo_marketplace_price_statistics IS
+  'Public aggregate-only marketplace statistics for GEO/SEO. Contains no row-level marketplace/user data and no AI-derived estimates.';
+
+ALTER TABLE public.geo_marketplace_price_statistics ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE public.geo_marketplace_price_statistics FROM PUBLIC;
+GRANT SELECT ON TABLE public.geo_marketplace_price_statistics TO anon, authenticated;
+
+DROP POLICY IF EXISTS "Public can read publishable GEO price aggregates"
+  ON public.geo_marketplace_price_statistics;
+CREATE POLICY "Public can read publishable GEO price aggregates"
+  ON public.geo_marketplace_price_statistics
+  FOR SELECT
+  TO anon, authenticated
+  USING (
+    sample_size >= 10
+    AND source = 'marketplace_history'
+    AND scope = 'city_category'
+    AND currency = 'ILS'
+  );
+
+-- Keep privileged raw-data aggregation outside the exposed public schema.
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION private.refresh_geo_marketplace_price_statistics(
+  _lookback_days integer DEFAULT 180
+)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private
+AS $$
+DECLARE
+  v_lookback_days integer := greatest(30, least(coalesce(_lookback_days, 180), 730));
+  v_rows integer := 0;
+BEGIN
+  -- Refresh is intentionally fail-closed and marketplace-history-only.
+  -- All published groups require at least 10 accepted ILS proposals.
+  DELETE FROM public.geo_marketplace_price_statistics
+  WHERE lookback_days = v_lookback_days;
+
+  INSERT INTO public.geo_marketplace_price_statistics (
+    city_slug,
+    category_slug,
+    lookback_days,
+    sample_size,
+    p25_price,
+    median_price,
+    p75_price,
+    currency,
+    period_start,
+    period_end,
+    confidence,
+    source,
+    scope,
+    calculated_at
+  )
+  SELECT
+    public.geo_slugify(t.city) AS city_slug,
+    public.geo_slugify(c.name_en) AS category_slug,
+    v_lookback_days,
+    count(*)::integer AS sample_size,
+    round(percentile_cont(0.25) WITHIN GROUP (ORDER BY p.price)::numeric, 0) AS p25_price,
+    round(percentile_cont(0.50) WITHIN GROUP (ORDER BY p.price)::numeric, 0) AS median_price,
+    round(percentile_cont(0.75) WITHIN GROUP (ORDER BY p.price)::numeric, 0) AS p75_price,
+    'ILS',
+    min(p.created_at),
+    max(p.created_at),
+    CASE
+      WHEN count(*) >= 100 THEN 'high'
+      WHEN count(*) >= 30 THEN 'medium'
+      ELSE 'limited'
+    END,
+    'marketplace_history',
+    'city_category',
+    now()
+  FROM public.proposals p
+  JOIN public.tasks t ON t.id = p.task_id
+  JOIN public.categories c ON c.id = t.category_id
+  WHERE p.status = 'accepted'
+    AND p.price IS NOT NULL
+    AND p.price > 0
+    AND coalesce(upper(p.currency), 'ILS') = 'ILS'
+    AND p.created_at >= now() - make_interval(days => v_lookback_days)
+    AND public.geo_slugify(t.city) <> ''
+    AND public.geo_slugify(c.name_en) <> ''
+  GROUP BY public.geo_slugify(t.city), public.geo_slugify(c.name_en)
+  HAVING count(*) >= 10;
+
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  RETURN v_rows;
+END;
+$$;
+
+COMMENT ON FUNCTION private.refresh_geo_marketplace_price_statistics(integer) IS
+  'Service-only refresh of aggregate GEO price statistics from accepted marketplace proposals. Never uses AI.';
+
+REVOKE ALL ON FUNCTION private.refresh_geo_marketplace_price_statistics(integer) FROM PUBLIC, anon, authenticated;
+GRANT USAGE ON SCHEMA private TO service_role;
+GRANT EXECUTE ON FUNCTION private.refresh_geo_marketplace_price_statistics(integer) TO service_role;
+
+-- Public RPC reads only the RLS-protected aggregate table. It is SECURITY INVOKER
+-- and therefore cannot bypass RLS or reach raw tasks/proposals.
 CREATE OR REPLACE FUNCTION public.get_geo_marketplace_price_stats(
   _city_slug text,
   _category_slug text,
@@ -27,7 +153,7 @@ CREATE OR REPLACE FUNCTION public.get_geo_marketplace_price_stats(
 RETURNS TABLE (
   city_slug text,
   category_slug text,
-  sample_size bigint,
+  sample_size integer,
   p25_price numeric,
   median_price numeric,
   p75_price numeric,
@@ -41,71 +167,35 @@ RETURNS TABLE (
 )
 LANGUAGE sql
 STABLE
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = public
 AS $$
-  WITH params AS (
-    SELECT
-      public.geo_slugify(_city_slug) AS city_slug,
-      public.geo_slugify(_category_slug) AS category_slug,
-      greatest(30, least(coalesce(_lookback_days, 180), 730)) AS lookback_days,
-      greatest(10, least(coalesce(_min_sample_size, 10), 500)) AS min_sample_size
-  ),
-  observations AS (
-    SELECT
-      p.price::numeric AS price,
-      p.created_at
-    FROM public.proposals p
-    JOIN public.tasks t ON t.id = p.task_id
-    JOIN public.categories c ON c.id = t.category_id
-    CROSS JOIN params x
-    WHERE p.status = 'accepted'
-      AND p.price IS NOT NULL
-      AND p.price > 0
-      AND coalesce(upper(p.currency), 'ILS') = 'ILS'
-      AND public.geo_slugify(t.city) = x.city_slug
-      AND public.geo_slugify(c.name_en) = x.category_slug
-      AND p.created_at >= now() - make_interval(days => x.lookback_days)
-  ),
-  aggregate_stats AS (
-    SELECT
-      count(*)::bigint AS sample_size,
-      percentile_cont(0.25) WITHIN GROUP (ORDER BY price)::numeric AS p25_price,
-      percentile_cont(0.50) WITHIN GROUP (ORDER BY price)::numeric AS median_price,
-      percentile_cont(0.75) WITHIN GROUP (ORDER BY price)::numeric AS p75_price,
-      min(created_at) AS period_start,
-      max(created_at) AS period_end
-    FROM observations
-  )
   SELECT
-    x.city_slug,
-    x.category_slug,
+    s.city_slug,
+    s.category_slug,
     s.sample_size,
-    round(s.p25_price, 0),
-    round(s.median_price, 0),
-    round(s.p75_price, 0),
-    'ILS'::text,
+    s.p25_price,
+    s.median_price,
+    s.p75_price,
+    s.currency,
     s.period_start,
     s.period_end,
-    CASE
-      WHEN s.sample_size >= 100 THEN 'high'
-      WHEN s.sample_size >= 30 THEN 'medium'
-      ELSE 'limited'
-    END::text,
-    'marketplace_history'::text,
-    'city_category'::text,
-    now()
-  FROM aggregate_stats s
-  CROSS JOIN params x
-  WHERE x.city_slug <> ''
-    AND x.category_slug <> ''
-    AND s.sample_size >= x.min_sample_size;
+    s.confidence,
+    s.source,
+    s.scope,
+    s.calculated_at
+  FROM public.geo_marketplace_price_statistics s
+  WHERE s.city_slug = public.geo_slugify(_city_slug)
+    AND s.category_slug = public.geo_slugify(_category_slug)
+    AND s.lookback_days = greatest(30, least(coalesce(_lookback_days, 180), 730))
+    AND s.sample_size >= greatest(10, least(coalesce(_min_sample_size, 10), 500))
+    AND s.source = 'marketplace_history'
+    AND s.scope = 'city_category'
+  LIMIT 1;
 $$;
 
 COMMENT ON FUNCTION public.get_geo_marketplace_price_stats(text, text, integer, integer) IS
-  'Returns aggregate local marketplace price statistics for GEO/SEO. Fail-closed below n=10. Marketplace history only; never AI-derived.';
+  'RLS-safe public reader for pre-aggregated local marketplace price statistics. Never returns AI-derived data.';
 
--- The function is intentionally callable by anonymous/public pages, but only
--- returns aggregate values after the minimum sample gate.
 REVOKE ALL ON FUNCTION public.get_geo_marketplace_price_stats(text, text, integer, integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_geo_marketplace_price_stats(text, text, integer, integer) TO anon, authenticated;
