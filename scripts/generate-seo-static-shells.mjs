@@ -12,7 +12,7 @@ const SUPABASE_URL =
   "https://emkiekjlxmtnzrgzfdep.supabase.co";
 const ANON =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lla2pseG10bnpyZ3pmZGVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzA1NDIsImV4cCI6MjA5MDA0NjU0Mn0.bilSwoFexDRoJ57zx8Oth2B2BQmV8tuOIB-VAGem5TA";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lla2pseG10bnpyZ3pmZGVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzA1NDIsImV4cCI6MjA5MDA0NjU0Mn0.bilSwoFexDRoJ57zx8Oth2B2BQmV8tuOIB-VAGem5TA";
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (c) => ({
@@ -129,8 +129,13 @@ function englishFaq(row) {
 
 function replaceMeta(out, attribute, key, value) {
   const escaped = escapeHtml(value);
-  const re = new RegExp(`<meta\\s+${attribute}="${key.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}"\\s+content="[^"]*"\\s*\\/?>(?:\\s*)`, "i");
-  if (re.test(out)) return out.replace(re, `<meta ${attribute}="${key}" content="${escaped}" />\n`);
+  const re = new RegExp(
+    `<meta\\s+${attribute}="${key}"\\s+content="[^"]*"\\s*\\/?>(?:\\s*)`,
+    "i",
+  );
+  if (re.test(out)) {
+    return out.replace(re, `<meta ${attribute}="${key}" content="${escaped}" />\n`);
+  }
   return out;
 }
 
