@@ -12,7 +12,7 @@ const SUPABASE_URL =
   "https://emkiekjlxmtnzrgzfdep.supabase.co";
 const ANON =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lla2pseG10bnpyZ3pmZGVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzA1NDIsImV4cCI6MjA5MDA0NjU0Mn0.bilSwoFexDRoJ57zx8Oth2B2BQmV8tuOIB-VAGem5TA";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lla2pseG10bnpyZ3pmZGVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NzA1NDIsImV4cCI6MjA5MDA0NjU0Mn0.bilSwoFexDRoJ57zx8Oth2B2BQmV8tuOIB-VAGem5TA";
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (c) => ({
@@ -31,9 +31,17 @@ function escapeJsonForHtml(value) {
 function normPath(value) {
   let out = String(value || "").trim();
   if (!out.startsWith("/")) out = `/${out}`;
-  out = out.replace(/\/{2,}/g, "/");
+  out = out.replace(/\\/g, "/").replace(/\/{2,}/g, "/");
   if (out.length > 1) out = out.replace(/\/+$/, "");
   return out;
+}
+
+function safeRoute(value) {
+  const route = normPath(value);
+  const parts = route.split("/").filter(Boolean);
+  if (parts.length === 0) return null;
+  if (parts.some((part) => part === "." || part === ".." || part.includes("\0"))) return null;
+  return `/${parts.join("/")}`;
 }
 
 function labelFromSlug(value) {
@@ -81,8 +89,6 @@ async function fetchGeoStats() {
     }
     return map;
   } catch (err) {
-    // The table does not exist until the GEO migration is applied. Build must
-    // remain deploy-safe before that point; SEO shells still render without price claims.
     console.warn(`[seo-prerender] GEO stats unavailable: ${err?.message || err}`);
     return new Map();
   }
@@ -94,40 +100,46 @@ function neutralFallbackFaq(row) {
   return [
     {
       question_en: `How do I find ${category.toLowerCase()} in ${city}?`,
-      answer_en: `Post a task with the details and location. Available taskers can send offers, and you can compare the information shown in their profiles before choosing.`
+      answer_en: "Post a task with the details and location. Available taskers can send offers, and you can compare the information shown in their profiles before choosing.",
     },
     {
       question_en: "How quickly will I receive offers?",
-      answer_en: "Response time varies by service, location, timing and task details. Flow4You does not publish a fixed response-time promise unless it is supported by current marketplace data."
+      answer_en: "Response time varies by service, location, timing and task details. Flow4You does not publish a fixed response-time promise unless it is supported by current marketplace data.",
     },
     {
       question_en: "How should I choose a tasker?",
-      answer_en: "Compare the offer, profile information, ratings and reviews available on Flow4You, and confirm the task scope before selecting a tasker."
+      answer_en: "Compare the offer, profile information, ratings and reviews available on Flow4You, and confirm the task scope before selecting a tasker.",
     },
     {
       question_en: "Can payment be protected through escrow?",
-      answer_en: "Where escrow is available for the task flow, funds are held until the applicable completion and release conditions are met."
-    }
+      answer_en: "Where escrow is available for the task flow, funds are held until the applicable completion and release conditions are met.",
+    },
   ];
 }
 
 function englishFaq(row) {
   if (Array.isArray(row.faq) && row.faq.length > 0) {
     const usable = row.faq
-      .map((item) => ({
-        question_en: item?.question_en,
-        answer_en: item?.answer_en,
-      }))
+      .map((item) => ({ question_en: item?.question_en, answer_en: item?.answer_en }))
       .filter((item) => item.question_en && item.answer_en);
     if (usable.length > 0) return usable;
   }
   return neutralFallbackFaq(row);
 }
 
+function replaceMeta(out, attribute, key, value) {
+  const escaped = escapeHtml(value);
+  const re = new RegExp(`<meta\\s+${attribute}="${key.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}"\\s+content="[^"]*"\\s*\\/?>(?:\\s*)`, "i");
+  if (re.test(out)) return out.replace(re, `<meta ${attribute}="${key}" content="${escaped}" />\n`);
+  return out;
+}
+
 function replaceHead(html, row, canonical, faqSchema, serviceSchema) {
   let out = html;
-  const title = escapeHtml(row.title_en || row.h1_en || "Flow4You");
-  const meta = escapeHtml(row.meta_en || "Find local service taskers on Flow4You.");
+  const rawTitle = row.title_en || row.h1_en || "Flow4You";
+  const rawMeta = row.meta_en || "Find local service taskers on Flow4You.";
+  const title = escapeHtml(rawTitle);
+  const meta = escapeHtml(rawMeta);
 
   out = out.replace(/<html\b[^>]*>/i, '<html lang="en">');
   out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
@@ -135,6 +147,11 @@ function replaceHead(html, row, canonical, faqSchema, serviceSchema) {
     /<meta\s+name="description"\s+content="[^"]*"\s*\/>/i,
     `<meta name="description" content="${meta}" />`,
   );
+  out = replaceMeta(out, "property", "og:title", rawTitle);
+  out = replaceMeta(out, "property", "og:description", rawMeta);
+  out = replaceMeta(out, "name", "twitter:title", rawTitle);
+  out = replaceMeta(out, "name", "twitter:description", rawMeta);
+
   out = out.replace(
     /<\/head>/i,
     `  <link rel="canonical" href="${escapeHtml(canonical)}" />\n` +
@@ -142,8 +159,6 @@ function replaceHead(html, row, canonical, faqSchema, serviceSchema) {
       `  <link rel="alternate" hreflang="ru" href="${escapeHtml(canonical)}?lang=ru" />\n` +
       `  <link rel="alternate" hreflang="he" href="${escapeHtml(canonical)}?lang=he" />\n` +
       `  <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonical)}" />\n` +
-      `  <meta property="og:title" content="${title}" />\n` +
-      `  <meta property="og:description" content="${meta}" />\n` +
       `  <meta property="og:url" content="${escapeHtml(canonical)}" />\n` +
       `  <script type="application/ld+json">${escapeJsonForHtml(faqSchema)}</script>\n` +
       `  <script type="application/ld+json">${escapeJsonForHtml(serviceSchema)}</script>\n` +
@@ -156,11 +171,11 @@ function renderPriceBlock(row, stats) {
   if (!stats) return "";
   const city = labelFromSlug(row.city_slug);
   const category = labelFromSlug(row.category_slug);
-  const money = (v) => new Intl.NumberFormat("en-IL", {
+  const money = (value) => new Intl.NumberFormat("en-IL", {
     style: "currency",
     currency: "ILS",
     maximumFractionDigits: 0,
-  }).format(Number(v));
+  }).format(Number(value));
 
   return `
     <section data-geo-source="marketplace_history" data-geo-sample-size="${Number(stats.sample_size)}">
@@ -213,8 +228,11 @@ export async function generateSeoStaticShells() {
 
   for (const row of rows) {
     if (!row?.slug) continue;
-    const route = normPath(row.canonical_path || `/${row.slug}`);
-    if (route === "/") continue;
+    const route = safeRoute(row.canonical_path || `/${row.slug}`);
+    if (!route) {
+      console.warn(`[seo-prerender] skipped unsafe route for slug ${row.slug}`);
+      continue;
+    }
 
     const canonical = `${SITE}${route}`;
     const stats = row.city_slug && row.category_slug
@@ -237,11 +255,7 @@ export async function generateSeoStaticShells() {
       "@type": "Service",
       name: row.h1_en || row.title_en || labelFromSlug(row.category_slug) || "Local service",
       url: canonical,
-      provider: {
-        "@type": "Organization",
-        name: "Flow4You",
-        url: SITE,
-      },
+      provider: { "@type": "Organization", name: "Flow4You", url: SITE },
       ...(row.city_slug
         ? { areaServed: { "@type": "City", name: labelFromSlug(row.city_slug) } }
         : {}),
@@ -250,7 +264,12 @@ export async function generateSeoStaticShells() {
     let html = replaceHead(baseHtml, row, canonical, faqSchema, serviceSchema);
     html = html.replace('<div id="root"></div>', `<div id="root">${renderShell(row, stats)}</div>`);
 
-    const outDir = path.join(DIST, route.replace(/^\//, ""));
+    const relativeRoute = route.replace(/^\//, "");
+    const outDir = path.resolve(DIST, relativeRoute);
+    if (!outDir.startsWith(`${path.resolve(DIST)}${path.sep}`)) {
+      console.warn(`[seo-prerender] skipped route outside dist: ${route}`);
+      continue;
+    }
     fs.mkdirSync(outDir, { recursive: true });
     fs.writeFileSync(path.join(outDir, "index.html"), html, "utf8");
     written += 1;
