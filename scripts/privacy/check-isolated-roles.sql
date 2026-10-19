@@ -1,5 +1,8 @@
 -- Run ONLY against an isolated fixture database, never the application database.
 BEGIN;
+-- A previous fixture run can leave its translation in this intentionally
+-- minimal schema (no FK cascade); reset only this synthetic fixture ID.
+DELETE FROM public.task_translations WHERE task_id='00000000-0000-0000-0000-000000000010';
 INSERT INTO public.tasks(id,user_id,assigned_to,category_id,title,description,city,task_type,status,address,latitude,longitude,service_details,schedule_mode,schedule_timezone,country_code,city_id,neighborhood_id)
 VALUES ('00000000-0000-0000-0000-000000000010','00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','513b748c-2dbf-47ab-b155-5555e0d33765','PRIVATE_FROM → PRIVATE_TO','PRIVATE_ACCESS','Synthetic City','onsite','open','PRIVATE_MAIN',32.123456,34.123456,'{"from_address":"PRIVATE_FROM","to_address":"PRIVATE_TO","items":"PRIVATE_ACCESS","from_floor":3,"to_elevator":true,"movers":true,"from_elevator":{"access":"PRIVATE_NESTED"},"unknown":{"secret":"PRIVATE_UNKNOWN"}}','flexible','Asia/Jerusalem','IL','osm:R111','osm:R222');
 INSERT INTO public.task_translations VALUES('00000000-0000-0000-0000-000000000010','PRIVATE_TRANSLATED',NULL);

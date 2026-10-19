@@ -29,6 +29,13 @@
       "when": 1792437856586,
       "tag": "0003_task_address_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792438081491,
+      "tag": "0004_nearby_privacy_owner_guard",
+      "breakpoints": true
     }
   ]
 }
