@@ -228,18 +228,18 @@ const IndexPage = () => {
         <meta name="twitter:title" content={i18n.metaTitle} />
         <meta name="twitter:description" content={i18n.metaDesc} />
       </Helmet>
-      <section className="py-6 md:py-8" aria-labelledby="home-services-title">
+      <section className="py-4 md:py-5" aria-labelledby="home-services-title">
         <div className="container">
           <h1 id="home-services-title" className="text-2xl md:text-3xl font-extrabold text-foreground">{t("cat.title")}</h1>
-          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4" data-testid="home-services">
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5 md:gap-3" data-testid="home-services">
             {categoryIcons.map((cat) => {
               const Icon = cat.icon;
               return (
                 <Button key={cat.key} asChild variant="outline"
-                  className="h-auto aspect-square sm:aspect-auto sm:min-h-32 whitespace-normal flex-col gap-3 p-2 md:p-5 rounded-xl bg-card border-border shadow-card hover:bg-secondary text-center">
+                  className="h-auto min-h-[68px] sm:min-h-[72px] items-start justify-start gap-2.5 whitespace-normal px-3 py-3 sm:px-4 text-start rounded-xl bg-card border-border shadow-card hover:bg-secondary">
                   <Link to={createTaskHref(cat.key as ServiceKey)}>
-                    <Icon className="!w-7 !h-7 text-primary" />
-                    <span className="text-lg md:text-xl font-extrabold leading-snug w-full">{t(`cat.${cat.key}`)}</span>
+                    <Icon className="!w-5 !h-5 shrink-0 text-primary" />
+                    <span className="text-base font-semibold leading-snug">{t(`cat.${cat.key}`)}</span>
                   </Link>
                 </Button>
               );
