@@ -174,8 +174,11 @@
 }
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] { gap: .625rem; }
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] a { padding: .75rem; }
+/* Mobile keeps two columns without splitting long names: 16px label (the
+   stated minimum) plus tighter side padding leaves each word on one line. */
+.homepage main [data-testid="home-services"] a { padding-inline: .625rem; }
 .homepage main [data-testid="home-services"] a span {
-  font-size: 1.125rem; font-weight: 600; overflow-wrap: break-word; hyphens: auto;
+  font-size: 1rem; font-weight: 600; overflow-wrap: break-word; hyphens: auto;
 }
 /* Banner button states, scoped to the homepage hero only.
    Hover yellow applies only on pointer devices so taps on touch screens
