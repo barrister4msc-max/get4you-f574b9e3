@@ -248,11 +248,10 @@ const IndexPage = () => {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-secondary py-10 md:py-12">
-        <img src={heroImage2} alt="" className="absolute inset-0 h-full w-full object-cover opacity-15" />
-        <div className="container relative">
-          <div className="max-w-2xl">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">{i18n.h1Pre} {i18n.h1Brand}</h2>
+      <section className="bg-gradient-hero py-6 md:py-8" data-testid="home-banner">
+        <div className="container grid items-center gap-6 lg:grid-cols-2 lg:gap-10">
+          <div className="min-w-0 max-w-2xl">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">{i18n.h1Pre} <span className="text-gradient-emerald">{i18n.h1Brand}</span></h2>
             <p className="mt-4 text-base text-foreground leading-relaxed">{i18n.subtitle}</p>
             <div className="mt-6 flex flex-wrap gap-3">
               {!isTaskerOnly && <Button asChild size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90"><Link to={postTaskHref}>{i18n.ctaPost}<ArrowRight className="rtl:rotate-180" /></Link></Button>}
@@ -261,6 +260,7 @@ const IndexPage = () => {
             </div>
             {geoError && <p className="mt-4 text-base text-destructive">{t("task.geo.enterManually")}</p>}
           </div>
+          <img src={heroImage2} alt="" width={1366} height={768} className="block w-full aspect-video rounded-xl shadow-xl object-contain" />
         </div>
       </section>
 
