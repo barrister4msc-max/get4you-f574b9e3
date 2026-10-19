@@ -1,10 +1,11 @@
 
 ## Final homepage and consistency audit
-- [ ] Move existing services above introduction; improve form readability and mobile targets
-- [ ] Remove unconfirmed figures and technical/empty UI
-- [ ] Verify RU/EN/HE and safe order/draft flows
-- [ ] Audit deletion, notifications and server behavior without production writes
-- [ ] Report results, required settings and blocked isolated write checks
+- [x] Move existing services above introduction; improve form readability and mobile targets
+- [x] Remove unconfirmed homepage/pre-login figures and coordinate debug UI
+- [x] Verify RU/EN/HE, moving/cleaning fields, calendar and signed-in draft restoration
+- [x] Read-only audit of deletion, public view, notifications cascade, realtime and schedule trigger
+- [x] Report results, required settings and limitations
+- [ ] Actual single-publication and delete/list/notification convergence E2E — blocked by shared production backend; needs isolated test environment with test accounts and notifications disabled
 
 ## Service → order form
 - [x] Service cards open the form with the service preselected (exact registry)
@@ -20,6 +21,6 @@
 - [x] Server: public reads return only open tasks (verified RPCs/view/RLS)
 - [x] Drafts: owner/version/TTL, single-flight publish
 - [x] Live removal of deleted tasks across lists (realtime + tab focus + stale-response guard)
-- [x] Notifications for deleted tasks show neutral "Task unavailable"
+- [x] Removed-task notifications are hidden locally; missing-task page is neutral (server deletion E2E remains blocked above)
 - [x] Garbage audit report (IDs + reasons), no deletion
 - [x] Cleanup of listed records
