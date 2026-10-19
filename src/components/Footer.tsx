@@ -18,7 +18,7 @@ export const Footer = () => {
             </div>
             <span className="font-semibold text-gradient-emerald">Flow4You</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
             <Link to="/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">{t('footer.privacy')}</Link>
             <Link to="/cookies" className="hover:text-foreground transition-colors">{t('footer.cookies')}</Link>

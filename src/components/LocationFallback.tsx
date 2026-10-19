@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { MapPin, Search, X, AlertTriangle, Loader2 } from "lucide-react";
 import type { GeoPermission, GeoSource } from "@/hooks/useGeolocation";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { Button } from "@/components/ui/button";
+
+const COPY = {
+  en: { clear: "Clear location", denied: "Location access is unavailable. Enter an address instead.", address: "City or address", set: "Select" },
+  ru: { clear: "Очистить местоположение", denied: "Геолокация недоступна. Введите адрес вручную.", address: "Город или адрес", set: "Выбрать" },
+  he: { clear: "נקה מיקום", denied: "המיקום אינו זמין. הזינו כתובת ידנית.", address: "עיר או כתובת", set: "בחר" },
+  ar: { clear: "مسح الموقع", denied: "الموقع غير متاح. أدخل العنوان يدويًا.", address: "المدينة أو العنوان", set: "اختر" },
+};
 
 interface CityPreset {
   name: string;
@@ -46,6 +55,8 @@ export function LocationFallback({
   cities = DEFAULT_CITIES,
   className = "",
 }: Props) {
+  const { locale } = useLanguage();
+  const text = COPY[locale];
   const [query, setQuery] = useState("");
 
   const submit = async (e: React.FormEvent) => {
@@ -68,25 +79,21 @@ export function LocationFallback({
             <MapPin className="w-3.5 h-3.5 text-primary" />
             <span className="truncate">{label}</span>
           </span>
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={onClear}
             className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-            aria-label="Clear location"
+            aria-label={text.clear}
           >
             <X className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
           <div className="flex-1">
             <p className="text-xs font-medium">
-              {permission === "unsupported"
-                ? "Geolocation is not supported by this browser."
-                : permission === "denied"
-                  ? "Location access is blocked. Choose a city or enter an address instead."
-                  : error || "Couldn't read your location. Pick a city or enter an address."}
+              {text.denied}
             </p>
           </div>
         </div>
@@ -99,30 +106,30 @@ export function LocationFallback({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="City or address"
+            placeholder={text.address}
             className="w-full ps-9 pe-3 py-2 rounded-lg border border-input bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <button
+        <Button
           type="submit"
           disabled={loading || !query.trim()}
           className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
-          Set
-        </button>
+          {text.set}
+        </Button>
       </form>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         {cities.map((c) => (
-          <button
+          <Button variant="outline"
             key={c.name}
             type="button"
             onClick={() => onPickCity(c.lat, c.lng, c.name)}
             className="text-[11px] px-2 py-1 rounded-full border border-border bg-card hover:bg-secondary transition-colors"
           >
             {c.name}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

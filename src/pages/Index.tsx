@@ -2,7 +2,7 @@ import { useGeolocation } from "@/hooks/useGeolocation";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Sparkles,
   ArrowRight,
@@ -28,23 +28,9 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import heroImage from "@/assets/hero-image.png";
+import { Button } from "@/components/ui/button";
+import { createTaskHref, type ServiceKey } from "@/lib/serviceRegistry";
 import heroImage2 from "@/assets/hero-image-2.jpg";
-
-const sparklePositions = [
-  { top: "15%", left: "42%", delay: 0, size: 4 },
-  { top: "25%", left: "55%", delay: 0.8, size: 3 },
-  { top: "20%", left: "38%", delay: 1.5, size: 5 },
-  { top: "35%", left: "60%", delay: 0.3, size: 3 },
-  { top: "40%", left: "45%", delay: 2.1, size: 4 },
-  { top: "30%", left: "50%", delay: 1.2, size: 3 },
-  { top: "50%", left: "48%", delay: 0.6, size: 5 },
-  { top: "55%", left: "53%", delay: 1.8, size: 3 },
-  { top: "18%", left: "58%", delay: 2.5, size: 4 },
-  { top: "45%", left: "40%", delay: 0.4, size: 3 },
-  { top: "60%", left: "52%", delay: 1.0, size: 4 },
-  { top: "22%", left: "48%", delay: 2.8, size: 5 },
-];
 
 const categoryIcons = [
   { key: "cleaning", icon: Sparkles },
@@ -55,12 +41,6 @@ const categoryIcons = [
   { key: "delivery", icon: Package },
   { key: "beauty", icon: Heart },
   { key: "tutoring", icon: GraduationCap },
-];
-
-const stats = [
-  { key: "hero.tasksCompleted", value: "12,400+" },
-  { key: "hero.verifiedPros", value: "3,200+" },
-  { key: "hero.satisfaction", value: "98%" },
 ];
 
 const popularCategories = [
@@ -227,9 +207,6 @@ const IndexPage = () => {
   // Registration is prompted on publish (motivation modal in CreateTask).
   const postTaskHref = "/create-task";
   const becomeTaskerHref = user ? "/for-taskers" : "/signup?role=tasker";
-  const heroRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
 
   return (
     <div>
@@ -251,149 +228,38 @@ const IndexPage = () => {
         <meta name="twitter:title" content={i18n.metaTitle} />
         <meta name="twitter:description" content={i18n.metaDesc} />
       </Helmet>
-      {/* Hero — full-screen with background image, dark overlay & parallax */}
-      <section
-        ref={heroRef}
-        className="relative min-h-[100svh] flex items-center overflow-hidden bg-gradient-to-br from-[hsl(210,35%,72%)] via-[hsl(200,28%,68%)] to-[hsl(40,20%,70%)]"
-      >
-        {/* Phoenix watermark */}
-        <motion.div
-          className="absolute inset-0 flex items-center justify-start md:pl-32"
-          aria-hidden="true"
-          animate={{
-            y: [0, -12, 0],
-            rotate: [0, 1.5, 0, -1.5, 0],
-            scale: [1, 1.02, 1],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          <img
-            src={heroImage}
-            alt=""
-            width={1024}
-            height={1024}
-            className="h-[85%] w-auto max-w-none object-contain opacity-30"
-            style={{
-              mask: "radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)",
-              WebkitMask: "radial-gradient(ellipse 50% 48% at center, black 60%, transparent 100%)",
-            }}
-          />
-        </motion.div>
-        {/* Sparkles */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          {sparklePositions.map((s, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-[hsl(42,80%,65%)]"
-              style={{ top: s.top, left: s.left, width: s.size, height: s.size }}
-              animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
-              transition={{ duration: 2.5, repeat: Infinity, delay: s.delay, ease: "easeInOut" }}
-            />
-          ))}
-        </div>
-        {/* Subtle overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(40,15%,95%,0.6)] via-transparent to-transparent" />
-
-        <div className="container relative z-10 py-20 md:py-28">
-          <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              className="flex-1 max-w-2xl"
-            >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground">
-                {i18n.h1Pre}{" "}
-                <span className="text-gradient-emerald">{i18n.h1Brand}</span>
-              </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-                {i18n.subtitle}
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                {!isTaskerOnly && (
-                  <Link
-                    to={postTaskHref}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
-                  >
-                    {i18n.ctaPost}
-                    <ArrowRight className="w-4 h-4" />
+      <section className="py-6 md:py-8" aria-labelledby="home-services-title">
+        <div className="container">
+          <h1 id="home-services-title" className="text-2xl md:text-3xl font-extrabold text-foreground">{t("cat.title")}</h1>
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4" data-testid="home-services">
+            {categoryIcons.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Button key={cat.key} asChild variant="outline"
+                  className="h-auto aspect-square sm:aspect-auto sm:min-h-32 whitespace-normal flex-col gap-3 p-2 md:p-5 rounded-xl bg-card border-border shadow-card hover:bg-secondary text-center">
+                  <Link to={createTaskHref(cat.key as ServiceKey)}>
+                    <Icon className="!w-7 !h-7 text-primary" />
+                    <span className="text-lg md:text-xl font-extrabold leading-snug w-full">{t(`cat.${cat.key}`)}</span>
                   </Link>
-                )}
-                <Link
-                  to={becomeTaskerHref}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors"
-                >
-                  {i18n.ctaBecome}
-                </Link>
-                <button
-                  onClick={handleFindNearby}
-                  disabled={geoLoading || pendingNearby}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold border border-border text-foreground hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <MapPin className="w-4 h-4" />
-                  {geoLoading || pendingNearby ? t("nearby.locating") : t("nearby.heroCta")}
-                </button>
-              </div>
-
-              {geoError && <p className="mt-4 text-sm text-destructive">{geoError}</p>}
-
-              <div className="mt-12 grid grid-cols-3 gap-6">
-                {stats.map((s) => (
-                  <div key={s.key}>
-                    <div className="text-2xl md:text-3xl font-bold text-foreground">{s.value}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{t(s.key)}</div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="flex-1 hidden md:flex justify-center"
-            >
-              <img
-                src={heroImage2}
-                alt="HandyMan4You.AI Ltd services"
-                className="w-full max-w-lg rounded-2xl object-cover border border-border/40 shadow-xl ring-1 ring-black/5"
-              />
-            </motion.div>
+                </Button>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-16 md:py-20">
-        <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center">{t("cat.title")}</h2>
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {categoryIcons.map((cat, i) => {
-              const Icon = cat.icon;
-              return (
-                <motion.div
-                  key={cat.key}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Link
-                    to={`/create-task?category=${cat.key}`}
-                    className="flex flex-col items-center justify-center gap-3 p-4 aspect-square rounded-2xl bg-card border border-border shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">{t(`cat.${cat.key}`)}</span>
-                  </Link>
-                </motion.div>
-              );
-            })}
+      <section className="relative overflow-hidden bg-secondary py-10 md:py-12">
+        <img src={heroImage2} alt="" className="absolute inset-0 h-full w-full object-cover opacity-15" />
+        <div className="container relative">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">{i18n.h1Pre} {i18n.h1Brand}</h2>
+            <p className="mt-4 text-base text-foreground leading-relaxed">{i18n.subtitle}</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {!isTaskerOnly && <Button asChild size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90"><Link to={postTaskHref}>{i18n.ctaPost}<ArrowRight className="rtl:rotate-180" /></Link></Button>}
+              <Button asChild variant="outline" size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base"><Link to={becomeTaskerHref}>{i18n.ctaBecome}</Link></Button>
+              <Button variant="outline" size="lg" onClick={handleFindNearby} disabled={geoLoading || pendingNearby} className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base"><MapPin />{geoLoading || pendingNearby ? t("nearby.locating") : t("nearby.heroCta")}</Button>
+            </div>
+            {geoError && <p className="mt-4 text-base text-destructive">{t("task.geo.enterManually")}</p>}
           </div>
         </div>
       </section>
@@ -430,7 +296,7 @@ const IndexPage = () => {
             <Shield className="w-12 h-12 text-primary mx-auto" />
             <h2 className="mt-4 text-2xl md:text-3xl font-bold">{t("escrow.title")}</h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">{t("escrow.desc")}</p>
-            <div className="mt-8 flex justify-center gap-8">
+            <div className="mt-8 flex flex-wrap justify-center gap-4 sm:gap-8">
               {[
                 { icon: CheckCircle2, text: t("escrow.verified") },
                 { icon: Shield, text: t("escrow.secure") },
@@ -505,7 +371,7 @@ const IndexPage = () => {
           <Accordion type="single" collapsible className="w-full">
             {i18n.faq.map((f, i) => (
               <AccordionItem key={i} value={`faq-${i}`}>
-                <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
+                <AccordionTrigger className="text-start text-base font-semibold">{f.q}</AccordionTrigger>
                 <AccordionContent>{f.a}</AccordionContent>
               </AccordionItem>
             ))}

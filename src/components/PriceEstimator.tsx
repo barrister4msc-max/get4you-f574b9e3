@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { Lightbulb, Loader2, Sparkles, RotateCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,9 +111,9 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
       {!loading && current?.status === "error" && (
         <div className="flex items-center gap-3 text-sm">
           <span className="text-destructive">{TXT.error[loc]}</span>
-          <button type="button" onClick={() => setRetry((r) => r + 1)} className="inline-flex items-center gap-1 text-primary underline">
+          <Button variant="ghost" type="button" onClick={() => setRetry((r) => r + 1)} className="inline-flex items-center gap-1 text-primary underline">
             <RotateCw className="w-3.5 h-3.5" />{TXT.retry[loc]}
-          </button>
+          </Button>
         </div>
       )}
       {!loading && current?.status === "available" && (() => {
@@ -132,10 +133,10 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
               {current.method === "tariff" ? TXT.tariff[loc] : `${TXT.history[loc].replace("{n}", String(current.provenance.sampleSize))}. ${TXT.range[loc]}`}
             </p>
             {cur === currency && (
-              <button type="button" onClick={() => onUseSuggested(rec)}
+              <Button variant="ghost" type="button" onClick={() => onUseSuggested(rec)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity text-sm">
                 <Sparkles className="w-4 h-4" />{TXT.use[loc]}
-              </button>
+              </Button>
             )}
           </>
         );

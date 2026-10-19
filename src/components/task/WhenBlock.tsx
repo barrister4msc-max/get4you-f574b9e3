@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -49,9 +50,9 @@ export function WhenBlock({ value, onChange, locale, error }: Props) {
     <div className="space-y-3" data-testid="when-block">
       <label className="block text-sm font-medium">{T.title[locale]}</label>
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" className={seg(value.mode === "date")} onClick={() => set({ mode: "date" })}>{T.pick[locale]}</button>
-        <button type="button" className={seg(value.mode === "flexible")}
-          onClick={() => onChange({ mode: "flexible", date: null, timeMode: "flexible", time: "", timeEnd: "" })}>{T.flexible[locale]}</button>
+        <Button variant="ghost" type="button" className={seg(value.mode === "date")} onClick={() => set({ mode: "date" })}>{T.pick[locale]}</Button>
+        <Button variant="ghost" type="button" className={seg(value.mode === "flexible")}
+          onClick={() => onChange({ mode: "flexible", date: null, timeMode: "flexible", time: "", timeEnd: "" })}>{T.flexible[locale]}</Button>
       </div>
 
       {value.mode === "date" && (
@@ -60,7 +61,7 @@ export function WhenBlock({ value, onChange, locale, error }: Props) {
             <label className="block text-sm font-medium mb-1.5">{T.date[locale]}</label>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
-                <button type="button" data-testid="due-date-trigger"
+                <Button variant="ghost" type="button" data-testid="due-date-trigger"
                   className={cn("w-full h-11 flex items-center gap-2 px-3 rounded-xl border bg-background text-sm text-start",
                     error === "date_required" || error === "date_in_past" ? "border-destructive" : "border-border",
                     !value.date && "text-muted-foreground")}>
@@ -68,7 +69,7 @@ export function WhenBlock({ value, onChange, locale, error }: Props) {
                   {value.date
                     ? fromDateKey(value.date).toLocaleDateString(intlLoc, { weekday: "short", day: "numeric", month: "long", year: "numeric" })
                     : T.choose[locale]}
-                </button>
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto max-w-[calc(100vw-1rem)] p-0" align="start">
                 <Calendar
@@ -88,9 +89,9 @@ export function WhenBlock({ value, onChange, locale, error }: Props) {
 
           <div className="grid grid-cols-3 gap-2">
             {(["exact", "interval", "flexible"] as TimeMode[]).map((m) => (
-              <button key={m} type="button" className={seg(value.timeMode === m)} onClick={() => set({ timeMode: m })}>
+              <Button variant="ghost" key={m} type="button" className={seg(value.timeMode === m)} onClick={() => set({ timeMode: m })}>
                 {m === "exact" ? T.exact[locale] : m === "interval" ? T.interval[locale] : T.timeFlex[locale]}
-              </button>
+              </Button>
             ))}
           </div>
 
