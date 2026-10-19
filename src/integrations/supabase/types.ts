@@ -2267,6 +2267,8 @@ export type Database = {
           budget_min: number | null
           category_id: string | null
           city: string | null
+          city_id: string | null
+          country_code: string | null
           created_at: string
           currency: string | null
           description: string | null
@@ -2274,11 +2276,13 @@ export type Database = {
           due_time: string | null
           due_time_end: string | null
           geo_point: unknown
+          geo_source: string | null
           id: string
           is_urgent: boolean | null
           latitude: number | null
           location: unknown
           longitude: number | null
+          neighborhood_id: string | null
           photos: string[] | null
           radius_km: number | null
           schedule_mode: string
@@ -2301,6 +2305,8 @@ export type Database = {
           budget_min?: number | null
           category_id?: string | null
           city?: string | null
+          city_id?: string | null
+          country_code?: string | null
           created_at?: string
           currency?: string | null
           description?: string | null
@@ -2308,11 +2314,13 @@ export type Database = {
           due_time?: string | null
           due_time_end?: string | null
           geo_point?: unknown
+          geo_source?: string | null
           id?: string
           is_urgent?: boolean | null
           latitude?: number | null
           location?: unknown
           longitude?: number | null
+          neighborhood_id?: string | null
           photos?: string[] | null
           radius_km?: number | null
           schedule_mode?: string
@@ -2335,6 +2343,8 @@ export type Database = {
           budget_min?: number | null
           category_id?: string | null
           city?: string | null
+          city_id?: string | null
+          country_code?: string | null
           created_at?: string
           currency?: string | null
           description?: string | null
@@ -2342,11 +2352,13 @@ export type Database = {
           due_time?: string | null
           due_time_end?: string | null
           geo_point?: unknown
+          geo_source?: string | null
           id?: string
           is_urgent?: boolean | null
           latitude?: number | null
           location?: unknown
           longitude?: number | null
+          neighborhood_id?: string | null
           photos?: string[] | null
           radius_km?: number | null
           schedule_mode?: string

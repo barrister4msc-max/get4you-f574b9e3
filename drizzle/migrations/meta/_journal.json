@@ -15,6 +15,13 @@
       "when": 1792425568895,
       "tag": "0001_task_service_details_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792427864592,
+      "tag": "0002_task_normalized_geo",
+      "breakpoints": true
     }
   ]
 }
