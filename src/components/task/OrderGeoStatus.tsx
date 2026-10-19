@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Loader2, RotateCw } from "lucide-react";
 import { cityLabel, typedCityMismatch, type Lang, type OrderGeo } from "@/lib/orderGeo";
 
@@ -21,7 +22,7 @@ export function OrderGeoStatus({ status, geo, locale, onRetry }: Props) {
   if (status === "resolving") return <p className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />{GEO_TXT.resolving[locale]}</p>;
   if (status === "error") return (
     <p className="mt-1.5 text-xs text-destructive flex items-center gap-2">{GEO_TXT.error[locale]}
-      <button type="button" onClick={onRetry} className="inline-flex items-center gap-1 underline text-primary"><RotateCw className="w-3 h-3" />{GEO_TXT.retry[locale]}</button>
+      <Button variant="ghost" type="button" onClick={onRetry} className="inline-flex items-center gap-1 underline text-primary"><RotateCw className="w-3 h-3" />{GEO_TXT.retry[locale]}</Button>
     </p>
   );
   if (status === "no_city") return <p className="mt-1.5 text-xs text-amber-600">{GEO_TXT.noCity[locale]}</p>;

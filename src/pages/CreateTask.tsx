@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { ServiceDetailsFields } from "@/components/task/ServiceDetailsFields";
 import { WhenBlock } from "@/components/task/WhenBlock";
 import { buildServiceTitle, describeServiceDetails, getServiceFields, sanitizeServiceDetails, validateServiceDetails, type ServiceDetails } from "@/lib/serviceFields";
@@ -577,7 +578,7 @@ useEffect(() => {
 }, [user]);
 
   return (
-    <div className="min-h-[80vh] py-12">
+    <div className="order-form min-h-[80vh] py-6 sm:py-10">
       <div className="container max-w-2xl">
         <h1 className="text-2xl font-bold mb-8">{t("task.create.title")}</h1>
 
@@ -606,7 +607,7 @@ useEffect(() => {
           {step === 1 && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-3">
-                <button
+                <Button variant="ghost"
                   type="button"
                   onClick={() => {
                     if (audioRecorder.isRecording) {
@@ -639,7 +640,7 @@ useEffect(() => {
                       ? `${Math.floor(audioRecorder.duration / 60)}:${String(audioRecorder.duration % 60).padStart(2, "0")}`
                       : t("task.voice")}
                   </span>
-                </button>
+                </Button>
                 <TaskAIAssistant onApplySuggestion={handleAISuggestion} context={aiContext} />
               </div>
 
@@ -660,7 +661,7 @@ useEffect(() => {
 
               {/* Voice to Task AI button */}
               {(voice.transcript || audioRecorder.audioUrl) && !audioRecorder.isRecording && (
-                <button
+                <Button variant="ghost"
                   type="button"
                   onClick={handleVoiceToTask}
                   disabled={voiceProcessing}
@@ -668,19 +669,19 @@ useEffect(() => {
                 >
                   {voiceProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                   {t("task.voice.createTask") || "✨ Create task from voice"}
-                </button>
+                </Button>
               )}
               {audioRecorder.audioUrl && !audioRecorder.isRecording && (
                 <div className="flex items-center gap-3 bg-muted rounded-xl p-3 border border-border">
                   <Play className="w-4 h-4 text-muted-foreground shrink-0" />
                   <audio src={audioRecorder.audioUrl} controls className="flex-1 h-8" />
-                  <button
+                  <Button variant="ghost"
                     type="button"
                     onClick={() => audioRecorder.reset()}
                     className="text-destructive hover:text-destructive/80"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -691,14 +692,14 @@ useEffect(() => {
                     <span className="text-sm font-medium text-primary">
                       {t("task.service.label")}: {t(`cat.${form.category}`)}
                     </span>
-                    <button type="button" onClick={() => setServicePickerOpen(true)} className="text-sm text-primary underline">
+                    <Button variant="ghost" type="button" onClick={() => setServicePickerOpen(true)} className="text-sm text-primary underline">
                       {t("task.service.change")}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {categories.map((c) => (
-                    <button
+                    <Button variant="ghost"
                       key={c}
                       type="button"
                       onClick={() => changeService(c)}
@@ -709,7 +710,7 @@ useEffect(() => {
                       }`}
                     >
                       {t(`cat.${c}`)}
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 )}
@@ -727,7 +728,7 @@ useEffect(() => {
                 <label className="block text-sm font-medium mb-2">{t("task.type")}</label>
                 <div className="flex gap-2">
                   {(["onsite", "remote"] as const).map((type) => (
-                    <button
+                    <Button variant="ghost"
                       key={type}
                       type="button"
                       onClick={() => update({ taskType: type })}
@@ -738,7 +739,7 @@ useEffect(() => {
                       }`}
                     >
                       {t(`task.type.${type}`)}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -780,7 +781,7 @@ useEffect(() => {
                 />
               </div>
 
-              <button
+              <Button variant="ghost"
                 type="button"
                 onClick={handleAutoCategorize}
                 disabled={categorizing}
@@ -788,18 +789,18 @@ useEffect(() => {
               >
                 {categorizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 {t("task.ai.autoCategorize")}
-              </button>
+              </Button>
 
               <div>
                 <label className="block text-sm font-medium mb-1.5">{t("task.location")}</label>
                 <div className="flex gap-2 mt-2">
-                  <button
+                  <Button variant="ghost"
                     type="button"
                     onClick={() => { setGeoChoice({ open: false, resolving: true }); getCurrentLocation(); }}
                     className="px-3 py-2 rounded-lg border text-xs hover:bg-secondary"
                   >
-                    {geoLoading ? "Определяем..." : "📍 Моя геолокация"}
-                  </button>
+                    {geoLoading ? t("task.geo.detecting") : t("task.geo.useCurrent")}
+                  </Button>
                 </div>
                 {geoLoading && !form.location && (
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
@@ -827,11 +828,6 @@ useEffect(() => {
                   onClear={clearLocation}
                 />
 
-                {latitude && longitude && geoSource !== "manual" && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    📍 {latitude.toFixed(5)}, {longitude.toFixed(5)}
-                  </p>
-                )}
                 <div className="relative">
                   <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
@@ -857,11 +853,11 @@ useEffect(() => {
                   <div className="mt-2 rounded-xl border border-border bg-secondary/50 p-3 text-xs space-y-2" data-testid="device-suggestion">
                     <p>{GEO_TXT.deviceDiffers[loc]}: <span className="font-medium">{deviceSuggestion.label}</span></p>
                     <div className="flex gap-2">
-                      <button type="button" className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground font-medium"
+                      <Button variant="ghost" type="button" className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground font-medium"
                         onClick={() => { const s = deviceSuggestion; setDeviceSuggestion(null); setAddressText(s.label); setGeocodedFor(s.label); void applyResolvedAddress(s.label, s.lat, s.lng); }}>
                         {GEO_TXT.useDevice[loc]}
-                      </button>
-                      <button type="button" className="px-3 py-1.5 rounded-lg border" onClick={() => setDeviceSuggestion(null)}>{GEO_TXT.keep[loc]}</button>
+                      </Button>
+                      <Button variant="ghost" type="button" className="px-3 py-1.5 rounded-lg border" onClick={() => setDeviceSuggestion(null)}>{GEO_TXT.keep[loc]}</Button>
                     </div>
                   </div>
                 )}
@@ -952,19 +948,19 @@ useEffect(() => {
                     {photoPreviews.map((src, i) => (
                       <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border">
                         <img src={src} alt="" className="w-full h-full object-cover" />
-                        <button
+                        <Button variant="ghost"
                           type="button"
                           onClick={() => removePhoto(i)}
                           className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
                         >
                           <X className="w-3 h-3" />
-                        </button>
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <button
+                <Button variant="ghost"
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={photos.length >= 5}
@@ -974,7 +970,7 @@ useEffect(() => {
                   <p className="text-sm text-muted-foreground mt-2">
                     {t("task.photos.upload") || "Click to upload photos"} ({photos.length}/5)
                   </p>
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -983,7 +979,7 @@ useEffect(() => {
             <div className="space-y-4">
               <div className="bg-card rounded-2xl border border-border p-6 space-y-3">
                 <h3 className="font-bold text-lg">{form.title || "—"}</h3>
-                <p className="text-sm text-muted-foreground">{form.description || "—"}</p>
+                {form.description && <p className="text-base text-muted-foreground">{form.description}</p>}
                 <div className="flex flex-wrap gap-3 text-sm">
                   <span className="bg-emerald-50 text-primary px-3 py-1 rounded-full font-medium">
                     {form.category ? t(`cat.${form.category}`) : "—"}
@@ -1035,18 +1031,18 @@ useEffect(() => {
         {/* Navigation */}
         <div className="flex justify-between mt-8">
           {step > 1 ? (
-            <button
+            <Button variant="ghost"
               onClick={() => setStep(step - 1)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
               {t("task.back")}
-            </button>
+            </Button>
           ) : (
             <div />
           )}
           {step < 3 ? (
-            <button
+            <Button variant="ghost"
               onClick={() => {
                 if (step === 1) {
                   const badKey = validateServiceDetails(form.category, form.serviceDetails || {});
@@ -1081,17 +1077,17 @@ useEffect(() => {
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
             >
               {t("task.next")}
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+            </Button>
           ) : (
-            <button
+            <Button variant="ghost"
               onClick={handleSubmit}
               disabled={submitting}
               className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               {t("task.submit")}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -1122,7 +1118,7 @@ useEffect(() => {
                   {t("task.geo.chooseDesc") || "Использовать вашу текущую геолокацию как адрес или ввести его вручную?"}
                 </p>
                 <div className="flex flex-col gap-2">
-                  <button
+                  <Button variant="ghost"
                     type="button"
                     disabled={geoChoice.resolving}
                     onClick={() => {
@@ -1139,15 +1135,15 @@ useEffect(() => {
                     ) : (
                       <>📍 {t("task.geo.useCurrent") || "Использовать текущую"}</>
                     )}
-                  </button>
-                  <button
+                  </Button>
+                  <Button variant="ghost"
                     type="button"
                     disabled={geoChoice.resolving}
                     onClick={() => setGeoChoice({ open: false, resolving: false })}
                     className="w-full py-2.5 rounded-xl font-medium border border-border text-foreground hover:bg-secondary transition-colors disabled:opacity-60"
                   >
                     {t("task.geo.enterManually") || "Ввести вручную"}
-                  </button>
+                  </Button>
                 </div>
                 {geoError && geoChoice.resolving && <p className="text-xs text-destructive">{geoError}</p>}
               </motion.div>
@@ -1178,19 +1174,11 @@ useEffect(() => {
                 <h2 className="text-xl font-bold text-foreground">{t("motivation.readyTitle")}</h2>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-start bg-secondary rounded-xl p-3">
-                    <Zap className="w-5 h-5 text-amber-500 shrink-0" />
-                    <p className="text-sm font-medium">{t("motivation.taskers")}</p>
-                  </div>
-                  <div className="flex items-center gap-3 text-start bg-secondary rounded-xl p-3">
-                    <Rocket className="w-5 h-5 text-primary shrink-0" />
-                    <p className="text-sm font-medium">{t("motivation.speed")}</p>
-                  </div>
-                  <div className="flex items-center gap-3 text-start bg-secondary rounded-xl p-3">
                     <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                     <p className="text-sm font-medium">{t("motivation.saved")}</p>
                   </div>
                 </div>
-                <button
+                <Button variant="ghost"
                   onClick={() => {
                     setShowMotivation(false);
                     navigate(`/login?tab=signup&returnTo=${encodeURIComponent("/dashboard")}`);
@@ -1198,7 +1186,7 @@ useEffect(() => {
                   className="w-full py-3 rounded-xl font-bold text-base bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                 >
                   {t("motivation.cta")}
-                </button>
+                </Button>
                 <p className="text-xs text-muted-foreground">{t("motivation.note")}</p>
               </motion.div>
             </motion.div>
