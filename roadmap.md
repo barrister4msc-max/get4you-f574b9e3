@@ -1,4 +1,8 @@
 
+## Integrated homepage hero
+- [x] Integrate compact service buttons into the existing uninterrupted banner
+- [x] Verify desktop/mobile RU and HE, service selection, and no horizontal overflow
+
 ## Order address privacy
 - [x] Inspect deployed views, RPCs, direct table policies and public consumers
 - [x] Apply privacy migration, closed JSON contract and caller-scoped translation inputs

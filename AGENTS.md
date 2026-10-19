@@ -5,4 +5,5 @@
 - Order geography is normalized via src/lib/orderGeo.ts from OpenStreetMap: stable osm:<R|N|W><id> city/neighborhood IDs, neighborhoods only suburb/neighbourhood/quarter (never admin districts); price estimates receive only city/neighborhood IDs, never the address (privacy, language-independent matching).
 - Set language and direction on the shared Layout container, not only Helmet's html tag, so route transitions cannot reset RTL.
 - Scope order-form readability rules to .order-form to keep other application screens' existing typography intact.
+- Keep homepage service selection and introduction in the shared HomeHero component; one parent owns the banner background so the two cannot become separate visual sections.
 - Public task reads use a closed server-side per-service projection behind an invoker view; full task rows remain owner/assignee/admin-only, because JSON, titles, translations and RPC coordinates can independently leak addresses. Never broaden full-row access to bidders to repair metadata consumers.
