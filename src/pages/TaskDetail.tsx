@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useTaskSyncTick, isTaskRemoved } from "@/lib/taskLiveSync";
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -133,8 +134,10 @@ const TaskDetailPage = () => {
   const isAssignedTasker = user?.id === task?.assigned_to;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
+  const taskReqRef = useRef(0);
   const fetchTask = async () => {
     if (!id) return;
+    const reqId = ++taskReqRef.current;
     // Try the full tasks table first (works for owner / assignee / admin).
     let { data } = await supabase
       .from('tasks')
@@ -175,13 +178,16 @@ const TaskDetailPage = () => {
       setAssignedRating({ avg: null, count: 0 });
     }
 
-    setTask(data);
+    if (reqId !== taskReqRef.current) return; // stale response
+    setTask(data && !isTaskRemoved(data.id) ? data : null);
     setLoading(false);
   };
 
+  const syncTick = useTaskSyncTick();
   useEffect(() => {
+    if (syncTick > 0 && isTaskRemoved(id)) { setTask(null); return; }
     fetchTask();
-  }, [id]);
+  }, [id, syncTick]);
 
   // Translate task title & description when locale changes
   useEffect(() => {
@@ -744,7 +750,7 @@ const handlePaymentConfirm = async (overrideProposalId?: string) => {
   if (!task) {
     return (
       <div className="py-8">
-        <div className="container max-w-4xl text-center text-muted-foreground py-20">{t('tasks.noResults')}</div>
+        <div className="container max-w-4xl text-center text-muted-foreground py-20">{t('task.unavailable')}</div>
       </div>
     );
   }

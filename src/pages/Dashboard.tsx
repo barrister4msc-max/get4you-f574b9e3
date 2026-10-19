@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
@@ -184,10 +185,13 @@ const DashboardPage = () => {
   const showTaskerBlocks = isTasker && activeRole === "tasker";
   const showClientBlocks = isClient && activeRole === "client";
 
+  const syncTick = useTaskSyncTick();
+  const dashReqRef = useRef(0);
   useEffect(() => {
     if (!user) return;
+    const reqId = ++dashReqRef.current;
     const fetchAll = async () => {
-      setLoading(true);
+      if (syncTick === 0) setLoading(true);
       const [tasksRes, proposalsRes, releasedRes, allEscrowRes, reviewsRes, assignedRes] = await Promise.all([
         supabase
           .from("tasks")
@@ -220,8 +224,9 @@ const DashboardPage = () => {
           .eq("assigned_to", user.id)
           .order("created_at", { ascending: false }),
       ]);
-      setMyTasks((tasksRes.data as MyTaskRow[]) || []);
-      setAssignedTasks((assignedRes.data as MyTaskRow[]) || []);
+      if (reqId !== dashReqRef.current) return; // stale response
+      setMyTasks(withoutRemoved((tasksRes.data as MyTaskRow[]) || []));
+      setAssignedTasks(withoutRemoved((assignedRes.data as MyTaskRow[]) || []));
 
       // Fetch pending proposal counts for tasks owned by client (badge in My Tasks)
       const ownedTaskIds = ((tasksRes.data as MyTaskRow[]) || []).map((t) => t.id);
@@ -294,7 +299,7 @@ const DashboardPage = () => {
       setLoading(false);
     };
     fetchAll();
-  }, [user]);
+  }, [user, syncTick]);
 
   useEffect(() => {
     const allTitles: { id: string; title: string }[] = [];
@@ -615,7 +620,16 @@ const DashboardPage = () => {
                 <p className="text-sm text-muted-foreground">{t("tasks.noResults")}</p>
               </div>
             ) : (
-              (isClient ? myTasks : displayedTasks).map((task) => (
+              (() => {
+                const all = isClient ? myTasks : displayedTasks;
+                const isHistory = (st?: string | null) => st === "completed" || st === "cancelled";
+                const ordered = [...all.filter((x) => !isHistory(x.status)), ...all.filter((x) => isHistory(x.status))];
+                const firstHistory = ordered.findIndex((x) => isHistory(x.status));
+                return ordered.map((task, idx) => (
+                <div key={task.id}>
+                {idx === firstHistory && (
+                  <h3 className="text-sm font-semibold text-muted-foreground mt-4 mb-2">{t("dashboard.taskHistory")}</h3>
+                )}
                 <Link
                   key={task.id}
                   to={`/tasks/${task.id}`}
@@ -646,7 +660,9 @@ const DashboardPage = () => {
                     </div>
                   </div>
                 </Link>
-              ))
+                </div>
+              ));
+              })()
             )}
           </div>
         )}

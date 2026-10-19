@@ -1,3 +1,4 @@
+import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -150,9 +151,10 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     );
   }, [hasQueryCoords, queryLat, queryLng]);
 
+  const syncTick = useTaskSyncTick();
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    if (syncTick === 0) setLoading(true);
 
     const fetchOwnerLanguages = async (userIds: string[]) => {
       if (userIds.length === 0) return new Map<string, string | null>();
@@ -296,7 +298,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         if (cancelled) return;
 
         setError(null);
-        setTasks(list);
+        setTasks(withoutRemoved(list));
 
         const taskIds = list.map((task) => task.id);
         if (taskIds.length > 0) {
@@ -334,7 +336,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
     return () => {
       cancelled = true;
     };
-  }, [categoryId, coords, language, radiusKm, user?.id]);
+  }, [categoryId, coords, language, radiusKm, user?.id, syncTick]);
 
   const handleRadiusChange = (value: number) => {
     setRadiusKm(value);

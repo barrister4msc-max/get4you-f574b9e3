@@ -1,3 +1,4 @@
+import { useTaskSyncTick, isTaskRemoved } from "@/lib/taskLiveSync";
 import { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -26,7 +27,9 @@ export const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const syncTick = useTaskSyncTick();
+  const visible = notifications.filter(n => !isTaskRemoved(n.task_id));
+  const unreadCount = visible.filter(n => !n.is_read).length;
 
   useEffect(() => {
     if (!user) return;
@@ -63,6 +66,14 @@ export const NotificationBell = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Re-read after task removals / tab return: deleted tasks cascade-delete their notifications.
+  useEffect(() => {
+    if (!user || syncTick === 0) return;
+    supabase.from('notifications').select('*').eq('user_id', user.id)
+      .order('created_at', { ascending: false }).limit(20)
+      .then(({ data }) => setNotifications((data as Notification[]) || []));
+  }, [user, syncTick]);
+
   const markAllRead = async () => {
     if (!user || unreadCount === 0) return;
     await supabase
@@ -97,10 +108,10 @@ export const NotificationBell = () => {
           )}
         </div>
         <div className="max-h-80 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {visible.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">{t('notifications.empty')}</p>
           ) : (
-            notifications.map(n => (
+            visible.map(n => (
               <Link
                 key={n.id}
                 to={

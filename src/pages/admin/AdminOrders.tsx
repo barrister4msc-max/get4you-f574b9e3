@@ -1,3 +1,4 @@
+import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,6 +88,7 @@ export default function AdminOrders() {
     const { data, error } = await supabase.from('tasks').update({ status } as any).eq('id', id).select('id');
     if (error) { toast.error(error.message); return; }
     if (!data || data.length === 0) { toast.error(t('admin.deleteNoRows') || 'No changes saved'); load(); return; }
+    announceTaskChanged(id);
     toast.success(t('admin.statusUpdated'));
     load();
   };
@@ -100,6 +102,7 @@ export default function AdminOrders() {
       load();
       return;
     }
+    announceTaskRemoved(id);
     toast.success(t('admin.deleted'));
     load();
   };
