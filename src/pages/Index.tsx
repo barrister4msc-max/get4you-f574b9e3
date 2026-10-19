@@ -236,10 +236,10 @@ const IndexPage = () => {
               const Icon = cat.icon;
               return (
                 <Button key={cat.key} asChild variant="outline"
-                  className="h-auto aspect-square sm:aspect-auto sm:min-h-32 whitespace-normal flex-col gap-3 p-3 md:p-5 rounded-xl bg-card border-border shadow-card hover:bg-secondary text-center">
+                  className="h-auto aspect-square sm:aspect-auto sm:min-h-32 whitespace-normal flex-col gap-3 p-2 md:p-5 rounded-xl bg-card border-border shadow-card hover:bg-secondary text-center">
                   <Link to={createTaskHref(cat.key as ServiceKey)}>
                     <Icon className="!w-7 !h-7 text-primary" />
-                    <span className="text-lg md:text-xl font-extrabold leading-snug break-words w-full">{t(`cat.${cat.key}`)}</span>
+                    <span className="text-lg md:text-xl font-extrabold leading-snug w-full">{t(`cat.${cat.key}`)}</span>
                   </Link>
                 </Button>
               );
