@@ -134,8 +134,10 @@ const TaskDetailPage = () => {
   const isAssignedTasker = user?.id === task?.assigned_to;
   const hasProposed = proposals.some(p => p.user_id === user?.id && p.status !== 'rejected');
 
+  const taskReqRef = useRef(0);
   const fetchTask = async () => {
     if (!id) return;
+    const reqId = ++taskReqRef.current;
     // Try the full tasks table first (works for owner / assignee / admin).
     let { data } = await supabase
       .from('tasks')
