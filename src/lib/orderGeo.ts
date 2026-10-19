@@ -66,7 +66,7 @@ export function neighborhoodFromPlace(p: NominatimPlace | null, cityNames: strin
   const a = p.address ?? {};
   const parentCity = a.city ?? a.town ?? a.village ?? a.municipality;
   if (parentCity && cityNames.length && !cityNames.includes(parentCity)) return null;
-  return { id, name: p.namedetails?.name ?? p.name ?? a[kind] ?? null };
+  return { id, name: p.name ?? p.namedetails?.name ?? a[kind] ?? null };
 }
 
 export const cityLabel = (g: Pick<OrderGeo, "cityNames">, lang: string) =>
