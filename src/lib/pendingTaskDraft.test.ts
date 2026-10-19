@@ -29,3 +29,19 @@ describe("task draft rules", () => {
     expect(readTaskDraft("user-a")?.title).toBe("guest");
   });
 });
+
+import { resolveServiceKey, categoryIdFor, applyServiceChange } from "./serviceRegistry";
+describe("service selection rules", () => {
+  it("maps cleaning and moving to exact categories", () => {
+    expect(categoryIdFor("cleaning")).toBe("393798f1-d8c8-490d-ba3d-934ca5e3730c");
+    expect(categoryIdFor("moving")).toBe("513b748c-2dbf-47ab-b155-5555e0d33765");
+  });
+  it("rejects unknown or fuzzy service names", () => {
+    expect(resolveServiceKey("clean")).toBeNull();
+    expect(categoryIdFor("Уборка")).toBeNull();
+  });
+  it("chosen cleaning overrides an old moving draft but keeps shared fields", () => {
+    const next = applyServiceChange({ category: "moving", title: "Квартира", budget: 900, budgetMax: 1500 }, "cleaning", { budget: 100, budgetMax: 200 });
+    expect(next).toMatchObject({ category: "cleaning", title: "Квартира", budget: 100, budgetMax: 200 });
+  });
+});

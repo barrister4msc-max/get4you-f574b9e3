@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { SERVICE_KEYS, resolveServiceKey, categoryIdFor, applyServiceChange, type ServiceKey } from "@/lib/serviceRegistry";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { LocationFallback } from "@/components/LocationFallback";
@@ -41,7 +42,8 @@ import {
   Rocket,
 } from "lucide-react";
 
-const categories = ["cleaning", "moving", "repair", "digital", "consulting", "delivery", "beauty", "tutoring"];
+const categories = SERVICE_KEYS;
+const SERVICE_PRICE_DEFAULTS = { budget: 100, budgetMax: 200 };
 
 const CreateTaskPage = () => {
   const {
@@ -96,7 +98,24 @@ const CreateTaskPage = () => {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState(() => {
-    const parsed = readTaskDraft(user?.id ?? null);
+    const urlService = resolveServiceKey(new URLSearchParams(window.location.search).get("category"));
+    const draft = readTaskDraft(user?.id ?? null);
+    const parsed = draft && urlService && draft.category !== urlService
+      ? applyServiceChange({ ...draft }, urlService, SERVICE_PRICE_DEFAULTS)
+      : draft;
+    if (!parsed && urlService) {
+      return {
+        category: urlService as string,
+        taskType: "onsite" as "onsite" | "remote",
+        title: "",
+        description: "",
+        budgetType: "fixed" as "fixed" | "range",
+        budget: 100,
+        budgetMax: 200,
+        urgency: "flexible",
+        location: "",
+      };
+    }
     if (parsed) {
       try {
         return {
@@ -131,6 +150,34 @@ const CreateTaskPage = () => {
   });
 
   const update = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlServiceKey = resolveServiceKey(searchParams.get("category"));
+  const [servicePickerOpen, setServicePickerOpen] = useState(!urlServiceKey && !form.category);
+
+  // Explicit service in the URL (incl. back/forward) always wins.
+  useEffect(() => {
+    if (!urlServiceKey) return;
+    setForm((f) => applyServiceChange(f, urlServiceKey, SERVICE_PRICE_DEFAULTS));
+    setPriceEstimate(null);
+    setServicePickerOpen(false);
+  }, [urlServiceKey]);
+
+  // Draft was restored after sign-in: stop future logins from redirecting here again.
+  useEffect(() => {
+    if (user && searchParams.get("continueDraft") === "1") {
+      try { localStorage.removeItem("task_draft_pending_submit"); } catch { /* ignore */ }
+    }
+  }, [user, searchParams]);
+
+  const changeService = (next: ServiceKey) => {
+    if (form.category !== next) setPriceEstimate(null);
+    setForm((f) => applyServiceChange(f, next, SERVICE_PRICE_DEFAULTS));
+    const sp = new URLSearchParams(searchParams);
+    sp.set("category", next);
+    setSearchParams(sp, { replace: true });
+    setServicePickerOpen(false);
+  };
 
   // Save draft to localStorage on form changes
   useEffect(() => {
@@ -202,7 +249,7 @@ const CreateTaskPage = () => {
       const min = ilsToDisplay(Number((data as { budget_min?: number }).budget_min) || 0);
       const max = ilsToDisplay(Number((data as { budget_max?: number }).budget_max) || 0);
       update({
-        category: (data as { category?: string }).category || form.category,
+        category: form.category || resolveServiceKey((data as { category?: string }).category) || "",
         taskType: (data as { task_type?: string }).task_type as "onsite" | "remote" || form.taskType,
         budget: min > 0 ? min : form.budget,
         budgetMax: max > 0 ? max : form.budgetMax,
@@ -242,7 +289,7 @@ const CreateTaskPage = () => {
       update({
         title: (data as { title?: string }).title || form.title,
         description: (data as { description?: string }).description || form.description,
-        category: (data as { category?: string }).category || form.category,
+        category: form.category || resolveServiceKey((data as { category?: string }).category) || "",
         budget: budget > 0 ? budget : form.budget,
         taskType: (data as { task_type?: string }).task_type as "onsite" | "remote" || form.taskType,
         location: (data as { location?: string }).location || form.location,
@@ -410,26 +457,7 @@ const CreateTaskPage = () => {
         voiceNoteUrl = voiceUrlData.publicUrl;
       }
 
-      let categoryId: string | null = null;
-      if (form.category) {
-        const { data: catData } = await supabase
-          .from("categories")
-          .select("id")
-          .eq("name_en", form.category.charAt(0).toUpperCase() + form.category.slice(1))
-          .maybeSingle();
-
-        if (!catData) {
-          // Try matching by lowercase name_en
-          const { data: catData2 } = await supabase
-            .from("categories")
-            .select("id")
-            .ilike("name_en", `%${form.category}%`)
-            .maybeSingle();
-          categoryId = catData2?.id || null;
-        } else {
-          categoryId = catData.id;
-        }
-      }
+      const categoryId: string | null = categoryIdFor(form.category);
 
       const { data, error } = await supabase
         .from("tasks")
@@ -599,12 +627,22 @@ useEffect(() => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">{t("task.category")}</label>
+                {form.category && !servicePickerOpen ? (
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-primary bg-emerald-50 px-4 py-3" data-testid="selected-service">
+                    <span className="text-sm font-medium text-primary">
+                      {t("task.service.label")}: {t(`cat.${form.category}`)}
+                    </span>
+                    <button type="button" onClick={() => setServicePickerOpen(true)} className="text-sm text-primary underline">
+                      {t("task.service.change")}
+                    </button>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {categories.map((c) => (
                     <button
                       key={c}
                       type="button"
-                      onClick={() => update({ category: c })}
+                      onClick={() => changeService(c)}
                       className={`py-2.5 px-3 rounded-xl border text-sm font-medium transition-all ${
                         form.category === c
                           ? "border-primary bg-emerald-50 text-primary"
@@ -615,6 +653,7 @@ useEffect(() => {
                     </button>
                   ))}
                 </div>
+                )}
               </div>
 
               <div>

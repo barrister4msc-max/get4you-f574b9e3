@@ -1,3 +1,4 @@
+import { categoryIdFor } from "./serviceRegistry";
 import { supabase } from "@/integrations/supabase/client";
 
 export const TASK_DRAFT_KEY = "task_draft";
@@ -100,27 +101,7 @@ export const clearPendingTaskDraft = () => {
   localStorage.removeItem(TASK_DRAFT_PENDING_KEY);
 };
 
-const resolveCategoryId = async (category: string | undefined) => {
-  const normalized = category?.trim();
-  if (!normalized) return null;
-
-  const titleCase = normalized.charAt(0).toUpperCase() + normalized.slice(1);
-  const { data: exactMatch } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("name_en", titleCase)
-    .maybeSingle();
-
-  if (exactMatch?.id) return exactMatch.id;
-
-  const { data: fuzzyMatch } = await supabase
-    .from("categories")
-    .select("id")
-    .ilike("name_en", `%${normalized}%`)
-    .maybeSingle();
-
-  return fuzzyMatch?.id ?? null;
-};
+const resolveCategoryId = async (category: string | undefined) => categoryIdFor(category);
 
 let inFlight: Promise<string | null> | null = null;
 

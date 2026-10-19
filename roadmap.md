@@ -1,4 +1,9 @@
 
+## Service → order form
+- [x] Service cards open the form with the service preselected (exact registry)
+- [x] URL choice beats old draft; AI/voice cannot change it
+- [x] Sign-in restores the draft, never auto-publishes; double publish blocked
+
 ## Task visibility & deletion
 - [x] Server: public reads return only open tasks (verified RPCs/view/RLS)
 - [x] Drafts: owner/version/TTL, single-flight publish

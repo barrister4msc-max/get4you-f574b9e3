@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  createTaskFromPendingDraft,
+  loadPendingTaskDraft,
   hasPendingTaskDraft,
 } from "./pendingTaskDraft";
 
@@ -52,23 +52,12 @@ export async function resolvePostAuthRedirect(
   opts: { returnTo?: string | null } = {}
 ): Promise<PostAuthRedirect> {
   // 1) Pending task draft
+  // Never publish automatically after sign-in: reopen the form with the
+  // restored draft so the user reviews it and presses "Publish" themselves.
   if (hasPendingTaskDraft()) {
-    try {
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("preferred_currency")
-        .eq("user_id", userId)
-        .maybeSingle();
-      const taskId = await createTaskFromPendingDraft({
-        userId,
-        currency: (prof as any)?.preferred_currency || "ILS",
-      });
-      if (taskId) return { path: `/tasks/${taskId}` };
-      return { path: "/dashboard" };
-    } catch (e) {
-      console.error("[postAuth] draft creation failed", e);
-      // fall through to onboarding/dashboard
-    }
+    const draft = loadPendingTaskDraft(userId);
+    const cat = draft?.category ? `&category=${encodeURIComponent(draft.category)}` : "";
+    return { path: `/create-task?continueDraft=1${cat}` };
   }
 
   // 2) Onboarding gate: phone + WhatsApp decision
