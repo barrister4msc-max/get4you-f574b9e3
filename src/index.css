@@ -221,6 +221,8 @@
 @media (min-width: 768px) {
   .homepage main :is(p, a, button, li, dd, dt, label, .text-sm),
   .homepage main [data-state] > div { font-size: 1.125rem; }
+  .homepage main [data-testid="home-services"] a { padding-inline: .75rem; }
+  .homepage main [data-testid="home-services"] a span { font-size: 1.125rem; }
   .homepage main h1 { font-size: 3rem; }
   .homepage main h2 { font-size: 2rem; }
   .homepage main h3 { font-size: 1.25rem; }
