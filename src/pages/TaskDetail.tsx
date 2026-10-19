@@ -1,3 +1,7 @@
+import { CalendarDays } from 'lucide-react';
+import { formatSchedule } from "@/lib/schedule";
+import { describeServiceDetails } from "@/lib/serviceFields";
+import { resolveServiceKey } from "@/lib/serviceRegistry";
 import { useTaskSyncTick, isTaskRemoved } from "@/lib/taskLiveSync";
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -871,7 +875,20 @@ const handlePaymentConfirm = async (overrideProposalId?: string) => {
                   <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{task.city || task.address}</span>
                 )}
                 <span className="flex items-center gap-1"><Clock className="w-4 h-4" />{new Date(task.created_at).toLocaleDateString()}</span>
+                <span className="flex items-center gap-1 text-foreground font-medium" data-testid="task-schedule">
+                  <CalendarDays className="w-4 h-4" />{formatSchedule(task, locale as "en" | "ru" | "he" | "ar")}
+                </span>
               </div>
+              {describeServiceDetails(resolveServiceKey(task.category_id), task.service_details, locale as "en" | "ru" | "he" | "ar").length > 0 && (
+                <dl className="mt-4 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
+                  {describeServiceDetails(resolveServiceKey(task.category_id), task.service_details, locale as "en" | "ru" | "he" | "ar").map((row) => (
+                    <div key={row.label} className="contents">
+                      <dt className="text-muted-foreground">{row.label}</dt>
+                      <dd className="break-words">{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
 
               {photos.length > 0 ? (
                 <div className="mt-4 space-y-3">

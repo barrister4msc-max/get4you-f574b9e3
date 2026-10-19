@@ -4,6 +4,11 @@
 - [x] URL choice beats old draft; AI/voice cannot change it
 - [x] Sign-in restores the draft, never auto-publishes; double publish blocked
 
+## Service fields & execution date
+- [x] Service parameter config (cleaning, moving), auto title
+- [x] "When" block with date popover, time modes, Jerusalem time, client+server checks
+- [x] Shown on review and task page; kept in draft
+
 ## Task visibility & deletion
 - [x] Server: public reads return only open tasks (verified RPCs/view/RLS)
 - [x] Drafts: owner/version/TTL, single-flight publish

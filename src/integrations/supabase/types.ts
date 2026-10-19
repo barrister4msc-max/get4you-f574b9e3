@@ -2271,6 +2271,8 @@ export type Database = {
           currency: string | null
           description: string | null
           due_date: string | null
+          due_time: string | null
+          due_time_end: string | null
           geo_point: unknown
           id: string
           is_urgent: boolean | null
@@ -2279,8 +2281,12 @@ export type Database = {
           longitude: number | null
           photos: string[] | null
           radius_km: number | null
+          schedule_mode: string
+          schedule_timezone: string
+          service_details: Json
           status: Database["public"]["Enums"]["task_status"] | null
           task_type: Database["public"]["Enums"]["task_type"] | null
+          time_mode: string | null
           title: string
           updated_at: string
           user_id: string | null
@@ -2299,6 +2305,8 @@ export type Database = {
           currency?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
+          due_time_end?: string | null
           geo_point?: unknown
           id?: string
           is_urgent?: boolean | null
@@ -2307,8 +2315,12 @@ export type Database = {
           longitude?: number | null
           photos?: string[] | null
           radius_km?: number | null
+          schedule_mode?: string
+          schedule_timezone?: string
+          service_details?: Json
           status?: Database["public"]["Enums"]["task_status"] | null
           task_type?: Database["public"]["Enums"]["task_type"] | null
+          time_mode?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
@@ -2327,6 +2339,8 @@ export type Database = {
           currency?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
+          due_time_end?: string | null
           geo_point?: unknown
           id?: string
           is_urgent?: boolean | null
@@ -2335,8 +2349,12 @@ export type Database = {
           longitude?: number | null
           photos?: string[] | null
           radius_km?: number | null
+          schedule_mode?: string
+          schedule_timezone?: string
+          service_details?: Json
           status?: Database["public"]["Enums"]["task_status"] | null
           task_type?: Database["public"]["Enums"]["task_type"] | null
+          time_mode?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -2963,14 +2981,20 @@ export type Database = {
           currency: string | null
           description: string | null
           due_date: string | null
+          due_time: string | null
+          due_time_end: string | null
           id: string | null
           is_urgent: boolean | null
           latitude: number | null
           longitude: number | null
           photos: string[] | null
           radius_km: number | null
+          schedule_mode: string | null
+          schedule_timezone: string | null
+          service_details: Json | null
           status: Database["public"]["Enums"]["task_status"] | null
           task_type: Database["public"]["Enums"]["task_type"] | null
+          time_mode: string | null
           title: string | null
           updated_at: string | null
           user_id: string | null
@@ -2988,14 +3012,20 @@ export type Database = {
           currency?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
+          due_time_end?: string | null
           id?: string | null
           is_urgent?: boolean | null
           latitude?: never
           longitude?: never
           photos?: string[] | null
           radius_km?: number | null
+          schedule_mode?: string | null
+          schedule_timezone?: string | null
+          service_details?: Json | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_type?: Database["public"]["Enums"]["task_type"] | null
+          time_mode?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -3013,14 +3043,20 @@ export type Database = {
           currency?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
+          due_time_end?: string | null
           id?: string | null
           is_urgent?: boolean | null
           latitude?: never
           longitude?: never
           photos?: string[] | null
           radius_km?: number | null
+          schedule_mode?: string | null
+          schedule_timezone?: string | null
+          service_details?: Json | null
           status?: Database["public"]["Enums"]["task_status"] | null
           task_type?: Database["public"]["Enums"]["task_type"] | null
+          time_mode?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null

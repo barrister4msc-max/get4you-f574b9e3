@@ -1,0 +1,3 @@
+- Service keys map to exact category IDs only in src/lib/serviceRegistry.ts; never match categories by translated name (avoids wrong-category orders).
+- Per-service order parameters live in src/lib/serviceFields.ts config; execution date/time logic lives in src/lib/schedule.ts and is re-validated by a DB trigger on tasks (client checks alone can be bypassed).
+- Task execution date is stored as a local calendar date plus separate time and timezone (Asia/Jerusalem default), never as a UTC timestamp, to avoid day shifts.

@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ServiceDetailsFields } from "@/components/task/ServiceDetailsFields";
+import { WhenBlock } from "@/components/task/WhenBlock";
+import { buildServiceTitle, describeServiceDetails, getServiceFields, sanitizeServiceDetails, validateServiceDetails, type ServiceDetails } from "@/lib/serviceFields";
+import { EMPTY_SCHEDULE, formatSchedule, scheduleToRow, validateSchedule, type Schedule, type ScheduleError } from "@/lib/schedule";
 import { SERVICE_KEYS, resolveServiceKey, categoryIdFor, applyServiceChange, type ServiceKey } from "@/lib/serviceRegistry";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useGeolocation } from "@/hooks/useGeolocation";
@@ -40,6 +44,7 @@ import {
   Users,
   Zap,
   Rocket,
+  CalendarDays,
 } from "lucide-react";
 
 const categories = SERVICE_KEYS;
@@ -113,6 +118,8 @@ const CreateTaskPage = () => {
         budget: 100,
         budgetMax: 200,
         urgency: "flexible",
+        serviceDetails: {} as ServiceDetails,
+        schedule: EMPTY_SCHEDULE as Schedule,
         location: "",
       };
     }
@@ -128,6 +135,8 @@ const CreateTaskPage = () => {
             budget: 100,
             budgetMax: 200,
             urgency: "flexible",
+        serviceDetails: {} as ServiceDetails,
+        schedule: EMPTY_SCHEDULE as Schedule,
             location: "",
           },
           ...parsed,
@@ -145,6 +154,8 @@ const CreateTaskPage = () => {
       budget: 100,
       budgetMax: 200,
       urgency: "flexible",
+        serviceDetails: {} as ServiceDetails,
+        schedule: EMPTY_SCHEDULE as Schedule,
       location: "",
     };
   });
@@ -158,7 +169,7 @@ const CreateTaskPage = () => {
   // Explicit service in the URL (incl. back/forward) always wins.
   useEffect(() => {
     if (!urlServiceKey) return;
-    setForm((f) => applyServiceChange(f, urlServiceKey, SERVICE_PRICE_DEFAULTS));
+    setForm((f) => (f.category === urlServiceKey ? f : { ...applyServiceChange(f, urlServiceKey, SERVICE_PRICE_DEFAULTS), serviceDetails: {} }));
     setPriceEstimate(null);
     setServicePickerOpen(false);
   }, [urlServiceKey]);
@@ -170,9 +181,13 @@ const CreateTaskPage = () => {
     }
   }, [user, searchParams]);
 
+  const [detailsInvalid, setDetailsInvalid] = useState<string | null>(null);
+  const [scheduleError, setScheduleError] = useState<ScheduleError | null>(null);
+  const loc = locale as "en" | "ru" | "he" | "ar";
+
   const changeService = (next: ServiceKey) => {
     if (form.category !== next) setPriceEstimate(null);
-    setForm((f) => applyServiceChange(f, next, SERVICE_PRICE_DEFAULTS));
+    setForm((f) => (f.category === next ? f : { ...applyServiceChange(f, next, SERVICE_PRICE_DEFAULTS), serviceDetails: {} }));
     const sp = new URLSearchParams(searchParams);
     sp.set("category", next);
     setSearchParams(sp, { replace: true });
@@ -379,6 +394,10 @@ const CreateTaskPage = () => {
   const handleSubmit = async () => {
     // Validate first (works for both guests and authed users)
     let hasError = false;
+    const schErr = validateSchedule(form.schedule || EMPTY_SCHEDULE);
+    if (schErr) { setScheduleError(schErr); setStep(2); toast.error(t("task.fix.errors") || "Please fix the highlighted fields"); return; }
+    const badKey = validateServiceDetails(form.category, form.serviceDetails || {});
+    if (badKey) { setDetailsInvalid(badKey); setStep(1); toast.error(t("task.fix.errors") || "Please fix the highlighted fields"); return; }
     if (!form.title.trim()) {
       setTitleError(t("task.title.required") || "Please enter a task title");
       toast.error(t("task.title.required") || "Please enter a task title");
@@ -476,6 +495,8 @@ const CreateTaskPage = () => {
           address: form.location.trim() || null,
           photos: photoUrls.length > 0 ? photoUrls : null,
           voice_note_url: voiceNoteUrl,
+          service_details: sanitizeServiceDetails(form.category, form.serviceDetails || {}),
+          ...scheduleToRow(form.schedule || EMPTY_SCHEDULE),
           status: "open",
           currency,
         })
@@ -656,6 +677,14 @@ useEffect(() => {
                 )}
               </div>
 
+              <ServiceDetailsFields
+                service={form.category}
+                value={form.serviceDetails || {}}
+                locale={loc}
+                invalidKey={detailsInvalid}
+                onChange={(d) => { update({ serviceDetails: d }); setDetailsInvalid(null); }}
+              />
+
               <div>
                 <label className="block text-sm font-medium mb-2">{t("task.type")}</label>
                 <div className="flex gap-2">
@@ -785,6 +814,13 @@ useEffect(() => {
                 </div>
               </div>
 
+              <WhenBlock
+                value={form.schedule || EMPTY_SCHEDULE}
+                locale={loc}
+                error={scheduleError}
+                onChange={(sch) => { update({ schedule: sch }); setScheduleError(null); }}
+              />
+
               <PriceEstimator
                 city={form.location}
                 category={form.category}
@@ -912,6 +948,20 @@ useEffect(() => {
                     {form.location}
                   </div>
                 )}
+                <div className="flex items-center gap-1 text-sm" data-testid="review-schedule">
+                  <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                  {formatSchedule(scheduleToRow(form.schedule || EMPTY_SCHEDULE), loc)}
+                </div>
+                {describeServiceDetails(form.category, form.serviceDetails, loc).length > 0 && (
+                  <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-sm">
+                    {describeServiceDetails(form.category, form.serviceDetails, loc).map((row) => (
+                      <div key={row.label} className="contents">
+                        <dt className="text-muted-foreground">{row.label}</dt>
+                        <dd className="break-words">{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
                 {photoPreviews.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-2">
                     {photoPreviews.map((src, i) => (
@@ -945,8 +995,21 @@ useEffect(() => {
           {step < 3 ? (
             <button
               onClick={() => {
+                if (step === 1) {
+                  const badKey = validateServiceDetails(form.category, form.serviceDetails || {});
+                  if (badKey) {
+                    setDetailsInvalid(badKey);
+                    toast.error(t("task.fix.errors") || "Please fix the highlighted fields");
+                    return;
+                  }
+                  if (!form.title.trim() && getServiceFields(form.category).length > 0) {
+                    update({ title: buildServiceTitle(form.category, form.serviceDetails || {}, loc, t(`cat.${form.category}`)) });
+                  }
+                }
                 if (step === 2) {
                   let bad = false;
+                  const schErr = validateSchedule(form.schedule || EMPTY_SCHEDULE);
+                  if (schErr) { setScheduleError(schErr); bad = true; }
                   if (!form.title.trim()) {
                     setTitleError(t("task.title.required") || "Please enter a task title");
                     bad = true;
