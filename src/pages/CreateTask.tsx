@@ -393,6 +393,10 @@ const CreateTaskPage = () => {
   const handleSubmit = async () => {
     // Validate first (works for both guests and authed users)
     let hasError = false;
+    const schErr = validateSchedule(form.schedule || EMPTY_SCHEDULE);
+    if (schErr) { setScheduleError(schErr); setStep(2); toast.error(t("task.fix.errors") || "Please fix the highlighted fields"); return; }
+    const badKey = validateServiceDetails(form.category, form.serviceDetails || {});
+    if (badKey) { setDetailsInvalid(badKey); setStep(1); toast.error(t("task.fix.errors") || "Please fix the highlighted fields"); return; }
     if (!form.title.trim()) {
       setTitleError(t("task.title.required") || "Please enter a task title");
       toast.error(t("task.title.required") || "Please enter a task title");
