@@ -66,7 +66,7 @@ export function neighborhoodFromPlace(p: NominatimPlace | null, cityNames: strin
   const a = p.address ?? {};
   const parentCity = a.city ?? a.town ?? a.village ?? a.municipality;
   if (parentCity && cityNames.length && !cityNames.includes(parentCity)) return null;
-  return { id, name: p.namedetails?.name ?? p.name ?? a[kind] ?? null };
+  return { id, name: p.name ?? p.namedetails?.name ?? a[kind] ?? null };
 }
 
 export const cityLabel = (g: Pick<OrderGeo, "cityNames">, lang: string) =>
@@ -98,10 +98,15 @@ export type GeoResolveResult = { status: "resolved"; geo: OrderGeo } | { status:
 /** Resolve country/city/neighborhood for coordinates of the order address. */
 export async function resolveOrderGeo(address: string, lat: number, lng: number, lang: string, signal?: AbortSignal): Promise<GeoResolveResult> {
   try {
-    const city = cityFromPlace(await nominatim(lat, lng, 10, lang, signal));
+    // Zoom 10 can land on an administrative district (e.g. "Hadera Subdistrict"); try finer zooms for the settlement.
+    let city: ReturnType<typeof cityFromPlace> = null;
+    for (const z of [10, 12, 13]) {
+      city = cityFromPlace(await nominatim(lat, lng, z, lang, signal));
+      if (city) break;
+    }
     if (!city) return { status: "no_city" };
     const known = [...city.aliases, ...Object.values(city.names).filter(Boolean) as string[]];
-    let nb = null;
+    let nb: ReturnType<typeof neighborhoodFromPlace> = null;
     for (const z of [16, 14]) {
       nb = neighborhoodFromPlace(await nominatim(lat, lng, z, lang, signal), known);
       if (nb) break;
@@ -114,4 +119,12 @@ export async function resolveOrderGeo(address: string, lat: number, lng: number,
   } catch (e) {
     return { status: "error", reason: e instanceof Error ? e.message : "network" };
   }
+}
+
+/** True when the typed address names no form of the resolved city (e.g. typed "Haifa", geocoder found Hadera). */
+export function typedCityMismatch(g: OrderGeo, typed: string): boolean {
+  const t = typed.toLowerCase().replace(/[־–-]/g, " ");
+  const forms = [...g.cityAliases, ...Object.values(g.cityNames)].filter(Boolean).map((x) => String(x).toLowerCase().replace(/[־–-]/g, " "));
+  const parts = forms.flatMap((f) => [f, ...f.split(/\s+/).filter((w) => w.length >= 4)]);
+  return !parts.some((f) => t.includes(f));
 }

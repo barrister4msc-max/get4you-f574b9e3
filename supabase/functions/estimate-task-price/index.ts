@@ -32,8 +32,10 @@ serve(async (req) => {
       service, currency,
       subtype: typeof b?.subtype === "string" && b.subtype ? b.subtype : null,
       areaM2: num(b?.area_m2), windows: num(b?.windows),
-      city: typeof b?.city === "string" ? b.city.trim() : null,
+      cityId: typeof b?.city_id === "string" && /^osm:[RNW][0-9]+$/.test(b.city_id) ? b.city_id : null,
+      neighborhoodId: typeof b?.neighborhood_id === "string" && /^osm:[RNW][0-9]+$/.test(b.neighborhood_id) ? b.neighborhood_id : null,
     };
+    if (!p.cityId) return reply({ status: "unavailable", reason: "city_required" });
 
     // 1) Confirmed tariff (none registered yet).
     const tariff = findTariff(p);
@@ -45,7 +47,7 @@ serve(async (req) => {
       .select("city, service_details, escrow_transactions!inner(amount, currency, status)")
       .eq("status", "completed").eq("category_id", categoryId)
       .eq("escrow_transactions.status", "released").limit(1000);
-    if (p.city) q = q.ilike("city", p.city);
+    q = q.eq("city_id", p.cityId); // same normalized city; neighborhood is not used as a filter yet
     const { data, error } = await q;
     if (error) {
       console.error("estimate history query failed", error.message);

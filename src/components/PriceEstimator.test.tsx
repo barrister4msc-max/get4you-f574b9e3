@@ -17,7 +17,7 @@ describe("PriceEstimator", () => {
     let resolveOld!: (v: unknown) => void;
     invoke.mockImplementationOnce(() => new Promise((r) => { resolveOld = r; }))
           .mockImplementationOnce(() => Promise.resolve({ data: hist(1000), error: null }));
-    const props = { category: "cleaning", city: "Haifa", onUseSuggested: vi.fn() };
+    const props = { category: "cleaning", cityId: "osm:R1382494", neighborhoodId: null, onUseSuggested: vi.fn() };
     const { rerender } = render(<PriceEstimator {...props} serviceDetails={{ area_m2: 100 }} />);
     await act(async () => { vi.advanceTimersByTime(700); });
     rerender(<PriceEstimator {...props} serviceDetails={{ area_m2: 200 }} />);
@@ -30,7 +30,7 @@ describe("PriceEstimator", () => {
   it("never sets budget without a click; error shows retry, no price", async () => {
     const onUse = vi.fn();
     invoke.mockResolvedValueOnce({ data: null, error: new Error("boom") });
-    render(<PriceEstimator category="cleaning" city="" serviceDetails={{ area_m2: 50 }} onUseSuggested={onUse} />);
+    render(<PriceEstimator category="cleaning" cityId={null} neighborhoodId={null} serviceDetails={{ area_m2: 50 }} onUseSuggested={onUse} />);
     await act(async () => { vi.advanceTimersByTime(700); });
     expect(screen.getByText("Retry")).toBeTruthy();
     expect(screen.queryByText(/₪/)).toBeNull();
