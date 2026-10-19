@@ -451,7 +451,6 @@ const CreateTaskPage = () => {
       }
 
       const categoryId: string | null = categoryIdFor(form.category);
-      }
 
       const { data, error } = await supabase
         .from("tasks")
