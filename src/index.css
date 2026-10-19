@@ -175,8 +175,9 @@
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] { gap: .625rem; }
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] a { padding: .75rem; }
 /* Mobile keeps two columns without splitting long names: 16px label (the
-   stated minimum) plus tighter side padding leaves each word on one line. */
-.homepage main [data-testid="home-services"] a { padding-inline: .625rem; }
+   stated minimum), a smaller icon and tighter padding give each word room. */
+.homepage main [data-testid="home-services"] a { padding-inline: .5rem; gap: .375rem; }
+.homepage main [data-testid="home-services"] a svg { width: 1.125rem; height: 1.125rem; }
 .homepage main [data-testid="home-services"] a span {
   font-size: 1rem; font-weight: 600; overflow-wrap: break-word; hyphens: auto;
 }
@@ -221,7 +222,8 @@
 @media (min-width: 768px) {
   .homepage main :is(p, a, button, li, dd, dt, label, .text-sm),
   .homepage main [data-state] > div { font-size: 1.125rem; }
-  .homepage main [data-testid="home-services"] a { padding-inline: .75rem; }
+  .homepage main [data-testid="home-services"] a { padding-inline: .75rem; gap: .5rem; }
+  .homepage main [data-testid="home-services"] a svg { width: 1.375rem; height: 1.375rem; }
   .homepage main [data-testid="home-services"] a span { font-size: 1.125rem; }
   .homepage main h1 { font-size: 3rem; }
   .homepage main h2 { font-size: 2rem; }
