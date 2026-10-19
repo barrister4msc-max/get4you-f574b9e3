@@ -2,6 +2,9 @@ export type Locale = 'en' | 'ru' | 'he' | 'ar';
 
 export const translations: Record<Locale, Record<string, string>> = {
   en: {
+    'geocode.chooseTitle': 'Choose the closest match',
+    'geocode.chooseDesc': 'Found several matches for',
+    'common.cancel': 'Cancel',
     // Nav
     'nav.home': 'Home',
     'nav.tasks': 'Browse Tasks',
@@ -869,6 +872,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'seo.tasks.viewTask': 'View task',
   },
   ru: {
+    'geocode.chooseTitle': 'Выберите подходящий адрес',
+    'geocode.chooseDesc': 'Найдено несколько вариантов для',
+    'common.cancel': 'Отмена',
     'nav.home': 'Главная',
     'nav.tasks': 'Задачи',
     'nav.create': 'Чем помочь?',
@@ -1709,6 +1715,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'seo.tasks.viewTask': 'Посмотреть задачу',
   },
   he: {
+    'geocode.chooseTitle': 'בחרו את הכתובת המתאימה',
+    'geocode.chooseDesc': 'נמצאו כמה התאמות עבור',
+    'common.cancel': 'ביטול',
     'nav.home': 'ראשי',
     'nav.tasks': 'משימות',
     'nav.create': 'במה לעזור?',
@@ -2549,6 +2558,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     'seo.tasks.viewTask': 'צפייה במשימה',
   },
   ar: {
+    'geocode.chooseTitle': 'اختر العنوان الأنسب',
+    'geocode.chooseDesc': 'تم العثور على عدة نتائج لـ',
+    'common.cancel': 'إلغاء',
     'nav.home': 'الرئيسية',
     'nav.tasks': 'المهام',
     'nav.create': 'كيف نساعدك؟',
