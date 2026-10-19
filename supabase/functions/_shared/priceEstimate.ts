@@ -6,7 +6,8 @@ export type EstimateParams = {
   subtype?: string | null;      // e.g. cleaning_type
   areaM2?: number | null;
   windows?: number | null;
-  city?: string | null;
+  cityId?: string | null;        // stable osm:R… city ID — never the private address
+  neighborhoodId?: string | null;
   currency: string;             // ISO code, major units
 };
 
@@ -114,5 +115,5 @@ export function parseEstimateResponse(x: unknown): EstimateResult {
 
 /** Request identity: any change here makes previous estimates stale. */
 export function estimateKey(p: EstimateParams): string {
-  return JSON.stringify([p.service, p.subtype ?? null, p.areaM2 ?? null, p.windows ?? null, (p.city ?? "").trim().toLowerCase(), p.currency]);
+  return JSON.stringify([p.service, p.subtype ?? null, p.areaM2 ?? null, p.windows ?? null, p.cityId ?? null, p.neighborhoodId ?? null, p.currency]);
 }

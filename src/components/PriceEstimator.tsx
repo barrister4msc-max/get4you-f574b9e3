@@ -28,13 +28,14 @@ const TXT: Record<string, Record<L, string>> = {
 interface Props {
   category: string;
   serviceDetails: Record<string, unknown>;
-  city: string;
+  cityId: string | null;
+  neighborhoodId: string | null;
   /** Called only on explicit click; never auto-overwrites a manual budget. */
   onUseSuggested: (price: number) => void;
   onEstimate?: (e: EstimateSummary | null) => void;
 }
 
-export function buildEstimateParams(category: string, sd: Record<string, unknown>, city: string, currency: string): EstimateParams | null {
+export function buildEstimateParams(category: string, sd: Record<string, unknown>, cityId: string | null, neighborhoodId: string | null, currency: string): EstimateParams | null {
   const service = resolveServiceKey(category);
   if (!service) return null;
   const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v)) ? Number(v) : null);
@@ -43,15 +44,15 @@ export function buildEstimateParams(category: string, sd: Record<string, unknown
     subtype: typeof sd.cleaning_type === "string" ? sd.cleaning_type : null,
     areaM2: n(sd.area_m2),
     windows: sd.windows === true ? n(sd.windows_count) : null,
-    city: city || null,
+    cityId, neighborhoodId,
   };
 }
 
-export const PriceEstimator = ({ category, serviceDetails, city, onUseSuggested, onEstimate }: Props) => {
+export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodId, onUseSuggested, onEstimate }: Props) => {
   const { locale, currency } = useLanguage();
   const loc = (["en", "ru", "he", "ar"].includes(locale) ? locale : "en") as L;
   const fp = useFormatPrice();
-  const params = buildEstimateParams(category, serviceDetails || {}, city, currency);
+  const params = buildEstimateParams(category, serviceDetails || {}, cityId, neighborhoodId, currency);
   const key = params ? estimateKey(params) : null;
   const [state, setState] = useState<{ key: string; result: EstimateResult } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,7 +72,7 @@ export const PriceEstimator = ({ category, serviceDetails, city, onUseSuggested,
       try {
         const { data, error } = await supabase.functions.invoke("estimate-task-price", {
           body: { service: params.service, category_id: categoryIdFor(params.service), subtype: params.subtype,
-            area_m2: params.areaM2, windows: params.windows, city: params.city, currency: params.currency },
+            area_m2: params.areaM2, windows: params.windows, city_id: params.cityId, neighborhood_id: params.neighborhoodId, currency: params.currency },
           signal: ctrl.signal,
         });
         result = error ? { status: "error", reason: "request_failed" } : parseEstimateResponse(data);

@@ -73,6 +73,6 @@ describe("contract", () => {
   });
   it("key changes with area, subtype, windows, city, currency", () => {
     const k = estimateKey(P());
-    for (const o of [{ areaM2: 101 }, { subtype: "deep" }, { windows: 2 }, { city: "Haifa" }, { currency: "USD" }]) expect(estimateKey(P(o))).not.toBe(k);
+    for (const o of [{ areaM2: 101 }, { subtype: "deep" }, { windows: 2 }, { cityId: "osm:R1" }, { neighborhoodId: "osm:N2" }, { currency: "USD" }]) expect(estimateKey(P(o))).not.toBe(k);
   });
 });
