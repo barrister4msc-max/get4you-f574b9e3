@@ -1,4 +1,11 @@
 
+## Final homepage and consistency audit
+- [ ] Move existing services above introduction; improve form readability and mobile targets
+- [ ] Remove unconfirmed figures and technical/empty UI
+- [ ] Verify RU/EN/HE and safe order/draft flows
+- [ ] Audit deletion, notifications and server behavior without production writes
+- [ ] Report results, required settings and blocked isolated write checks
+
 ## Service → order form
 - [x] Service cards open the form with the service preselected (exact registry)
 - [x] URL choice beats old draft; AI/voice cannot change it
