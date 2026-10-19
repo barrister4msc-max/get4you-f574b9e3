@@ -85,6 +85,7 @@ const CreateTaskPage = () => {
   const [categorizing, setCategorizing] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const publishLockRef = useRef(false);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [priceEstimate, setPriceEstimate] = useState<{
@@ -360,6 +361,8 @@ const CreateTaskPage = () => {
       return;
     }
 
+    if (publishLockRef.current) return;
+    publishLockRef.current = true;
     setSubmitting(true);
     try {
       // Make sure coordinates match the address typed in by the user.
@@ -474,6 +477,7 @@ const CreateTaskPage = () => {
             : null;
       toast.error(message || t("task.publish.error") || "Failed to publish task");
     } finally {
+      publishLockRef.current = false;
       setSubmitting(false);
     }
   };
