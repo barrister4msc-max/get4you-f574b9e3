@@ -12,7 +12,7 @@ import { TaskAIAssistant } from "@/components/TaskAIAssistant";
 import { PriceEstimator, PriceFeedback } from "@/components/PriceEstimator";
 import { getMinPrice, formatMinPriceMessage, formatMinPriceLabel } from "@/lib/pricing";
 import {
-  TASK_DRAFT_KEY,
+  clearPendingTaskDraft,
   savePendingTaskDraft,
   readTaskDraft,
   writeTaskDraft,
