@@ -14,6 +14,8 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { TaskAIAssistant } from "@/components/TaskAIAssistant";
+import { OrderGeoStatus, GEO_TXT } from "@/components/task/OrderGeoStatus";
+import { resolveOrderGeo, isGeoStale, cityLabel, type OrderGeo } from "@/lib/orderGeo";
 import { PriceEstimator, PriceFeedback, type EstimateSummary } from "@/components/PriceEstimator";
 import { getMinPrice, formatMinPriceMessage, formatMinPriceLabel } from "@/lib/pricing";
 import {
@@ -115,6 +117,7 @@ const CreateTaskPage = () => {
         budgetMax: 200,
         urgency: "flexible",
         serviceDetails: {} as ServiceDetails,
+        geo: null as OrderGeo | null,
         schedule: EMPTY_SCHEDULE as Schedule,
         location: "",
       };
@@ -132,6 +135,7 @@ const CreateTaskPage = () => {
             budgetMax: 200,
             urgency: "flexible",
         serviceDetails: {} as ServiceDetails,
+        geo: null as OrderGeo | null,
         schedule: EMPTY_SCHEDULE as Schedule,
             location: "",
           },
@@ -151,6 +155,7 @@ const CreateTaskPage = () => {
       budgetMax: 200,
       urgency: "flexible",
         serviceDetails: {} as ServiceDetails,
+        geo: null as OrderGeo | null,
         schedule: EMPTY_SCHEDULE as Schedule,
       location: "",
     };
@@ -328,6 +333,27 @@ const CreateTaskPage = () => {
   // Tracks the address string for which the current lat/lng were geocoded,
   // so we know if the user changed the address since the last geocode.
   const [geocodedFor, setGeocodedFor] = useState<string | null>(null);
+  // Normalized geography (country / city / neighborhood) of the ORDER address.
+  const [geoStatus, setGeoStatus] = useState<"idle" | "resolving" | "resolved" | "no_city" | "error">("idle");
+  const [deviceSuggestion, setDeviceSuggestion] = useState<{ label: string; lat: number; lng: number } | null>(null);
+  const geoReqRef = useRef(0);
+  const formLocRef = useRef("");
+  formLocRef.current = form.location;
+  const applyResolvedAddress = useCallback(async (address: string, lat: number, lng: number) => {
+    const my = ++geoReqRef.current;
+    setGeoStatus("resolving");
+    const r = await resolveOrderGeo(address, lat, lng, locale);
+    if (my !== geoReqRef.current) return; // a newer address superseded this one
+    if (r.status === "resolved") {
+      setForm((f) => (f.location.trim() === address.trim() ? { ...f, geo: r.geo } : f));
+      setGeoStatus("resolved");
+    } else setGeoStatus(r.status);
+  }, [locale]);
+  /** Any address change drops the old city AND neighborhood together. */
+  const setAddressText = (text: string) => {
+    if (text.trim() !== form.location.trim()) { geoReqRef.current++; setGeoStatus("idle"); }
+    update({ location: text, ...(isGeoStale(form.geo, text) ? { geo: null } : {}) });
+  };
 
   /** Forward-geocode the address the user typed in, so the saved task has
    *  coordinates that actually match its address. */
@@ -341,6 +367,7 @@ const CreateTaskPage = () => {
         const r = await searchAddress(query);
         if (r) {
           setGeocodedFor(query);
+          void applyResolvedAddress(query, r.lat, r.lng);
           // Keep the user's typed text but normalize coords via setManualLocation
           // (searchAddress already calls setManualLocation internally with display_name)
         }
@@ -348,7 +375,7 @@ const CreateTaskPage = () => {
         setAddressGeocoding(false);
       }
     },
-    [geocodedFor, searchAddress],
+    [geocodedFor, searchAddress, applyResolvedAddress],
   );
 
   // On entering step 2 (address step) — ask the user how they want to set the address
@@ -377,15 +404,22 @@ const CreateTaskPage = () => {
       const address = await reverseGeocode(latitude, longitude, locale);
       if (cancelled) return;
       const resolved = address ?? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-      update({ location: resolved });
-      setGeocodedFor(resolved);
       setGeoChoice({ open: false, resolving: false });
+      const current = formLocRef.current.trim();
+      if (current && current !== resolved) {
+        // Device location may only SUGGEST an address; it never overwrites the chosen order place.
+        setDeviceSuggestion({ label: resolved, lat: latitude, lng: longitude });
+        return;
+      }
+      update({ location: resolved, geo: null });
+      setGeocodedFor(resolved);
+      void applyResolvedAddress(resolved, latitude, longitude);
       toast.success(t("task.geo.applied") || "Адрес определён");
     })();
     return () => {
       cancelled = true;
     };
-  }, [geoChoice.resolving, latitude, longitude, geoSource, geoError, reverseGeocode, locale, t]);
+  }, [geoChoice.resolving, latitude, longitude, geoSource, geoError, reverseGeocode, locale, t, applyResolvedAddress]);
 
   const handleSubmit = async () => {
     // Validate first (works for both guests and authed users)
@@ -429,19 +463,22 @@ const CreateTaskPage = () => {
     try {
       // Make sure coordinates match the address typed in by the user.
       // If the user typed an address but never triggered geocoding, do it now.
-      let finalLat: number | null = latitude ?? null;
-      let finalLng: number | null = longitude ?? null;
+      let finalLat: number | null = form.geo?.lat ?? null;
+      let finalLng: number | null = form.geo?.lng ?? null;
+      let finalGeo: OrderGeo | null = isGeoStale(form.geo, form.location) ? null : form.geo ?? null;
       if (form.taskType === "remote") {
         finalLat = null;
         finalLng = null;
       } else {
         const typed = form.location.trim();
-        if (typed && (geocodedFor !== typed || finalLat == null || finalLng == null)) {
+        if (typed && (!finalGeo || finalLat == null || finalLng == null)) {
           try {
             const r = await searchAddress(typed);
             if (r) {
               finalLat = r.lat;
               finalLng = r.lng;
+              const g = await resolveOrderGeo(typed, r.lat, r.lng, locale);
+              finalGeo = g.status === "resolved" ? g.geo : null;
             }
           } catch {
             // Non-fatal — we'll still publish with whatever coords we have.
@@ -489,6 +526,11 @@ const CreateTaskPage = () => {
           budget_max: form.budgetMax,
           is_urgent: form.urgency === "urgent",
           address: form.location.trim() || null,
+          city: form.taskType === "remote" ? null : finalGeo ? cityLabel(finalGeo, locale) : null,
+          country_code: form.taskType === "remote" ? null : finalGeo?.countryCode ?? null,
+          city_id: form.taskType === "remote" ? null : finalGeo?.cityId ?? null,
+          neighborhood_id: form.taskType === "remote" ? null : finalGeo?.neighborhoodId ?? null,
+          geo_source: form.taskType === "remote" || !finalGeo ? null : "osm",
           photos: photoUrls.length > 0 ? photoUrls : null,
           voice_note_url: voiceNoteUrl,
           service_details: sanitizeServiceDetails(form.category, form.serviceDetails || {}),
@@ -753,7 +795,7 @@ useEffect(() => {
                 <div className="flex gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={getCurrentLocation}
+                    onClick={() => { setGeoChoice({ open: false, resolving: true }); getCurrentLocation(); }}
                     className="px-3 py-2 rounded-lg border text-xs hover:bg-secondary"
                   >
                     {geoLoading ? "Определяем..." : "📍 Моя геолокация"}
@@ -774,12 +816,13 @@ useEffect(() => {
                   loading={geoLoading}
                   onSearchAddress={async (q) => {
                     const r = await searchAddress(q);
-                    if (r) update({ location: r.label });
+                    if (r) { setAddressText(r.label); setGeocodedFor(r.label); void applyResolvedAddress(r.label, r.lat, r.lng); }
                     return r;
                   }}
                   onPickCity={(lat, lng, name) => {
                     setManualLocation(lat, lng, name);
-                    update({ location: name });
+                    setAddressText(name);
+                    void applyResolvedAddress(name, lat, lng);
                   }}
                   onClear={clearLocation}
                 />
@@ -793,7 +836,7 @@ useEffect(() => {
                   <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     value={form.location}
-                    onChange={(e) => update({ location: e.target.value })}
+                    onChange={(e) => setAddressText(e.target.value)}
                     onBlur={(e) => {
                       // After the user finishes typing an address, resolve it to
                       // coordinates so the saved task carries an accurate geo point.
@@ -808,6 +851,20 @@ useEffect(() => {
                     <Loader2 className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-muted-foreground" />
                   )}
                 </div>
+                <OrderGeoStatus status={geoStatus} geo={isGeoStale(form.geo, form.location) ? null : form.geo ?? null} locale={loc}
+                  onRetry={() => { const g = form.location.trim(); if (g) { setGeocodedFor(null); void geocodeTypedAddress(g); } }} />
+                {deviceSuggestion && (
+                  <div className="mt-2 rounded-xl border border-border bg-secondary/50 p-3 text-xs space-y-2" data-testid="device-suggestion">
+                    <p>{GEO_TXT.deviceDiffers[loc]}: <span className="font-medium">{deviceSuggestion.label}</span></p>
+                    <div className="flex gap-2">
+                      <button type="button" className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground font-medium"
+                        onClick={() => { const s = deviceSuggestion; setDeviceSuggestion(null); setAddressText(s.label); setGeocodedFor(s.label); void applyResolvedAddress(s.label, s.lat, s.lng); }}>
+                        {GEO_TXT.useDevice[loc]}
+                      </button>
+                      <button type="button" className="px-3 py-1.5 rounded-lg border" onClick={() => setDeviceSuggestion(null)}>{GEO_TXT.keep[loc]}</button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <WhenBlock
@@ -818,7 +875,8 @@ useEffect(() => {
               />
 
               <PriceEstimator
-                city={form.location}
+                cityId={form.taskType === "remote" || isGeoStale(form.geo, form.location) ? null : form.geo?.cityId ?? null}
+                neighborhoodId={form.taskType === "remote" || isGeoStale(form.geo, form.location) ? null : form.geo?.neighborhoodId ?? null}
                 category={form.category}
                 serviceDetails={form.serviceDetails || {}}
                 onUseSuggested={(p) => update({ budget: p })}
