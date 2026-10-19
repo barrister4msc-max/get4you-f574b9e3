@@ -18,8 +18,8 @@ export function HomeHero({ serviceLabel, services, title, description, image, ch
     <section className="bg-gradient-hero py-4 md:py-6" data-testid="home-banner" aria-labelledby="home-hero-title">
       <div className="container px-4 sm:px-8">
         <nav aria-labelledby="home-services-title">
-          <p id="home-services-title" className="text-sm font-semibold text-foreground">{serviceLabel}</p>
-          <div className="mt-2 grid grid-cols-2 gap-2 md:flex md:flex-wrap" data-testid="home-services">
+          <p id="home-services-title" className="text-[1.25rem] leading-[1.3] font-bold text-foreground md:text-[1.5rem]">{serviceLabel}</p>
+          <div className="mt-3.5 grid grid-cols-2 gap-2 md:flex md:flex-wrap" data-testid="home-services">
             {services.map(({ key, label, icon: Icon }) => (
               <Button key={key} asChild
                 className="h-auto min-h-[52px] min-w-0 justify-start gap-2 rounded-md border border-primary/25 bg-background/90 px-3 py-3 text-start text-lg font-semibold text-foreground whitespace-normal shadow-none">

@@ -170,7 +170,7 @@ export const Header = () => {
             </button>
           </div>
 
-          <SheetContent side="right" className="md:hidden w-[86vw] max-w-sm border-border bg-card px-0">
+          <SheetContent side="right" className={`md:hidden w-[86vw] max-w-sm border-border bg-card px-0${location.pathname === '/' ? ' homepage-nav' : ''}`}>
             <SheetTitle className="sr-only">Mobile navigation</SheetTitle>
             <div className="flex h-full flex-col pt-8">
               <div className="border-b border-border px-4 pb-4">
