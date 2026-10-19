@@ -163,6 +163,13 @@ const CreateTaskPage = () => {
     setServicePickerOpen(false);
   }, [urlServiceKey]);
 
+  // Draft was restored after sign-in: stop future logins from redirecting here again.
+  useEffect(() => {
+    if (user && searchParams.get("continueDraft") === "1") {
+      try { localStorage.removeItem("task_draft_pending_submit"); } catch { /* ignore */ }
+    }
+  }, [user, searchParams]);
+
   const changeService = (next: ServiceKey) => {
     if (form.category !== next) setPriceEstimate(null);
     setForm((f) => applyServiceChange(f, next, SERVICE_PRICE_DEFAULTS));
