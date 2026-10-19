@@ -1,7 +1,7 @@
 
 ## Flow4You appearance restoration
-- [ ] Restore original banner gradient, accent heading and separate bright illustration
-- [ ] Preserve compact services and verify mobile/desktop RTL without changing order flows
+- [x] Restore original banner gradient, accent heading and separate bright illustration
+- [x] Preserve compact services and verify mobile/desktop RTL without changing order flows
 
 ## Final homepage and consistency audit
 - [x] Move existing services above introduction; improve form readability and mobile targets
