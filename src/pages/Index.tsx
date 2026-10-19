@@ -236,7 +236,7 @@ const IndexPage = () => {
               const Icon = cat.icon;
               return (
                 <Button key={cat.key} asChild variant="outline"
-                  className="h-auto min-h-[68px] sm:min-h-[72px] items-start justify-start gap-2.5 whitespace-normal px-3 py-3 sm:px-4 text-start rounded-xl bg-card border-border shadow-card hover:bg-secondary">
+                  className="h-auto min-h-[68px] sm:min-h-[72px] items-center justify-start gap-2.5 whitespace-normal px-3 py-3 sm:px-4 text-start rounded-xl bg-card border-border shadow-card hover:bg-secondary">
                   <Link to={createTaskHref(cat.key as ServiceKey)}>
                     <Icon className="!w-5 !h-5 shrink-0 text-primary" />
                     <span className="text-base font-semibold leading-snug">{t(`cat.${cat.key}`)}</span>
