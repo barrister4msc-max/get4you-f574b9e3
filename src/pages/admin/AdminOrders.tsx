@@ -84,16 +84,22 @@ export default function AdminOrders() {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from('tasks').update({ status } as any).eq('id', id);
+    const { data, error } = await supabase.from('tasks').update({ status } as any).eq('id', id).select('id');
     if (error) { toast.error(error.message); return; }
+    if (!data || data.length === 0) { toast.error(t('admin.deleteNoRows') || 'No changes saved'); load(); return; }
     toast.success(t('admin.statusUpdated'));
     load();
   };
 
   const deleteTask = async (id: string) => {
     if (!confirm(t('admin.deleteConfirm'))) return;
-    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    const { data, error } = await supabase.from('tasks').delete().eq('id', id).select('id');
     if (error) { toast.error(error.message); return; }
+    if (!data || data.length === 0) {
+      toast.error(t('admin.deleteNoRows') || 'Nothing was deleted: no access or task already removed');
+      load();
+      return;
+    }
     toast.success(t('admin.deleted'));
     load();
   };
