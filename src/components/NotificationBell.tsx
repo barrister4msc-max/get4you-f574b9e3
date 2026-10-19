@@ -1,3 +1,4 @@
+import { useTaskSyncTick, isTaskRemoved } from "@/lib/taskLiveSync";
 import { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -100,7 +101,7 @@ export const NotificationBell = () => {
           {notifications.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">{t('notifications.empty')}</p>
           ) : (
-            notifications.map(n => (
+            notifications.filter(n => !isTaskRemoved(n.task_id)).map(n => (
               <Link
                 key={n.id}
                 to={

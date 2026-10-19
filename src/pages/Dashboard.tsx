@@ -1,5 +1,5 @@
 import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useFormatPrice } from "@/hooks/useFormatPrice";

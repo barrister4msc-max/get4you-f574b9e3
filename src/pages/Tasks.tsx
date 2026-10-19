@@ -1,5 +1,5 @@
 import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
