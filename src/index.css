@@ -184,11 +184,6 @@
 /* Banner button states, scoped to the homepage hero only.
    Hover yellow applies only on pointer devices so taps on touch screens
    never leave a stuck yellow state behind. */
-.homepage main [data-testid="home-services"] a:hover,
-.homepage main .home-banner-actions a:not(.bg-accent):hover {
-  background: hsl(var(--background) / 0.95);
-  color: hsl(var(--foreground));
-}
 .homepage main [data-testid="home-services"] a:active,
 .homepage main .home-banner-actions a:not(.bg-accent):active {
   background: hsl(var(--accent) / 0.3);
