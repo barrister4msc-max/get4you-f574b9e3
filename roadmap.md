@@ -1,4 +1,12 @@
 
+## Order address privacy
+- [x] Inspect deployed views, RPCs, direct table policies and public consumers
+- [x] Apply privacy migration, closed JSON contract and caller-scoped translation inputs
+- [x] Test five synthetic PostgreSQL roles in isolation; verify deployed guest/unrelated API and detail page
+- [x] Report applied environment and verification limits in address privacy report
+- [ ] Verify production owner/assignee/admin readback — blocked by unavailable authorized sessions for an existing moving task
+- [ ] Verify nearby/recommended HTTP results — blocked by existing ambiguous overloads PGRST203; search redesign outside this task
+
 ## Flow4You appearance restoration
 - [x] Restore original banner gradient, accent heading and separate bright illustration
 - [x] Preserve compact services and verify mobile/desktop RTL without changing order flows

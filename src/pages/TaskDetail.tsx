@@ -196,6 +196,13 @@ const TaskDetailPage = () => {
   // Translate task title & description when locale changes
   useEffect(() => {
     if (!task) return;
+    // Moving copy may contain private addresses in old translations. Keep the
+    // authorized original, or the safe server projection, rather than a cache.
+    if (task.category_id === '513b748c-2dbf-47ab-b155-5555e0d33765') {
+      setTranslatedTitle(null);
+      setTranslatedDescription(null);
+      return;
+    }
     // Check cache first
     const cached = getCachedTranslation(locale, task.id);
     if (cached) {

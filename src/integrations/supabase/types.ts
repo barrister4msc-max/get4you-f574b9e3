@@ -324,13 +324,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "chat_messages_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       complaints: {
@@ -377,13 +370,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "complaints_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -540,13 +526,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "disputes_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -843,13 +822,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "escrow_transactions_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       esek_patur_applications: {
@@ -1038,13 +1010,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "notifications_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       order_messages: {
@@ -1209,13 +1174,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1403,13 +1361,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payouts_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1655,13 +1606,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "proposals_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       rate_limit: {
@@ -1723,13 +1667,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1962,13 +1899,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "task_assignments_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: true
-            referencedRelation: "tasks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       task_price_audit: {
@@ -2018,13 +1948,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_price_audit_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2246,13 +2169,6 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasker_task_notifications_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2892,13 +2808,6 @@ export type Database = {
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "orders_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       payment_reconciliation: {
@@ -2989,16 +2898,20 @@ export type Database = {
           budget_min: number | null
           category_id: string | null
           city: string | null
+          city_id: string | null
+          country_code: string | null
           created_at: string | null
           currency: string | null
           description: string | null
           due_date: string | null
           due_time: string | null
           due_time_end: string | null
+          geo_source: string | null
           id: string | null
           is_urgent: boolean | null
           latitude: number | null
           longitude: number | null
+          neighborhood_id: string | null
           photos: string[] | null
           radius_km: number | null
           schedule_mode: string | null
@@ -3011,78 +2924,17 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           voice_note_url: string | null
+          categories: {
+            created_at: string
+            icon: string | null
+            id: string
+            name_en: string
+            name_he: string | null
+            name_ru: string | null
+            sort_order: number | null
+          } | null
         }
-        Insert: {
-          address?: never
-          assigned_to?: string | null
-          budget_fixed?: number | null
-          budget_max?: number | null
-          budget_min?: number | null
-          category_id?: string | null
-          city?: string | null
-          created_at?: string | null
-          currency?: string | null
-          description?: string | null
-          due_date?: string | null
-          due_time?: string | null
-          due_time_end?: string | null
-          id?: string | null
-          is_urgent?: boolean | null
-          latitude?: never
-          longitude?: never
-          photos?: string[] | null
-          radius_km?: number | null
-          schedule_mode?: string | null
-          schedule_timezone?: string | null
-          service_details?: Json | null
-          status?: Database["public"]["Enums"]["task_status"] | null
-          task_type?: Database["public"]["Enums"]["task_type"] | null
-          time_mode?: string | null
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          voice_note_url?: string | null
-        }
-        Update: {
-          address?: never
-          assigned_to?: string | null
-          budget_fixed?: number | null
-          budget_max?: number | null
-          budget_min?: number | null
-          category_id?: string | null
-          city?: string | null
-          created_at?: string | null
-          currency?: string | null
-          description?: string | null
-          due_date?: string | null
-          due_time?: string | null
-          due_time_end?: string | null
-          id?: string | null
-          is_urgent?: boolean | null
-          latitude?: never
-          longitude?: never
-          photos?: string[] | null
-          radius_km?: number | null
-          schedule_mode?: string | null
-          schedule_timezone?: string | null
-          service_details?: Json | null
-          status?: Database["public"]["Enums"]["task_status"] | null
-          task_type?: Database["public"]["Enums"]["task_type"] | null
-          time_mode?: string | null
-          title?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          voice_note_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -3261,6 +3113,24 @@ export type Database = {
         Returns: undefined
       }
       auto_complete_stale_tasks: { Args: never; Returns: number }
+      categories: {
+        Args: { "": Database["public"]["Views"]["tasks_public"]["Row"] }
+        Returns: {
+          created_at: string
+          icon: string | null
+          id: string
+          name_en: string
+          name_he: string | null
+          name_ru: string | null
+          sort_order: number | null
+        }
+        SetofOptions: {
+          from: "tasks_public"
+          to: "categories"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
       check_ai_rate_limit: {
         Args: {
           _function_name: string
@@ -3617,6 +3487,44 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_task_rows: {
+        Args: never
+        Returns: {
+          address: string
+          assigned_to: string
+          budget_fixed: number
+          budget_max: number
+          budget_min: number
+          category_id: string
+          city: string
+          city_id: string
+          country_code: string
+          created_at: string
+          currency: string
+          description: string
+          due_date: string
+          due_time: string
+          due_time_end: string
+          geo_source: string
+          id: string
+          is_urgent: boolean
+          latitude: number
+          longitude: number
+          neighborhood_id: string
+          photos: string[]
+          radius_km: number
+          schedule_mode: string
+          schedule_timezone: string
+          service_details: Json
+          status: Database["public"]["Enums"]["task_status"]
+          task_type: Database["public"]["Enums"]["task_type"]
+          time_mode: string
+          title: string
+          updated_at: string
+          user_id: string
+          voice_note_url: string
+        }[]
+      }
       get_public_tasks_seo: {
         Args: never
         Returns: {
@@ -3881,6 +3789,18 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      public_task_description: {
+        Args: { category: string; original: string }
+        Returns: string
+      }
+      public_task_service_details: {
+        Args: { category: string; details: Json }
+        Returns: Json
+      }
+      public_task_title: {
+        Args: { category: string; original: string }
+        Returns: string
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

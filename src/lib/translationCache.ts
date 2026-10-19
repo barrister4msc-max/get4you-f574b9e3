@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'task-translations-v2';
+// Discard copies cached before server-side task address protection.
+const STORAGE_KEY = 'task-translations-v3-private-safe';
 const MAX_ENTRIES = 500;
 
 interface CacheEntry {
