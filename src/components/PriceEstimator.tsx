@@ -115,7 +115,7 @@ export const PriceEstimator = ({ category, serviceDetails, city, onUseSuggested,
         </div>
       )}
       {!loading && current?.status === "available" && (() => {
-        const cur = current.currency;
+        const cur = current.currency as "ILS" | "USD";
         const rec = current.method === "tariff" ? current.total : current.recommended;
         return (
           <>
