@@ -1162,7 +1162,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
     'general.search': 'Поиск...',
-    'footer.rights': 'Все права защищены.',
 
     'footer.terms': 'Условия',
     'footer.privacy': 'Конфиденциальность',
@@ -2004,7 +2003,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
     'general.search': 'חיפוש...',
-    'footer.rights': 'כל הזכויות שמורות.',
     'footer.terms': 'תנאים',
     'footer.privacy': 'פרטיות',
     'footer.cookies': 'עוגיות',
@@ -2845,7 +2843,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     'currency.usd': 'USD',
     'currency.ils': 'ILS',
     'general.search': 'بحث...',
-    'footer.rights': 'جميع الحقوق محفوظة.',
     'footer.terms': 'الشروط',
     'footer.privacy': 'الخصوصية',
     'footer.cookies': 'ملفات تعريف الارتباط',
