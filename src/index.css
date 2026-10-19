@@ -147,7 +147,7 @@
 /* --- Page body: phone sizes (min 16px everywhere) ------------------ */
 .homepage main :is(p, a, button, li, dd, dt, label, .text-sm) { font-size: 1rem; line-height: 1.55; }
 .homepage main .text-xs { font-size: .875rem; }
-.homepage main h1 { font-size: 2.125rem; line-height: 1.15; font-weight: 800; overflow-wrap: break-word; }
+.homepage main h1 { font-size: 2.125rem; line-height: 1.15; font-weight: 800; overflow-wrap: break-word; hyphens: auto; }
 .homepage main h2 { font-size: 1.75rem; line-height: 1.25; }
 .homepage main h3 { font-size: 1.25rem; line-height: 1.35; font-weight: 600; }
 .homepage main [data-radix-collection-item] { font-size: 1.125rem; }
@@ -175,7 +175,7 @@
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] { gap: .625rem; }
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] a { padding: .75rem; }
 .homepage main [data-testid="home-services"] a span {
-  font-size: 1.125rem; font-weight: 600; overflow-wrap: break-word;
+  font-size: 1.125rem; font-weight: 600; overflow-wrap: break-word; hyphens: auto;
 }
 /* Banner button states, scoped to the homepage hero only.
    Hover yellow applies only on pointer devices so taps on touch screens
