@@ -1,3 +1,9 @@
+## Homepage typography scale-up (all elements)
+- [ ] Apply homepage-scoped computed sizes: logo 24, nav 18 semibold, controls 16-18, service label 24 bold, service/button text 18 semibold, banner H1 48-52 desktop (32-36 mobile), banner copy 20 desktop / 18 mobile, section H2 32 desktop (24-28 mobile), step/card titles 20 semibold, body/FAQ/links/footer 18, utility captions >=14
+- [ ] Buttons min-height 48 with padding adjusted; drop fixed heights that clip; allow long names to wrap
+- [ ] Verify computed font-size + screenshots RU/EN/HE desktop and mobile, no clipping, overlap or horizontal scroll; report menu, service button, banner copy and step-description sizes
+
+## Homepage typography
 
 ## Homepage typography
 - [x] Increase typography across homepage, navigation and footer with homepage-only styles
