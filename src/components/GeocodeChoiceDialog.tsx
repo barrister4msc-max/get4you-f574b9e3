@@ -17,7 +17,7 @@ export function GeocodeChoiceDialog() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) geocodeChoiceStore.cancel(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
         <DialogHeader>
           <DialogTitle>{t("geocode.chooseTitle") || "Choose the closest match"}</DialogTitle>
           <DialogDescription>
@@ -33,7 +33,7 @@ export function GeocodeChoiceDialog() {
                 className="w-full text-start flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-secondary transition-colors"
               >
                 <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                <span className="flex-1">{c.label}</span>
+                <span className="flex-1 min-w-0 break-words">{c.label}</span>
               </button>
             </li>
           ))}
