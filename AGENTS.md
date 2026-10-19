@@ -2,3 +2,4 @@
 - Per-service order parameters live in src/lib/serviceFields.ts config; execution date/time logic lives in src/lib/schedule.ts and is re-validated by a DB trigger on tasks (client checks alone can be bypassed).
 - Task execution date is stored as a local calendar date plus separate time and timezone (Asia/Jerusalem default), never as a UTC timestamp, to avoid day shifts.
 - Price estimates come only from confirmed tariffs or comparable completed orders via the pure module supabase/functions/_shared/priceEstimate.ts; no AI or invented fallback prices (unverifiable numbers caused unexplained jumps).
+- Order geography is normalized via src/lib/orderGeo.ts from OpenStreetMap: stable osm:<R|N|W><id> city/neighborhood IDs, neighborhoods only suburb/neighbourhood/quarter (never admin districts); price estimates receive only city/neighborhood IDs, never the address (privacy, language-independent matching).
