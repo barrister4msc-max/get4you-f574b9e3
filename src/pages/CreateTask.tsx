@@ -44,6 +44,7 @@ import {
   Users,
   Zap,
   Rocket,
+  CalendarDays,
 } from "lucide-react";
 
 const categories = SERVICE_KEYS;
