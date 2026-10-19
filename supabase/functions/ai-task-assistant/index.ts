@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
+import { safeTranslationInputs } from "../_shared/taskTranslationPrivacy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,7 +21,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages = [], type, tasks = [], targetLocale, userLocale } = await req.json();
+    const { messages = [], type, tasks: requestedTasks = [], targetLocale, userLocale } = await req.json();
+    let tasks = requestedTasks;
+    let safeMovingTranslations: Array<{ id: string; title: string; description: null }> = [];
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -58,6 +61,40 @@ serve(async (req) => {
       });
     }
 
+    if (type === "translate_tasks") {
+      // The service-role cache must never authenticate visibility on behalf of
+      // callers. Read the public projection with their own token first.
+      const caller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+        global: { headers: { Authorization: authHeader || "" } },
+      });
+      const ids = (Array.isArray(requestedTasks) ? requestedTasks : [])
+        .map((task: { id?: unknown }) => task.id)
+        .filter((id: unknown): id is string => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id))
+        .slice(0, 50);
+      const { data: publicRows, error: publicError } = await caller.from("tasks_public")
+        .select("id,title,description,category_id").in("id", ids);
+      if (publicError) throw new Error("Unable to verify task visibility");
+      const readable = [...(publicRows || [])];
+      const publicIds = new Set(readable.map(row => row.id));
+      const privateIds = ids.filter((id: string) => !publicIds.has(id));
+      if (privateIds.length > 0) {
+        const { data: privateRows, error: privateError } = await caller.from("tasks")
+          .select("id,title,description,category_id").in("id", privateIds);
+        if (privateError) throw new Error("Unable to verify private task visibility");
+        readable.push(...(privateRows || []));
+      }
+      const verified = safeTranslationInputs(ids.map((id: string) => ({ id })), readable);
+      const movingNames: Record<string, string> = { en: "Moving", ru: "Переезд", he: "הובלה", ar: "نقل" };
+      safeMovingTranslations = verified.filter(row => row.privateMoving)
+        .map(row => ({ id: row.id, title: movingNames[targetLocale] || "Moving", description: null }));
+      tasks = verified.filter(row => !row.privateMoving).map(({ id, title, description }) => ({ id, title, description }));
+      if (tasks.length === 0) {
+        return new Response(JSON.stringify({ translations: safeMovingTranslations }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Anti-abuse: minimum prompt length for chat-style calls
     if (type !== "translate_tasks") {
       const lastUser = [...messages].reverse().find((m: any) => m?.role === "user");
@@ -70,7 +107,7 @@ serve(async (req) => {
     }
 
     // Translation cache: serve from DB first, only translate the missing ones
-    let cachedTranslations: Array<{ id: string; title: string; description: string | null }> = [];
+    let cachedTranslations: Array<{ id: string; title: string; description: string | null }> = [...safeMovingTranslations];
     let tasksToTranslate: typeof tasks = tasks;
     const hashStr = async (s: string) => {
       const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));

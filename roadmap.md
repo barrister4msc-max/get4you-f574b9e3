@@ -1,4 +1,10 @@
 
+## Order address privacy
+- [ ] Inspect deployed views, RPCs, direct table policies and public consumers
+- [ ] Apply additive privacy migration and preserve authorized private access
+- [ ] Test synthetic data with real PostgreSQL roles in isolation and check deployed API access
+- [ ] Report applied environment and remaining verification limits
+
 ## Flow4You appearance restoration
 - [x] Restore original banner gradient, accent heading and separate bright illustration
 - [x] Preserve compact services and verify mobile/desktop RTL without changing order flows

@@ -108,8 +108,6 @@ export function buildServiceTitle(key: string | null | undefined, d: ServiceDeta
     const opt = (SERVICE_FIELDS.cleaning![0].fields.find((f) => f.key === "cleaning_type") as Extract<FieldDef, { type: "select" }>)
       .options.find((o) => o.value === d.cleaning_type);
     if (opt) parts.push(opt.label[locale]);
-  } else if (key === "moving") {
-    if (d.from_address && d.to_address) parts.push(`${d.from_address} → ${d.to_address}`);
   }
   return parts.filter(Boolean).join(" · ").slice(0, 120);
 }
