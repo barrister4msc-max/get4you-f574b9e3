@@ -21,10 +21,10 @@ export function HomeHero({ serviceLabel, services, title, description, image, ch
           <p id="home-services-title" className="text-sm font-semibold text-foreground">{serviceLabel}</p>
           <div className="mt-2 grid grid-cols-2 gap-2 md:flex md:flex-wrap" data-testid="home-services">
             {services.map(({ key, label, icon: Icon }) => (
-              <Button key={key} asChild variant="outline"
-                className="h-auto min-h-12 min-w-0 justify-start gap-2 rounded-md border-border bg-card/80 px-3 py-2 text-start text-base font-semibold whitespace-normal shadow-none hover:bg-card">
+              <Button key={key} asChild
+                className="h-auto min-h-[52px] min-w-0 justify-start gap-2 rounded-md bg-accent px-3 py-3 text-start text-lg font-semibold text-accent-foreground whitespace-normal shadow-none hover:bg-accent/90">
                 <Link to={createTaskHref(key)}>
-                  <Icon className="!size-5 shrink-0 text-primary" />
+                  <Icon className="!size-[22px] shrink-0 text-primary" />
                   <span className="min-w-0 leading-snug">{label}</span>
                 </Link>
               </Button>
