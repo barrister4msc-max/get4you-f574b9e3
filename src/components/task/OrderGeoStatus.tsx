@@ -1,5 +1,5 @@
 import { Loader2, RotateCw } from "lucide-react";
-import { cityLabel, type Lang, type OrderGeo } from "@/lib/orderGeo";
+import { cityLabel, typedCityMismatch, type Lang, type OrderGeo } from "@/lib/orderGeo";
 
 export const GEO_TXT: Record<string, Record<Lang, string>> = {
   city: { en: "City", ru: "Город", he: "עיר", ar: "المدينة" },
@@ -11,6 +11,7 @@ export const GEO_TXT: Record<string, Record<Lang, string>> = {
   retry: { en: "Retry", ru: "Повторить", he: "נסה שוב", ar: "إعادة المحاولة" },
   deviceDiffers: { en: "Your device is at a different place", ru: "Устройство находится в другом месте", he: "המכשיר נמצא במקום אחר", ar: "جهازك في مكان آخر" },
   useDevice: { en: "Use this address", ru: "Использовать этот адрес", he: "השתמש בכתובת זו", ar: "استخدم هذا العنوان" },
+  mismatch: { en: "The address was found in a different city — please check it.", ru: "Адрес найден в другом городе — проверьте его.", he: "הכתובת נמצאה בעיר אחרת — נא לבדוק.", ar: "تم العثور على العنوان في مدينة أخرى — يرجى التحقق." },
   keep: { en: "Keep order address", ru: "Оставить адрес заказа", he: "השאר את כתובת ההזמנה", ar: "إبقاء عنوان الطلب" },
 };
 
@@ -25,11 +26,13 @@ export function OrderGeoStatus({ status, geo, locale, onRetry }: Props) {
   );
   if (status === "no_city") return <p className="mt-1.5 text-xs text-amber-600">{GEO_TXT.noCity[locale]}</p>;
   if (!geo) return null;
-  return (
+  const mismatch = typedCityMismatch(geo, geo.resolvedFor);
+  return (<>
+    {mismatch && <p className="mt-1.5 text-xs text-amber-600" data-testid="city-mismatch">{GEO_TXT.mismatch[locale]}</p>}
     <p className="mt-1.5 text-xs text-muted-foreground" data-testid="order-geo">
       {GEO_TXT.city[locale]}: <span className="font-medium text-foreground">{cityLabel(geo, locale)}</span>
       {" · "}{GEO_TXT.hood[locale]}: <span className="font-medium text-foreground">{geo.neighborhoodName ?? GEO_TXT.unknown[locale]}</span>
       {" · "}<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline">© OpenStreetMap</a>
     </p>
-  );
+  </>);
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cityFromPlace, neighborhoodFromPlace, isGeoStale, cityLabel, type OrderGeo } from "./orderGeo";
+import { typedCityMismatch, cityFromPlace, neighborhoodFromPlace, isGeoStale, cityLabel, type OrderGeo } from "./orderGeo";
 
 // Shapes copied from real Nominatim reverse responses (Tel Aviv, relation 1382494).
 const nd = { name: "תל־אביב–יפו", "name:en": "Tel Aviv-Yafo", "name:ru": "Тель-Авив", "name:ar": "تل أبيب - يافا", alt_name: "Tel-Aviv" };
@@ -27,6 +27,14 @@ describe("order geography", () => {
     const nb = { osm_type: "node", osm_id: 77, addresstype: "suburb", name: "Florentin", address: { city: "Tel-Aviv" } };
     expect(neighborhoodFromPlace(nb, ["Tel-Aviv"])?.id).toBe("osm:N77");
     expect(neighborhoodFromPlace(nb, ["Haifa"])).toBeNull();
+  });
+  it("typed city differing from resolved city is flagged; same city in any language is not", () => {
+    const c = cityFromPlace(cityHe)!;
+    const g = { cityNames: c.names, cityAliases: c.aliases } as unknown as OrderGeo;
+    expect(typedCityMismatch(g, "Dizengoff 50, Tel Aviv")).toBe(false);
+    expect(typedCityMismatch(g, "דיזנגוף 50, תל אביב")).toBe(false);
+    expect(typedCityMismatch(g, "Дизенгоф 50, Тель-Авив")).toBe(false);
+    expect(typedCityMismatch(g, "Herzl 10, Haifa")).toBe(true);
   });
   it("changing the address (city) invalidates city and neighborhood together", () => {
     const g = { resolvedFor: "Dizengoff 1, Tel Aviv", cityNames: { default: "x", he: "תל אביב" } } as unknown as OrderGeo;
