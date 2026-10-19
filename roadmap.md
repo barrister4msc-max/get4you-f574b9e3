@@ -1,4 +1,9 @@
 
+## Homepage typography
+- [ ] Increase typography across homepage, navigation and footer with homepage-only styles
+- [ ] Match service buttons to yellow primary CTA; preserve exact service links
+- [ ] Verify desktop/mobile RU/EN/HE, FAQ, service transitions and no overflow or support overlap
+
 ## Integrated homepage hero
 - [x] Integrate compact service buttons into the existing uninterrupted banner
 - [x] Verify desktop/mobile RU and HE, service selection, and no horizontal overflow
