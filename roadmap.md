@@ -1,7 +1,7 @@
 
 ## Integrated homepage hero
-- [ ] Integrate compact service buttons into the existing uninterrupted banner
-- [ ] Verify desktop/mobile RU and HE, service selection, and no horizontal overflow
+- [x] Integrate compact service buttons into the existing uninterrupted banner
+- [x] Verify desktop/mobile RU and HE, service selection, and no horizontal overflow
 
 ## Order address privacy
 - [x] Inspect deployed views, RPCs, direct table policies and public consumers
