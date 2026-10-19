@@ -1,5 +1,5 @@
 import { useTaskSyncTick, isTaskRemoved } from "@/lib/taskLiveSync";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
