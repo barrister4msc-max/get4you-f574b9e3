@@ -14,7 +14,7 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { TaskAIAssistant } from "@/components/TaskAIAssistant";
-import { PriceEstimator, PriceFeedback } from "@/components/PriceEstimator";
+import { PriceEstimator, PriceFeedback, type EstimateSummary } from "@/components/PriceEstimator";
 import { getMinPrice, formatMinPriceMessage, formatMinPriceLabel } from "@/lib/pricing";
 import {
   clearPendingTaskDraft,
@@ -95,11 +95,7 @@ const CreateTaskPage = () => {
   const publishLockRef = useRef(false);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
-  const [priceEstimate, setPriceEstimate] = useState<{
-    min_price: number;
-    max_price: number;
-    recommended_price: number;
-  } | null>(null);
+  const [priceEstimate, setPriceEstimate] = useState<EstimateSummary | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState(() => {
@@ -824,8 +820,7 @@ useEffect(() => {
               <PriceEstimator
                 city={form.location}
                 category={form.category}
-                title={form.title}
-                description={form.description}
+                serviceDetails={form.serviceDetails || {}}
                 onUseSuggested={(p) => update({ budget: p })}
                 onEstimate={(e) => setPriceEstimate(e)}
               />
