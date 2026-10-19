@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { ru, he, arSA, enGB } from "date-fns/locale";
 import { fromDateKey, toDateKey, zonedNow, type Schedule, type ScheduleError, type TimeMode } from "@/lib/schedule";
 
 type Loc = "en" | "ru" | "he" | "ar";
@@ -77,6 +78,8 @@ export function WhenBlock({ value, onChange, locale, error }: Props) {
                   disabled={(d) => toDateKey(d) < today.date}
                   defaultMonth={value.date ? fromDateKey(value.date) : fromDateKey(today.date)}
                   initialFocus
+                  locale={{ en: enGB, ru, he, ar: arSA }[locale]}
+                  dir={locale === "he" || locale === "ar" ? "rtl" : "ltr"}
                   className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
