@@ -620,7 +620,16 @@ const DashboardPage = () => {
                 <p className="text-sm text-muted-foreground">{t("tasks.noResults")}</p>
               </div>
             ) : (
-              (isClient ? myTasks : displayedTasks).map((task) => (
+              (() => {
+                const all = isClient ? myTasks : displayedTasks;
+                const isHistory = (st?: string | null) => st === "completed" || st === "cancelled";
+                const ordered = [...all.filter((x) => !isHistory(x.status)), ...all.filter((x) => isHistory(x.status))];
+                const firstHistory = ordered.findIndex((x) => isHistory(x.status));
+                return ordered.map((task, idx) => (
+                <div key={task.id}>
+                {idx === firstHistory && (
+                  <h3 className="text-sm font-semibold text-muted-foreground mt-4 mb-2">{t("balance.history")}</h3>
+                )}
                 <Link
                   key={task.id}
                   to={`/tasks/${task.id}`}
@@ -651,7 +660,9 @@ const DashboardPage = () => {
                     </div>
                   </div>
                 </Link>
-              ))
+                </div>
+              ));
+              })()
             )}
           </div>
         )}
