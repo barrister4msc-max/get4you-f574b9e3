@@ -12,8 +12,10 @@ import { TaskAIAssistant } from "@/components/TaskAIAssistant";
 import { PriceEstimator, PriceFeedback } from "@/components/PriceEstimator";
 import { getMinPrice, formatMinPriceMessage, formatMinPriceLabel } from "@/lib/pricing";
 import {
-  TASK_DRAFT_KEY,
+  clearPendingTaskDraft,
   savePendingTaskDraft,
+  readTaskDraft,
+  writeTaskDraft,
   hasPendingTaskDraft,
 } from "@/lib/pendingTaskDraft";
 import { motion, AnimatePresence } from "framer-motion";
@@ -83,6 +85,7 @@ const CreateTaskPage = () => {
   const [categorizing, setCategorizing] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const publishLockRef = useRef(false);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [priceEstimate, setPriceEstimate] = useState<{
@@ -93,10 +96,9 @@ const CreateTaskPage = () => {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [form, setForm] = useState(() => {
-    const saved = localStorage.getItem(TASK_DRAFT_KEY);
-    if (saved) {
+    const parsed = readTaskDraft(user?.id ?? null);
+    if (parsed) {
       try {
-        const parsed = JSON.parse(saved);
         return {
           ...{
             category: "",
@@ -132,8 +134,8 @@ const CreateTaskPage = () => {
 
   // Save draft to localStorage on form changes
   useEffect(() => {
-    localStorage.setItem(TASK_DRAFT_KEY, JSON.stringify(form));
-  }, [form]);
+    writeTaskDraft(form, user?.id ?? null);
+  }, [form, user?.id]);
 
   const aiContext = `Title: ${form.title}, Description: ${form.description}, Category: ${form.category}, Type: ${form.taskType}`;
 
@@ -359,6 +361,8 @@ const CreateTaskPage = () => {
       return;
     }
 
+    if (publishLockRef.current) return;
+    publishLockRef.current = true;
     setSubmitting(true);
     try {
       // Make sure coordinates match the address typed in by the user.
@@ -452,7 +456,7 @@ const CreateTaskPage = () => {
 
       if (error) throw error;
 
-      localStorage.removeItem(TASK_DRAFT_KEY);
+      clearPendingTaskDraft();
       toast.success(t("task.published") || "Task published!");
 
       if (data?.id) {
@@ -473,6 +477,7 @@ const CreateTaskPage = () => {
             : null;
       toast.error(message || t("task.publish.error") || "Failed to publish task");
     } finally {
+      publishLockRef.current = false;
       setSubmitting(false);
     }
   };
