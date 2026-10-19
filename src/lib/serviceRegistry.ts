@@ -19,11 +19,15 @@ export const SERVICE_KEYS = Object.keys(SERVICE_REGISTRY) as ServiceKey[];
 export const isServiceKey = (v: unknown): v is ServiceKey =>
   typeof v === "string" && Object.prototype.hasOwnProperty.call(SERVICE_REGISTRY, v);
 
+/** Explicit slug aliases used by service (SEO) pages. Exact match only. */
+const SERVICE_ALIASES: Record<string, ServiceKey> = { handyman: "repair", repairs: "repair" };
+
 /** Accepts a service key or an exact category UUID; anything else → null. */
 export const resolveServiceKey = (v: string | null | undefined): ServiceKey | null => {
   if (!v) return null;
   const s = v.trim().toLowerCase();
   if (isServiceKey(s)) return s;
+  if (SERVICE_ALIASES[s]) return SERVICE_ALIASES[s];
   const byId = SERVICE_KEYS.find((k) => SERVICE_REGISTRY[k] === s);
   return byId ?? null;
 };
