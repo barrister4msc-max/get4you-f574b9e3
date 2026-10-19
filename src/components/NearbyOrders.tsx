@@ -1,3 +1,4 @@
+import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -296,7 +297,7 @@ export const NearbyOrders = ({ defaultRadiusKm = 10 }: { defaultRadiusKm?: numbe
         if (cancelled) return;
 
         setError(null);
-        setTasks(list);
+        setTasks(withoutRemoved(list));
 
         const taskIds = list.map((task) => task.id);
         if (taskIds.length > 0) {

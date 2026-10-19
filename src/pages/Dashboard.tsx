@@ -1,3 +1,4 @@
+import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -184,10 +185,13 @@ const DashboardPage = () => {
   const showTaskerBlocks = isTasker && activeRole === "tasker";
   const showClientBlocks = isClient && activeRole === "client";
 
+  const syncTick = useTaskSyncTick();
+  const dashReqRef = useRef(0);
   useEffect(() => {
     if (!user) return;
+    const reqId = ++dashReqRef.current;
     const fetchAll = async () => {
-      setLoading(true);
+      if (syncTick === 0) setLoading(true);
       const [tasksRes, proposalsRes, releasedRes, allEscrowRes, reviewsRes, assignedRes] = await Promise.all([
         supabase
           .from("tasks")
@@ -220,8 +224,9 @@ const DashboardPage = () => {
           .eq("assigned_to", user.id)
           .order("created_at", { ascending: false }),
       ]);
-      setMyTasks((tasksRes.data as MyTaskRow[]) || []);
-      setAssignedTasks((assignedRes.data as MyTaskRow[]) || []);
+      if (reqId !== dashReqRef.current) return; // stale response
+      setMyTasks(withoutRemoved((tasksRes.data as MyTaskRow[]) || []));
+      setAssignedTasks(withoutRemoved((assignedRes.data as MyTaskRow[]) || []));
 
       // Fetch pending proposal counts for tasks owned by client (badge in My Tasks)
       const ownedTaskIds = ((tasksRes.data as MyTaskRow[]) || []).map((t) => t.id);
@@ -294,7 +299,7 @@ const DashboardPage = () => {
       setLoading(false);
     };
     fetchAll();
-  }, [user]);
+  }, [user, syncTick]);
 
   useEffect(() => {
     const allTitles: { id: string; title: string }[] = [];

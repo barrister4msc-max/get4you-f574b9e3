@@ -1,3 +1,4 @@
+import { useTaskSyncTick, withoutRemoved, announceTaskRemoved, announceTaskChanged } from "@/lib/taskLiveSync";
 import { useState, useEffect, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -347,7 +348,10 @@ const TasksPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, hasNearbyQueryCoords, nearbyLat, nearbyLng]);
 
+  const syncTick = useTaskSyncTick();
+  const tasksReqRef = useRef(0);
   useEffect(() => {
+    const reqId = ++tasksReqRef.current;
     const fetchData = async () => {
       // Public listing uses tasks_public (no precise address/coords for non-participants)
       const [tasksRes, catsRes] = await Promise.all([
@@ -358,12 +362,13 @@ const TasksPage = () => {
         supabase.from("categories").select("id, name_en, name_ru, name_he").order("sort_order"),
       ]);
 
-      setTasks((tasksRes.data as unknown as TaskRow[]) || []);
+      if (reqId !== tasksReqRef.current) return; // stale response
+      setTasks(withoutRemoved((tasksRes.data as unknown as TaskRow[]) || []));
       setCategories(catsRes.data || []);
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [syncTick]);
 
   // When we have user coords, hydrate task rows with coords from get_nearby_tasks RPC
   // (tasks_public hides precise lat/lng for privacy, so distance sort needs this enrichment)
@@ -437,10 +442,10 @@ const TasksPage = () => {
         .eq("assigned_to", user.id)
         .in("status", ["in_progress", "open", "completed"])
         .order("created_at", { ascending: false });
-      setMyTasks((data as TaskRow[]) || []);
+      setMyTasks(withoutRemoved((data as TaskRow[]) || []));
     };
     fetchMyTasks();
-  }, [user, isTasker]);
+  }, [user, isTasker, syncTick]);
 
   const getCategoryName = (task: TaskRow) => {
     const cat = task.categories;
