@@ -628,7 +628,7 @@ const DashboardPage = () => {
                 return ordered.map((task, idx) => (
                 <div key={task.id}>
                 {idx === firstHistory && (
-                  <h3 className="text-sm font-semibold text-muted-foreground mt-4 mb-2">{t("balance.history")}</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mt-4 mb-2">{t("dashboard.taskHistory")}</h3>
                 )}
                 <Link
                   key={task.id}
