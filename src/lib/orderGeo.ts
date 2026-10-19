@@ -101,7 +101,7 @@ export async function resolveOrderGeo(address: string, lat: number, lng: number,
     const city = cityFromPlace(await nominatim(lat, lng, 10, lang, signal));
     if (!city) return { status: "no_city" };
     const known = [...city.aliases, ...Object.values(city.names).filter(Boolean) as string[]];
-    let nb = null;
+    let nb: ReturnType<typeof neighborhoodFromPlace> = null;
     for (const z of [16, 14]) {
       nb = neighborhoodFromPlace(await nominatim(lat, lng, z, lang, signal), known);
       if (nb) break;
