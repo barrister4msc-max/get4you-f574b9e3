@@ -128,6 +128,8 @@
 .homepage { font-size: 1rem; letter-spacing: 0; }
 
 /* --- Shared header, homepage variant ------------------------------- */
+/* Opaque so enlarged page text never shows through the sticky bar. */
+.homepage header { background-color: hsl(var(--card)); }
 .homepage header .container { height: auto; min-height: 4.5rem; gap: .75rem; padding-block: .5rem; flex-wrap: wrap; }
 .homepage header nav { flex-wrap: wrap; }
 .homepage header a[href="/"] .text-gradient-emerald { font-size: 1.5rem; line-height: 1.2; }
@@ -145,7 +147,7 @@
 /* --- Page body: phone sizes (min 16px everywhere) ------------------ */
 .homepage main :is(p, a, button, li, dd, dt, label, .text-sm) { font-size: 1rem; line-height: 1.55; }
 .homepage main .text-xs { font-size: .875rem; }
-.homepage main h1 { font-size: 2.125rem; line-height: 1.15; font-weight: 800; overflow-wrap: anywhere; }
+.homepage main h1 { font-size: 2.125rem; line-height: 1.15; font-weight: 800; overflow-wrap: break-word; }
 .homepage main h2 { font-size: 1.75rem; line-height: 1.25; }
 .homepage main h3 { font-size: 1.25rem; line-height: 1.35; font-weight: 600; }
 .homepage main [data-radix-collection-item] { font-size: 1.125rem; }
@@ -173,7 +175,7 @@
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] { gap: .625rem; }
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] a { padding: .75rem; }
 .homepage main [data-testid="home-services"] a span {
-  font-size: 1.125rem; font-weight: 600; overflow-wrap: anywhere;
+  font-size: 1.125rem; font-weight: 600; overflow-wrap: break-word;
 }
 /* Banner button states, scoped to the homepage hero only.
    Hover yellow applies only on pointer devices so taps on touch screens
@@ -208,7 +210,7 @@
 .homepage footer .text-xs { font-size: .875rem; }
 .homepage footer .container > div { flex-wrap: wrap; gap: 1.5rem; }
 .homepage footer .container > div > div { min-width: 0; }
-.homepage footer p { overflow-wrap: anywhere; }
+.homepage footer p { overflow-wrap: break-word; }
 /* Keep support reachable without covering enlarged text or actions. */
 .homepage > button.fixed { position: static; align-self: flex-end; margin: 0 1.5rem 1.5rem; flex-shrink: 0; }
 
