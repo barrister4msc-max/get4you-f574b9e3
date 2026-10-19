@@ -5,4 +5,4 @@
 - [x] Live removal of deleted tasks across lists (realtime + tab focus + stale-response guard)
 - [x] Notifications for deleted tasks show neutral "Task unavailable"
 - [x] Garbage audit report (IDs + reasons), no deletion
-- [ ] Cleanup of listed records — waits for user approval
+- [x] Cleanup of listed records
