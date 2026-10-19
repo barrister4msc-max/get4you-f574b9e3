@@ -1,3 +1,4 @@
+import { useTaskSyncTick, isTaskRemoved } from "@/lib/taskLiveSync";
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -175,13 +176,16 @@ const TaskDetailPage = () => {
       setAssignedRating({ avg: null, count: 0 });
     }
 
-    setTask(data);
+    if (reqId !== taskReqRef.current) return; // stale response
+    setTask(data && !isTaskRemoved(data.id) ? data : null);
     setLoading(false);
   };
 
+  const syncTick = useTaskSyncTick();
   useEffect(() => {
+    if (syncTick > 0 && isTaskRemoved(id)) { setTask(null); return; }
     fetchTask();
-  }, [id]);
+  }, [id, syncTick]);
 
   // Translate task title & description when locale changes
   useEffect(() => {
@@ -744,7 +748,7 @@ const handlePaymentConfirm = async (overrideProposalId?: string) => {
   if (!task) {
     return (
       <div className="py-8">
-        <div className="container max-w-4xl text-center text-muted-foreground py-20">{t('tasks.noResults')}</div>
+        <div className="container max-w-4xl text-center text-muted-foreground py-20">{t('task.unavailable')}</div>
       </div>
     );
   }
