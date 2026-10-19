@@ -16,7 +16,7 @@ interface HomeHeroProps {
 export function HomeHero({ serviceLabel, services, title, description, image, children }: HomeHeroProps) {
   return (
     <section className="bg-gradient-hero py-4 md:py-6" data-testid="home-banner" aria-labelledby="home-hero-title">
-      <div className="container">
+      <div className="container px-4 sm:px-8">
         <nav aria-labelledby="home-services-title">
           <p id="home-services-title" className="text-sm font-semibold text-foreground">{serviceLabel}</p>
           <div className="mt-2 grid grid-cols-2 gap-2 md:flex md:flex-wrap" data-testid="home-services">
@@ -31,10 +31,10 @@ export function HomeHero({ serviceLabel, services, title, description, image, ch
             ))}
           </div>
         </nav>
-        <div className="mt-5 grid items-center gap-5 lg:mt-6 lg:grid-cols-2 lg:gap-10">
+        <div className="mt-4 grid items-center gap-4 lg:mt-6 lg:grid-cols-2 lg:gap-10">
           <div className="min-w-0 max-w-2xl">
             <h1 id="home-hero-title" className="text-2xl font-extrabold text-foreground md:text-3xl">{title}</h1>
-            <p className="mt-3 text-base leading-relaxed text-foreground">{description}</p>
+            <p className="mt-3 text-base leading-normal text-foreground md:leading-relaxed">{description}</p>
             {children}
           </div>
           <img src={image} alt="" width={1366} height={768} className="block aspect-video w-full rounded-lg object-contain" />

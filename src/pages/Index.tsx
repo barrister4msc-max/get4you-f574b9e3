@@ -236,10 +236,10 @@ const IndexPage = () => {
         description={i18n.subtitle}
         image={heroImage2}
       >
-            <div className="mt-4 flex flex-wrap gap-2.5">
-              {!isTaskerOnly && <Button asChild size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90"><Link to={postTaskHref}>{i18n.ctaPost}<ArrowRight className="rtl:rotate-180" /></Link></Button>}
-              <Button asChild variant="outline" size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base"><Link to={becomeTaskerHref}>{i18n.ctaBecome}</Link></Button>
-              <Button variant="outline" size="lg" onClick={handleFindNearby} disabled={geoLoading || pendingNearby} className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base"><MapPin />{geoLoading || pendingNearby ? t("nearby.locating") : t("nearby.heroCta")}</Button>
+            <div className="mt-4 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
+              {!isTaskerOnly && <Button asChild size="lg" className="min-h-12 h-auto px-3 sm:px-8 py-3 whitespace-normal font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90"><Link to={postTaskHref}>{i18n.ctaPost}<ArrowRight className="rtl:rotate-180" /></Link></Button>}
+              <Button asChild variant="outline" size="lg" className="min-h-12 h-auto px-3 sm:px-8 py-3 whitespace-normal font-bold text-base"><Link to={becomeTaskerHref}>{i18n.ctaBecome}</Link></Button>
+              <Button variant="outline" size="lg" onClick={handleFindNearby} disabled={geoLoading || pendingNearby} className="col-span-2 justify-self-start min-h-12 h-auto px-3 sm:px-8 py-3 whitespace-normal font-bold text-base"><MapPin />{geoLoading || pendingNearby ? t("nearby.locating") : t("nearby.heroCta")}</Button>
             </div>
             {geoError && <p className="mt-4 text-base text-destructive">{t("task.geo.enterManually")}</p>}
       </HomeHero>
