@@ -29,10 +29,11 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { createTaskHref, type ServiceKey } from "@/lib/serviceRegistry";
+import { type ServiceKey } from "@/lib/serviceRegistry";
+import { HomeHero } from "@/components/HomeHero";
 import heroImage2 from "@/assets/hero-image-2.jpg";
 
-const categoryIcons = [
+const categoryIcons: { key: ServiceKey; icon: typeof Sparkles }[] = [
   { key: "cleaning", icon: Sparkles },
   { key: "moving", icon: Truck },
   { key: "repair", icon: Wrench },
@@ -228,41 +229,20 @@ const IndexPage = () => {
         <meta name="twitter:title" content={i18n.metaTitle} />
         <meta name="twitter:description" content={i18n.metaDesc} />
       </Helmet>
-      <section className="py-4 md:py-5" aria-labelledby="home-services-title">
-        <div className="container">
-          <h1 id="home-services-title" className="text-2xl md:text-3xl font-extrabold text-foreground">{t("cat.title")}</h1>
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5 md:gap-3" data-testid="home-services">
-            {categoryIcons.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Button key={cat.key} asChild variant="outline"
-                  className="h-auto min-h-[68px] sm:min-h-[72px] items-center justify-start gap-2.5 whitespace-normal px-3 py-3 sm:px-4 text-start rounded-xl bg-card border-border shadow-card hover:bg-secondary">
-                  <Link to={createTaskHref(cat.key as ServiceKey)}>
-                    <Icon className="!w-5 !h-5 shrink-0 text-primary" />
-                    <span className="text-base font-semibold leading-snug">{t(`cat.${cat.key}`)}</span>
-                  </Link>
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gradient-hero py-6 md:py-8" data-testid="home-banner">
-        <div className="container grid items-center gap-6 lg:grid-cols-2 lg:gap-10">
-          <div className="min-w-0 max-w-2xl">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">{i18n.h1Pre} <span className="text-gradient-emerald">{i18n.h1Brand}</span></h2>
-            <p className="mt-4 text-base text-foreground leading-relaxed">{i18n.subtitle}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
+      <HomeHero
+        serviceLabel={locale === "ru" ? "Выберите услугу" : locale === "he" ? "בחרו שירות" : locale === "ar" ? "اختر خدمة" : "Choose a service"}
+        services={categoryIcons.map((cat) => ({ ...cat, label: t(`cat.${cat.key}`) }))}
+        title={<>{i18n.h1Pre} <span className="text-gradient-emerald">{i18n.h1Brand}</span></>}
+        description={i18n.subtitle}
+        image={heroImage2}
+      >
+            <div className="mt-4 flex flex-wrap gap-2.5">
               {!isTaskerOnly && <Button asChild size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base bg-accent text-accent-foreground hover:bg-accent/90"><Link to={postTaskHref}>{i18n.ctaPost}<ArrowRight className="rtl:rotate-180" /></Link></Button>}
               <Button asChild variant="outline" size="lg" className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base"><Link to={becomeTaskerHref}>{i18n.ctaBecome}</Link></Button>
               <Button variant="outline" size="lg" onClick={handleFindNearby} disabled={geoLoading || pendingNearby} className="min-h-12 h-auto py-3 whitespace-normal font-bold text-base"><MapPin />{geoLoading || pendingNearby ? t("nearby.locating") : t("nearby.heroCta")}</Button>
             </div>
             {geoError && <p className="mt-4 text-base text-destructive">{t("task.geo.enterManually")}</p>}
-          </div>
-          <img src={heroImage2} alt="" width={1366} height={768} className="block w-full aspect-video rounded-xl shadow-xl object-contain" />
-        </div>
-      </section>
+      </HomeHero>
 
       {/* How it works */}
       <section className="py-16 md:py-20 bg-warm-surface">
