@@ -140,6 +140,32 @@
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] { gap: .625rem; }
 .homepage main [data-testid="home-banner"] [data-testid="home-services"] a { padding: .75rem; }
 .homepage main [data-testid="home-services"] a span { overflow-wrap: anywhere; }
+/* Banner button states, scoped to the homepage hero only.
+   Hover yellow applies only on pointer devices so taps on touch screens
+   never leave a stuck yellow state behind. */
+.homepage main [data-testid="home-services"] a:hover,
+.homepage main .home-banner-actions a:not(.bg-accent):hover {
+  background: hsl(var(--background) / 0.95);
+  color: hsl(var(--foreground));
+}
+.homepage main [data-testid="home-services"] a:active,
+.homepage main .home-banner-actions a:not(.bg-accent):active {
+  background: hsl(var(--accent) / 0.3);
+  color: hsl(var(--foreground));
+}
+.homepage main [data-testid="home-services"] a:focus-visible,
+.homepage main .home-banner-actions a:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .homepage main [data-testid="home-services"] a:hover,
+  .homepage main .home-banner-actions a:not(.bg-accent):hover {
+    background: hsl(var(--accent));
+    border-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+}
 .homepage main h1 { overflow-wrap: anywhere; }
 .homepage main [data-radix-collection-item] { font-size: 1.125rem; }
 .homepage main [data-state] > div { font-size: 1rem; }
