@@ -28,6 +28,17 @@ describe("task draft rules", () => {
     expect(hasPendingTaskDraft()).toBe(true);
     expect(readTaskDraft("user-a")?.title).toBe("guest");
   });
+
+  it("preserves service fields, normalized geography and flexible schedule through auth handoff", () => {
+    const draft = {
+      category: "cleaning", title: "TEST cleaning", budget: 200,
+      serviceDetails: { area_m2: 50, cleaning_type: "regular" },
+      geo: { cityId: "osm:R1382494", neighborhoodId: null },
+      schedule: { mode: "flexible", date: null, timeMode: "flexible", time: "", timeEnd: "" },
+    };
+    savePendingTaskDraft(draft);
+    expect(readTaskDraft("user-a")).toEqual(draft);
+  });
 });
 
 import { resolveServiceKey, categoryIdFor, applyServiceChange } from "./serviceRegistry";
