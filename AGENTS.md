@@ -1,10 +1,13 @@
 - Service keys map to exact category IDs only in src/lib/serviceRegistry.ts; never match categories by translated name (avoids wrong-category orders).
 - Per-service order parameters live in src/lib/serviceFields.ts config; execution date/time logic lives in src/lib/schedule.ts and is re-validated by a DB trigger on tasks (client checks alone can be bypassed).
 - Task execution date is stored as a local calendar date plus separate time and timezone (Asia/Jerusalem default), never as a UTC timestamp, to avoid day shifts.
-- Price estimates come only from confirmed tariffs or comparable completed orders via the pure module supabase/functions/_shared/priceEstimate.ts; no AI or invented fallback prices (unverifiable numbers caused unexplained jumps).
+- Price estimates come from confirmed tariffs, verified public web offers (supabase/functions/_shared/webPrices.ts: quote must appear verbatim on the fetched page; only per-m² or m²-ranged prices are converted; recommended = round((min+max)/2)), or comparable completed orders; AI only extracts candidate quotes and never supplies numbers (unverifiable numbers caused unexplained jumps).
 - Order geography is normalized via src/lib/orderGeo.ts from OpenStreetMap: stable osm:<R|N|W><id> city/neighborhood IDs, neighborhoods only suburb/neighbourhood/quarter (never admin districts); price estimates receive only city/neighborhood IDs, never the address (privacy, language-independent matching).
 - Set language and direction on the shared Layout container, not only Helmet's html tag, so route transitions cannot reset RTL.
 - Scope order-form readability rules to .order-form to keep other application screens' existing typography intact.
 - Keep homepage service selection and introduction in the shared HomeHero component; one parent owns the banner background so the two cannot become separate visual sections.
 - Scope homepage typography and shared header/footer adjustments to the route-aware `.homepage` Layout shell so other pages retain their existing sizing.
 - Public task reads use a closed server-side per-service projection behind an invoker view; full task rows remain owner/assignee/admin-only, because JSON, titles, translations and RPC coordinates can independently leak addresses. Never broaden full-row access to bidders to repair metadata consumers.
+
+- Post-auth routing has one owner, OAuthReturnHandler; AuthCallback only waits, and no component exchanges URL codes (the broker's `code` is not a database PKCE code; competing handlers caused lost redirects).
+- Task publish uses a client-generated id persisted until success, so the primary key turns retries into a detectable conflict (button locks alone miss lost responses and reloads).
