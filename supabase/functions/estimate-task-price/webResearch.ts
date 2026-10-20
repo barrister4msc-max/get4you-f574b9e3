@@ -1,6 +1,6 @@
 // Official OpenAI native web search → source evidence → fetched quote verification.
 // Only public city/subtype leave the server; never private addresses or free text.
-import { estimateWithGeographyFallback, pageMatchesPriceGeography, CLEANING_QUERY_HE, isVerified, normalizeCleaning, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type PriceGeography, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate } from "../_shared/webPrices.ts";
+import { estimateWithGeographyFallback, pageMatchesPriceGeography, CLEANING_QUERY_HE, isVerified, normalizeCleaning, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type PriceGeography, type LoadMode, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate } from "../_shared/webPrices.ts";
 import { searchEvidence, publicSourceUrl, openAIStreamFailure, type SearchEvidence } from "../_shared/searchEvidence.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { parseHTML } from "npm:linkedom";

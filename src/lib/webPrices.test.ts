@@ -126,3 +126,28 @@ describe("cleaning types never mix", () => {
     expect(cleaningQuoteMatchesType("ניקיון אחרי שיפוץ 25 ₪ למ\"ר", "after_renovation")).toBe(true);
   });
 });
+
+describe("pre-loaded prices answer without waiting", () => {
+  it("uses a saved regional price before starting a slow live city search", async () => {
+    const calls: string[] = [];
+    const result = await estimateWithGeographyFallback("חיפה", async (place, geography, mode) => {
+      calls.push(`${mode}:${place}`);
+      return { offers: mode === "saved" && geography === "region" ? normalizeCleaning(o({ price: 20 }), spec, null) : [], checkedAt: "2026-10-20" };
+    }, { savedFirst: true });
+    expect(calls).toEqual(["saved:חיפה", "saved:חיפה והקריות"]);
+    expect(result).toMatchObject({ status: "available", min: 1600, provenance: { geography: "region" } });
+  });
+  it("searches live only when nothing is saved anywhere", async () => {
+    const calls: string[] = [];
+    await estimateWithGeographyFallback("חיפה", async (place, _g, mode) => { calls.push(`${mode}:${place}`); return { offers: [], checkedAt: "x" }; }, { savedFirst: true });
+    expect(calls).toEqual(["saved:חיפה", "saved:חיפה והקריות", "saved:ישראל", "live:חיפה", "live:חיפה והקריות", "live:ישראל"]);
+  });
+  it("pre-loading from the country scope skips city and region", async () => {
+    const calls: string[] = [];
+    await estimateWithGeographyFallback("חיפה", async (place) => { calls.push(place); return { offers: [], checkedAt: "x" }; }, { from: "country" });
+    expect(calls).toEqual(["ישראל"]);
+  });
+  it("saved prices stay usable for 30 days", () => {
+    expect(PRICE_SUMMARY_TTL_MS).toBe(30 * 24 * 60 * 60 * 1000);
+  });
+});

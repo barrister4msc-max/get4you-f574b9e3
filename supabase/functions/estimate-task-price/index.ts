@@ -47,7 +47,8 @@ serve(async (req) => {
     const types = ["regular", "deep", "after_renovation", "move_in_out"];
     if (service === "cleaning" && cityHe && p.areaM2 && p.areaM2 > 0 && p.subtype && types.includes(p.subtype)) {
       try {
-        const web = await researchCleaning(cityHe, { areaM2: p.areaM2, cleaningType: p.subtype as CleaningType, windows: p.windows ?? null });
+        const from = b?.start_scope === "region" || b?.start_scope === "country" ? b.start_scope : undefined;
+        const web = await researchCleaning(cityHe, { areaM2: p.areaM2, cleaningType: p.subtype as CleaningType, windows: p.windows ?? null }, from);
         return reply(web);
       } catch (e) {
         console.warn("[prices] web research failed", e instanceof Error ? e.message : String(e));
