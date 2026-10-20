@@ -112,7 +112,7 @@ async function verifyPage(url: string, place: string, geography: PriceGeography)
   } catch { return null; }
 }
 
-async function offersFor(place: string, spec: OrderSpec, geography: PriceGeography) {
+async function offersFor(place: string, spec: OrderSpec, geography: PriceGeography, mode: LoadMode = "live") {
   const url = Deno.env.get("SUPABASE_URL"); const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !secret) throw new ResearchError(503, "summary_storage_not_configured");
   const db = createClient(url, secret);
@@ -124,6 +124,7 @@ async function offersFor(place: string, spec: OrderSpec, geography: PriceGeograp
     return offers.flatMap((o) => normalizeCleaning(o, spec, prices.length === 1 ? prices[0] : null));
   });
   if (saved && summaryIsFresh(saved.expires_at)) return { offers: apply(saved.offers), checkedAt: saved.checked_at, evidence: saved.applicability.search as SearchEvidence, cacheHit: true };
+  if (mode === "saved") return { offers: [], checkedAt: new Date().toISOString(), cacheHit: false };
   // This Responses integration has its own state; old provider pauses remain unchanged.
   const { data: pause, error: pauseError } = await db.from("web_price_research_state").select("status,reason").eq("id", "cleaning-lovable-responses").maybeSingle();
   if (pauseError) throw new ResearchError(503, "research_state_unavailable");
@@ -154,6 +155,6 @@ async function offersFor(place: string, spec: OrderSpec, geography: PriceGeograp
     throw e;
   }
 }
-export async function researchCleaning(cityHe: string, spec: OrderSpec): Promise<WebEstimate> {
-  return estimateWithGeographyFallback(cityHe, (place, geography) => offersFor(place, spec, geography));
+export async function researchCleaning(cityHe: string, spec: OrderSpec, from?: PriceGeography): Promise<WebEstimate> {
+  return estimateWithGeographyFallback(cityHe, (place, geography, mode) => offersFor(place, spec, geography, mode), { savedFirst: true, from });
 }
