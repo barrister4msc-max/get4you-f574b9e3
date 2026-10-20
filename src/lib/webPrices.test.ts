@@ -151,3 +151,15 @@ describe("pre-loaded prices answer without waiting", () => {
     expect(PRICE_SUMMARY_TTL_MS).toBe(30 * 24 * 60 * 60 * 1000);
   });
 });
+
+describe("specialised cleaning must name its scope", () => {
+  it("a generic apartment price with polish is not a move-out price", async () => {
+    const { cleaningQuoteMatchesType } = await import("../../supabase/functions/_shared/webPrices");
+    expect(cleaningQuoteMatchesType('מחיר ניקיון דירת 4 חדרים 2,500 - 1,600 ₪ המחיר כולל פוליש ווקס', "move_in_out")).toBe(false);
+    expect(cleaningQuoteMatchesType('ניקיון דירה לפני כניסה 1,500 ₪', "move_in_out")).toBe(true);
+  });
+  it("a generic price is not a renovation-cleaning price", async () => {
+    const { cleaningQuoteMatchesType } = await import("../../supabase/functions/_shared/webPrices");
+    expect(cleaningQuoteMatchesType('ניקיון דירה 18 ₪ למ"ר', "after_renovation")).toBe(false);
+  });
+});
