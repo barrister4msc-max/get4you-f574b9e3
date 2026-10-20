@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
 import {
   computeHistory, computeTariff, findTariff, type ComparableRecord, type EstimateParams, type EstimateResult,
 } from "../_shared/priceEstimate.ts";
+import { researchCleaning } from "./webResearch.ts";
+import type { CleaningType } from "../_shared/webPrices.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +16,7 @@ const corsHeaders = {
 const AREA_SERVICES = new Set(["cleaning"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const reply = (r: EstimateResult, status = 200) =>
+const reply = (r: EstimateResult | Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(r), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -41,7 +43,20 @@ serve(async (req) => {
     const tariff = findTariff(p);
     if (tariff) return reply(computeTariff(tariff, p));
 
-    // 2) Completed orders with released payment, same exact category, same city and currency.
+    // 2) Verified public internet prices (city, then its region). Only the
+    //    public city name is sent out — never the address.
+    const cityHe = typeof b?.city_name_he === "string" ? b.city_name_he.trim().slice(0, 60) : "";
+    const types = ["regular", "deep", "after_renovation", "move_in_out"];
+    if (service === "cleaning" && currency === "ILS" && cityHe && p.areaM2 && p.areaM2 > 0 && p.subtype && types.includes(p.subtype)) {
+      try {
+        const web = await researchCleaning(cityHe, { areaM2: p.areaM2, cleaningType: p.subtype as CleaningType, windows: p.windows ?? null });
+        if (web.status === "available") return reply(web);
+      } catch (e) {
+        console.warn("[prices] web research failed", e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // 3) Completed orders with released payment, same exact category, same city and currency.
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     let q = sb.from("tasks")
       .select("city, service_details, escrow_transactions!inner(amount, currency, status)")

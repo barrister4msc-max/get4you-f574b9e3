@@ -42,6 +42,9 @@ export type EstimateResult =
       provenance: { tariffId: string; tariffVersion: string; components: Component[]; minimumApplied: boolean } }
   | { status: "available"; method: "history"; currency: string; min: number; max: number; recommended: number;
       provenance: { sampleSize: number; statistic: "p25-median-p75"; areaWindowPct: number | null } }
+  | { status: "available"; method: "web"; currency: string; min: number; max: number; recommended: number;
+      provenance: { geography: "city" | "region"; area: string; checkedAt: string;
+        offers: Array<{ url: string; quote: string; unit: string; unitPrice: number; normalized: number; calc: string; isFromPrice: boolean }> } }
   | { status: "unavailable"; reason: string }
   | { status: "error"; reason: string };
 
@@ -108,6 +111,8 @@ export function parseEstimateResponse(x: unknown): EstimateResult {
   if (o.status === "error") return { status: "error", reason: String(o.reason ?? "") };
   if (o.status !== "available" || typeof o.currency !== "string" || !o.provenance) return { status: "error", reason: "malformed" };
   if (o.method === "tariff" && finite(o.total) && o.total > 0) return o as unknown as EstimateResult;
+  if (o.method === "web" && finite(o.min) && finite(o.max) && finite(o.recommended) && o.min > 0 && o.min <= o.max &&
+      o.recommended === Math.round(((o.min as number) + (o.max as number)) / 2)) return o as unknown as EstimateResult;
   if (o.method === "history" && finite(o.min) && finite(o.max) && finite(o.recommended) &&
       o.min > 0 && o.min <= o.recommended && o.recommended <= o.max) return o as unknown as EstimateResult;
   return { status: "error", reason: "malformed" };
