@@ -4,7 +4,6 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
-import { hasPendingTaskDraft } from '@/lib/pendingTaskDraft';
 import { rememberPostAuthReturnTo, resolvePostAuthRedirect } from '@/lib/postAuthRedirect';
 import { Mail, Lock, User, ArrowRight, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import PasswordInput from '@/components/PasswordInput';
@@ -78,30 +77,7 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
-  // Handle OAuth errors that land directly on /login (for example a user
-  // manually navigates there after a failed provider round-trip). Keep the raw
-  // provider message visible while OAuth is being debugged.
-  useState(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.replace('#', '?'));
-    const errorDesc = params.get('error_description') || searchParams.get('error_description');
-    const error = params.get('error') || searchParams.get('error');
-    if (error || errorDesc) {
-      const msg = errorDesc || error || 'OAuth error';
-      console.error('[oauth-flow] Login received OAuth error', {
-        href: window.location.href,
-        hash,
-        search: window.location.search,
-        error,
-        error_description: errorDesc,
-        hashParams: Object.fromEntries(params),
-        searchParams: Object.fromEntries(searchParams),
-      });
-      setTimeout(() => toast.error(msg), 100);
-      // Clean up URL
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-  });
+  // OAuth errors in the URL are reported once by OAuthReturnHandler.
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const hasMinLength = password.length >= 8;
@@ -172,8 +148,13 @@ const LoginPage = () => {
       // Persist returnTo so it survives the email-confirmation roundtrip
       // back to /auth/callback.
       rememberPostAuthReturnTo(searchParams.get('returnTo'));
-      if (hasPendingTaskDraft()) {
-        toast.success('Аккаунт создан. Публикуем заявку…');
+      // With email confirmation there is no session yet: never claim the task
+      // is being published. If a session exists (auto-confirm), restore the
+      // draft for review via the unified resolver; otherwise ask to confirm.
+      const { data: { session: s } } = await supabase.auth.getSession();
+      if (s?.user) {
+        const { path } = await resolvePostAuthRedirect(supabase, s.user.id, { returnTo: searchParams.get('returnTo') });
+        navigate(path);
         return;
       }
       setSignupEmail(email);
@@ -211,12 +192,6 @@ const LoginPage = () => {
       if (returnTo) window.sessionStorage.setItem('oauth_return_to', returnTo);
       rememberPostAuthReturnTo(returnTo);
       try { window.sessionStorage.setItem('oauth_pending', provider); } catch { /* noop */ }
-      console.log('[oauth-flow] start signInWithOAuth', {
-        provider,
-        origin: window.location.origin,
-        pathname: window.location.pathname,
-        returnTo,
-      });
       const result = await lovable.auth.signInWithOAuth(provider, {
         // Use the bare origin (public, same-origin) — this is the documented
         // default that always sits in the Lovable OAuth broker allow-list for
@@ -231,13 +206,7 @@ const LoginPage = () => {
         // Log the full error so the actual provider/broker failure is visible
         // in console (Supabase/Lovable often returns "failed to sign in with
         // vendor" for provider-side config errors).
-        console.error('[oauth-flow] signInWithOAuth failed', {
-          provider,
-          name: (result.error as any)?.name,
-          message: (result.error as any)?.message,
-          status: (result.error as any)?.status,
-          error: result.error,
-        });
+        console.warn('[auth] stage=oauth_start status=error', { provider });
         const raw = (result.error as any)?.message || String(result.error) || 'OAuth error';
         toast.error(raw, { duration: 10000 });
         window.sessionStorage.removeItem('oauth_return_to');
@@ -245,11 +214,23 @@ const LoginPage = () => {
         setSocialLoading(null);
         return;
       }
-      // Browser will redirect to provider; nothing else to do.
+      if (!result?.redirected) {
+        // Popup flow: the wrapper's setSession reports failures via {error},
+        // not exceptions — confirm a session really exists before continuing.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.sessionStorage.removeItem('oauth_return_to');
+          try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
+          toast.error(t('auth.oauthFailed') || 'Sign-in did not complete. Please try again.');
+          setSocialLoading(null);
+          return;
+        }
+      }
+      // Full-page flow: browser redirects; OAuthReturnHandler finishes routing.
     } catch (err: any) {
       window.sessionStorage.removeItem('oauth_return_to');
       try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
-      console.error('[oauth-flow] signInWithOAuth threw', err);
+      console.warn('[auth] stage=oauth_start status=threw', { provider });
       toast.error(err?.message || 'OAuth error');
       setSocialLoading(null);
     }

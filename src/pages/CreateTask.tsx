@@ -1,3 +1,4 @@
+import { budgetColumns } from "@/lib/taskBudget";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,7 @@ const CreateTaskPage = () => {
   } = useGeolocation();
   const { t, currency, locale, rates } = useLanguage();
   const formatPrice = useFormatPrice();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const minPrice = getMinPrice(currency, rates);
   const minMessage = formatMinPriceMessage(currency, rates);
 
@@ -96,6 +97,7 @@ const CreateTaskPage = () => {
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const publishLockRef = useRef(false);
+  const publishIdRef = useRef<string | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [priceEstimate, setPriceEstimate] = useState<EstimateSummary | null>(null);
@@ -196,10 +198,35 @@ const CreateTaskPage = () => {
     setServicePickerOpen(false);
   };
 
-  // Save draft to localStorage on form changes
+  // Re-read the draft once auth has settled: the first render may run before
+  // the session is restored, and an owner-bound draft is invisible to a guest.
+  const draftHydratedRef = useRef(false);
+  const [draftHydrated, setDraftHydrated] = useState(false);
   useEffect(() => {
+    if (authLoading || draftHydratedRef.current) return;
+    draftHydratedRef.current = true;
+    const draft = readTaskDraft(user?.id ?? null);
+    if (draft) {
+      setForm((f) => {
+        const merged = { ...f, ...draft } as typeof f;
+        return urlServiceKey && merged.category !== urlServiceKey
+          ? { ...applyServiceChange(merged, urlServiceKey, SERVICE_PRICE_DEFAULTS), serviceDetails: {} }
+          : merged;
+      });
+      if (searchParams.get("continueDraft") === "1") {
+        toast.message(t("task.photos.readd") || "Please re-attach photos and voice notes before publishing");
+      }
+    }
+    setDraftHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user?.id]);
+
+  // Save draft to localStorage on form changes — never before hydration, so an
+  // empty form can't overwrite the saved draft while sign-in is still restoring.
+  useEffect(() => {
+    if (!draftHydrated) return;
     writeTaskDraft(form, user?.id ?? null);
-  }, [form, user?.id]);
+  }, [form, user?.id, draftHydrated]);
 
   const aiContext = `Title: ${form.title}, Description: ${form.description}, Category: ${form.category}, Type: ${form.taskType}`;
 
@@ -460,6 +487,10 @@ const CreateTaskPage = () => {
 
     if (publishLockRef.current) return;
     publishLockRef.current = true;
+    // One id per publish intent: retries after a network drop reuse it, so the
+    // database primary key turns a duplicate insert into a detectable conflict.
+    if (!publishIdRef.current) publishIdRef.current = crypto.randomUUID();
+    const taskId = publishIdRef.current;
     setSubmitting(true);
     try {
       // Make sure coordinates match the address typed in by the user.
@@ -515,6 +546,7 @@ const CreateTaskPage = () => {
       const { data, error } = await supabase
         .from("tasks")
         .insert({
+          id: taskId,
           latitude: finalLat,
           longitude: finalLng,
           user_id: user.id,
@@ -522,9 +554,7 @@ const CreateTaskPage = () => {
           description: form.description.trim() || null,
           category_id: categoryId,
           task_type: form.taskType as "onsite" | "remote",
-          budget_fixed: form.budget,
-          budget_min: form.budget,
-          budget_max: form.budgetMax,
+          ...budgetColumns(form.budgetType, form.budget, form.budgetMax),
           is_urgent: form.urgency === "urgent",
           address: form.location.trim() || null,
           city: form.taskType === "remote" ? null : finalGeo ? cityLabel(finalGeo, locale) : null,
@@ -542,13 +572,24 @@ const CreateTaskPage = () => {
         .select("id")
         .single();
 
-      if (error) throw error;
+      let createdId: string | null = data?.id ?? null;
+      if (error) {
+        // Duplicate primary key = an earlier attempt with this id already succeeded.
+        if ((error as { code?: string }).code === "23505") {
+          const { data: existing } = await supabase.from("tasks").select("id").eq("id", taskId).maybeSingle();
+          if (!existing) throw error;
+          createdId = existing.id;
+        } else {
+          throw error;
+        }
+      }
 
+      publishIdRef.current = null;
       clearPendingTaskDraft();
       toast.success(t("task.published") || "Task published!");
 
-      if (data?.id) {
-        navigate(`/tasks/${data.id}`);
+      if (createdId) {
+        navigate(`/tasks/${createdId}`);
       } else {
         navigate("/tasks");
       }
@@ -563,6 +604,14 @@ const CreateTaskPage = () => {
               typeof (err as { message: unknown }).message === "string"
             ? (err as { message: string }).message
             : null;
+      const m = (message || "").toLowerCase();
+      if (m.includes("schedule") || m.includes("execution") || m.includes("time")) {
+        setScheduleError("time_in_past"); setStep(2);
+      } else if (m.includes("price") || m.includes("budget") || m.includes("minimum")) {
+        setPriceError(message); setStep(2);
+      } else if (m.includes("categor") || m.includes("service")) {
+        setStep(1);
+      }
       toast.error(message || t("task.publish.error") || "Failed to publish task");
     } finally {
       publishLockRef.current = false;
