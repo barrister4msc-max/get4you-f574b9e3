@@ -1,6 +1,6 @@
 // Official OpenAI native web search → source evidence → fetched quote verification.
 // Only public city/subtype leave the server; never private addresses or free text.
-import { aggregate, CLEANING_QUERY_HE, isVerified, normalizeCleaning, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type AppliedOffer, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate } from "../_shared/webPrices.ts";
+import { aggregate, CLEANING_QUERY_HE, isVerified, normalizeCleaning, priceCityName, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type AppliedOffer, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate } from "../_shared/webPrices.ts";
 import { searchEvidence, publicSourceUrl, openAIStreamFailure, type SearchEvidence } from "../_shared/searchEvidence.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { parseHTML } from "npm:linkedom";
@@ -155,6 +155,7 @@ async function offersFor(place: string, spec: OrderSpec, geography: "city" | "re
   }
 }
 export async function researchCleaning(cityHe: string, spec: OrderSpec): Promise<WebEstimate> {
+  cityHe = priceCityName(cityHe);
   let data = await offersFor(cityHe, spec, "city");
   let result = aggregate(data.offers, "city", cityHe, data.checkedAt);
   const region = regionFor(cityHe);

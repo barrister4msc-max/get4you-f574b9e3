@@ -109,7 +109,16 @@ const REGION_OF: Record<string, string> = {
   "אשדוד": "הדרום", "אשקלון": "הדרום", "באר שבע": "הדרום", "אילת": "הדרום",
   "נצרת": "הצפון", "עפולה": "הצפון", "טבריה": "הצפון", "כרמיאל": "הצפון", "עכו": "הצפון", "נהריה": "הצפון",
 };
-export const regionFor = (cityHe: string): string | null => REGION_OF[cityHe.trim()] ?? null;
+/** OSM uses maqaf/en-dash spellings; search/cache use one public city spelling. */
+export function priceCityName(cityHe: string): string {
+  const name = cityHe.replace(/[־–—-]/g, " ").replace(/\s+/g, " ").trim();
+  return name === "תל אביב יפו" ? "תל אביב" : name;
+}
+export const regionFor = (cityHe: string): string | null => {
+  const canonical = priceCityName(cityHe);
+  return REGION_OF[cityHe.trim()] ?? REGION_OF[canonical] ??
+    Object.entries(REGION_OF).find(([city]) => priceCityName(city) === canonical)?.[1] ?? null;
+};
 
 export const CLEANING_QUERY_HE: Record<CleaningType, string> = {
   regular: "ניקיון בית שוטף מחיר",

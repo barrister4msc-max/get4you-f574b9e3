@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, isVerified, normalizeCleaning, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
+import { aggregate, isVerified, normalizeCleaning, priceCityName, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
 
 const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: "", price: 0, unit: "per_m2", cleaningType: "after_renovation",
   priceMax: null, areaMin: null, areaMax: null, isFromPrice: false, includesWindows: null, vatNote: null, ...x });
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
 describe("web price rules", () => {
+  it("finds the regional fallback for OSM Hebrew city punctuation without changing geography", () => {
+    expect(regionFor("חיפה")).toBe("חיפה והקריות");
+    expect(regionFor("תל־אביב–יפו")).toBe("גוש דן");
+    expect(priceCityName("תל־אביב–יפו")).toBe("תל אביב");
+    expect(regionFor("unknown")).toBeNull();
+  });
   it("recomputes 100 and 200 m² from the same documented range without new prices", () => {
     const offer = o({ price: 18, priceMax: 25 });
     expect(aggregate(normalizeCleaning(offer, { ...spec, areaM2: 100 }, null), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 1800, max: 2500, recommended: 2150 });
