@@ -1,3 +1,9 @@
+## Gemini Google Search price research
+- [ ] Replace mandatory Firecrawl research with native Gemini grounding, verified sources and saved search metadata
+- [ ] Keep ILS range on conversion failure; preserve explicit application and stale-response guard
+- [ ] Test Haifa/Tel Aviv, 100/200 m², ILS/USD, persisted reuse and manual budget in real form — requires Gemini API access
+- [ ] Deploy price function; distinguish saved/deployed/published and exact billing blocker without increasing limits
+
 ## Restore price recommendation
 - [x] Diagnose actual unavailable response: USD skipped web lookup; no persistent summaries; search connected and returns HTTP 200
 - [x] Persist verified source summaries with expiry; refresh without destructive overwrite; persist terminal provider pause
