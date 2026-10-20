@@ -1,4 +1,5 @@
 ## Switch price research to Lovable AI
+- [x] Add city → region → Israel fallback; 40 tests passed; live country sources persisted and Haifa form showed Israel provenance/min/max/midpoint with budget changed only on click; no orders/payments
 - [x] City → matching region fallback; normalize OSM Hebrew punctuation; live Haifa + Haifa/Krayot searched but no applicable deep-cleaning 100 m² offer
 - [x] Replace own OpenAI credentials with Lovable AI Responses; keep verified native sources and separate pause/cache state
 - [x] Deploy and verify Tel Aviv 100 m²: ILS 1800–2500, midpoint 2150, cache reused; actual USD form applied 692.64 only on click; no order/payment

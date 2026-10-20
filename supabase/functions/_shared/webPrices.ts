@@ -20,6 +20,40 @@ export type RawOffer = {
 };
 
 export type OrderSpec = { areaM2: number; cleaningType: CleaningType; windows: number | null; additionalWork?: boolean };
+export type PriceGeography = "city" | "region" | "country";
+export const PRICE_COUNTRY = "ישראל";
+
+/** Country sampling accepts Israeli ILS pages, including offers for other Israeli cities. */
+export function pageMatchesPriceGeography(text: string, place: string, geography: PriceGeography): boolean {
+  return geography === "country"
+    ? /[א-ת]/.test(text) && /₪|ש[״"']?ח|שקל|\bILS\b/.test(text)
+    : text.includes(place.split(" ")[0]);
+}
+
+/** Stop at the first comparable scope; provider/storage failures are not missing prices. */
+export async function estimateWithGeographyFallback(
+  city: string,
+  load: (place: string, geography: PriceGeography) => Promise<{ offers: AppliedOffer[]; checkedAt: string; evidence?: import("./searchEvidence.ts").SearchEvidence; cacheHit?: boolean }>,
+): Promise<WebEstimate> {
+  city = priceCityName(city);
+  const region = regionFor(city);
+  const scopes: Array<{ place: string; geography: PriceGeography }> = [
+    { place: city, geography: "city" },
+    ...(region ? [{ place: region, geography: "region" as const }] : []),
+    { place: PRICE_COUNTRY, geography: "country" },
+  ];
+  let result: WebEstimate = { status: "unavailable", reason: "no_comparable_offers" };
+  for (const scope of scopes) {
+    const data = await load(scope.place, scope.geography);
+    result = aggregate(data.offers, scope.geography, scope.place, data.checkedAt);
+    if (result.status === "available") {
+      result.provenance.search = data.evidence;
+      result.provenance.cacheHit = data.cacheHit;
+      return result;
+    }
+  }
+  return result;
+}
 
 export type AppliedOffer = {
   url: string; quote: string; unit: RawOffer["unit"]; unitPrice: number;
@@ -80,11 +114,11 @@ function normalizeOne(o: RawOffer, spec: OrderSpec, windowPrice: number | null):
 
 export type WebEstimate =
   | { status: "available"; method: "web"; currency: "ILS"; min: number; max: number; recommended: number;
-      provenance: { geography: "city" | "region"; area: string; checkedAt: string; offers: AppliedOffer[]; search?: import("./searchEvidence.ts").SearchEvidence; cacheHit?: boolean } }
+      provenance: { geography: PriceGeography; area: string; checkedAt: string; offers: AppliedOffer[]; search?: import("./searchEvidence.ts").SearchEvidence; cacheHit?: boolean } }
   | { status: "unavailable"; reason: string };
 
 /** min = lowest, max = highest applicable price, recommended = round((min+max)/2). */
-export function aggregate(offers: AppliedOffer[], geography: "city" | "region", area: string, checkedAt: string): WebEstimate {
+export function aggregate(offers: AppliedOffer[], geography: PriceGeography, area: string, checkedAt: string): WebEstimate {
   const ok = offers.filter((o) => finite(o.normalized) && o.normalized > 0);
   if (!ok.length) return { status: "unavailable", reason: "no_comparable_offers" };
   const prices = ok.map((o) => o.normalized);

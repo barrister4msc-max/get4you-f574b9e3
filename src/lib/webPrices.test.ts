@@ -1,11 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, isVerified, normalizeCleaning, priceCityName, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
+import { aggregate, estimateWithGeographyFallback, pageMatchesPriceGeography, isVerified, normalizeCleaning, priceCityName, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
 
 const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: "", price: 0, unit: "per_m2", cleaningType: "after_renovation",
   priceMax: null, areaMin: null, areaMax: null, isFromPrice: false, includesWindows: null, vatNote: null, ...x });
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
 describe("web price rules", () => {
+  it("falls back from empty city and region to Israel minimum, maximum and midpoint", async () => {
+    const calls: string[] = [];
+    const result = await estimateWithGeographyFallback("חיפה", async (place, geography) => {
+      calls.push(`${geography}:${place}`);
+      return { offers: geography === "country" ? normalizeCleaning(o({ price: 18, priceMax: 25 }), { ...spec, areaM2: 100 }, null) : [], checkedAt: "2026-10-20" };
+    });
+    expect(calls).toEqual(["city:חיפה", "region:חיפה והקריות", "country:ישראל"]);
+    expect(result).toMatchObject({ status: "available", min: 1800, max: 2500, recommended: 2150, provenance: { geography: "country", area: "ישראל" } });
+  });
+  it("tries country even for a city without a mapped region and invents no missing price", async () => {
+    const calls: string[] = [];
+    const result = await estimateWithGeographyFallback("unknown", async (place) => {
+      calls.push(place); return { offers: [], checkedAt: "2026-10-20" };
+    });
+    expect(calls).toEqual(["unknown", "ישראל"]);
+    expect(result).toEqual({ status: "unavailable", reason: "no_comparable_offers" });
+  });
+  it("keeps local prices instead of replacing them with country samples", async () => {
+    const calls: string[] = [];
+    const result = await estimateWithGeographyFallback("חיפה", async (place) => {
+      calls.push(place); return { offers: normalizeCleaning(o({ price: 10 }), spec, null), checkedAt: "2026-10-20" };
+    });
+    expect(calls).toEqual(["חיפה"]);
+    expect(result).toMatchObject({ min: 800, max: 800, recommended: 800, provenance: { geography: "city" } });
+  });
+  it("country sampling accepts Hebrew ILS pages from other cities but not foreign currencies", () => {
+    expect(pageMatchesPriceGeography('ניקיון בתל אביב 18 ₪ למ״ר', "ישראל", "country")).toBe(true);
+    expect(pageMatchesPriceGeography('ניקיון בתל אביב 18 דולר', "ישראל", "country")).toBe(false);
+    expect(pageMatchesPriceGeography('ניקיון בתל אביב 18 ₪', "חיפה", "city")).toBe(false);
+  });
   it("finds the regional fallback for OSM Hebrew city punctuation without changing geography", () => {
     expect(regionFor("חיפה")).toBe("חיפה והקריות");
     expect(regionFor("תל־אביב–יפו")).toBe("גוש דן");
