@@ -118,8 +118,10 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         }), currency === "USD" ? supabase.functions.invoke("exchange-rates", { signal: ctrl.signal }) : Promise.resolve(null)]);
         const rate = currency === "ILS" ? 1 : exchange && !exchange.error ? estimateConversionRate(exchange.data) : null;
         result = response.error ? { status: "error", reason: "request_failed" } : parseEstimateResponse(response.data);
-        if (result.status === "available" && result.method === "web" && (params.subtype === "deep" || params.subtype === "regular") &&
-          result.provenance.offers.some((offer) => !cleaningQuoteMatchesType(offer.quote, params.subtype === "regular" ? "regular" : "deep"))) {
+        const types = ["regular", "deep", "after_renovation", "move_in_out"] as const;
+        const subtype = types.find((t) => t === params.subtype);
+        if (result.status === "available" && result.method === "web" && subtype &&
+          result.provenance.offers.some((offer) => !cleaningQuoteMatchesType(offer.quote, subtype))) {
           result = { status: "unavailable", reason: "incompatible_cleaning_scope" };
         }
         if (response.error instanceof FunctionsHttpError) {

@@ -113,3 +113,16 @@ describe("ranges and rooms", () => {
     expect(normalizeCleaning(o({ unit: "per_room_job", cleaningType: "deep", price: 900 }), deep, null)).toEqual([]);
   });
 });
+
+describe("cleaning types never mix", () => {
+  it("move-out cleaning rejects a quote that also covers renovation", async () => {
+    const { cleaningQuoteMatchesType } = await import("../../supabase/functions/_shared/webPrices");
+    expect(cleaningQuoteMatchesType("ניקוי יסודי לאחר שיפוץ או מעבר דירה ₪1200-1652", "move_in_out")).toBe(false);
+    expect(cleaningQuoteMatchesType("ניקיון לפני אכלוס מ-₪699", "move_in_out")).toBe(true);
+  });
+  it("renovation cleaning rejects a quote that also covers moving", async () => {
+    const { cleaningQuoteMatchesType } = await import("../../supabase/functions/_shared/webPrices");
+    expect(cleaningQuoteMatchesType("ניקוי יסודי לאחר שיפוץ או מעבר דירה ₪1200-1652", "after_renovation")).toBe(false);
+    expect(cleaningQuoteMatchesType("ניקיון אחרי שיפוץ 25 ₪ למ\"ר", "after_renovation")).toBe(true);
+  });
+});
