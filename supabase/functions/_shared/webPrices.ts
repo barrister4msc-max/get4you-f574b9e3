@@ -30,26 +30,36 @@ export function pageMatchesPriceGeography(text: string, place: string, geography
     : text.includes(place.split(" ")[0]);
 }
 
-/** Stop at the first comparable scope; provider/storage failures are not missing prices. */
+export type LoadMode = "saved" | "live";
+/**
+ * Stop at the first comparable scope; provider/storage failures are not missing prices.
+ * savedFirst: answer from any already-saved scope (city → region → country) before any slow live search.
+ * from: start at a broader scope (used to pre-load region/country summaries).
+ */
 export async function estimateWithGeographyFallback(
   city: string,
-  load: (place: string, geography: PriceGeography) => Promise<{ offers: AppliedOffer[]; checkedAt: string; evidence?: import("./searchEvidence.ts").SearchEvidence; cacheHit?: boolean }>,
+  load: (place: string, geography: PriceGeography, mode?: LoadMode) => Promise<{ offers: AppliedOffer[]; checkedAt: string; evidence?: import("./searchEvidence.ts").SearchEvidence; cacheHit?: boolean }>,
+  opts: { savedFirst?: boolean; from?: PriceGeography } = {},
 ): Promise<WebEstimate> {
   city = priceCityName(city);
   const region = regionFor(city);
-  const scopes: Array<{ place: string; geography: PriceGeography }> = [
+  const all: Array<{ place: string; geography: PriceGeography }> = [
     { place: city, geography: "city" },
     ...(region ? [{ place: region, geography: "region" as const }] : []),
     { place: PRICE_COUNTRY, geography: "country" },
   ];
+  const order: PriceGeography[] = ["city", "region", "country"];
+  const scopes = opts.from ? all.filter((s) => order.indexOf(s.geography) >= order.indexOf(opts.from!)) : all;
   let result: WebEstimate = { status: "unavailable", reason: "no_comparable_offers" };
-  for (const scope of scopes) {
-    const data = await load(scope.place, scope.geography);
-    result = aggregate(data.offers, scope.geography, scope.place, data.checkedAt);
-    if (result.status === "available") {
-      result.provenance.search = data.evidence;
-      result.provenance.cacheHit = data.cacheHit;
-      return result;
+  for (const mode of (opts.savedFirst ? ["saved", "live"] : ["live"]) as LoadMode[]) {
+    for (const scope of scopes) {
+      const data = await load(scope.place, scope.geography, mode);
+      result = aggregate(data.offers, scope.geography, scope.place, data.checkedAt);
+      if (result.status === "available") {
+        result.provenance.search = data.evidence;
+        result.provenance.cacheHit = data.cacheHit;
+        return result;
+      }
     }
   }
   return result;
@@ -61,7 +71,8 @@ export type AppliedOffer = {
 };
 
 const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
-export const PRICE_SUMMARY_TTL_MS = 24 * 60 * 60 * 1000;
+/** Pre-loaded summaries stay usable for 30 days so customers never wait for a live search. */
+export const PRICE_SUMMARY_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export function summaryIsFresh(expiresAt: string, now = Date.now()): boolean {
   return Number.isFinite(Date.parse(expiresAt)) && Date.parse(expiresAt) > now;
 }
