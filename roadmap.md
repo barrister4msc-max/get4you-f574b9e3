@@ -1,3 +1,9 @@
+## Restore price recommendation
+- [ ] Diagnose actual unavailable response and connected search
+- [ ] Persist verified source summaries with expiry; refresh without destructive overwrite
+- [ ] Match cleaning scope and convert ILS once with a verified rate; explicit apply only
+- [ ] Test rules and verify live server → form → budget without publishing orders
+
 ## Homepage typography scale-up (all elements)
 - [x] Apply homepage-scoped computed sizes: logo 24, nav 18 semibold, controls 18, service label 24 bold, service/button text 18 semibold (16 phone), banner H1 48-52 desktop (32-36 mobile), banner copy 20 desktop / 18 mobile, section H2 32 desktop (24-28 mobile), step/card titles 20 semibold, body/FAQ/links/footer 18, utility captions >=14
 - [x] Buttons min-height 48 with padding adjusted; drop fixed heights that clip; allow long names to wrap
