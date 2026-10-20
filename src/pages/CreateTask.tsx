@@ -610,7 +610,7 @@ const CreateTaskPage = () => {
       if (m.includes("schedule") || m.includes("execution") || m.includes("time")) {
         setScheduleError("time_in_past"); setStep(2);
       } else if (m.includes("price") || m.includes("budget") || m.includes("minimum")) {
-        setPriceError(message); setStep(3);
+        setPriceError(message); setStep(2);
       } else if (m.includes("categor") || m.includes("service")) {
         setStep(1);
       }
