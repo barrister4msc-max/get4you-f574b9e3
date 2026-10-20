@@ -86,4 +86,4 @@
 - [x] Owner tariff: regular/deep cleaning 500–700 ₪ shown instantly; cleaning types (regular/deep, renovation, move) never share quotes
 - [x] Pre-load renovation cleaning prices (saved 30 days, answers instantly from saved city/region/country)
 - [ ] Move-out cleaning prices: real offers saved but quoted per number of rooms; form asks m² — waiting on owner choice (add rooms field?)
-- [ ] Answer: overview of AI features for the app
+- [x] Answer: overview of AI features for the app
