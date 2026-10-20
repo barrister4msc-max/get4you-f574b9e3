@@ -80,7 +80,7 @@ function normalizeOne(o: RawOffer, spec: OrderSpec, windowPrice: number | null):
 
 export type WebEstimate =
   | { status: "available"; method: "web"; currency: "ILS"; min: number; max: number; recommended: number;
-      provenance: { geography: "city" | "region"; area: string; checkedAt: string; offers: AppliedOffer[] } }
+      provenance: { geography: "city" | "region"; area: string; checkedAt: string; offers: AppliedOffer[]; search?: import("./searchEvidence.ts").SearchEvidence; cacheHit?: boolean } }
   | { status: "unavailable"; reason: string };
 
 /** min = lowest, max = highest applicable price, recommended = round((min+max)/2). */
