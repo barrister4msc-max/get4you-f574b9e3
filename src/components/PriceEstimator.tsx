@@ -152,7 +152,7 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
       {!loading && current?.status === "unavailable" && <p className="text-sm text-muted-foreground">{TXT.unavailable[loc]}</p>}
       {!loading && current?.status === "error" && (
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-destructive">{current.reason === "openai:credit_balance_exhausted" ? TXT.openaiLimit[loc] : current.reason.toLowerCase().includes("credit limit") ? TXT.limit[loc] : TXT.error[loc]}</span>
+          <span className="text-destructive">{current.reason === "openai:credit_balance_exhausted" ? TXT.openaiLimit[loc] : /credit[ _]limit/.test(current.reason.toLowerCase()) ? TXT.limit[loc] : TXT.error[loc]}</span>
           <Button variant="ghost" type="button" onClick={() => setRetry((r) => r + 1)} className="inline-flex items-center gap-1 text-primary underline">
             <RotateCw className="w-3.5 h-3.5" />{TXT.retry[loc]}
           </Button>
@@ -193,7 +193,7 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
                         </li>
                       ))}
                     </ul>
-                    {current.provenance.search && <div className="space-y-1"><p>OpenAI · Web Search</p><ul>{current.provenance.search.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer nofollow" className="underline text-primary">{source.title || new URL(source.url).hostname}</a></li>)}</ul></div>}
+                    {current.provenance.search && <div className="space-y-1"><p>{current.provenance.search.provider === "lovable" ? "Lovable AI · OpenAI Web Search" : "OpenAI · Web Search"}</p><ul>{current.provenance.search.sources.map((source) => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer nofollow" className="underline text-primary">{source.title || new URL(source.url).hostname}</a></li>)}</ul></div>}
                   </>
                 ) : current.method === "history" ? (
                   <p>{TXT.history[loc].replace("{n}", String(current.provenance.sampleSize))}</p>

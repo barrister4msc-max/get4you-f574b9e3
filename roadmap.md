@@ -1,3 +1,7 @@
+## Switch price research to Lovable AI
+- [x] Replace own OpenAI credentials with Lovable AI Responses; keep verified native sources and separate pause/cache state
+- [ ] Deploy and verify a live server request and form; no real order/payment creation
+
 ## OpenAI native web-search price research
 - [x] Securely save user's OPENAI_API_KEY; verify authenticated model listing and use documented gpt-5.5
 - [x] Replace mandatory Firecrawl with native OpenAI web_search, provider source evidence, fetched quote verification and saved search metadata; separate provider cache/pause state

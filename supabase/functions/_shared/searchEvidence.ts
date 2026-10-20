@@ -1,5 +1,5 @@
 /** Native OpenAI search evidence, not URLs invented in answer text. */
-export type SearchEvidence = { provider: "openai"; queries: string[]; sources: Array<{ url: string; title: string }> };
+export type SearchEvidence = { provider: "openai" | "lovable"; queries: string[]; sources: Array<{ url: string; title: string }> };
 export function openAIStreamFailure(event: Record<string, any>): { status: number; reason: string } {
   const error = event.response?.error ?? event.error ?? event;
   const code = typeof error.code === "string" ? error.code : "stream_failed";
