@@ -36,6 +36,20 @@
       "when": 1792438081491,
       "tag": "0004_nearby_privacy_owner_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792514989449,
+      "tag": "0005_verified_web_price_summaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792515278156,
+      "tag": "0006_web_price_research_pause",
+      "breakpoints": true
     }
   ]
 }

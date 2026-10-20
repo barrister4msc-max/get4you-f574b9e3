@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, isVerified, normalizeCleaning, type RawOffer } from "../../supabase/functions/_shared/webPrices";
+import { aggregate, isVerified, normalizeCleaning, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
 
 const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: "", price: 0, unit: "per_m2", cleaningType: "after_renovation",
   priceMax: null, areaMin: null, areaMax: null, isFromPrice: false, includesWindows: null, vatNote: null, ...x });
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
 describe("web price rules", () => {
+  it("expired summaries are not applicable and freshness is never extended by reading", () => {
+    const checked = Date.parse("2026-10-20T16:00:00Z");
+    const expiry = new Date(checked + PRICE_SUMMARY_TTL_MS).toISOString();
+    expect(summaryIsFresh(expiry, checked + PRICE_SUMMARY_TTL_MS - 1)).toBe(true);
+    expect(summaryIsFresh(expiry, checked + PRICE_SUMMARY_TTL_MS)).toBe(false);
+    expect(summaryIsFresh("invalid", checked)).toBe(false);
+  });
+  it("additional unpriced work is not silently treated as standard cleaning", () => {
+    expect(normalizeCleaning(o({ price: 10 }), { ...spec, additionalWork: true }, null)).toEqual([]);
+  });
   it("recommended is the midpoint of the lowest and highest applicable price", () => {
     const a = [o({ price: 10, quote: "10" }), o({ price: 15, quote: "15" }), o({ price: 25, quote: "25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
     const r = aggregate(a, "city", "חיפה", "2026-10-20");

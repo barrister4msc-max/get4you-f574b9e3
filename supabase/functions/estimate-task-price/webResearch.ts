@@ -5,13 +5,24 @@
 // address, name, phone or any other personal data.
 import {
   aggregate, CLEANING_QUERY_HE, isVerified, normalizeCleaning, regionFor,
+  summaryIsFresh, PRICE_SUMMARY_TTL_MS,
   type AppliedOffer, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate,
 } from "../_shared/webPrices.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
 const AI_URL = "https://ai.gateway.lovable.dev/v1/responses";
-const TTL_MS = 24 * 60 * 60 * 1000;
-const cache = new Map<string, { at: number; value: WebEstimate }>();
+export class ResearchError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
+async function providerFailure(res: Response): Promise<never> {
+  const body = await res.text();
+  console.error(`[prices] provider failed [${res.status}]: ${body}`);
+  let message = body.slice(0, 300);
+  try { message = JSON.parse(body).message ?? message; } catch { /* non-JSON */ }
+  throw new ResearchError(res.status, message);
+}
 
 type Page = { url: string; text: string };
 
@@ -22,14 +33,14 @@ async function search(query: string): Promise<Page[]> {
   const res = await fetch(`${GATEWAY}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": fcKey },
-    body: JSON.stringify({ query, limit: 8, country: "IL", lang: "he", tbs: "qdr:y",
+    body: JSON.stringify({ query, limit: 8, country: "IL", lang: "he",
       scrapeOptions: { formats: ["markdown"], onlyMainContent: true } }),
     signal: AbortSignal.timeout(45000),
   });
-  if (!res.ok) throw new Error(`search_failed_${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) return providerFailure(res);
   const j = await res.json();
   const items: Array<{ url?: string; markdown?: string }> = j?.data?.web ?? j?.data ?? [];
-  return items.filter((i) => i.url && i.markdown).map((i) => ({ url: i.url!, text: i.markdown!.slice(0, 14000) }));
+  return items.flatMap((i) => typeof i.url === "string" && typeof i.markdown === "string" ? [{ url: i.url, text: i.markdown.slice(0, 48000) }] : []);
 }
 
 const N = (t: string) => ({ type: [t, "null"] });
@@ -71,7 +82,8 @@ async function extract(page: Page): Promise<RawOffer[]> {
       text: { format: { type: "json_schema", name: "offers", strict: true, schema: OFFER_SCHEMA } },
     }),
   });
-  if (!res.ok || !res.body) { console.warn("[prices] extract failed", res.status); return []; }
+  if (!res.ok) return providerFailure(res);
+  if (!res.body) return [];
   let out = ""; let buf = "";
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   for (;;) {
@@ -102,46 +114,66 @@ async function extract(page: Page): Promise<RawOffer[]> {
   }));
 }
 
-async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]> {
-  let pages: Page[] = [];
+async function offersFor(place: string, spec: OrderSpec, geography: "city" | "region"): Promise<{ offers: AppliedOffer[]; checkedAt: string }> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !secret) throw new Error("summary_storage_not_configured");
+  const db = createClient(url, secret);
+  const cacheKey = JSON.stringify(["cleaning-v3", place, spec.cleaningType]);
+  const { data: saved, error: readError } = await db.from("web_price_summaries").select("offers,expires_at,checked_at").eq("cache_key", cacheKey).maybeSingle();
+  if (readError) throw new Error(`summary_read_failed: ${readError.message}`);
+  const apply = (groups: Array<{ offers: RawOffer[] }>) => groups.flatMap(({ offers }) => {
+    const windowPrices = offers.filter((o) => o.unit === "per_window" && !o.isFromPrice).map((o) => o.price);
+    return offers.flatMap((o) => normalizeCleaning(o, spec, windowPrices.length === 1 ? windowPrices[0] : null));
+  });
+  if (saved && summaryIsFresh(saved.expires_at)) return { offers: apply(saved.offers), checkedAt: saved.checked_at };
+  const { data: pause, error: pauseError } = await db.from("web_price_research_state").select("status,reason").eq("id", "cleaning").maybeSingle();
+  if (pauseError) throw new Error("research_state_unavailable");
+  if (pause) throw new ResearchError(pause.status, pause.reason);
   try {
+  let pages: Page[] = [];
     const [a, b] = await Promise.all([
       search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`),
-      search(`מחירון ניקיון ${place}`),
+      search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place} מ"ר מחירון`),
     ]);
     const seen = new Set<string>();
     pages = [...a, ...b].filter((p) => !seen.has(p.url) && seen.add(p.url));
-  }
-  catch (e) { console.warn("[prices] search failed", e instanceof Error ? e.message : String(e)); return []; }
   // A page counts for this geography only if it mentions the place itself.
   const relevant = pages.filter((p) => p.text.includes(place.split(" ")[0]));
-  const extracted = await Promise.all(relevant.map(async (p) => ({ p, offers: await extract(p).catch(() => []) })));
-  const applied: AppliedOffer[] = [];
-  for (const { p, offers } of extracted) {
-    const verified = offers.filter((o) => isVerified(o, p.text));
-    const windowPrices = verified.filter((o) => o.unit === "per_window" && !o.isFromPrice).map((o) => o.price);
-    const windowPrice = windowPrices.length === 1 ? windowPrices[0] : null; // ambiguous → none
-    for (const o of verified) {
-      applied.push(...normalizeCleaning(o, spec, windowPrice));
-    }
+  const extracted: Array<{ p: Page; offers: RawOffer[] }> = [];
+  for (const p of relevant) extracted.push({ p, offers: await extract(p) });
+  const groups = extracted.map(({ p, offers }) => ({ url: p.url, offers: offers.filter((o) => isVerified(o, p.text)) })).filter((g) => g.offers.length);
+  // Never replace the last successful summary with an empty or failed update.
+  const checkedAt = new Date().toISOString();
+  if (groups.length) {
+    const { error } = await db.from("web_price_summaries").upsert({ cache_key: cacheKey, service: "cleaning", geography, place,
+      applicability: { cleaningType: spec.cleaningType, composition: "source-specific", normalization: "per_m2_or_explicit_area_range" }, currency: "ILS", offers: groups,
+      checked_at: checkedAt, expires_at: new Date(Date.now() + PRICE_SUMMARY_TTL_MS).toISOString() });
+    if (error) throw new Error(`summary_save_failed: ${error.message}`);
   }
+  const applied = apply(groups);
   console.info("[prices]", JSON.stringify({ place, pages: pages.length, relevant: relevant.length,
     extracted: extracted.reduce((n, x) => n + x.offers.length, 0),
     verified: extracted.reduce((n, x) => n + x.offers.filter((o) => isVerified(o, x.p.text)).length, 0), applied: applied.length }));
   if (Deno.env.get("PRICES_DEBUG")) console.info(JSON.stringify(extracted.map((x) => x.offers.map((o) => [o.unit, o.cleaningType, o.price, o.areaMin, o.areaMax, isVerified(o, x.p.text), o.quote.slice(0, 80)]))));
-  return applied;
+  return { offers: applied, checkedAt };
+  } catch (error) {
+    if (error instanceof ResearchError && (error.status === 402 || error.status === 403)) {
+      await db.from("web_price_research_state").upsert({ id: "cleaning", status: error.status, reason: error.message, paused_at: new Date().toISOString() });
+    }
+    throw error;
+  }
 }
 
 export async function researchCleaning(cityHe: string, spec: OrderSpec): Promise<WebEstimate> {
-  const key = JSON.stringify([cityHe, spec]);
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
-  const checkedAt = new Date().toISOString();
-  let result = aggregate(await offersFor(cityHe, spec), "city", cityHe, checkedAt);
+  const city = await offersFor(cityHe, spec, "city");
+  let result = aggregate(city.offers, "city", cityHe, city.checkedAt);
   if (result.status !== "available") {
     const region = regionFor(cityHe);
-    if (region) result = aggregate(await offersFor(region, spec), "region", region, checkedAt);
+    if (region) {
+      const regional = await offersFor(region, spec, "region");
+      result = aggregate(regional.offers, "region", region, regional.checkedAt);
+    }
   }
-  cache.set(key, { at: Date.now(), value: result });
   return result;
 }

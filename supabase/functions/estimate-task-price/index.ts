@@ -3,14 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
 import {
   computeHistory, computeTariff, findTariff, type ComparableRecord, type EstimateParams, type EstimateResult,
 } from "../_shared/priceEstimate.ts";
-import { researchCleaning } from "./webResearch.ts";
+import { researchCleaning, ResearchError } from "./webResearch.ts";
 import type { CleaningType } from "../_shared/webPrices.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 // Services whose price depends on area; history without area is not comparable for them.
 const AREA_SERVICES = new Set(["cleaning"]);
@@ -37,6 +32,9 @@ serve(async (req) => {
       cityId: typeof b?.city_id === "string" && /^osm:[RNW][0-9]+$/.test(b.city_id) ? b.city_id : null,
       neighborhoodId: typeof b?.neighborhood_id === "string" && /^osm:[RNW][0-9]+$/.test(b.neighborhood_id) ? b.neighborhood_id : null,
     };
+    if (b.additional_work === true) return reply({ status: "unavailable", reason: "additional_work_requires_quote" });
+    if (p.areaM2 !== null && p.areaM2 !== undefined && (p.areaM2 <= 0 || p.areaM2 > 5000)) return reply({ status: "error", reason: "invalid_area" }, 400);
+    if (p.windows !== null && p.windows !== undefined && (!Number.isInteger(p.windows) || p.windows < 1 || p.windows > 200)) return reply({ status: "error", reason: "invalid_windows" }, 400);
     if (!p.cityId) return reply({ status: "unavailable", reason: "city_required" });
 
     // 1) Confirmed tariff (none registered yet).
@@ -47,17 +45,22 @@ serve(async (req) => {
     //    public city name is sent out — never the address.
     const cityHe = typeof b?.city_name_he === "string" ? b.city_name_he.trim().slice(0, 60) : "";
     const types = ["regular", "deep", "after_renovation", "move_in_out"];
-    if (service === "cleaning" && currency === "ILS" && cityHe && p.areaM2 && p.areaM2 > 0 && p.subtype && types.includes(p.subtype)) {
+    if (service === "cleaning" && cityHe && p.areaM2 && p.areaM2 > 0 && p.subtype && types.includes(p.subtype)) {
       try {
         const web = await researchCleaning(cityHe, { areaM2: p.areaM2, cleaningType: p.subtype as CleaningType, windows: p.windows ?? null });
-        if (web.status === "available") return reply(web);
+        return reply(web);
       } catch (e) {
         console.warn("[prices] web research failed", e instanceof Error ? e.message : String(e));
+        return reply({ status: "error", reason: e instanceof Error ? e.message : "web_research_failed" }, e instanceof ResearchError ? e.status : 502);
       }
     }
+    if (service === "cleaning") return reply({ status: "unavailable", reason: !cityHe ? "city_name_required" : "cleaning_parameters_required" });
 
     // 3) Completed orders with released payment, same exact category, same city and currency.
-    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const url = Deno.env.get("SUPABASE_URL");
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !secret) return reply({ status: "error", reason: "storage_not_configured" }, 500);
+    const sb = createClient(url, secret);
     let q = sb.from("tasks")
       .select("city, service_details, escrow_transactions!inner(amount, currency, status)")
       .eq("status", "completed").eq("category_id", categoryId)

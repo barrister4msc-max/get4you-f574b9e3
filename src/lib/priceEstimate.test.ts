@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  computeTariff, computeHistory, findTariff, parseEstimateResponse, estimateKey, TARIFFS,
+  computeTariff, computeHistory, findTariff, parseEstimateResponse, estimateKey, TARIFFS, estimateConversionRate, convertEstimateAmount,
   type Tariff, type EstimateParams, type ComparableRecord,
 } from "../../supabase/functions/_shared/priceEstimate";
 
@@ -62,6 +62,13 @@ describe("history", () => {
 });
 
 describe("contract", () => {
+  it("converts ILS to USD once using only a verified fresh rate", () => {
+    const rate = estimateConversionRate({ rates: { USD: 1, ILS: 4 }, fetchedAt: Date.now() });
+    expect(rate).toBe(0.25);
+    expect(convertEstimateAmount(1000, rate ?? 0)).toBe(250);
+    expect(estimateConversionRate({ rates: { USD: 1, ILS: 3.7 } })).toBeNull();
+    expect(estimateConversionRate({ rates: { USD: 1, ILS: 4 }, fetchedAt: Date.now() - 86400001 })).toBeNull();
+  });
   it("unavailable/error carry no money", () => {
     expect(parseEstimateResponse({ status: "unavailable", reason: "x", total: 999 })).toEqual({ status: "unavailable", reason: "x" });
     expect(parseEstimateResponse({ status: "error", reason: "y", min: 1 })).toEqual({ status: "error", reason: "y" });

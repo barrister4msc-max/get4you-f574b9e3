@@ -6,6 +6,7 @@ export type EstimateParams = {
   subtype?: string | null;      // e.g. cleaning_type
   areaM2?: number | null;
   windows?: number | null;
+  additionalWork?: boolean;
   cityId?: string | null;        // stable osm:R… city ID — never the private address
   neighborhoodId?: string | null;
   currency: string;             // ISO code, major units
@@ -66,7 +67,7 @@ export function computeTariff(t: Tariff, p: EstimateParams): EstimateResult {
   }
   const sum = components.reduce((s, c) => s + c.amount, 0);
   const minimumApplied = t.minimum !== undefined && sum < t.minimum;
-  const total = round2(minimumApplied ? t.minimum! : sum);
+   const total = round2(minimumApplied && t.minimum !== undefined ? t.minimum : sum);
   if (!finite(total) || total <= 0) return { status: "error", reason: "invalid_total" };
   return { status: "available", method: "tariff", currency: t.currency, total,
     provenance: { tariffId: t.id, tariffVersion: t.version, components, minimumApplied } };
@@ -120,5 +121,14 @@ export function parseEstimateResponse(x: unknown): EstimateResult {
 
 /** Request identity: any change here makes previous estimates stale. */
 export function estimateKey(p: EstimateParams): string {
-  return JSON.stringify([p.service, p.subtype ?? null, p.areaM2 ?? null, p.windows ?? null, p.cityId ?? null, p.neighborhoodId ?? null, p.currency]);
+  return JSON.stringify([p.service, p.subtype ?? null, p.areaM2 ?? null, p.windows ?? null, p.cityId ?? null, p.neighborhoodId ?? null, p.currency, p.additionalWork ?? false]);
 }
+
+/** A verified USD-base exchange response, never the application's fallback rate. */
+export function estimateConversionRate(x: unknown): number | null {
+  const o = x as { rates?: Record<string, number>; fetchedAt?: number } | null;
+  const n = o?.rates?.ILS;
+  return finite(n) && n > 0 && o?.rates?.USD === 1 && finite(o.fetchedAt) &&
+    Date.now() - o.fetchedAt >= 0 && Date.now() - o.fetchedAt < 86400000 ? 1 / n : null;
+}
+export const convertEstimateAmount = (amount: number, rate: number) => Math.round(amount * rate * 100) / 100;
