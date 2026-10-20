@@ -2460,6 +2460,27 @@ export type Database = {
         }
         Relationships: []
       }
+      web_price_research_state: {
+        Row: {
+          id: string
+          paused_at: string
+          reason: string
+          status: number
+        }
+        Insert: {
+          id: string
+          paused_at?: string
+          reason: string
+          status?: number
+        }
+        Update: {
+          id?: string
+          paused_at?: string
+          reason?: string
+          status?: number
+        }
+        Relationships: []
+      }
       web_price_summaries: {
         Row: {
           applicability: Json
