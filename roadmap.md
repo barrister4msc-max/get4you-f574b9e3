@@ -1,4 +1,5 @@
 ## Switch price research to Lovable AI
+- [ ] If city has no applicable offers, use verified regional prices; verify normalized Hebrew city names
 - [x] Replace own OpenAI credentials with Lovable AI Responses; keep verified native sources and separate pause/cache state
 - [ ] Deploy and verify a live server request and form; no real order/payment creation
 
