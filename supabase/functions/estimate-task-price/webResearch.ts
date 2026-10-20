@@ -22,7 +22,7 @@ async function search(query: string): Promise<Page[]> {
   const res = await fetch(`${GATEWAY}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": fcKey },
-    body: JSON.stringify({ query, limit: 6, country: "IL", lang: "he", tbs: "qdr:y",
+    body: JSON.stringify({ query, limit: 8, country: "IL", lang: "he", tbs: "qdr:y",
       scrapeOptions: { formats: ["markdown"], onlyMainContent: true } }),
     signal: AbortSignal.timeout(45000),
   });
@@ -37,9 +37,9 @@ const OFFER_SCHEMA = {
   type: "object", additionalProperties: false, required: ["offers"],
   properties: { offers: { type: "array", items: {
     type: "object", additionalProperties: false,
-    required: ["quote", "price", "unit", "cleaning_type", "area_min", "area_max", "is_from_price", "includes_windows", "vat_note"],
+    required: ["quote", "price", "price_max", "unit", "cleaning_type", "area_min", "area_max", "is_from_price", "includes_windows", "vat_note"],
     properties: {
-      quote: { type: "string" }, price: { type: "number" },
+      quote: { type: "string" }, price: { type: "number" }, price_max: N("number"),
       unit: { type: "string", enum: ["per_job", "per_m2", "per_hour", "per_window", "per_room_job", "other"] },
       cleaning_type: { type: "string", enum: ["regular", "deep", "after_renovation", "move_in_out", "unknown"] },
       area_min: N("number"), area_max: N("number"), is_from_price: { type: "boolean" },
@@ -50,7 +50,7 @@ const OFFER_SCHEMA = {
 const SYSTEM =
   "Extract residential cleaning price offers in ILS from the page. Copy `quote` verbatim from the page (it must contain the number). " +
   "Use unit per_m2 only when the price is explicitly per square metre; per_job with area_min/area_max only when the page states the m\u00b2 range; " +
-  "per_room_job when priced by number of rooms; per_hour for hourly; per_window for a price per window. Mark 'from/\u05d4\u05d7\u05dc \u05de/\u05de-' prices as is_from_price. " +
+  "per_room_job when priced by number of rooms; per_hour for hourly; per_window for a price per window. If the price is a range A-B, set price=A and price_max=B, else price_max=null. Whenever the page states an m\\u00b2 range for the price (even if priced by rooms), fill area_min/area_max. Mark 'from/\u05d4\u05d7\u05dc \u05de/\u05de-' prices as is_from_price. " +
   "cleaning_type: regular=ongoing, deep=thorough/general, after_renovation=after renovation, move_in_out=before move-in/after move-out. Never invent numbers; return an empty list if none.";
 
 /** Streams a Responses call and returns the concatenated output text. */
@@ -91,7 +91,7 @@ async function extract(page: Page): Promise<RawOffer[]> {
   let parsed: { offers?: Array<Record<string, unknown>> } = {};
   try { parsed = JSON.parse(out || "{}"); } catch { return []; }
   return (parsed.offers ?? []).map((o) => ({
-    url: page.url, quote: String(o.quote ?? ""), price: Number(o.price),
+    url: page.url, quote: String(o.quote ?? ""), price: Number(o.price), priceMax: typeof o.price_max === "number" ? o.price_max : null,
     unit: (o.unit as RawOffer["unit"]) ?? "other",
     cleaningType: o.cleaning_type === "unknown" ? null : (o.cleaning_type as CleaningType),
     areaMin: typeof o.area_min === "number" ? o.area_min : null,
@@ -104,7 +104,14 @@ async function extract(page: Page): Promise<RawOffer[]> {
 
 async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]> {
   let pages: Page[] = [];
-  try { pages = await search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`); }
+  try {
+    const [a, b] = await Promise.all([
+      search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`),
+      search(`מחירון ניקיון ${place}`),
+    ]);
+    const seen = new Set<string>();
+    pages = [...a, ...b].filter((p) => !seen.has(p.url) && seen.add(p.url));
+  }
   catch (e) { console.warn("[prices] search failed", e instanceof Error ? e.message : String(e)); return []; }
   // A page counts for this geography only if it mentions the place itself.
   const relevant = pages.filter((p) => p.text.includes(place.split(" ")[0]));
@@ -115,8 +122,7 @@ async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]
     const windowPrices = verified.filter((o) => o.unit === "per_window" && !o.isFromPrice).map((o) => o.price);
     const windowPrice = windowPrices.length === 1 ? windowPrices[0] : null; // ambiguous → none
     for (const o of verified) {
-      const a = normalizeCleaning(o, spec, windowPrice);
-      if (a) applied.push(a);
+      applied.push(...normalizeCleaning(o, spec, windowPrice));
     }
   }
   console.info("[prices]", JSON.stringify({ place, pages: pages.length, relevant: relevant.length,

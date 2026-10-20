@@ -9,6 +9,7 @@ export type RawOffer = {
   url: string;
   quote: string;
   price: number;
+  priceMax: number | null;   // upper end when the page states a range "A–B"
   unit: "per_job" | "per_m2" | "per_hour" | "per_window" | "per_room_job" | "other";
   cleaningType: CleaningType | null;
   areaMin: number | null;     // m² range this per-job price applies to
@@ -33,7 +34,8 @@ export function isVerified(o: RawOffer, pageText: string): boolean {
   if (!o.quote || o.quote.length < 4 || !finite(o.price) || o.price <= 0) return false;
   const norm = (s: string) => s.replace(/\s+/g, " ").replace(/[*_|]/g, "").trim();
   if (!norm(pageText).includes(norm(o.quote))) return false;
-  return digits(o.quote).includes(String(Math.round(o.price)));
+  const d = digits(o.quote);
+  return d.includes(String(Math.round(o.price))) && (!finite(o.priceMax) || d.includes(String(Math.round(o.priceMax))));
 }
 
 /**
@@ -41,12 +43,23 @@ export function isVerified(o: RawOffer, pageText: string): boolean {
  * Hourly and per-room prices are never converted: that would require an invented
  * duration or m²-per-room assumption.
  */
-export function normalizeCleaning(o: RawOffer, spec: OrderSpec, windowPrice: number | null): AppliedOffer | null {
+export function normalizeCleaning(o: RawOffer, spec: OrderSpec, windowPrice: number | null): AppliedOffer[] {
+  const out: AppliedOffer[] = [];
+  const prices = finite(o.priceMax) && o.priceMax > o.price ? [o.price, o.priceMax] : [o.price];
+  for (const price of prices) {
+    const a = normalizeOne({ ...o, price }, spec, windowPrice);
+    if (a) out.push(a);
+  }
+  return out;
+}
+
+function normalizeOne(o: RawOffer, spec: OrderSpec, windowPrice: number | null): AppliedOffer | null {
   if (o.cleaningType !== spec.cleaningType) return null;
   let base: number; let calc: string;
   if (o.unit === "per_m2") {
     base = o.price * spec.areaM2; calc = `${o.price} ₪/м² × ${spec.areaM2} м²`;
-  } else if (o.unit === "per_job") {
+  } else if (o.unit === "per_job" || (o.unit === "per_room_job" && (finite(o.areaMin) || finite(o.areaMax)))) {
+    // A rooms-based price counts only when the page itself states the m² range.
     if (!finite(o.areaMin) && !finite(o.areaMax)) return null;
     if (finite(o.areaMin) && spec.areaM2 < o.areaMin) return null;
     if (finite(o.areaMax) && spec.areaM2 > o.areaMax) return null;
