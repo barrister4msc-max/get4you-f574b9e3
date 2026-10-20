@@ -78,30 +78,7 @@ const LoginPage = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
 
-  // Handle OAuth errors that land directly on /login (for example a user
-  // manually navigates there after a failed provider round-trip). Keep the raw
-  // provider message visible while OAuth is being debugged.
-  useState(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.replace('#', '?'));
-    const errorDesc = params.get('error_description') || searchParams.get('error_description');
-    const error = params.get('error') || searchParams.get('error');
-    if (error || errorDesc) {
-      const msg = errorDesc || error || 'OAuth error';
-      console.error('[oauth-flow] Login received OAuth error', {
-        href: window.location.href,
-        hash,
-        search: window.location.search,
-        error,
-        error_description: errorDesc,
-        hashParams: Object.fromEntries(params),
-        searchParams: Object.fromEntries(searchParams),
-      });
-      setTimeout(() => toast.error(msg), 100);
-      // Clean up URL
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-  });
+  // OAuth errors in the URL are reported once by OAuthReturnHandler.
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const hasMinLength = password.length >= 8;
@@ -172,8 +149,13 @@ const LoginPage = () => {
       // Persist returnTo so it survives the email-confirmation roundtrip
       // back to /auth/callback.
       rememberPostAuthReturnTo(searchParams.get('returnTo'));
-      if (hasPendingTaskDraft()) {
-        toast.success('Аккаунт создан. Публикуем заявку…');
+      // With email confirmation there is no session yet: never claim the task
+      // is being published. If a session exists (auto-confirm), restore the
+      // draft for review via the unified resolver; otherwise ask to confirm.
+      const { data: { session: s } } = await supabase.auth.getSession();
+      if (s?.user) {
+        const { path } = await resolvePostAuthRedirect(supabase, s.user.id, { returnTo: searchParams.get('returnTo') });
+        navigate(path);
         return;
       }
       setSignupEmail(email);
