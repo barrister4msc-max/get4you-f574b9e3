@@ -44,7 +44,7 @@ export type EstimateResult =
   | { status: "available"; method: "history"; currency: string; min: number; max: number; recommended: number;
       provenance: { sampleSize: number; statistic: "p25-median-p75"; areaWindowPct: number | null } }
   | { status: "available"; method: "web"; currency: string; min: number; max: number; recommended: number;
-      provenance: { geography: "city" | "region"; area: string; checkedAt: string;
+      provenance: { geography: "city" | "region"; area: string; checkedAt: string; search?: import("./searchEvidence").SearchEvidence; cacheHit?: boolean;
         offers: Array<{ url: string; quote: string; unit: string; unitPrice: number; normalized: number; calc: string; isFromPrice: boolean }> } }
   | { status: "unavailable"; reason: string }
   | { status: "error"; reason: string };

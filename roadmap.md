@@ -1,9 +1,11 @@
-## Gemini Google Search price research
-- [ ] Switch price research to the user's own OpenAI key per confirmed choice; collect OPENAI_API_KEY securely before live verification
-- [ ] Replace mandatory Firecrawl research with native Gemini grounding, verified sources and saved search metadata
-- [ ] Keep ILS range on conversion failure; preserve explicit application and stale-response guard
-- [ ] Test Haifa/Tel Aviv, 100/200 m², ILS/USD, persisted reuse and manual budget in real form — requires Gemini API access
-- [ ] Deploy price function; distinguish saved/deployed/published and exact billing blocker without increasing limits
+## OpenAI native web-search price research
+- [x] Securely save user's OPENAI_API_KEY; verify authenticated model listing and use documented gpt-5.5
+- [x] Replace mandatory Firecrawl with native OpenAI web_search, provider source evidence, fetched quote verification and saved search metadata; separate provider cache/pause state
+- [x] Keep ILS range on conversion failure; preserve explicit application, debounce and stale-response guard; 35 rule tests pass
+- [x] Deploy estimate-task-price; confirm Lovable AI 9-credit monthly cap and separate OpenAI credit_balance_exhausted without increasing limits; persist OpenAI pause
+- [x] Verify real Haifa 100 m² USD form: exact server failure, retry, manual $100 retained; no order/payment created
+- [ ] Verify successful native searches for Haifa/Tel Aviv, 100/200 m² ILS/USD, source summaries, cross-session reuse and application in real form — blocked by confirmed exhausted OpenAI API balance; resume only after owner confirms restored billing
+- [ ] Publish screen changes to 4you.ai — requires user request to publish; live price success remains unverified
 
 ## Restore price recommendation
 - [x] Diagnose actual unavailable response: USD skipped web lookup; no persistent summaries; search connected and returns HTTP 200
