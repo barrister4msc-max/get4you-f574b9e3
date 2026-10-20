@@ -2460,6 +2460,42 @@ export type Database = {
         }
         Relationships: []
       }
+      web_price_summaries: {
+        Row: {
+          applicability: Json
+          cache_key: string
+          checked_at: string
+          currency: string
+          expires_at: string
+          geography: string
+          offers: Json
+          place: string
+          service: string
+        }
+        Insert: {
+          applicability?: Json
+          cache_key: string
+          checked_at: string
+          currency?: string
+          expires_at: string
+          geography: string
+          offers?: Json
+          place: string
+          service: string
+        }
+        Update: {
+          applicability?: Json
+          cache_key?: string
+          checked_at?: string
+          currency?: string
+          expires_at?: string
+          geography?: string
+          offers?: Json
+          place?: string
+          service?: string
+        }
+        Relationships: []
+      }
       whatsapp_logs: {
         Row: {
           actor_id: string | null
