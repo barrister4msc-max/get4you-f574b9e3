@@ -57,17 +57,17 @@ function normalizeOne(o: RawOffer, spec: OrderSpec, windowPrice: number | null):
   if (o.cleaningType !== spec.cleaningType) return null;
   let base: number; let calc: string;
   if (o.unit === "per_m2") {
-    base = o.price * spec.areaM2; calc = `${o.price} ₪/м² × ${spec.areaM2} м²`;
+    base = o.price * spec.areaM2; calc = `${o.price} ₪/m² × ${spec.areaM2} m²`;
   } else if (o.unit === "per_job" || (o.unit === "per_room_job" && (finite(o.areaMin) || finite(o.areaMax)))) {
     // A rooms-based price counts only when the page itself states the m² range.
     if (!finite(o.areaMin) && !finite(o.areaMax)) return null;
     if (finite(o.areaMin) && spec.areaM2 < o.areaMin) return null;
     if (finite(o.areaMax) && spec.areaM2 > o.areaMax) return null;
-    base = o.price; calc = `${o.price} ₪ за заказ (${o.areaMin ?? "…"}–${o.areaMax ?? "…"} м²)`;
+    base = o.price; calc = `${o.price} ₪ (${o.areaMin ?? "…"}–${o.areaMax ?? "…"} m²)`;
   } else return null;
   if (finite(spec.windows) && spec.windows > 0 && o.includesWindows !== true) {
     if (!finite(windowPrice)) return null;
-    base += windowPrice * spec.windows; calc += ` + ${windowPrice} ₪ × ${spec.windows} окон`;
+    base += windowPrice * spec.windows; calc += ` + ${windowPrice} ₪ × ${spec.windows} windows`;
   }
   return { url: o.url, quote: o.quote, unit: o.unit, unitPrice: o.price, normalized: Math.round(base), calc, isFromPrice: o.isFromPrice };
 }

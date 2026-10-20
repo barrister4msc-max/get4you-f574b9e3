@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 /**
  * Waiting screen only. Session establishment is done by the Supabase client
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button';
 const AuthCallbackPage = () => {
   const { user, loading } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (user) return;
@@ -26,9 +28,9 @@ const AuthCallbackPage = () => {
   if (timedOut && !user && !loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-base text-foreground">Не удалось завершить вход. Ваша заявка сохранена — попробуйте ещё раз.</p>
+        <p className="text-base text-foreground">{t('auth.callback.timeout')}</p>
         <Button asChild>
-          <Link to="/login">Войти снова</Link>
+          <Link to="/login">{t('auth.callback.retry')}</Link>
         </Button>
       </div>
     );
@@ -38,7 +40,7 @@ const AuthCallbackPage = () => {
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <Loader2 className="w-5 h-5 animate-spin text-primary" />
-        <span>Выполняем вход…</span>
+        <span>{t('auth.callback.loading')}</span>
       </div>
     </div>
   );
