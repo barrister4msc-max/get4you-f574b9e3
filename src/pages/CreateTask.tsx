@@ -608,7 +608,7 @@ const CreateTaskPage = () => {
             : null;
       const m = (message || "").toLowerCase();
       if (m.includes("schedule") || m.includes("execution") || m.includes("time")) {
-        setScheduleError("invalid" as ScheduleError); setStep(2);
+        setScheduleError("time_in_past"); setStep(2);
       } else if (m.includes("price") || m.includes("budget") || m.includes("minimum")) {
         setPriceError(message); setStep(3);
       } else if (m.includes("categor") || m.includes("service")) {
