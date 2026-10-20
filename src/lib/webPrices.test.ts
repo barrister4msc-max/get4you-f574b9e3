@@ -71,7 +71,7 @@ describe("web price rules", () => {
     expect(normalizeCleaning(o({ price: 10 }), { ...spec, additionalWork: true }, null)).toEqual([]);
   });
   it("recommended is the midpoint of the lowest and highest applicable price", () => {
-    const a = [o({ price: 10, quote: "10" }), o({ price: 15, quote: "15" }), o({ price: 25, quote: "25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
+    const a = [o({ price: 10, quote: "שיפוץ 10" }), o({ price: 15, quote: "שיפוץ 15" }), o({ price: 25, quote: "שיפוץ 25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
     const r = aggregate(a, "city", "חיפה", "2026-10-20");
     expect(r).toMatchObject({ status: "available", min: 800, max: 2000, recommended: 1400 });
   });
