@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { aggregate, estimateWithGeographyFallback, pageMatchesPriceGeography, isVerified, normalizeCleaning, priceCityName, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
 
-const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: "ניקיון אחרי שיפוץ", price: 0, unit: "per_m2", cleaningType: "after_renovation",
+const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: (x.cleaningType ?? "after_renovation") === "after_renovation" ? "ניקיון אחרי שיפוץ" : "", price: 0, unit: "per_m2", cleaningType: "after_renovation",
   priceMax: null, areaMin: null, areaMax: null, isFromPrice: false, includesWindows: null, vatNote: null, ...x });
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
