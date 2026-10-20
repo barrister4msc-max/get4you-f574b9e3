@@ -1,5 +1,11 @@
 /** Native OpenAI search evidence, not URLs invented in answer text. */
 export type SearchEvidence = { provider: "openai"; queries: string[]; sources: Array<{ url: string; title: string }> };
+export function openAIStreamFailure(event: Record<string, any>): { status: number; reason: string } {
+  const error = event.response?.error ?? event.error ?? event;
+  const code = typeof error.code === "string" ? error.code : "stream_failed";
+  const quota = error.type === "insufficient_quota" || code === "credit_balance_exhausted";
+  return { status: quota ? 402 : error.type === "permission_denied" ? 403 : 502, reason: `openai:${code}` };
+}
 export function publicSourceUrl(value: string): boolean {
   try {
     const u = new URL(value);

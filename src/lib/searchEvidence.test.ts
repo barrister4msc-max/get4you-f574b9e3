@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { publicSourceUrl, searchEvidence } from "../../supabase/functions/_shared/searchEvidence";
+import { publicSourceUrl, searchEvidence, openAIStreamFailure } from "../../supabase/functions/_shared/searchEvidence";
 describe("native search evidence", () => {
+  it("preserves OpenAI credit exhaustion inside a successful HTTP stream as a terminal billing failure", () => {
+    expect(openAIStreamFailure({ type: "error", error: { type: "insufficient_quota", code: "credit_balance_exhausted" } })).toEqual({ status: 402, reason: "openai:credit_balance_exhausted" });
+  });
   it("does not treat model-written links as search sources", () => {
     expect(searchEvidence([{ type: "message", content: [{ text: "https://invented.example/price" }] }]).sources).toEqual([]);
   });

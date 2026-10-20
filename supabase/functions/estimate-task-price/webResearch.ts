@@ -1,7 +1,7 @@
 // Official OpenAI native web search → source evidence → fetched quote verification.
 // Only public city/subtype leave the server; never private addresses or free text.
 import { aggregate, CLEANING_QUERY_HE, isVerified, normalizeCleaning, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type AppliedOffer, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate } from "../_shared/webPrices.ts";
-import { searchEvidence, publicSourceUrl, type SearchEvidence } from "../_shared/searchEvidence.ts";
+import { searchEvidence, publicSourceUrl, openAIStreamFailure, type SearchEvidence } from "../_shared/searchEvidence.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { parseHTML } from "npm:linkedom";
 export class ResearchError extends Error {
@@ -60,7 +60,11 @@ async function search(place: string, spec: OrderSpec): Promise<{ offers: RawOffe
       if (!line.startsWith("data:")) continue;
       let event; try { event = JSON.parse(line.slice(5)); } catch { continue; }
       if (event.type === "response.completed") completed = event.response;
-      if (event.type === "response.failed" || event.type === "error") throw new ResearchError(502, `openai:${event.response?.error?.code ?? event.code ?? "stream_failed"}`);
+      if (event.type === "response.failed" || event.type === "error") {
+        const failure = openAIStreamFailure(event);
+        await reader.cancel();
+        throw new ResearchError(failure.status, failure.reason);
+      }
     }
   }
   if (!completed) throw new ResearchError(502, "openai_incomplete_response");
