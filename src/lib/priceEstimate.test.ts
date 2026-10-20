@@ -37,9 +37,23 @@ describe("tariff", () => {
     expect(total(r)).toBe(600);
     expect(computeTariff(T, P({ currency: "USD" })).status).toBe("unavailable");
   });
-  it("no production tariffs → none found", () => {
-    expect(TARIFFS).toHaveLength(0);
+  it("owner tariff: regular cleaning 500–700 ₪, recommended 600", () => {
+    const r = computeTariff(findTariff(P({ subtype: "regular" }))!, P({ subtype: "regular" }));
+    expect(r.status === "available" && r.method === "tariff" && [r.min, r.max, r.total]).toEqual([500, 700, 600]);
+  });
+  it("owner tariff: deep cleaning 500–700 ₪ for 100 m²", () => {
+    const r = computeTariff(findTariff(P({ subtype: "deep" }))!, P({ subtype: "deep" }));
+    expect(r.status === "available" && r.method === "tariff" && [r.min, r.max, r.total]).toEqual([500, 700, 600]);
+  });
+  it("renovation and move-out cleaning do not use the regular cleaning tariff", () => {
+    expect(findTariff(P({ subtype: "after_renovation" }))).toBeNull();
+    expect(findTariff(P({ subtype: "move_in_out" }))).toBeNull();
     expect(findTariff(P())).toBeNull();
+    expect(TARIFFS.every((t) => t.service === "cleaning")).toBe(true);
+  });
+  it("tariff range survives the wire contract", () => {
+    const r = computeTariff(findTariff(P({ subtype: "deep" }))!, P({ subtype: "deep" }));
+    expect(parseEstimateResponse(JSON.parse(JSON.stringify(r)))).toEqual(r);
   });
 });
 

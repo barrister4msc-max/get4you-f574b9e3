@@ -61,10 +61,15 @@ export function buildEstimateParams(category: string, sd: Record<string, unknown
   };
 }
 
+type Available = Extract<EstimateResult, { status: "available" }>;
+const bounds = (r: Available) => r.method === "tariff"
+  ? { min: r.min ?? r.total, max: r.max ?? r.total, rec: r.total }
+  : { min: r.min, max: r.max, rec: r.recommended };
+
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const cacheGet = (k: string): EstimateResult | null => {
   try {
-    const raw = sessionStorage.getItem(`price_est_v3:${k}`);
+    const raw = sessionStorage.getItem(`price_est_v4:${k}`);
     if (!raw) return null;
     const { at, r } = JSON.parse(raw);
     if (r.method === "web" && !summaryIsFresh(new Date(Date.parse(r.provenance.checkedAt) + PRICE_SUMMARY_TTL_MS).toISOString())) return null;
@@ -72,7 +77,7 @@ const cacheGet = (k: string): EstimateResult | null => {
   } catch { return null; }
 };
 const cacheSet = (k: string, r: EstimateResult) => {
-  try { if (r.status === "available") sessionStorage.setItem(`price_est_v3:${k}`, JSON.stringify({ at: Date.now(), r })); } catch { /* ignore */ }
+  try { if (r.status === "available") sessionStorage.setItem(`price_est_v4:${k}`, JSON.stringify({ at: Date.now(), r })); } catch { /* ignore */ }
 };
 
 export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodId, cityNameHe, onUseSuggested, onEstimate }: Props) => {
@@ -97,9 +102,8 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
     const cached = cacheGet(key);
     const report = (result: EstimateResult) => {
       if (result.status === "available") {
-        onEstimateRef.current?.(result.method === "tariff"
-          ? { min_price: result.total, max_price: result.total, recommended_price: result.total, currency: result.currency }
-          : { min_price: result.min, max_price: result.max, recommended_price: result.recommended, currency: result.currency });
+        const b = bounds(result);
+        onEstimateRef.current?.({ min_price: b.min, max_price: b.max, recommended_price: b.rec, currency: result.currency });
       }
     };
     if (cached && retry === 0 && currency === "ILS") { setConversion({ key, rate: 1 }); setState({ key, result: cached }); setLoading(false); report(cached); return; }
@@ -114,8 +118,10 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         }), currency === "USD" ? supabase.functions.invoke("exchange-rates", { signal: ctrl.signal }) : Promise.resolve(null)]);
         const rate = currency === "ILS" ? 1 : exchange && !exchange.error ? estimateConversionRate(exchange.data) : null;
         result = response.error ? { status: "error", reason: "request_failed" } : parseEstimateResponse(response.data);
-        if (result.status === "available" && result.method === "web" && (params.subtype === "deep" || params.subtype === "regular") &&
-          result.provenance.offers.some((offer) => !cleaningQuoteMatchesType(offer.quote, params.subtype === "regular" ? "regular" : "deep"))) {
+        const types = ["regular", "deep", "after_renovation", "move_in_out"] as const;
+        const subtype = types.find((t) => t === params.subtype);
+        if (result.status === "available" && result.method === "web" && subtype &&
+          result.provenance.offers.some((offer) => !cleaningQuoteMatchesType(offer.quote, subtype))) {
           result = { status: "unavailable", reason: "incompatible_cleaning_scope" };
         }
         if (response.error instanceof FunctionsHttpError) {
@@ -124,8 +130,8 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         if (ctrl.signal.aborted || my !== seq.current) return;
         setConversion(rate !== null ? { key, rate, checkedAt: exchange?.data?.fetchedAt } : null);
         if (result.status === "available" && rate !== null) {
-          const rec = result.method === "tariff" ? result.total : result.recommended;
-          onEstimateRef.current?.({ min_price: convertEstimateAmount(result.method === "tariff" ? rec : result.min, rate), max_price: convertEstimateAmount(result.method === "tariff" ? rec : result.max, rate), recommended_price: convertEstimateAmount(rec, rate), currency });
+          const b = bounds(result);
+          onEstimateRef.current?.({ min_price: convertEstimateAmount(b.min, rate), max_price: convertEstimateAmount(b.max, rate), recommended_price: convertEstimateAmount(b.rec, rate), currency });
         }
       } catch {
         result = { status: "error", reason: "request_failed" };
@@ -167,13 +173,14 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         const cur = rate === null ? "ILS" : currency;
         const displayRate = rate ?? 1;
         const display = (n: number) => fp(convertEstimateAmount(n, displayRate), cur, cur);
-        const rec = convertEstimateAmount(current.method === "tariff" ? current.total : current.recommended, displayRate);
+        const b = bounds(current);
+        const rec = convertEstimateAmount(b.rec, displayRate);
         return (
           <>
-            {current.method === "tariff" || current.min === current.max ? (
+            {b.min === b.max ? (
               <div className="text-2xl sm:text-3xl font-bold text-foreground">{fp(rec, cur, cur)}</div>
             ) : (
-              <div className="text-2xl sm:text-3xl font-bold text-foreground">{display(current.min)} — {display(current.max)}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-foreground">{display(b.min)} — {display(b.max)}</div>
             )}
             <div className="text-base"><span className="font-medium">{TXT.rec[loc]}: </span><span className="font-bold text-primary">{fp(rec, cur, cur)}</span></div>
             {rate === null && <div className="text-sm text-destructive flex flex-wrap items-center gap-2"><span>{TXT.conversionError[loc]}</span><Button type="button" variant="ghost" onClick={() => setRetry((r) => r + 1)}><RotateCw className="w-4 h-4" />{TXT.retry[loc]}</Button></div>}

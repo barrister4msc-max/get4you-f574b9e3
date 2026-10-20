@@ -83,3 +83,5 @@
 - [x] Draft not overwritten before auth restores; fixed budget consistent; idempotent publish id; signup no longer claims "publishing"
 - [x] Internet price lookup verified end-to-end via Lovable AI for Tel Aviv; uncached latency caveat recorded above
 - [ ] Live Google/Apple/signup end-to-end check — blocked: database was unreachable during this session
+- [x] Owner tariff: regular/deep cleaning 500–700 ₪ shown instantly; cleaning types (regular/deep, renovation, move) never share quotes
+- [ ] Pre-warm renovation / move-out cleaning prices — live search still slow (~40s+ timeout); needs owner prices or background warm-up
