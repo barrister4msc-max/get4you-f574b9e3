@@ -114,7 +114,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'task.published': 'Task published successfully!',
     'task.photos.readd': 'Your form is restored. Please re-attach photos or voice notes before publishing.',
     'auth.callback.loading': 'Signing you in…',
-    'auth.callback.timeout': 'We couldn't finish signing in. Your request is saved — please try again.',
+    'auth.callback.timeout': 'We could not finish signing in. Your request is saved — please try again.',
     'auth.callback.retry': 'Sign in again',
     'auth.oauthFailed': 'Sign-in did not complete. Please try again.',
     'task.publish.error': 'Failed to publish task',
