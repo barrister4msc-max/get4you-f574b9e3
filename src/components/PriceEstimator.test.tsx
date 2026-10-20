@@ -60,8 +60,12 @@ describe("PriceEstimator", () => {
   it("an unavailable verified rate cannot apply a fallback amount", async () => {
     currency = "USD";
     invoke.mockImplementation((name: string) => Promise.resolve({ data: name === "exchange-rates" ? null : hist(1000), error: name === "exchange-rates" ? new Error("rate unavailable") : null }));
-    render(<PriceEstimator category="cleaning" cityId="osm:R3" neighborhoodId={null} serviceDetails={{ area_m2: 80 }} onUseSuggested={vi.fn()} />);
+    const onUse = vi.fn();
+    render(<PriceEstimator category="cleaning" cityId="osm:R3" neighborhoodId={null} serviceDetails={{ area_m2: 80 }} onUseSuggested={onUse} />);
     await act(async () => { vi.advanceTimersByTime(700); });
     expect(screen.queryByText("Use this price")).toBeNull();
+    expect(screen.getByText("₪1000")).toBeTruthy();
+    expect(onUse).not.toHaveBeenCalled();
+    expect(invoke.mock.calls[0][1].body.currency).toBe("ILS");
   });
 });

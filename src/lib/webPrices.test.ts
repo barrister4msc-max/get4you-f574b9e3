@@ -6,6 +6,11 @@ const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
 describe("web price rules", () => {
+  it("recomputes 100 and 200 m² from the same documented range without new prices", () => {
+    const offer = o({ price: 18, priceMax: 25 });
+    expect(aggregate(normalizeCleaning(offer, { ...spec, areaM2: 100 }, null), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 1800, max: 2500, recommended: 2150 });
+    expect(aggregate(normalizeCleaning(offer, { ...spec, areaM2: 200 }, null), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 3600, max: 5000, recommended: 4300 });
+  });
   it("expired summaries are not applicable and freshness is never extended by reading", () => {
     const checked = Date.parse("2026-10-20T16:00:00Z");
     const expiry = new Date(checked + PRICE_SUMMARY_TTL_MS).toISOString();
