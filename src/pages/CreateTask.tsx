@@ -489,7 +489,14 @@ const CreateTaskPage = () => {
     publishLockRef.current = true;
     // One id per publish intent: retries after a network drop reuse it, so the
     // database primary key turns a duplicate insert into a detectable conflict.
-    if (!publishIdRef.current) publishIdRef.current = crypto.randomUUID();
+    // Persisted so a reload after a lost response retries with the same id.
+    if (!publishIdRef.current) {
+      try { publishIdRef.current = localStorage.getItem("task_publish_id"); } catch { /* ignore */ }
+    }
+    if (!publishIdRef.current) {
+      publishIdRef.current = crypto.randomUUID();
+      try { localStorage.setItem("task_publish_id", publishIdRef.current); } catch { /* ignore */ }
+    }
     const taskId = publishIdRef.current;
     setSubmitting(true);
     try {
@@ -585,6 +592,7 @@ const CreateTaskPage = () => {
       }
 
       publishIdRef.current = null;
+      try { localStorage.removeItem("task_publish_id"); } catch { /* ignore */ }
       clearPendingTaskDraft();
       toast.success(t("task.published") || "Task published!");
 
