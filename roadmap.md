@@ -1,4 +1,5 @@
 ## Gemini Google Search price research
+- [ ] Switch price research to OpenAI per latest request; clarify own OpenAI key versus existing Lovable connection before credential setup
 - [ ] Replace mandatory Firecrawl research with native Gemini grounding, verified sources and saved search metadata
 - [ ] Keep ILS range on conversion failure; preserve explicit application and stale-response guard
 - [ ] Test Haifa/Tel Aviv, 100/200 m², ILS/USD, persisted reuse and manual budget in real form — requires Gemini API access
