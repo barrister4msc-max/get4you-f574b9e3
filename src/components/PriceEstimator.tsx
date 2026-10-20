@@ -9,7 +9,7 @@ import { categoryIdFor, resolveServiceKey } from "@/lib/serviceRegistry";
 import {
   estimateKey, parseEstimateResponse, estimateConversionRate, convertEstimateAmount, type EstimateParams, type EstimateResult,
 } from "../../supabase/functions/_shared/priceEstimate";
-import { PRICE_SUMMARY_TTL_MS, summaryIsFresh } from "../../supabase/functions/_shared/webPrices";
+import { cleaningQuoteMatchesType, PRICE_SUMMARY_TTL_MS, summaryIsFresh } from "../../supabase/functions/_shared/webPrices";
 
 /** Shape consumed by PriceFeedback; only produced from an "available" estimate. */
 export type EstimateSummary = { min_price: number; max_price: number; recommended_price: number; currency: string };
@@ -64,7 +64,7 @@ export function buildEstimateParams(category: string, sd: Record<string, unknown
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const cacheGet = (k: string): EstimateResult | null => {
   try {
-    const raw = sessionStorage.getItem(`price_est_v2:${k}`);
+    const raw = sessionStorage.getItem(`price_est_v3:${k}`);
     if (!raw) return null;
     const { at, r } = JSON.parse(raw);
     if (r.method === "web" && !summaryIsFresh(new Date(Date.parse(r.provenance.checkedAt) + PRICE_SUMMARY_TTL_MS).toISOString())) return null;
@@ -72,7 +72,7 @@ const cacheGet = (k: string): EstimateResult | null => {
   } catch { return null; }
 };
 const cacheSet = (k: string, r: EstimateResult) => {
-  try { if (r.status === "available") sessionStorage.setItem(`price_est_v2:${k}`, JSON.stringify({ at: Date.now(), r })); } catch { /* ignore */ }
+  try { if (r.status === "available") sessionStorage.setItem(`price_est_v3:${k}`, JSON.stringify({ at: Date.now(), r })); } catch { /* ignore */ }
 };
 
 export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodId, cityNameHe, onUseSuggested, onEstimate }: Props) => {
@@ -114,6 +114,10 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         }), currency === "USD" ? supabase.functions.invoke("exchange-rates", { signal: ctrl.signal }) : Promise.resolve(null)]);
         const rate = currency === "ILS" ? 1 : exchange && !exchange.error ? estimateConversionRate(exchange.data) : null;
         result = response.error ? { status: "error", reason: "request_failed" } : parseEstimateResponse(response.data);
+        if (result.status === "available" && result.method === "web" && (params.subtype === "deep" || params.subtype === "regular") &&
+          result.provenance.offers.some((offer) => !cleaningQuoteMatchesType(offer.quote, params.subtype === "regular" ? "regular" : "deep"))) {
+          result = { status: "unavailable", reason: "incompatible_cleaning_scope" };
+        }
         if (response.error instanceof FunctionsHttpError) {
           try { result = parseEstimateResponse(await response.error.context.json()); } catch { /* retain failure */ }
         }

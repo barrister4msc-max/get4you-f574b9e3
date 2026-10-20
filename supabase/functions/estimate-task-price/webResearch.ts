@@ -26,7 +26,7 @@ const SYSTEM =
   "Extract residential cleaning price offers in ILS from the page. Copy `quote` verbatim from the page (it must contain the number). " +
   "Use unit per_m2 only when the price is explicitly per square metre; per_job with area_min/area_max only when the page states the m\u00b2 range; " +
   "per_room_job when priced by number of rooms; per_hour for hourly; per_window for a price per window. If the price is a range A-B, set price=A and price_max=B, else price_max=null. Whenever the page states an m\\u00b2 range for the price (even if priced by rooms), fill area_min/area_max. Mark 'from/\u05d4\u05d7\u05dc \u05de/\u05de-' prices as is_from_price. " +
-  "cleaning_type: regular=ongoing, deep=thorough/general, after_renovation=after renovation, move_in_out=before move-in/after move-out. Never invent numbers; return an empty list if none.";
+  "cleaning_type: regular=ongoing occupied-home housekeeping, deep=thorough/general cleaning of an occupied home, after_renovation=after renovation, move_in_out=before move-in/after move-out or empty apartment. Never label renovation, construction, move-in/out or empty-apartment packages as deep/regular, even when they say comprehensive/general cleaning. Mixed-scope ranges combining these jobs are unknown unless a separate price for the requested type is explicitly stated. Include the service scope in each verbatim quote. Never invent numbers; return an empty list if none.";
 
 
 async function search(place: string, spec: OrderSpec, geography: PriceGeography): Promise<{ offers: RawOffer[]; evidence: SearchEvidence }> {
