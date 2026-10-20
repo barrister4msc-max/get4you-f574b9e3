@@ -24,7 +24,7 @@ async function search(query: string): Promise<Page[]> {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": fcKey },
     body: JSON.stringify({ query, limit: 6, country: "IL", lang: "he", tbs: "qdr:y",
       scrapeOptions: { formats: ["markdown"], onlyMainContent: true } }),
-    signal: AbortSignal.timeout(25000),
+    signal: AbortSignal.timeout(45000),
   });
   if (!res.ok) throw new Error(`search_failed_${res.status}: ${(await res.text()).slice(0, 200)}`);
   const j = await res.json();
@@ -103,7 +103,9 @@ async function extract(page: Page): Promise<RawOffer[]> {
 }
 
 async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]> {
-  const pages = await search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`);
+  let pages: Page[] = [];
+  try { pages = await search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`); }
+  catch (e) { console.warn("[prices] search failed", e instanceof Error ? e.message : String(e)); return []; }
   // A page counts for this geography only if it mentions the place itself.
   const relevant = pages.filter((p) => p.text.includes(place.split(" ")[0]));
   const extracted = await Promise.all(relevant.map(async (p) => ({ p, offers: await extract(p).catch(() => []) })));
@@ -117,6 +119,10 @@ async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]
       if (a) applied.push(a);
     }
   }
+  console.info("[prices]", JSON.stringify({ place, pages: pages.length, relevant: relevant.length,
+    extracted: extracted.reduce((n, x) => n + x.offers.length, 0),
+    verified: extracted.reduce((n, x) => n + x.offers.filter((o) => isVerified(o, x.p.text)).length, 0), applied: applied.length }));
+  if (Deno.env.get("PRICES_DEBUG")) console.info(JSON.stringify(extracted.map((x) => x.offers.map((o) => [o.unit, o.cleaningType, o.price, o.areaMin, o.areaMax, isVerified(o, x.p.text), o.quote.slice(0, 80)]))));
   return applied;
 }
 
