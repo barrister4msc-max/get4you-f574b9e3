@@ -6,6 +6,19 @@ const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
 describe("web price rules", () => {
+  it("does not price general cleaning from a renovation or move-in range even when AI labeled it deep", () => {
+    const offer = o({ cleaningType: "deep", price: 18, priceMax: 25, quote: 'ניקוי כולל: לדוגמא ניקיון אחרי שיפוץ, ניקיון לפני אכלוס, ניקיון לפני מעבר בטווח של 18-25 ₪ למ"ר' });
+    expect(normalizeCleaning(offer, { areaM2: 100, cleaningType: "deep", windows: null }, null)).toEqual([]);
+  });
+  it("rejects mixed general/renovation packages instead of assuming an occupied-home rate", () => {
+    const offer = o({ cleaningType: "deep", price: 18, priceMax: 25, quote: 'ניקיון דירה אחרי שיפוץ, ניקיון דירה לפני מעבר או סתם ניקוין כללי 18-25 ₪ למ״ר' });
+    expect(normalizeCleaning(offer, { areaM2: 100, cleaningType: "deep", windows: null }, null)).toEqual([]);
+  });
+  it("preserves correctly classified renovation prices and separate occupied-home deep cleaning", () => {
+    const offer = o({ price: 18, priceMax: 25, quote: 'ניקיון אחרי שיפוץ 18-25 ₪ למ״ר' });
+    expect(normalizeCleaning(offer, spec, null).map((x) => x.normalized)).toEqual([1440, 2000]);
+    expect(normalizeCleaning(o({ cleaningType: "deep", price: 10, quote: 'ניקיון יסודי בבית מאוכלס 10 ₪ למ״ר' }), { ...spec, cleaningType: "deep" }, null).map((x) => x.normalized)).toEqual([800]);
+  });
   it("falls back from empty city and region to Israel minimum, maximum and midpoint", async () => {
     const calls: string[] = [];
     const result = await estimateWithGeographyFallback("חיפה", async (place, geography) => {

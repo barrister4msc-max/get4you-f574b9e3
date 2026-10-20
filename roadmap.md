@@ -1,4 +1,5 @@
 ## Switch price research to Lovable AI
+- [x] Correct mismatched renovation/moving quotes labeled as general cleaning; 43 tests pass, server returns no_comparable_offers for Haifa 100m², form removes wrong recommendation and preserves manual budget
 - [x] Add city → region → Israel fallback; 40 tests passed; live country sources persisted and Haifa form showed Israel provenance/min/max/midpoint with budget changed only on click; no orders/payments
 - [x] City → matching region fallback; normalize OSM Hebrew punctuation; live Haifa + Haifa/Krayot searched but no applicable deep-cleaning 100 m² offer
 - [x] Replace own OpenAI credentials with Lovable AI Responses; keep verified native sources and separate pause/cache state

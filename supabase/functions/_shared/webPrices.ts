@@ -67,6 +67,12 @@ export function summaryIsFresh(expiresAt: string, now = Date.now()): boolean {
 }
 const digits = (s: string) => s.replace(/[^\d]/g, "");
 
+/** A generic deep-cleaning label must not override a quote's renovation/moving scope. */
+export function cleaningQuoteMatchesType(quote: string, type: CleaningType): boolean {
+  if (type !== "deep" && type !== "regular") return true;
+  return !/שיפוץ|שיפוצים|אכלוס|מעבר|דיר[הת]\s+ריק[הות]*|בתים\s+ריקים|after\s+renovation|after\s+construction|move[\s-]?(?:in|out)|empty\s+(?:apartment|home)|после\s+ремонта|перед\s+(?:переездом|заселением)|пуст(?:ая|ой)\s+квартир/i.test(quote);
+}
+
 /** The quote must literally appear on the page and contain the price digits. */
 export function isVerified(o: RawOffer, pageText: string): boolean {
   if (!o.quote || o.quote.length < 4 || !finite(o.price) || o.price <= 0) return false;
@@ -95,6 +101,7 @@ export function normalizeCleaning(o: RawOffer, spec: OrderSpec, windowPrice: num
 
 function normalizeOne(o: RawOffer, spec: OrderSpec, windowPrice: number | null): AppliedOffer | null {
   if (o.cleaningType !== spec.cleaningType) return null;
+  if (!cleaningQuoteMatchesType(o.quote, spec.cleaningType)) return null;
   let base: number; let calc: string;
   if (o.unit === "per_m2") {
     base = o.price * spec.areaM2; calc = `${o.price} ₪/m² × ${spec.areaM2} m²`;
