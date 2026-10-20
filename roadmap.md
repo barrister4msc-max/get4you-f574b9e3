@@ -52,3 +52,9 @@
 - [x] Removed-task notifications are hidden locally; missing-task page is neutral (server deletion E2E remains blocked above)
 - [x] Garbage audit report (IDs + reasons), no deletion
 - [x] Cleanup of listed records
+
+## Auth / publish / internet prices (Oct 2026)
+- [x] Single post-auth handler, no code exchange, no silent home redirect, safe logs
+- [x] Draft not overwritten before auth restores; fixed budget consistent; idempotent publish id; signup no longer claims "publishing"
+- [ ] Internet price lookup by city — blocked: needs a web search/scraping connection (e.g. Firecrawl) approved by the user
+- [ ] Live Google/Apple/signup end-to-end check — blocked: database was unreachable during this session
