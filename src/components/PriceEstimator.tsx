@@ -14,16 +14,20 @@ export type EstimateSummary = { min_price: number; max_price: number; recommende
 
 type L = "en" | "ru" | "he" | "ar";
 const TXT: Record<string, Record<L, string>> = {
-  title: { en: "Price estimate", ru: "Оценка стоимости", he: "הערכת מחיר", ar: "تقدير السعر" },
+  title: { en: "Service cost", ru: "Стоимость услуги", he: "עלות השירות", ar: "تكلفة الخدمة" },
   tariff: { en: "Calculated by tariff", ru: "Расчёт по тарифу", he: "חישוב לפי תעריף", ar: "محسوب حسب التعرفة" },
   history: { en: "Estimate from {n} comparable completed orders", ru: "Оценка по {n} сопоставимым выполненным заказам", he: "הערכה לפי {n} הזמנות דומות שהושלמו", ar: "تقدير من {n} طلبات مكتملة مماثلة" },
   range: { en: "Middle half of final prices; recommended = median.", ru: "Средняя половина итоговых цен; рекомендуемая — медиана.", he: "מחצית אמצעית של המחירים הסופיים; מומלץ = חציון.", ar: "النصف الأوسط من الأسعار النهائية؛ الموصى به = الوسيط." },
-  unavailable: { en: "Not enough data for an estimate. Please enter your budget.", ru: "Недостаточно данных для оценки. Укажите бюджет самостоятельно.", he: "אין מספיק נתונים להערכה. הזינו תקציב בעצמכם.", ar: "لا توجد بيانات كافية للتقدير. أدخل ميزانيتك." },
+  unavailable: { en: "Automatic estimate is not available yet", ru: "Автооценка пока недоступна", he: "הערכה אוטומטית עדיין לא זמינה", ar: "التقدير التلقائي غير متاح بعد" },
+  how: { en: "How it was calculated", ru: "Как рассчитано", he: "איך חושב", ar: "كيف تم الحساب" },
+  checked: { en: "Checked", ru: "Проверено", he: "נבדק", ar: "تم التحقق" },
+  geoCity: { en: "Sources for", ru: "Источники по", he: "מקורות עבור", ar: "مصادر لـ" },
+  formula: { en: "Recommended = (minimum + maximum) / 2", ru: "Рекомендуемая = (минимальная + максимальная) / 2", he: "מומלץ = (מינימום + מקסימום) / 2", ar: "الموصى به = (الأدنى + الأعلى) / 2" },
   error: { en: "Could not load the estimate.", ru: "Не удалось получить оценку.", he: "לא ניתן לטעון הערכה.", ar: "تعذر تحميل التقدير." },
   retry: { en: "Retry", ru: "Повторить", he: "נסה שוב", ar: "إعادة المحاولة" },
   use: { en: "Use this price", ru: "Использовать эту цену", he: "השתמש במחיר זה", ar: "استخدم هذا السعر" },
   loading: { en: "Calculating…", ru: "Считаем…", he: "מחשב…", ar: "جارٍ الحساب…" },
-  rec: { en: "Recommended", ru: "Рекомендуемая", he: "מומלץ", ar: "الموصى به" },
+  rec: { en: "Recommended price", ru: "Рекомендуемая цена", he: "מחיר מומלץ", ar: "السعر الموصى به" },
 };
 
 interface Props {
@@ -31,6 +35,8 @@ interface Props {
   serviceDetails: Record<string, unknown>;
   cityId: string | null;
   neighborhoodId: string | null;
+  /** Public Hebrew city name for internet price research (never the address). */
+  cityNameHe?: string | null;
   /** Called only on explicit click; never auto-overwrites a manual budget. */
   onUseSuggested: (price: number) => void;
   onEstimate?: (e: EstimateSummary | null) => void;
@@ -49,12 +55,25 @@ export function buildEstimateParams(category: string, sd: Record<string, unknown
   };
 }
 
-export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodId, onUseSuggested, onEstimate }: Props) => {
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const cacheGet = (k: string): EstimateResult | null => {
+  try {
+    const raw = sessionStorage.getItem(`price_est:${k}`);
+    if (!raw) return null;
+    const { at, r } = JSON.parse(raw);
+    return Date.now() - at < CACHE_TTL_MS ? parseEstimateResponse(r) : null;
+  } catch { return null; }
+};
+const cacheSet = (k: string, r: EstimateResult) => {
+  try { if (r.status === "available" || r.status === "unavailable") sessionStorage.setItem(`price_est:${k}`, JSON.stringify({ at: Date.now(), r })); } catch { /* ignore */ }
+};
+
+export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodId, cityNameHe, onUseSuggested, onEstimate }: Props) => {
   const { locale, currency } = useLanguage();
   const loc = (["en", "ru", "he", "ar"].includes(locale) ? locale : "en") as L;
   const fp = useFormatPrice();
   const params = buildEstimateParams(category, serviceDetails || {}, cityId, neighborhoodId, currency);
-  const key = params ? estimateKey(params) : null;
+  const key = params ? `${estimateKey(params)}|${cityNameHe ?? ""}` : null;
   const [state, setState] = useState<{ key: string; result: EstimateResult } | null>(null);
   const [loading, setLoading] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -67,13 +86,22 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
     onEstimateRef.current?.(null); // previous estimate is no longer current
     if (!params || !key) { setState(null); setLoading(false); return; }
     const ctrl = new AbortController();
+    const cached = cacheGet(key);
+    const report = (result: EstimateResult) => {
+      if (result.status === "available") {
+        onEstimateRef.current?.(result.method === "tariff"
+          ? { min_price: result.total, max_price: result.total, recommended_price: result.total, currency: result.currency }
+          : { min_price: result.min, max_price: result.max, recommended_price: result.recommended, currency: result.currency });
+      }
+    };
+    if (cached && retry === 0) { setState({ key, result: cached }); setLoading(false); report(cached); return; }
     setLoading(true);
     const h = setTimeout(async () => {
       let result: EstimateResult;
       try {
         const { data, error } = await supabase.functions.invoke("estimate-task-price", {
           body: { service: params.service, category_id: categoryIdFor(params.service), subtype: params.subtype,
-            area_m2: params.areaM2, windows: params.windows, city_id: params.cityId, neighborhood_id: params.neighborhoodId, currency: params.currency },
+            area_m2: params.areaM2, windows: params.windows, city_id: params.cityId, neighborhood_id: params.neighborhoodId, currency: params.currency, city_name_he: cityNameHe ?? null },
           signal: ctrl.signal,
         });
         result = error ? { status: "error", reason: "request_failed" } : parseEstimateResponse(data);
@@ -81,13 +109,10 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         result = { status: "error", reason: "request_failed" };
       }
       if (ctrl.signal.aborted || my !== seq.current) return; // stale response
+      cacheSet(key, result);
       setState({ key, result });
       setLoading(false);
-      if (result.status === "available") {
-        onEstimateRef.current?.(result.method === "tariff"
-          ? { min_price: result.total, max_price: result.total, recommended_price: result.total, currency: result.currency }
-          : { min_price: result.min, max_price: result.max, recommended_price: result.recommended, currency: result.currency });
-      }
+      report(result);
     }, 600);
     return () => { clearTimeout(h); ctrl.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,23 +146,41 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         const rec = current.method === "tariff" ? current.total : current.recommended;
         return (
           <>
-            {current.method === "tariff" ? (
-              <div className="text-2xl sm:text-3xl font-bold text-foreground">{fp(current.total, cur, cur)}</div>
+            {current.method === "tariff" || current.min === current.max ? (
+              <div className="text-2xl sm:text-3xl font-bold text-foreground">{fp(rec, cur, cur)}</div>
             ) : (
-              <>
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">{fp(current.min, cur, cur)} – {fp(current.max, cur, cur)}</div>
-                <div className="text-sm"><span className="font-medium">{TXT.rec[loc]}: </span><span className="font-bold text-primary">{fp(current.recommended, cur, cur)}</span></div>
-              </>
+              <div className="text-2xl sm:text-3xl font-bold text-foreground">{fp(current.min, cur, cur)} — {fp(current.max, cur, cur)}</div>
             )}
-            <p className="text-xs text-muted-foreground">
-              {current.method === "tariff" ? TXT.tariff[loc] : `${TXT.history[loc].replace("{n}", String(current.provenance.sampleSize))}. ${TXT.range[loc]}`}
-            </p>
+            <div className="text-base"><span className="font-medium">{TXT.rec[loc]}: </span><span className="font-bold text-primary">{fp(rec, cur, cur)}</span></div>
             {cur === currency && (
               <Button variant="ghost" type="button" onClick={() => onUseSuggested(rec)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold bg-accent text-accent-foreground hover:opacity-90 transition-opacity text-sm">
                 <Sparkles className="w-4 h-4" />{TXT.use[loc]}
               </Button>
             )}
+            <details className="text-sm text-muted-foreground" data-testid="price-how">
+              <summary className="cursor-pointer text-primary font-medium">{TXT.how[loc]}</summary>
+              <div className="mt-2 space-y-2">
+                {current.method === "web" ? (
+                  <>
+                    <p>{TXT.geoCity[loc]}: {current.provenance.area} · {TXT.checked[loc]}: {new Date(current.provenance.checkedAt).toLocaleDateString(locale)}</p>
+                    <ul className="space-y-1.5">
+                      {current.provenance.offers.map((o, i) => (
+                        <li key={i} className="break-words">
+                          <a href={o.url} target="_blank" rel="noopener noreferrer nofollow" className="underline text-primary">{new URL(o.url).hostname}</a>
+                          {" — "}«{o.quote}» → {o.calc} = <span className="font-semibold text-foreground">₪{o.normalized}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : current.method === "history" ? (
+                  <p>{TXT.history[loc].replace("{n}", String(current.provenance.sampleSize))}</p>
+                ) : (
+                  <p>{TXT.tariff[loc]}</p>
+                )}
+                <p>{TXT.formula[loc]}</p>
+              </div>
+            </details>
           </>
         );
       })()}

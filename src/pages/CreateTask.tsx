@@ -922,6 +922,7 @@ useEffect(() => {
               <PriceEstimator
                 cityId={form.taskType === "remote" || isGeoStale(form.geo, form.location) ? null : form.geo?.cityId ?? null}
                 neighborhoodId={form.taskType === "remote" || isGeoStale(form.geo, form.location) ? null : form.geo?.neighborhoodId ?? null}
+                cityNameHe={form.taskType === "remote" || isGeoStale(form.geo, form.location) ? null : form.geo?.cityNames?.he ?? null}
                 category={form.category}
                 serviceDetails={form.serviceDetails || {}}
                 onUseSuggested={(p) => update({ budget: p })}
