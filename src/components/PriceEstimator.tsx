@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { Lightbulb, Loader2, Sparkles, RotateCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useFormatPrice } from "@/hooks/useFormatPrice";
 import { categoryIdFor, resolveServiceKey } from "@/lib/serviceRegistry";
@@ -24,6 +25,7 @@ const TXT: Record<string, Record<L, string>> = {
   geoCity: { en: "Sources for", ru: "Источники по", he: "מקורות עבור", ar: "مصادر لـ" },
   formula: { en: "Recommended = (minimum + maximum) / 2", ru: "Рекомендуемая = (минимальная + максимальная) / 2", he: "מומלץ = (מינימום + מקסימום) / 2", ar: "الموصى به = (الأدنى + الأعلى) / 2" },
   error: { en: "Could not load the estimate.", ru: "Не удалось получить оценку.", he: "לא ניתן לטעון הערכה.", ar: "تعذر تحميل التقدير." },
+  limit: { en: "Price updates are paused: workspace spending limit reached.", ru: "Обновление цен приостановлено: достигнут лимит расходов рабочего пространства.", he: "עדכון המחירים הושהה: הגעתם למגבלת ההוצאות של סביבת העבודה.", ar: "تحديث الأسعار متوقف: تم الوصول إلى حد إنفاق مساحة العمل." },
   retry: { en: "Retry", ru: "Повторить", he: "נסה שוב", ar: "إعادة المحاولة" },
   use: { en: "Use this price", ru: "Использовать эту цену", he: "השתמש במחיר זה", ar: "استخدم هذا السعر" },
   loading: { en: "Calculating…", ru: "Считаем…", he: "מחשב…", ar: "جارٍ الحساب…" },
@@ -108,6 +110,9 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
         }), currency === "USD" ? supabase.functions.invoke("exchange-rates", { signal: ctrl.signal }) : Promise.resolve(null)]);
         const rate = currency === "ILS" ? 1 : exchange && !exchange.error ? estimateConversionRate(exchange.data) : null;
         result = response.error ? { status: "error", reason: "request_failed" } : parseEstimateResponse(response.data);
+        if (response.error instanceof FunctionsHttpError) {
+          try { result = parseEstimateResponse(await response.error.context.json()); } catch { /* retain failure */ }
+        }
         if (result.status === "available" && rate === null) result = { status: "error", reason: "exchange_rate_unavailable" };
         if (ctrl.signal.aborted || my !== seq.current) return;
         if (rate !== null) setConversion({ key, rate });
@@ -144,10 +149,12 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
       {!loading && current?.status === "unavailable" && <p className="text-sm text-muted-foreground">{TXT.unavailable[loc]}</p>}
       {!loading && current?.status === "error" && (
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-destructive">{TXT.error[loc]}</span>
+          <span className="text-destructive">{current.reason.toLowerCase().includes("credit limit") ? TXT.limit[loc] : TXT.error[loc]}</span>
+          {!current.reason.toLowerCase().includes("credit limit") && (
           <Button variant="ghost" type="button" onClick={() => setRetry((r) => r + 1)} className="inline-flex items-center gap-1 text-primary underline">
             <RotateCw className="w-3.5 h-3.5" />{TXT.retry[loc]}
           </Button>
+          )}
         </div>
       )}
       {!loading && current?.status === "available" && (() => {

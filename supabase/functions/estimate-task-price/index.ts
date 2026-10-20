@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.100.0";
 import {
   computeHistory, computeTariff, findTariff, type ComparableRecord, type EstimateParams, type EstimateResult,
 } from "../_shared/priceEstimate.ts";
-import { researchCleaning } from "./webResearch.ts";
+import { researchCleaning, ResearchError } from "./webResearch.ts";
 import type { CleaningType } from "../_shared/webPrices.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
@@ -51,7 +51,7 @@ serve(async (req) => {
         return reply(web);
       } catch (e) {
         console.warn("[prices] web research failed", e instanceof Error ? e.message : String(e));
-        return reply({ status: "error", reason: e instanceof Error ? e.message : "web_research_failed" }, 502);
+        return reply({ status: "error", reason: e instanceof Error ? e.message : "web_research_failed" }, e instanceof ResearchError ? e.status : 502);
       }
     }
     if (service === "cleaning") return reply({ status: "unavailable", reason: !cityHe ? "city_name_required" : "cleaning_parameters_required" });

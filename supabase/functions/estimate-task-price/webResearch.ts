@@ -12,6 +12,17 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
 const AI_URL = "https://ai.gateway.lovable.dev/v1/responses";
 const TTL_MS = 24 * 60 * 60 * 1000;
+export class ResearchError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
+
+async function providerFailure(res: Response): Promise<never> {
+  const body = await res.text();
+  console.error(`[prices] provider failed [${res.status}]: ${body}`);
+  let message = body.slice(0, 300);
+  try { message = JSON.parse(body).message ?? message; } catch { /* non-JSON */ }
+  throw new ResearchError(res.status, message);
+}
 
 type Page = { url: string; text: string };
 
@@ -26,7 +37,7 @@ async function search(query: string): Promise<Page[]> {
       scrapeOptions: { formats: ["markdown"], onlyMainContent: true } }),
     signal: AbortSignal.timeout(45000),
   });
-  if (!res.ok) throw new Error(`search_failed_${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) return providerFailure(res);
   const j = await res.json();
   const items: Array<{ url?: string; markdown?: string }> = j?.data?.web ?? j?.data ?? [];
   return items.flatMap((i) => typeof i.url === "string" && typeof i.markdown === "string" ? [{ url: i.url, text: i.markdown.slice(0, 48000) }] : []);
@@ -71,7 +82,7 @@ async function extract(page: Page): Promise<RawOffer[]> {
       text: { format: { type: "json_schema", name: "offers", strict: true, schema: OFFER_SCHEMA } },
     }),
   });
-  if (!res.ok) throw new Error(`extract_failed_${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) return providerFailure(res);
   if (!res.body) return [];
   let out = ""; let buf = "";
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -116,6 +127,10 @@ async function offersFor(place: string, spec: OrderSpec, geography: "city" | "re
     return offers.flatMap((o) => normalizeCleaning(o, spec, windowPrices.length === 1 ? windowPrices[0] : null));
   });
   if (saved && new Date(saved.expires_at).getTime() > Date.now()) return { offers: apply(saved.offers), checkedAt: saved.checked_at };
+  const { data: pause, error: pauseError } = await db.from("web_price_research_state").select("status,reason").eq("id", "cleaning").maybeSingle();
+  if (pauseError) throw new Error("research_state_unavailable");
+  if (pause) throw new ResearchError(pause.status, pause.reason);
+  try {
   let pages: Page[] = [];
     const [a, b] = await Promise.all([
       search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`),
@@ -125,7 +140,8 @@ async function offersFor(place: string, spec: OrderSpec, geography: "city" | "re
     pages = [...a, ...b].filter((p) => !seen.has(p.url) && seen.add(p.url));
   // A page counts for this geography only if it mentions the place itself.
   const relevant = pages.filter((p) => p.text.includes(place.split(" ")[0]));
-  const extracted = await Promise.all(relevant.map(async (p) => ({ p, offers: await extract(p) })));
+  const extracted: Array<{ p: Page; offers: RawOffer[] }> = [];
+  for (const p of relevant) extracted.push({ p, offers: await extract(p) });
   const groups = extracted.map(({ p, offers }) => ({ url: p.url, offers: offers.filter((o) => isVerified(o, p.text)) })).filter((g) => g.offers.length);
   // Never replace the last successful summary with an empty or failed update.
   const checkedAt = new Date().toISOString();
@@ -141,6 +157,12 @@ async function offersFor(place: string, spec: OrderSpec, geography: "city" | "re
     verified: extracted.reduce((n, x) => n + x.offers.filter((o) => isVerified(o, x.p.text)).length, 0), applied: applied.length }));
   if (Deno.env.get("PRICES_DEBUG")) console.info(JSON.stringify(extracted.map((x) => x.offers.map((o) => [o.unit, o.cleaningType, o.price, o.areaMin, o.areaMax, isVerified(o, x.p.text), o.quote.slice(0, 80)]))));
   return { offers: applied, checkedAt };
+  } catch (error) {
+    if (error instanceof ResearchError && (error.status === 402 || error.status === 403)) {
+      await db.from("web_price_research_state").upsert({ id: "cleaning", status: error.status, reason: error.message, paused_at: new Date().toISOString() });
+    }
+    throw error;
+  }
 }
 
 export async function researchCleaning(cityHe: string, spec: OrderSpec): Promise<WebEstimate> {
