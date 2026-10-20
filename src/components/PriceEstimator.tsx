@@ -28,6 +28,7 @@ const TXT: Record<string, Record<L, string>> = {
   formula: { en: "Recommended = (minimum + maximum) / 2", ru: "Рекомендуемая = (минимальная + максимальная) / 2", he: "מומלץ = (מינימום + מקסימום) / 2", ar: "الموصى به = (الأدنى + الأعلى) / 2" },
   error: { en: "Could not load the estimate.", ru: "Не удалось получить оценку.", he: "לא ניתן לטעון הערכה.", ar: "تعذر تحميل التقدير." },
   limit: { en: "Price updates are paused: workspace spending limit reached.", ru: "Обновление цен приостановлено: достигнут лимит расходов рабочего пространства.", he: "עדכון המחירים הושהה: הגעתם למגבלת ההוצאות של סביבת העבודה.", ar: "تحديث الأسعار متوقف: تم الوصول إلى حد إنفاق مساحة العمل." },
+  openaiLimit: { en: "Price updates paused: OpenAI API balance exhausted.", ru: "Обновление цен приостановлено: исчерпан баланс OpenAI API.", he: "עדכון המחירים הושהה: יתרת OpenAI API אזלה.", ar: "تحديث الأسعار متوقف: نفد رصيد OpenAI API." },
   retry: { en: "Retry", ru: "Повторить", he: "נסה שוב", ar: "إعادة المحاولة" },
   use: { en: "Use this price", ru: "Использовать эту цену", he: "השתמש במחיר זה", ar: "استخدم هذا السعر" },
   loading: { en: "Calculating…", ru: "Считаем…", he: "מחשב…", ar: "جارٍ الحساب…" },
@@ -151,7 +152,7 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
       {!loading && current?.status === "unavailable" && <p className="text-sm text-muted-foreground">{TXT.unavailable[loc]}</p>}
       {!loading && current?.status === "error" && (
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-destructive">{current.reason.toLowerCase().includes("credit limit") ? TXT.limit[loc] : TXT.error[loc]}</span>
+          <span className="text-destructive">{current.reason === "openai:credit_balance_exhausted" ? TXT.openaiLimit[loc] : current.reason.toLowerCase().includes("credit limit") ? TXT.limit[loc] : TXT.error[loc]}</span>
           <Button variant="ghost" type="button" onClick={() => setRetry((r) => r + 1)} className="inline-flex items-center gap-1 text-primary underline">
             <RotateCw className="w-3.5 h-3.5" />{TXT.retry[loc]}
           </Button>
