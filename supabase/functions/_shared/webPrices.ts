@@ -19,7 +19,7 @@ export type RawOffer = {
   vatNote: string | null;
 };
 
-export type OrderSpec = { areaM2: number; cleaningType: CleaningType; windows: number | null };
+export type OrderSpec = { areaM2: number; cleaningType: CleaningType; windows: number | null; additionalWork?: boolean };
 
 export type AppliedOffer = {
   url: string; quote: string; unit: RawOffer["unit"]; unitPrice: number;
@@ -48,6 +48,8 @@ export function isVerified(o: RawOffer, pageText: string): boolean {
  * duration or m²-per-room assumption.
  */
 export function normalizeCleaning(o: RawOffer, spec: OrderSpec, windowPrice: number | null): AppliedOffer[] {
+  // Free-text extras have no documented unit/quantity: never price them as standard cleaning.
+  if (spec.additionalWork) return [];
   const out: AppliedOffer[] = [];
   const prices = finite(o.priceMax) && o.priceMax > o.price ? [o.price, o.priceMax] : [o.price];
   for (const price of prices) {

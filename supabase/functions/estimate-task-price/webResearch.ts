@@ -5,13 +5,13 @@
 // address, name, phone or any other personal data.
 import {
   aggregate, CLEANING_QUERY_HE, isVerified, normalizeCleaning, regionFor,
+  summaryIsFresh, PRICE_SUMMARY_TTL_MS,
   type AppliedOffer, type CleaningType, type OrderSpec, type RawOffer, type WebEstimate,
 } from "../_shared/webPrices.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
 const AI_URL = "https://ai.gateway.lovable.dev/v1/responses";
-const TTL_MS = 24 * 60 * 60 * 1000;
 export class ResearchError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
@@ -126,7 +126,7 @@ async function offersFor(place: string, spec: OrderSpec, geography: "city" | "re
     const windowPrices = offers.filter((o) => o.unit === "per_window" && !o.isFromPrice).map((o) => o.price);
     return offers.flatMap((o) => normalizeCleaning(o, spec, windowPrices.length === 1 ? windowPrices[0] : null));
   });
-  if (saved && new Date(saved.expires_at).getTime() > Date.now()) return { offers: apply(saved.offers), checkedAt: saved.checked_at };
+  if (saved && summaryIsFresh(saved.expires_at)) return { offers: apply(saved.offers), checkedAt: saved.checked_at };
   const { data: pause, error: pauseError } = await db.from("web_price_research_state").select("status,reason").eq("id", "cleaning").maybeSingle();
   if (pauseError) throw new Error("research_state_unavailable");
   if (pause) throw new ResearchError(pause.status, pause.reason);
@@ -148,7 +148,7 @@ async function offersFor(place: string, spec: OrderSpec, geography: "city" | "re
   if (groups.length) {
     const { error } = await db.from("web_price_summaries").upsert({ cache_key: cacheKey, service: "cleaning", geography, place,
       applicability: { cleaningType: spec.cleaningType, composition: "source-specific", normalization: "per_m2_or_explicit_area_range" }, currency: "ILS", offers: groups,
-      checked_at: checkedAt, expires_at: new Date(Date.now() + TTL_MS).toISOString() });
+      checked_at: checkedAt, expires_at: new Date(Date.now() + PRICE_SUMMARY_TTL_MS).toISOString() });
     if (error) throw new Error(`summary_save_failed: ${error.message}`);
   }
   const applied = apply(groups);

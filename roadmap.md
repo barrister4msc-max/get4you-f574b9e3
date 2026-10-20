@@ -1,8 +1,10 @@
 ## Restore price recommendation
-- [ ] Diagnose actual unavailable response and connected search
-- [ ] Persist verified source summaries with expiry; refresh without destructive overwrite
-- [ ] Match cleaning scope and convert ILS once with a verified rate; explicit apply only
-- [ ] Test rules and verify live server → form → budget without publishing orders
+- [x] Diagnose actual unavailable response: USD skipped web lookup; no persistent summaries; search connected and returns HTTP 200
+- [x] Persist verified source summaries with expiry; refresh without destructive overwrite; persist terminal provider pause
+- [x] Convert ILS once with a verified rate; explicit apply only; area/type/windows matched
+- [x] Test rules and verify real form failure: confirmed city, unchanged $100 manual budget, clear spending-limit message, no order publication
+- [ ] Verify live available server → form → budget and refreshed summaries — blocked by confirmed AI HTTP 403 workspace credit limit; no invented price fallback
+- [ ] Price additional free-text work — blocked by missing documented scope/unit/quantity and applicable verified offers; currently refuses a misleading standard-cleaning estimate
 
 ## Homepage typography scale-up (all elements)
 - [x] Apply homepage-scoped computed sizes: logo 24, nav 18 semibold, controls 18, service label 24 bold, service/button text 18 semibold (16 phone), banner H1 48-52 desktop (32-36 mobile), banner copy 20 desktop / 18 mobile, section H2 32 desktop (24-28 mobile), step/card titles 20 semibold, body/FAQ/links/footer 18, utility captions >=14
@@ -62,5 +64,5 @@
 ## Auth / publish / internet prices (Oct 2026)
 - [x] Single post-auth handler, no code exchange, no silent home redirect, safe logs
 - [x] Draft not overwritten before auth restores; fixed budget consistent; idempotent publish id; signup no longer claims "publishing"
-- [ ] Internet price lookup by city — blocked: needs a web search/scraping connection (e.g. Firecrawl) approved by the user
+- [ ] Internet price lookup available end-to-end — Firecrawl is linked; blocked by confirmed AI HTTP 403 workspace credit limit
 - [ ] Live Google/Apple/signup end-to-end check — blocked: database was unreachable during this session
