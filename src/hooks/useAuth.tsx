@@ -64,27 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Safety net: never get stuck on white screen (iOS Safari / Apple OAuth race)
     const safetyTimer = window.setTimeout(finishLoading, 4000);
 
-    // Recover session from URL hash if OAuth implicit flow landed here (Apple/Google).
-    const recoverFromHash = async () => {
-      try {
-        const hash = window.location.hash;
-        if (!hash || hash.length < 2) return false;
-        const params = new URLSearchParams(hash.replace('#', '?'));
-        const access_token = params.get('access_token');
-        const refresh_token = params.get('refresh_token');
-        if (access_token && refresh_token) {
-          await supabase.auth.setSession({ access_token, refresh_token });
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          return true;
-        }
-      } catch (e) {
-        console.error('[auth] hash recovery failed', e);
-      }
-      return false;
-    };
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('[oauth-flow] onAuthStateChange', { event: _event, hasSession: !!session, userId: session?.user?.id });
       if (cancelled) return;
       if (session?.user) {
         // Defer to avoid deadlocks inside the auth callback. Check
@@ -120,7 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    recoverFromHash().then(() => {
+    // URL-hash tokens are consumed by the Supabase client itself (single mechanism).
+    {
       supabase.auth.getSession()
         .then(async ({ data: { session } }) => {
           if (cancelled) return;
@@ -154,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('[auth] getSession failed', e);
           finishLoading();
         });
-    });
+    }
 
     return () => {
       cancelled = true;

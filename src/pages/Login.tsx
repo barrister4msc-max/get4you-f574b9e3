@@ -211,12 +211,6 @@ const LoginPage = () => {
       if (returnTo) window.sessionStorage.setItem('oauth_return_to', returnTo);
       rememberPostAuthReturnTo(returnTo);
       try { window.sessionStorage.setItem('oauth_pending', provider); } catch { /* noop */ }
-      console.log('[oauth-flow] start signInWithOAuth', {
-        provider,
-        origin: window.location.origin,
-        pathname: window.location.pathname,
-        returnTo,
-      });
       const result = await lovable.auth.signInWithOAuth(provider, {
         // Use the bare origin (public, same-origin) — this is the documented
         // default that always sits in the Lovable OAuth broker allow-list for
@@ -231,13 +225,7 @@ const LoginPage = () => {
         // Log the full error so the actual provider/broker failure is visible
         // in console (Supabase/Lovable often returns "failed to sign in with
         // vendor" for provider-side config errors).
-        console.error('[oauth-flow] signInWithOAuth failed', {
-          provider,
-          name: (result.error as any)?.name,
-          message: (result.error as any)?.message,
-          status: (result.error as any)?.status,
-          error: result.error,
-        });
+        console.warn('[auth] stage=oauth_start status=error', { provider });
         const raw = (result.error as any)?.message || String(result.error) || 'OAuth error';
         toast.error(raw, { duration: 10000 });
         window.sessionStorage.removeItem('oauth_return_to');
@@ -245,11 +233,23 @@ const LoginPage = () => {
         setSocialLoading(null);
         return;
       }
-      // Browser will redirect to provider; nothing else to do.
+      if (!result?.redirected) {
+        // Popup flow: the wrapper's setSession reports failures via {error},
+        // not exceptions — confirm a session really exists before continuing.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.sessionStorage.removeItem('oauth_return_to');
+          try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
+          toast.error(t('auth.oauthFailed') || 'Sign-in did not complete. Please try again.');
+          setSocialLoading(null);
+          return;
+        }
+      }
+      // Full-page flow: browser redirects; OAuthReturnHandler finishes routing.
     } catch (err: any) {
       window.sessionStorage.removeItem('oauth_return_to');
       try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
-      console.error('[oauth-flow] signInWithOAuth threw', err);
+      console.warn('[auth] stage=oauth_start status=threw', { provider });
       toast.error(err?.message || 'OAuth error');
       setSocialLoading(null);
     }
