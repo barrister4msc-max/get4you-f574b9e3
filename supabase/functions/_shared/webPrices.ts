@@ -80,12 +80,13 @@ const digits = (s: string) => s.replace(/[^\d]/g, "");
 
 /** A generic deep-cleaning label must not override a quote's renovation/moving scope. */
 const RENOVATION = /שיפוץ|שיפוצים|בנייה|renovation|construction|ремонт/i;
-const MOVING = /אכלוס|מעבר|דיר[הת]\s+ריק[הות]*|בתים\s+ריקים|move[\s-]?(?:in|out)|moving|empty\s+(?:apartment|home)|переезд|заселени|пуст(?:ая|ой)\s+квартир/i;
+const MOVING = /אכלוס|מעבר|לפני\s+כניסה|כניסה\s+לדירה|עזיבת?|יציאה\s+מ|דיר[הת]\s+ריק[הות]*|בתים\s+ריקים|move[\s-]?(?:in|out)|moving|empty\s+(?:apartment|home)|переезд|заселени|пуст(?:ая|ой)\s+квартир/i;
 /** Cleaning types never share quotes: a quote mentioning another type's scope is rejected. */
 export function cleaningQuoteMatchesType(quote: string, type: CleaningType): boolean {
   if (type === "deep" || type === "regular") return !RENOVATION.test(quote) && !MOVING.test(quote);
-  if (type === "after_renovation") return !MOVING.test(quote);
-  if (type === "move_in_out") return !RENOVATION.test(quote);
+  // Specialised types must name their own scope, so a generic apartment price is never relabelled.
+  if (type === "after_renovation") return RENOVATION.test(quote) && !MOVING.test(quote);
+  if (type === "move_in_out") return MOVING.test(quote) && !RENOVATION.test(quote);
   return true;
 }
 

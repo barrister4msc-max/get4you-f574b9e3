@@ -84,4 +84,6 @@
 - [x] Internet price lookup verified end-to-end via Lovable AI for Tel Aviv; uncached latency caveat recorded above
 - [ ] Live Google/Apple/signup end-to-end check — blocked: database was unreachable during this session
 - [x] Owner tariff: regular/deep cleaning 500–700 ₪ shown instantly; cleaning types (regular/deep, renovation, move) never share quotes
-- [ ] Pre-warm renovation / move-out cleaning prices — live search still slow (~40s+ timeout); needs owner prices or background warm-up
+- [x] Pre-load renovation cleaning prices (saved 30 days, answers instantly from saved city/region/country)
+- [ ] Move-out cleaning prices: real offers saved but quoted per number of rooms; form asks m² — waiting on owner choice (add rooms field?)
+- [x] Answer: overview of AI features for the app

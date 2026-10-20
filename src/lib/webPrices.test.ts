@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { aggregate, estimateWithGeographyFallback, pageMatchesPriceGeography, isVerified, normalizeCleaning, priceCityName, regionFor, summaryIsFresh, PRICE_SUMMARY_TTL_MS, type RawOffer } from "../../supabase/functions/_shared/webPrices";
 
-const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: "", price: 0, unit: "per_m2", cleaningType: "after_renovation",
+const o = (x: Partial<RawOffer>): RawOffer => ({ url: "https://a.example", quote: (x.cleaningType ?? "after_renovation") === "after_renovation" ? "ניקיון אחרי שיפוץ" : "", price: 0, unit: "per_m2", cleaningType: "after_renovation",
   priceMax: null, areaMin: null, areaMax: null, isFromPrice: false, includesWindows: null, vatNote: null, ...x });
 const spec = { areaM2: 80, cleaningType: "after_renovation" as const, windows: null };
 
@@ -71,7 +71,7 @@ describe("web price rules", () => {
     expect(normalizeCleaning(o({ price: 10 }), { ...spec, additionalWork: true }, null)).toEqual([]);
   });
   it("recommended is the midpoint of the lowest and highest applicable price", () => {
-    const a = [o({ price: 10, quote: "10" }), o({ price: 15, quote: "15" }), o({ price: 25, quote: "25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
+    const a = [o({ price: 10, quote: "שיפוץ 10" }), o({ price: 15, quote: "שיפוץ 15" }), o({ price: 25, quote: "שיפוץ 25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
     const r = aggregate(a, "city", "חיפה", "2026-10-20");
     expect(r).toMatchObject({ status: "available", min: 800, max: 2000, recommended: 1400 });
   });
@@ -149,5 +149,17 @@ describe("pre-loaded prices answer without waiting", () => {
   });
   it("saved prices stay usable for 30 days", () => {
     expect(PRICE_SUMMARY_TTL_MS).toBe(30 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe("specialised cleaning must name its scope", () => {
+  it("a generic apartment price with polish is not a move-out price", async () => {
+    const { cleaningQuoteMatchesType } = await import("../../supabase/functions/_shared/webPrices");
+    expect(cleaningQuoteMatchesType('מחיר ניקיון דירת 4 חדרים 2,500 - 1,600 ₪ המחיר כולל פוליש ווקס', "move_in_out")).toBe(false);
+    expect(cleaningQuoteMatchesType('ניקיון דירה לפני כניסה 1,500 ₪', "move_in_out")).toBe(true);
+  });
+  it("a generic price is not a renovation-cleaning price", async () => {
+    const { cleaningQuoteMatchesType } = await import("../../supabase/functions/_shared/webPrices");
+    expect(cleaningQuoteMatchesType('ניקיון דירה 18 ₪ למ"ר', "after_renovation")).toBe(false);
   });
 });
