@@ -1,18 +1,24 @@
+## Switch price research to Lovable AI
+- [x] City → matching region fallback; normalize OSM Hebrew punctuation; live Haifa + Haifa/Krayot searched but no applicable deep-cleaning 100 m² offer
+- [x] Replace own OpenAI credentials with Lovable AI Responses; keep verified native sources and separate pause/cache state
+- [x] Deploy and verify Tel Aviv 100 m²: ILS 1800–2500, midpoint 2150, cache reused; actual USD form applied 692.64 only on click; no order/payment
+- [ ] Resolve slow uncached research exceeding the 150s request boundary — successful form verified from cache; uncached path remains unreliable
+
 ## OpenAI native web-search price research
 - [x] Securely save user's OPENAI_API_KEY; verify authenticated model listing and use documented gpt-5.5
 - [x] Replace mandatory Firecrawl with native OpenAI web_search, provider source evidence, fetched quote verification and saved search metadata; separate provider cache/pause state
 - [x] Keep ILS range on conversion failure; preserve explicit application, debounce and stale-response guard; 35 rule tests pass
 - [x] Deploy estimate-task-price; confirm Lovable AI 9-credit monthly cap and separate OpenAI credit_balance_exhausted without increasing limits; persist OpenAI pause
 - [x] Verify real Haifa 100 m² USD form: exact server failure, retry, manual $100 retained; no order/payment created
-- [ ] Verify successful native searches for Haifa/Tel Aviv, 100/200 m² ILS/USD, source summaries, cross-session reuse and application in real form — blocked by confirmed exhausted OpenAI API balance; resume only after owner confirms restored billing
-- [ ] Publish screen changes to 4you.ai — requires user request to publish; live price success remains unverified
+- [x] Own OpenAI verification superseded by user-authorized Lovable AI integration above; separate OpenAI pause retained
+- [ ] Publish screen changes to 4you.ai — requires user request to publish
 
 ## Restore price recommendation
 - [x] Diagnose actual unavailable response: USD skipped web lookup; no persistent summaries; search connected and returns HTTP 200
 - [x] Persist verified source summaries with expiry; refresh without destructive overwrite; persist terminal provider pause
 - [x] Convert ILS once with a verified rate; explicit apply only; area/type/windows matched
 - [x] Test rules and verify real form failure: confirmed city, unchanged $100 manual budget, clear spending-limit message, no order publication
-- [ ] Verify live available server → form → budget and refreshed summaries — blocked by confirmed AI HTTP 403 workspace credit limit; no invented price fallback
+- [x] Live available server → form → budget verified via Lovable AI; saved source summary reused
 - [ ] Price additional free-text work — blocked by missing documented scope/unit/quantity and applicable verified offers; currently refuses a misleading standard-cleaning estimate
 
 ## Homepage typography scale-up (all elements)
@@ -73,5 +79,5 @@
 ## Auth / publish / internet prices (Oct 2026)
 - [x] Single post-auth handler, no code exchange, no silent home redirect, safe logs
 - [x] Draft not overwritten before auth restores; fixed budget consistent; idempotent publish id; signup no longer claims "publishing"
-- [ ] Internet price lookup available end-to-end — Firecrawl is linked; blocked by confirmed AI HTTP 403 workspace credit limit
+- [x] Internet price lookup verified end-to-end via Lovable AI for Tel Aviv; uncached latency caveat recorded above
 - [ ] Live Google/Apple/signup end-to-end check — blocked: database was unreachable during this session
