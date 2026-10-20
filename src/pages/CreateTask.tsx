@@ -1,3 +1,4 @@
+import { budgetColumns } from "@/lib/taskBudget";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -553,10 +554,7 @@ const CreateTaskPage = () => {
           description: form.description.trim() || null,
           category_id: categoryId,
           task_type: form.taskType as "onsite" | "remote",
-          budget_fixed: form.budget,
-          budget_min: form.budget,
-          // Fixed price: min = max = the entered price; a hidden stale budgetMax must not contradict it.
-          budget_max: form.budgetType === "range" ? Math.max(Number(form.budgetMax) || 0, form.budget) : form.budget,
+          ...budgetColumns(form.budgetType, form.budget, form.budgetMax),
           is_urgent: form.urgency === "urgent",
           address: form.location.trim() || null,
           city: form.taskType === "remote" ? null : finalGeo ? cityLabel(finalGeo, locale) : null,

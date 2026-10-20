@@ -4,7 +4,6 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
-import { hasPendingTaskDraft } from '@/lib/pendingTaskDraft';
 import { rememberPostAuthReturnTo, resolvePostAuthRedirect } from '@/lib/postAuthRedirect';
 import { Mail, Lock, User, ArrowRight, CheckCircle2, RefreshCw, AlertTriangle } from 'lucide-react';
 import PasswordInput from '@/components/PasswordInput';
