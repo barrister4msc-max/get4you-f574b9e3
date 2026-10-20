@@ -9,7 +9,7 @@ import {
 } from "../_shared/webPrices.ts";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
-const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_URL = "https://ai.gateway.lovable.dev/v1/responses";
 const TTL_MS = 24 * 60 * 60 * 1000;
 const cache = new Map<string, { at: number; value: WebEstimate }>();
 
@@ -32,48 +32,64 @@ async function search(query: string): Promise<Page[]> {
   return items.filter((i) => i.url && i.markdown).map((i) => ({ url: i.url!, text: i.markdown!.slice(0, 14000) }));
 }
 
+const N = (t: string) => ({ type: [t, "null"] });
 const OFFER_SCHEMA = {
-  type: "object",
-  properties: {
-    offers: { type: "array", items: { type: "object", properties: {
-      quote: { type: "string", description: "Exact substring copied from the page that contains the price" },
-      price: { type: "number" },
+  type: "object", additionalProperties: false, required: ["offers"],
+  properties: { offers: { type: "array", items: {
+    type: "object", additionalProperties: false,
+    required: ["quote", "price", "unit", "cleaning_type", "area_min", "area_max", "is_from_price", "includes_windows", "vat_note"],
+    properties: {
+      quote: { type: "string" }, price: { type: "number" },
       unit: { type: "string", enum: ["per_job", "per_m2", "per_hour", "per_window", "per_room_job", "other"] },
       cleaning_type: { type: "string", enum: ["regular", "deep", "after_renovation", "move_in_out", "unknown"] },
-      area_min: { type: ["number", "null"] }, area_max: { type: ["number", "null"] },
-      is_from_price: { type: "boolean" }, includes_windows: { type: ["boolean", "null"] },
-      vat_note: { type: ["string", "null"] },
-    }, required: ["quote", "price", "unit", "cleaning_type", "is_from_price"] } },
-  },
-  required: ["offers"],
+      area_min: N("number"), area_max: N("number"), is_from_price: { type: "boolean" },
+      includes_windows: N("boolean"), vat_note: N("string"),
+    } } } },
 };
 
+const SYSTEM =
+  "Extract residential cleaning price offers in ILS from the page. Copy `quote` verbatim from the page (it must contain the number). " +
+  "Use unit per_m2 only when the price is explicitly per square metre; per_job with area_min/area_max only when the page states the m\u00b2 range; " +
+  "per_room_job when priced by number of rooms; per_hour for hourly; per_window for a price per window. Mark 'from/\u05d4\u05d7\u05dc \u05de/\u05de-' prices as is_from_price. " +
+  "cleaning_type: regular=ongoing, deep=thorough/general, after_renovation=after renovation, move_in_out=before move-in/after move-out. Never invent numbers; return an empty list if none.";
+
+/** Streams a Responses call and returns the concatenated output text. */
 async function extract(page: Page): Promise<RawOffer[]> {
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) return [];
   const res = await fetch(AI_URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    signal: AbortSignal.timeout(30000),
+    headers: { "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
+    signal: AbortSignal.timeout(45000),
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content:
-          "Extract residential cleaning price offers in ILS from the page. Copy `quote` verbatim from the page (it must contain the number). " +
-          "Use unit per_m2 only when the price is explicitly per square metre; per_job with area_min/area_max only when the page states the m² range; " +
-          "per_room_job when the price is by number of rooms; per_hour for hourly. Mark 'from/החל מ/מ-' prices as is_from_price. " +
-          "cleaning_type: regular=ongoing/שוטף, deep=יסודי/כללי, after_renovation=אחרי שיפוץ, move_in_out=לפני כניסה/אחרי יציאה. Never invent numbers." },
+      model: "openai/gpt-6-astra", stream: true, store: false,
+      reasoning: { effort: "low" },
+      input: [
+        { role: "system", content: SYSTEM },
         { role: "user", content: `URL: ${page.url}\n\n${page.text}` },
       ],
-      tools: [{ type: "function", function: { name: "offers", description: "Price offers found", parameters: OFFER_SCHEMA } }],
-      tool_choice: { type: "function", function: { name: "offers" } },
+      text: { format: { type: "json_schema", name: "offers", strict: true, schema: OFFER_SCHEMA } },
     }),
   });
-  if (!res.ok) { console.warn("[prices] extract failed", res.status); return []; }
-  const j = await res.json();
-  const args = j?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+  if (!res.ok || !res.body) { console.warn("[prices] extract failed", res.status); return []; }
+  let out = ""; let buf = "";
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += value;
+    let i;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line.startsWith("data:")) continue;
+      try {
+        const ev = JSON.parse(line.slice(5));
+        if (ev.type === "response.output_text.delta") out += ev.delta ?? "";
+      } catch { /* keep-alive */ }
+    }
+  }
   let parsed: { offers?: Array<Record<string, unknown>> } = {};
-  try { parsed = JSON.parse(args ?? "{}"); } catch { return []; }
+  try { parsed = JSON.parse(out || "{}"); } catch { return []; }
   return (parsed.offers ?? []).map((o) => ({
     url: page.url, quote: String(o.quote ?? ""), price: Number(o.price),
     unit: (o.unit as RawOffer["unit"]) ?? "other",
