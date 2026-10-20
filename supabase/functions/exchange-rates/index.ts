@@ -1,7 +1,4 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
 // Free API — no key needed. Returns rates relative to USD.
 const API_URL = 'https://open.er-api.com/v6/latest/USD'
@@ -17,9 +14,10 @@ Deno.serve(async (req) => {
   try {
     const now = Date.now()
     if (!cache || now - cache.fetchedAt > CACHE_TTL) {
-      const res = await fetch(API_URL)
+      const res = await fetch(API_URL, { signal: AbortSignal.timeout(10000) })
       if (!res.ok) throw new Error(`Exchange API error: ${res.status}`)
       const data = await res.json()
+      if (data.result !== 'success' || data.rates?.USD !== 1 || !Number.isFinite(data.rates?.ILS) || data.rates.ILS <= 0) throw new Error('Invalid exchange rate response')
       cache = { rates: data.rates, fetchedAt: now }
     }
 
@@ -27,7 +25,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : 'Exchange unavailable' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
