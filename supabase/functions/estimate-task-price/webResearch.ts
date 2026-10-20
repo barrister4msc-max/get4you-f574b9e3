@@ -22,14 +22,14 @@ async function search(query: string): Promise<Page[]> {
   const res = await fetch(`${GATEWAY}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": fcKey },
-    body: JSON.stringify({ query, limit: 8, country: "IL", lang: "he", tbs: "qdr:y",
+    body: JSON.stringify({ query, limit: 8, country: "IL", lang: "he",
       scrapeOptions: { formats: ["markdown"], onlyMainContent: true } }),
     signal: AbortSignal.timeout(45000),
   });
   if (!res.ok) throw new Error(`search_failed_${res.status}: ${(await res.text()).slice(0, 200)}`);
   const j = await res.json();
   const items: Array<{ url?: string; markdown?: string }> = j?.data?.web ?? j?.data ?? [];
-  return items.flatMap((i) => typeof i.url === "string" && typeof i.markdown === "string" ? [{ url: i.url, text: i.markdown.slice(0, 24000) }] : []);
+  return items.flatMap((i) => typeof i.url === "string" && typeof i.markdown === "string" ? [{ url: i.url, text: i.markdown.slice(0, 48000) }] : []);
 }
 
 const N = (t: string) => ({ type: [t, "null"] });
@@ -103,23 +103,23 @@ async function extract(page: Page): Promise<RawOffer[]> {
   }));
 }
 
-async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]> {
+async function offersFor(place: string, spec: OrderSpec, geography: "city" | "region"): Promise<{ offers: AppliedOffer[]; checkedAt: string }> {
   const url = Deno.env.get("SUPABASE_URL");
   const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !secret) throw new Error("summary_storage_not_configured");
   const db = createClient(url, secret);
-  const cacheKey = JSON.stringify(["cleaning-v2", place, spec.cleaningType]);
-  const { data: saved, error: readError } = await db.from("web_price_summaries").select("offers,expires_at").eq("cache_key", cacheKey).maybeSingle();
+  const cacheKey = JSON.stringify(["cleaning-v3", place, spec.cleaningType]);
+  const { data: saved, error: readError } = await db.from("web_price_summaries").select("offers,expires_at,checked_at").eq("cache_key", cacheKey).maybeSingle();
   if (readError) throw new Error(`summary_read_failed: ${readError.message}`);
   const apply = (groups: Array<{ offers: RawOffer[] }>) => groups.flatMap(({ offers }) => {
     const windowPrices = offers.filter((o) => o.unit === "per_window" && !o.isFromPrice).map((o) => o.price);
     return offers.flatMap((o) => normalizeCleaning(o, spec, windowPrices.length === 1 ? windowPrices[0] : null));
   });
-  if (saved && new Date(saved.expires_at).getTime() > Date.now()) return apply(saved.offers);
+  if (saved && new Date(saved.expires_at).getTime() > Date.now()) return { offers: apply(saved.offers), checkedAt: saved.checked_at };
   let pages: Page[] = [];
     const [a, b] = await Promise.all([
       search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place}`),
-      search(`מחירון ניקיון ${place}`),
+      search(`${CLEANING_QUERY_HE[spec.cleaningType]} ${place} מ"ר מחירון`),
     ]);
     const seen = new Set<string>();
     pages = [...a, ...b].filter((p) => !seen.has(p.url) && seen.add(p.url));
@@ -128,10 +128,11 @@ async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]
   const extracted = await Promise.all(relevant.map(async (p) => ({ p, offers: await extract(p) })));
   const groups = extracted.map(({ p, offers }) => ({ url: p.url, offers: offers.filter((o) => isVerified(o, p.text)) })).filter((g) => g.offers.length);
   // Never replace the last successful summary with an empty or failed update.
+  const checkedAt = new Date().toISOString();
   if (groups.length) {
-    const { error } = await db.from("web_price_summaries").upsert({ cache_key: cacheKey, service: "cleaning", geography: regionFor(place) ? "city" : "region", place,
+    const { error } = await db.from("web_price_summaries").upsert({ cache_key: cacheKey, service: "cleaning", geography, place,
       applicability: { cleaningType: spec.cleaningType, composition: "source-specific", normalization: "per_m2_or_explicit_area_range" }, currency: "ILS", offers: groups,
-      checked_at: new Date().toISOString(), expires_at: new Date(Date.now() + TTL_MS).toISOString() });
+      checked_at: checkedAt, expires_at: new Date(Date.now() + TTL_MS).toISOString() });
     if (error) throw new Error(`summary_save_failed: ${error.message}`);
   }
   const applied = apply(groups);
@@ -139,15 +140,18 @@ async function offersFor(place: string, spec: OrderSpec): Promise<AppliedOffer[]
     extracted: extracted.reduce((n, x) => n + x.offers.length, 0),
     verified: extracted.reduce((n, x) => n + x.offers.filter((o) => isVerified(o, x.p.text)).length, 0), applied: applied.length }));
   if (Deno.env.get("PRICES_DEBUG")) console.info(JSON.stringify(extracted.map((x) => x.offers.map((o) => [o.unit, o.cleaningType, o.price, o.areaMin, o.areaMax, isVerified(o, x.p.text), o.quote.slice(0, 80)]))));
-  return applied;
+  return { offers: applied, checkedAt };
 }
 
 export async function researchCleaning(cityHe: string, spec: OrderSpec): Promise<WebEstimate> {
-  const checkedAt = new Date().toISOString();
-  let result = aggregate(await offersFor(cityHe, spec), "city", cityHe, checkedAt);
+  const city = await offersFor(cityHe, spec, "city");
+  let result = aggregate(city.offers, "city", cityHe, city.checkedAt);
   if (result.status !== "available") {
     const region = regionFor(cityHe);
-    if (region) result = aggregate(await offersFor(region, spec), "region", region, checkedAt);
+    if (region) {
+      const regional = await offersFor(region, spec, "region");
+      result = aggregate(regional.offers, "region", region, regional.checkedAt);
+    }
   }
   return result;
 }
