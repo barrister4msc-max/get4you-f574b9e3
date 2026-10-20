@@ -27,6 +27,10 @@ export type AppliedOffer = {
 };
 
 const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
+export const PRICE_SUMMARY_TTL_MS = 24 * 60 * 60 * 1000;
+export function summaryIsFresh(expiresAt: string, now = Date.now()): boolean {
+  return Number.isFinite(Date.parse(expiresAt)) && Date.parse(expiresAt) > now;
+}
 const digits = (s: string) => s.replace(/[^\d]/g, "");
 
 /** The quote must literally appear on the page and contain the price digits. */
