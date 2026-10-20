@@ -24,10 +24,15 @@ export type Tariff = {
   pricePerWindow?: number;
   minimum?: number;
   maxAreaM2?: number;           // tariff is not valid above this area
+  /** Owner-confirmed fixed price band; recommended = round((min+max)/2). */
+  range?: { min: number; max: number };
 };
 
-/** No confirmed tariffs exist yet. Synthetic tariffs belong in test fixtures only. */
-export const TARIFFS: Tariff[] = [];
+/** Owner-confirmed tariffs (stated by the business owner, Oct 2026). Synthetic tariffs belong in test fixtures only. */
+export const TARIFFS: Tariff[] = [
+  { id: "owner-cleaning-regular", version: "2026-10-20", service: "cleaning", subtype: "regular", currency: "ILS", base: 0, range: { min: 500, max: 700 } },
+  { id: "owner-cleaning-deep", version: "2026-10-20", service: "cleaning", subtype: "deep", currency: "ILS", base: 0, range: { min: 500, max: 700 } },
+];
 
 export type ComparableRecord = {
   amount: number;               // final released amount, major units
@@ -39,7 +44,7 @@ export type ComparableRecord = {
 export type Component = { label: string; unit: string; quantity: number; unitPrice: number; amount: number };
 
 export type EstimateResult =
-  | { status: "available"; method: "tariff"; currency: string; total: number;
+  | { status: "available"; method: "tariff"; currency: string; total: number; min?: number; max?: number;
       provenance: { tariffId: string; tariffVersion: string; components: Component[]; minimumApplied: boolean } }
   | { status: "available"; method: "history"; currency: string; min: number; max: number; recommended: number;
       provenance: { sampleSize: number; statistic: "p25-median-p75"; areaWindowPct: number | null } }
@@ -55,6 +60,13 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 export function computeTariff(t: Tariff, p: EstimateParams): EstimateResult {
   if (t.currency !== p.currency) return { status: "unavailable", reason: "currency_mismatch" };
   if (t.subtype && t.subtype !== (p.subtype ?? null)) return { status: "unavailable", reason: "subtype_mismatch" };
+  if (t.range) {
+    const { min, max } = t.range;
+    if (!finite(min) || !finite(max) || min <= 0 || min > max) return { status: "error", reason: "invalid_tariff" };
+    const total = Math.round((min + max) / 2);
+    return { status: "available", method: "tariff", currency: t.currency, total, min, max,
+      provenance: { tariffId: t.id, tariffVersion: t.version, components: [{ label: "owner_range", unit: "order", quantity: 1, unitPrice: total, amount: total }], minimumApplied: false } };
+  }
   const components: Component[] = [{ label: "base", unit: "order", quantity: 1, unitPrice: t.base, amount: t.base }];
   if (t.pricePerM2 !== undefined) {
     if (!finite(p.areaM2) || p.areaM2 <= 0 || p.areaM2 > 10000) return { status: "unavailable", reason: "area_required" };
@@ -111,7 +123,11 @@ export function parseEstimateResponse(x: unknown): EstimateResult {
   if (o.status === "unavailable") return { status: "unavailable", reason: String(o.reason ?? "") };
   if (o.status === "error") return { status: "error", reason: String(o.reason ?? "") };
   if (o.status !== "available" || typeof o.currency !== "string" || !o.provenance) return { status: "error", reason: "malformed" };
-  if (o.method === "tariff" && finite(o.total) && o.total > 0) return o as unknown as EstimateResult;
+  if (o.method === "tariff" && finite(o.total) && o.total > 0) {
+    if (o.min === undefined && o.max === undefined) return o as unknown as EstimateResult;
+    if (finite(o.min) && finite(o.max) && o.min > 0 && o.min <= o.total && o.total <= o.max) return o as unknown as EstimateResult;
+    return { status: "error", reason: "malformed" };
+  }
   if (o.method === "web" && finite(o.min) && finite(o.max) && finite(o.recommended) && o.min > 0 && o.min <= o.max &&
       o.recommended === Math.round(((o.min as number) + (o.max as number)) / 2)) return o as unknown as EstimateResult;
   if (o.method === "history" && finite(o.min) && finite(o.max) && finite(o.recommended) &&
