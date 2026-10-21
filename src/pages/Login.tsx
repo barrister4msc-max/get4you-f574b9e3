@@ -136,23 +136,20 @@ const LoginPage = () => {
       return;
     }
     setLoading(true);
+    // Persist returnTo before signUp so it survives the email-confirmation
+    // round trip to /auth/callback; OAuthReturnHandler does all routing.
+    rememberPostAuthReturnTo(searchParams.get('returnTo'));
+    try { window.sessionStorage.setItem('oauth_pending', 'email'); } catch { /* noop */ }
     const { error } = await signUp(email, password, name, role, normalized.e164, whatsappOptIn);
     setLoading(false);
     if (error) {
+      try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
       toast.error(error);
     } else {
-      // Persist returnTo so it survives the email-confirmation roundtrip
-      // back to /auth/callback.
-      rememberPostAuthReturnTo(searchParams.get('returnTo'));
-      // With email confirmation there is no session yet: never claim the task
-      // is being published. If a session exists (auto-confirm), restore the
-      // draft for review via the unified resolver; otherwise ask to confirm.
+      // Auto-confirm: a session exists and OAuthReturnHandler routes now.
       const { data: { session: s } } = await supabase.auth.getSession();
-      if (s?.user) {
-        const { path } = await resolvePostAuthRedirect(supabase, s.user.id, { returnTo: searchParams.get('returnTo') });
-        navigate(path);
-        return;
-      }
+      if (s?.user) return;
+      try { window.sessionStorage.removeItem('oauth_pending'); } catch { /* noop */ }
       setSignupEmail(email);
       setSignupComplete(true);
       // Send welcome email
