@@ -57,6 +57,13 @@ describe("tariff", () => {
   });
 });
 
+describe("owner cleaning tariff by area", () => {
+  const at = (a: number) => computeTariff(findTariff(P({ subtype: "deep", areaM2: a }))!, P({ subtype: "deep", areaM2: a }));
+  it("up to 100 m² is 500–700, rec 600", () => { expect(at(60)).toMatchObject({ min: 500, max: 700, total: 600 }); expect(at(100)).toMatchObject({ min: 500, max: 700, total: 600 }); });
+  it("200 m² is 1000–1400, rec 1200", () => { expect(at(200)).toMatchObject({ min: 1000, max: 1400, total: 1200 }); });
+  it("150 m² is 750–1050, rec 900", () => { expect(at(150)).toMatchObject({ min: 750, max: 1050, total: 900 }); });
+});
+
 describe("history", () => {
   const rec = (amount: number, areaM2: number | null, currency = "ILS"): ComparableRecord => ({ amount, currency, areaM2 });
   it("records without area are not comparable for area services", () => {
