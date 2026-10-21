@@ -90,3 +90,4 @@
 - [ ] Draft thread: finish Google OAuth (no competing redirects, keep language+form, resume action, open already-published task, no English home) + E2E incl. repeated callback/reload
 - [ ] Draft thread: fix price-history gap (comparable orders only; 100/200 m²; ILS/USD; min/max/mid); order history+saved → Lovable AI → Gemini; no credits never blocks login/publish/manual price
 - [ ] Diagnose 'failed to sign in with vendor' (Google): stage, code, status; embedded vs tab vs 4you.ai; keep lang/draft/intent
+- [ ] Real Google+Apple sign-up/sign-in checks (draft restore, no dupes, cancel, logout) — after backend recovers
