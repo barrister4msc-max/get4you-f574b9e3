@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +30,9 @@ export const OAuthReturnHandler = () => {
   const location = useLocation();
   const handledRef = useRef(false);
   const errorReportedRef = useRef(false);
+  // Cover the landing page while a return is being routed, so the user never
+  // sees (or interacts with) the home page before reaching the saved order.
+  const [routing, setRouting] = useState(() => !!ss.get('oauth_pending') && location.pathname !== '/login');
 
   // Provider / broker error returned in the URL.
   useEffect(() => {
@@ -43,6 +47,7 @@ export const OAuthReturnHandler = () => {
     console.warn('[auth] stage=provider_return status=error', { error: err, error_code: code });
     ss.del('oauth_pending');
     ss.del('oauth_return_to');
+    setRouting(false);
     toast.error(desc || err || 'Sign-in failed', { duration: 10000 });
     window.history.replaceState(null, '', location.pathname);
     // Return to the login page so the user can retry; the draft stays in storage.
@@ -63,6 +68,7 @@ export const OAuthReturnHandler = () => {
     const onCallback = location.pathname === '/auth/callback';
     if (!pending && !onCallback) return;
     handledRef.current = true;
+    setRouting(true);
     console.info('[auth] stage=session_ready', { provider: pending || 'email' });
     ss.del('oauth_pending');
     const sessionReturnTo = ss.get('oauth_return_to');
@@ -78,10 +84,12 @@ export const OAuthReturnHandler = () => {
       try {
         const { path } = await resolvePostAuthRedirect(supabase, user.id, { returnTo: sessionReturnTo || null });
         navigate(path, { replace: true });
+        setRouting(false);
       } catch {
         console.warn('[auth] stage=redirect status=error');
         consumePostAuthReturnTo();
         navigate('/dashboard', { replace: true });
+        setRouting(false);
       }
       // Welcome email for new accounts — after routing, never delaying it.
       try {
@@ -107,7 +115,19 @@ export const OAuthReturnHandler = () => {
     })();
   }, [user, loading, navigate, location.pathname]);
 
-  return null;
+  // Session never arrived (e.g. user closed the provider window): uncover.
+  useEffect(() => {
+    if (!routing || loading || user) return;
+    const id = window.setTimeout(() => setRouting(false), 15000);
+    return () => window.clearTimeout(id);
+  }, [routing, loading, user]);
+
+  if (!routing) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  );
 };
 
 export default OAuthReturnHandler;
