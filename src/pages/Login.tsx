@@ -42,6 +42,11 @@ const LoginPage = () => {
 
   // If user is already authenticated, redirect to start page (or returnTo)
   useEffect(() => {
+    // While an OAuth return is in flight, OAuthReturnHandler owns routing;
+    // redirecting here too caused competing navigations (e.g. to English home).
+    let oauthPending = false;
+    try { oauthPending = !!window.sessionStorage.getItem('oauth_pending'); } catch { /* noop */ }
+    if (oauthPending) return;
     if (!authLoading && user) {
       (async () => {
         const returnTo = searchParams.get('returnTo');
