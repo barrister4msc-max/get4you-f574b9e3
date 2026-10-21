@@ -26,12 +26,14 @@ export type Tariff = {
   maxAreaM2?: number;           // tariff is not valid above this area
   /** Owner-confirmed fixed price band; recommended = round((min+max)/2). */
   range?: { min: number; max: number };
+  /** Range covers orders up to this area; larger areas scale the range proportionally. */
+  rangeAreaM2?: number;
 };
 
 /** Owner-confirmed tariffs (stated by the business owner, Oct 2026). Synthetic tariffs belong in test fixtures only. */
 export const TARIFFS: Tariff[] = [
-  { id: "owner-cleaning-regular", version: "2026-10-20", service: "cleaning", subtype: "regular", currency: "ILS", base: 0, range: { min: 500, max: 700 } },
-  { id: "owner-cleaning-deep", version: "2026-10-20", service: "cleaning", subtype: "deep", currency: "ILS", base: 0, range: { min: 500, max: 700 } },
+  { id: "owner-cleaning-regular", version: "2026-10-20", service: "cleaning", subtype: "regular", currency: "ILS", base: 0, range: { min: 500, max: 700 }, rangeAreaM2: 100 },
+  { id: "owner-cleaning-deep", version: "2026-10-20", service: "cleaning", subtype: "deep", currency: "ILS", base: 0, range: { min: 500, max: 700 }, rangeAreaM2: 100 },
 ];
 
 export type ComparableRecord = {
@@ -61,8 +63,13 @@ export function computeTariff(t: Tariff, p: EstimateParams): EstimateResult {
   if (t.currency !== p.currency) return { status: "unavailable", reason: "currency_mismatch" };
   if (t.subtype && t.subtype !== (p.subtype ?? null)) return { status: "unavailable", reason: "subtype_mismatch" };
   if (t.range) {
-    const { min, max } = t.range;
+    let { min, max } = t.range;
     if (!finite(min) || !finite(max) || min <= 0 || min > max) return { status: "error", reason: "invalid_tariff" };
+    if (t.rangeAreaM2 && finite(p.areaM2) && p.areaM2 > t.rangeAreaM2) {
+      const k = p.areaM2 / t.rangeAreaM2;
+      min = Math.round((min * k) / 10) * 10;
+      max = Math.round((max * k) / 10) * 10;
+    }
     const total = Math.round((min + max) / 2);
     return { status: "available", method: "tariff", currency: t.currency, total, min, max,
       provenance: { tariffId: t.id, tariffVersion: t.version, components: [{ label: "owner_range", unit: "order", quantity: 1, unitPrice: total, amount: total }], minimumApplied: false } };
