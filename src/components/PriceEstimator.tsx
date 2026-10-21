@@ -195,7 +195,7 @@ export const PriceEstimator = ({ category, serviceDetails, cityId, neighborhoodI
               <div className="mt-2 space-y-2">
                 {current.method === "web" ? (
                   <>
-                    <p>{TXT.geoCity[loc]}: {current.provenance.area} · {TXT.checked[loc]}: {new Date(current.provenance.checkedAt).toLocaleDateString(locale)}</p>
+                    <p>{TXT.geoCity[loc]}: {current.provenance.area} · {loc === "ru" ? "Источников" : loc === "he" ? "מקורות" : loc === "ar" ? "المصادر" : "Sources"}: {new Set(current.provenance.offers.map((o) => o.url)).size} · {TXT.checked[loc]}: {new Date(current.provenance.checkedAt).toLocaleDateString(locale)}</p>
                     <ul className="space-y-1.5">
                       {current.provenance.offers.map((o, i) => (
                         <li key={i} className="break-words">
