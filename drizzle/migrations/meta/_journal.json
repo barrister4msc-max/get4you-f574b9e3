@@ -50,6 +50,13 @@
       "when": 1792515278156,
       "tag": "0006_web_price_research_pause",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792601489141,
+      "tag": "0007_market_price_intelligence",
+      "breakpoints": true
     }
   ]
 }
