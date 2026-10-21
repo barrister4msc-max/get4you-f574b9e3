@@ -52,12 +52,25 @@ export async function resolvePostAuthRedirect(
   opts: { returnTo?: string | null } = {}
 ): Promise<PostAuthRedirect> {
   // 1) Pending task draft
-  // Never publish automatically after sign-in: reopen the form with the
-  // restored draft so the user reviews it and presses "Publish" themselves.
+  // The pending flag is set only when the guest pressed "Publish": resume that
+  // confirmed publish once (the form re-validates and reuses its publish id,
+  // so a repeated callback or reload opens the existing task, never a copy).
   if (hasPendingTaskDraft()) {
     const draft = loadPendingTaskDraft(userId);
     const cat = draft?.category ? `&category=${encodeURIComponent(draft.category)}` : "";
-    return { path: `/create-task?continueDraft=1${cat}` };
+    return { path: `/create-task?continueDraft=1&publish=1${cat}` };
+  }
+  // 1b) Unconfirmed draft started before auth: reopen it for review.
+  const rt = opts.returnTo || (() => {
+    try { return localStorage.getItem(RETURN_TO_KEY); } catch { return null; }
+  })();
+  if (typeof rt === "string" && rt.startsWith("/create-task")) {
+    const draft = loadPendingTaskDraft(userId);
+    if (draft) {
+      consumePostAuthReturnTo();
+      const cat = draft.category ? `&category=${encodeURIComponent(draft.category)}` : "";
+      return { path: `/create-task?continueDraft=1${cat}` };
+    }
   }
 
   // 2) Onboarding gate: phone + WhatsApp decision

@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +30,9 @@ export const OAuthReturnHandler = () => {
   const location = useLocation();
   const handledRef = useRef(false);
   const errorReportedRef = useRef(false);
+  // Cover the landing page while a return is being routed, so the user never
+  // sees (or interacts with) the home page before reaching the saved order.
+  const [routing, setRouting] = useState(() => !!ss.get('oauth_pending') && location.pathname !== '/login');
 
   // Provider / broker error returned in the URL.
   useEffect(() => {
@@ -43,24 +47,32 @@ export const OAuthReturnHandler = () => {
     console.warn('[auth] stage=provider_return status=error', { error: err, error_code: code });
     ss.del('oauth_pending');
     ss.del('oauth_return_to');
+    setRouting(false);
     toast.error(desc || err || 'Sign-in failed', { duration: 10000 });
     window.history.replaceState(null, '', location.pathname);
     // Return to the login page so the user can retry; the draft stays in storage.
     navigate('/login', { replace: true });
   }, [location.pathname, navigate]);
 
-  // Route once the session is established after an auth flow.
+  // Allow the next sign-in in this tab to be routed after a sign-out.
+  useEffect(() => {
+    if (!loading && !user) handledRef.current = false;
+  }, [user, loading]);
+
+  // Route once the session is established after an auth flow
+  // (Google/Apple: oauth_pending; email login/signup: oauth_pending='email';
+  // email confirmation link: /auth/callback).
   useEffect(() => {
     if (handledRef.current || loading || !user) return;
     const pending = ss.get('oauth_pending');
     const onCallback = location.pathname === '/auth/callback';
     if (!pending && !onCallback) return;
     handledRef.current = true;
+    setRouting(true);
     console.info('[auth] stage=session_ready', { provider: pending || 'email' });
     ss.del('oauth_pending');
     const sessionReturnTo = ss.get('oauth_return_to');
     ss.del('oauth_return_to');
-    const storedReturnTo = consumePostAuthReturnTo();
 
     (async () => {
       try {
@@ -69,7 +81,17 @@ export const OAuthReturnHandler = () => {
       } catch {
         console.warn('[auth] stage=ensure_profile status=threw');
       }
-      // Welcome email for new accounts (idempotent per user on the server).
+      try {
+        const { path } = await resolvePostAuthRedirect(supabase, user.id, { returnTo: sessionReturnTo || null });
+        navigate(path, { replace: true });
+        setRouting(false);
+      } catch {
+        console.warn('[auth] stage=redirect status=error');
+        consumePostAuthReturnTo();
+        navigate('/dashboard', { replace: true });
+        setRouting(false);
+      }
+      // Welcome email for new accounts — after routing, never delaying it.
       try {
         const { data: profile } = await supabase
           .from('profiles')
@@ -90,20 +112,22 @@ export const OAuthReturnHandler = () => {
       } catch {
         console.warn('[auth] stage=welcome_email status=error');
       }
-      try {
-        const returnTo =
-          (sessionReturnTo && sessionReturnTo !== '/create-task?continueDraft=1' ? sessionReturnTo : null) ||
-          storedReturnTo || null;
-        const { path } = await resolvePostAuthRedirect(supabase, user.id, { returnTo });
-        navigate(path, { replace: true });
-      } catch {
-        console.warn('[auth] stage=redirect status=error');
-        navigate('/dashboard', { replace: true });
-      }
     })();
   }, [user, loading, navigate, location.pathname]);
 
-  return null;
+  // Session never arrived (e.g. user closed the provider window): uncover.
+  useEffect(() => {
+    if (!routing || loading || user) return;
+    const id = window.setTimeout(() => setRouting(false), 15000);
+    return () => window.clearTimeout(id);
+  }, [routing, loading, user]);
+
+  if (!routing) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  );
 };
 
 export default OAuthReturnHandler;

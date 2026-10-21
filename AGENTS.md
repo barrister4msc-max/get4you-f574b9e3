@@ -15,3 +15,4 @@
 
 - Post-auth routing has one owner, OAuthReturnHandler; AuthCallback only waits, and no component exchanges URL codes (the broker's `code` is not a database PKCE code; competing handlers caused lost redirects).
 - Task publish uses a client-generated id persisted until success, so the primary key turns retries into a detectable conflict (button locks alone miss lost responses and reloads).
+- Guest order attachments survive sign-in in IndexedDB (src/lib/draftAttachments.ts); the pending-submit flag means the guest pressed Publish, so the form resumes that publish once with its persisted publish id (localStorage cannot hold files; flag without id would duplicate).
