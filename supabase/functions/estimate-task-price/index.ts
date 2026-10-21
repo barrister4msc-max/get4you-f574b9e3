@@ -16,6 +16,30 @@ const reply = (r: EstimateResult | Record<string, unknown>, status = 200) =>
 
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
+async function loadHistory(categoryId: string, p: EstimateParams): Promise<EstimateResult> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !secret) return { status: "error", reason: "storage_not_configured" };
+  const sb = createClient(url, secret);
+  const { data, error } = await sb.from("tasks")
+    .select("service_details, escrow_transactions!inner(amount, currency, status)")
+    .eq("status", "completed").eq("category_id", categoryId).eq("city_id", p.cityId!)
+    .eq("escrow_transactions.status", "released").limit(1000);
+  if (error) {
+    console.error("estimate history query failed", error.message);
+    return { status: "error", reason: "history_unavailable" };
+  }
+  const records: ComparableRecord[] = [];
+  for (const row of (data ?? []) as Array<{ service_details: Record<string, unknown> | null; escrow_transactions: Array<{ amount: number; currency: string }> }>) {
+    const sd = row.service_details ?? {};
+    for (const e of row.escrow_transactions ?? []) {
+      records.push({ amount: Number(e.amount), currency: String(e.currency).toUpperCase(),
+        areaM2: num(sd.area_m2), subtype: typeof sd.cleaning_type === "string" ? sd.cleaning_type : null });
+    }
+  }
+  return computeHistory(records, p, AREA_SERVICES.has(p.service));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -41,8 +65,15 @@ serve(async (req) => {
     const tariff = findTariff(p);
     if (tariff) return reply(computeTariff(tariff, p));
 
-    // 2) Verified public internet prices (city, then its region). Only the
-    //    public city name is sent out — never the address.
+    // 2) Completed orders with released payment: same exact category, city, currency
+    //    (and for cleaning: same cleaning type, area within the comparability window).
+    //    Checked before any web search so real history is never skipped.
+    const history = await loadHistory(categoryId, p);
+    if (history.status === "available") return reply(history);
+    if (history.status === "error" && service !== "cleaning") return reply(history, 502);
+
+    // 3) Verified public internet prices (saved first, then city → region → country).
+    //    Only the public city name is sent out — never the address.
     const cityHe = typeof b?.city_name_he === "string" ? b.city_name_he.trim().slice(0, 60) : "";
     const types = ["regular", "deep", "after_renovation", "move_in_out"];
     if (service === "cleaning" && cityHe && p.areaM2 && p.areaM2 > 0 && p.subtype && types.includes(p.subtype)) {
@@ -56,31 +87,7 @@ serve(async (req) => {
       }
     }
     if (service === "cleaning") return reply({ status: "unavailable", reason: !cityHe ? "city_name_required" : "cleaning_parameters_required" });
-
-    // 3) Completed orders with released payment, same exact category, same city and currency.
-    const url = Deno.env.get("SUPABASE_URL");
-    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!url || !secret) return reply({ status: "error", reason: "storage_not_configured" }, 500);
-    const sb = createClient(url, secret);
-    let q = sb.from("tasks")
-      .select("city, service_details, escrow_transactions!inner(amount, currency, status)")
-      .eq("status", "completed").eq("category_id", categoryId)
-      .eq("escrow_transactions.status", "released").limit(1000);
-    q = q.eq("city_id", p.cityId); // same normalized city; neighborhood is not used as a filter yet
-    const { data, error } = await q;
-    if (error) {
-      console.error("estimate history query failed", error.message);
-      return reply({ status: "error", reason: "history_unavailable" }, 502);
-    }
-    const records: ComparableRecord[] = [];
-    for (const row of (data ?? []) as Array<{ service_details: Record<string, unknown> | null; escrow_transactions: Array<{ amount: number; currency: string }> }>) {
-      const sd = row.service_details ?? {};
-      for (const e of row.escrow_transactions ?? []) {
-        records.push({ amount: Number(e.amount), currency: String(e.currency).toUpperCase(),
-          areaM2: num(sd.area_m2), subtype: typeof sd.cleaning_type === "string" ? sd.cleaning_type : null });
-      }
-    }
-    return reply(computeHistory(records, p, AREA_SERVICES.has(service)));
+    return reply(history);
   } catch (e) {
     console.error("estimate-task-price error:", e);
     return reply({ status: "error", reason: "internal" }, 500);

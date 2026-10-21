@@ -47,7 +47,7 @@ export type EstimateResult =
   | { status: "available"; method: "tariff"; currency: string; total: number; min?: number; max?: number;
       provenance: { tariffId: string; tariffVersion: string; components: Component[]; minimumApplied: boolean } }
   | { status: "available"; method: "history"; currency: string; min: number; max: number; recommended: number;
-      provenance: { sampleSize: number; statistic: "p25-median-p75"; areaWindowPct: number | null } }
+      provenance: { sampleSize: number; statistic: "p25-p75-midpoint"; areaWindowPct: number | null } }
   | { status: "available"; method: "web"; currency: string; min: number; max: number; recommended: number;
       provenance: { geography: "city" | "region" | "country"; area: string; checkedAt: string; search?: import("./searchEvidence").SearchEvidence; cacheHit?: boolean;
         offers: Array<{ url: string; quote: string; unit: string; unitPrice: number; normalized: number; calc: string; isFromPrice: boolean }> } }
@@ -111,9 +111,10 @@ export function computeHistory(records: ComparableRecord[], p: EstimateParams, n
   });
   if (usable.length < MIN_COMPARABLES) return { status: "unavailable", reason: "not_enough_comparable_orders" };
   const s = usable.map((r) => r.amount).sort((a, b) => a - b);
+  const min = Math.round(quantile(s, 0.25)), max = Math.round(quantile(s, 0.75));
   return { status: "available", method: "history", currency: p.currency,
-    min: Math.round(quantile(s, 0.25)), recommended: Math.round(quantile(s, 0.5)), max: Math.round(quantile(s, 0.75)),
-    provenance: { sampleSize: usable.length, statistic: "p25-median-p75", areaWindowPct: needsArea ? AREA_WINDOW_PCT : null } };
+    min, recommended: Math.round((min + max) / 2), max,
+    provenance: { sampleSize: usable.length, statistic: "p25-p75-midpoint", areaWindowPct: needsArea ? AREA_WINDOW_PCT : null } };
 }
 
 /** Runtime validation of the wire contract. Anything malformed becomes "error"; no money leaks on unavailable/error. */
@@ -131,7 +132,7 @@ export function parseEstimateResponse(x: unknown): EstimateResult {
   if (o.method === "web" && finite(o.min) && finite(o.max) && finite(o.recommended) && o.min > 0 && o.min <= o.max &&
       o.recommended === Math.round(((o.min as number) + (o.max as number)) / 2)) return o as unknown as EstimateResult;
   if (o.method === "history" && finite(o.min) && finite(o.max) && finite(o.recommended) &&
-      o.min > 0 && o.min <= o.recommended && o.recommended <= o.max) return o as unknown as EstimateResult;
+      o.min > 0 && o.min <= o.max && o.recommended === Math.round(((o.min as number) + (o.max as number)) / 2)) return o as unknown as EstimateResult;
   return { status: "error", reason: "malformed" };
 }
 
