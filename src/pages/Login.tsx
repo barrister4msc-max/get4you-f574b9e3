@@ -97,23 +97,14 @@ const LoginPage = () => {
     setLoading(true);
     const returnTo = searchParams.get('returnTo');
     rememberPostAuthReturnTo(returnTo);
+    // OAuthReturnHandler owns post-auth routing for email sign-in too.
+    try { window.sessionStorage.setItem('oauth_pending', 'email'); } catch { /* noop */ }
+    if (returnTo) try { window.sessionStorage.setItem('oauth_return_to', returnTo); } catch { /* noop */ }
     const { error } = await signIn(email, password);
+    setLoading(false);
     if (error) {
-      setLoading(false);
+      try { window.sessionStorage.removeItem('oauth_pending'); window.sessionStorage.removeItem('oauth_return_to'); } catch { /* noop */ }
       toast.error(error);
-      return;
-    }
-    // Resolve unified post-auth destination (draft / onboarding / returnTo / dashboard).
-    try {
-      const { data: { user: signedIn } } = await supabase.auth.getUser();
-      if (signedIn) {
-        const { path } = await resolvePostAuthRedirect(supabase, signedIn.id, { returnTo });
-        navigate(path);
-      } else {
-        navigate('/');
-      }
-    } finally {
-      setLoading(false);
     }
   };
 

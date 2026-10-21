@@ -49,7 +49,14 @@ export const OAuthReturnHandler = () => {
     navigate('/login', { replace: true });
   }, [location.pathname, navigate]);
 
-  // Route once the session is established after an auth flow.
+  // Allow the next sign-in in this tab to be routed after a sign-out.
+  useEffect(() => {
+    if (!loading && !user) handledRef.current = false;
+  }, [user, loading]);
+
+  // Route once the session is established after an auth flow
+  // (Google/Apple: oauth_pending; email login/signup: oauth_pending='email';
+  // email confirmation link: /auth/callback).
   useEffect(() => {
     if (handledRef.current || loading || !user) return;
     const pending = ss.get('oauth_pending');
@@ -60,7 +67,6 @@ export const OAuthReturnHandler = () => {
     ss.del('oauth_pending');
     const sessionReturnTo = ss.get('oauth_return_to');
     ss.del('oauth_return_to');
-    const storedReturnTo = consumePostAuthReturnTo();
 
     (async () => {
       try {
@@ -69,7 +75,15 @@ export const OAuthReturnHandler = () => {
       } catch {
         console.warn('[auth] stage=ensure_profile status=threw');
       }
-      // Welcome email for new accounts (idempotent per user on the server).
+      try {
+        const { path } = await resolvePostAuthRedirect(supabase, user.id, { returnTo: sessionReturnTo || null });
+        navigate(path, { replace: true });
+      } catch {
+        console.warn('[auth] stage=redirect status=error');
+        consumePostAuthReturnTo();
+        navigate('/dashboard', { replace: true });
+      }
+      // Welcome email for new accounts — after routing, never delaying it.
       try {
         const { data: profile } = await supabase
           .from('profiles')
@@ -89,16 +103,6 @@ export const OAuthReturnHandler = () => {
         }
       } catch {
         console.warn('[auth] stage=welcome_email status=error');
-      }
-      try {
-        const returnTo =
-          (sessionReturnTo && sessionReturnTo !== '/create-task?continueDraft=1' ? sessionReturnTo : null) ||
-          storedReturnTo || null;
-        const { path } = await resolvePostAuthRedirect(supabase, user.id, { returnTo });
-        navigate(path, { replace: true });
-      } catch {
-        console.warn('[auth] stage=redirect status=error');
-        navigate('/dashboard', { replace: true });
       }
     })();
   }, [user, loading, navigate, location.pathname]);
