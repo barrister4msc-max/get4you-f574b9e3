@@ -5,6 +5,7 @@ import {
 } from "../_shared/priceEstimate.ts";
 import { researchCleaning, ResearchError } from "./webResearch.ts";
 import type { CleaningType } from "../_shared/webPrices.ts";
+import { readSnapshot, saveSnapshot, snapshotKey } from "../_shared/marketIntel.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 // Services whose price depends on area; history without area is not comparable for them.
@@ -79,7 +80,16 @@ serve(async (req) => {
     if (service === "cleaning" && cityHe && p.areaM2 && p.areaM2 > 0 && p.subtype && types.includes(p.subtype)) {
       try {
         const from = b?.start_scope === "region" || b?.start_scope === "country" ? b.start_scope : undefined;
+        const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        const key = snapshotKey({ service, subtype: p.subtype, city: cityHe, areaM2: p.areaM2, windows: p.windows ?? null }) + (from ?? "");
+        const snap = await readSnapshot(db, key).catch(() => null);
+        if (snap && snap.status === "available") {
+          console.info("[market] snapshot hit", key);
+          return reply({ ...snap, provenance: { ...snap.provenance, cacheHit: true, snapshot: true } });
+        }
         const web = await researchCleaning(cityHe, { areaM2: p.areaM2, cleaningType: p.subtype as CleaningType, windows: p.windows ?? null }, from);
+        if (web.status === "available") await saveSnapshot(db, key, { area_m2: p.areaM2, windows: p.windows, start_scope: from ?? null, city_id: p.cityId }, cityHe, p.subtype, web)
+          .catch((e) => console.warn("[market] snapshot save failed", e instanceof Error ? e.message : String(e)));
         return reply(web);
       } catch (e) {
         console.warn("[prices] web research failed", e instanceof Error ? e.message : String(e));
