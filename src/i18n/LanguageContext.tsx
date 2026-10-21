@@ -16,6 +16,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 const LOCALE_STORAGE_KEY = 'app-locale';
+const LOCALE_EXPLICIT_KEY = 'app-locale-explicit';
 
 const isLocale = (value: string | null): value is Locale => {
   return value === 'en' || value === 'ru' || value === 'he' || value === 'ar';
@@ -38,6 +39,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
+    try { window.localStorage.setItem(LOCALE_EXPLICIT_KEY, '1'); } catch {}
     // Persist to profile if logged in (fire & forget)
     supabase.auth.getUser().then(({ data }) => {
       const uid = data.user?.id;
@@ -52,12 +54,24 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
   }, [locale]);
 
-  // Load preferred_language from profile on auth change (only if user hasn't explicitly chosen)
+  // On sign-in: a language the visitor explicitly chose wins and is saved to the
+  // profile; only without an explicit choice is the profile language adopted.
+  // (Previously a new profile's default overwrote the chosen language after OAuth.)
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const uid = session?.user?.id;
-      if (!uid) return;
+      if (!uid || (event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION')) return;
       setTimeout(async () => {
+        let explicit = false;
+        let chosen: string | null = null;
+        try {
+          explicit = window.localStorage.getItem(LOCALE_EXPLICIT_KEY) === '1';
+          chosen = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+        } catch {}
+        if (explicit && isLocale(chosen)) {
+          await supabase.from('profiles').update({ preferred_language: chosen }).eq('user_id', uid);
+          return;
+        }
         const { data } = await supabase
           .from('profiles')
           .select('preferred_language')
