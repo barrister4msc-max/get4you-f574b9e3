@@ -142,9 +142,15 @@ export type WebEstimate =
   | { status: "unavailable"; reason: string };
 
 /** min = lowest, max = highest applicable price, recommended = round((min+max)/2). */
+const domainOf = (url: string): string => {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
+};
 export function aggregate(offers: AppliedOffer[], geography: PriceGeography, area: string, checkedAt: string): WebEstimate {
   const ok = offers.filter((o) => finite(o.normalized) && o.normalized > 0);
   if (!ok.length) return { status: "unavailable", reason: "no_comparable_offers" };
+  // One site — even with several quotes — is not a market range; one national statistic
+  // presented as a local exact price is how "unreal" prices appear. Require 2+ domains.
+  if (new Set(ok.map((o) => domainOf(o.url))).size < 2) return { status: "unavailable", reason: "insufficient_independent_sources" };
   const prices = ok.map((o) => o.normalized);
   const min = Math.min(...prices); const max = Math.max(...prices);
   // A single "from" price is only a lower bound — it cannot define a range.
