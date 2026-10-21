@@ -69,6 +69,20 @@ describe("history", () => {
     const r = [...Array(5).fill(rec(500, 300)), ...Array(5).fill(rec(500, 100, "USD"))];
     expect(computeHistory(r, P(), true).status).toBe("unavailable");
   });
+  it("only same cleaning type and size are comparable; 100 vs 200 m² differ", () => {
+    const mk = (a: number, m: number, t: string) => ({ amount: a, currency: "ILS", areaM2: m, subtype: t });
+    const recs = [...[800, 900, 1000, 1100, 1200].map((a) => mk(a, 100, "after_renovation")),
+      ...[1600, 1800, 2000, 2200, 2400].map((a) => mk(a, 200, "after_renovation")),
+      ...[5000, 5000, 5000, 5000, 5000].map((a) => mk(a, 100, "move_in_out"))];
+    const r100 = computeHistory(recs, P({ subtype: "after_renovation", areaM2: 100 }), true);
+    const r200 = computeHistory(recs, P({ subtype: "after_renovation", areaM2: 200 }), true);
+    expect(r100).toMatchObject({ min: 900, max: 1100, recommended: 1000 });
+    expect(r200).toMatchObject({ min: 1800, max: 2200, recommended: 2000 });
+  });
+  it("recommended is the midpoint of min and max", () => {
+    const r = computeHistory([400, 500, 520, 540, 900].map((a) => rec(a, 100)), P(), true);
+    expect(r).toMatchObject({ min: 500, max: 540, recommended: 520 });
+  });
   it("comparable records give quartiles with real sample size", () => {
     const r = computeHistory([400, 500, 600, 700, 800].map((a) => rec(a, 100)), P(), true);
     expect(r).toMatchObject({ status: "available", method: "history", min: 500, recommended: 600, max: 700, provenance: { sampleSize: 5 } });
