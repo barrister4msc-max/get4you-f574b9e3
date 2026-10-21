@@ -91,4 +91,4 @@
 - [x] Price history checked before web search; midpoint recommended; 100/200 m² + ILS/USD verified (only 1 completed cleaning order, no area — history not yet usable). Gemini fallback for web search not built (same credits pool)
 - [x] Diagnose Google 'failed to sign in with vendor': backend DB unreachable; recovered; redirect race + language overwrite fixed in code
 - [ ] Real Google+Apple sign-up/sign-in checks (draft restore, no dupes, cancel, logout) — after backend recovers
-- [ ] Market price intelligence: observations + snapshots tables, dedupe/versioning, 7/14-day freshness, reuse, admin view, sources UI, Haifa 50/100/200 + Tel Aviv tests — waiting on owner: tariff 500–700 vs market priority
+- [x] Market price intelligence: observations + snapshots, dedupe/versioning, 7-day snapshot reuse, admin view; Haifa 50/100/200 + Tel Aviv checked

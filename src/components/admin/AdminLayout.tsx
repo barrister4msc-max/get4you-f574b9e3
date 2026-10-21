@@ -20,6 +20,7 @@ export const AdminLayout = () => {
     { to: '/admin/payments', icon: CreditCard, label: 'Платежи' },
     { to: '/admin/payouts', icon: Banknote, label: 'Payouts / Withdrawals' },
     { to: '/admin/reconciliation', icon: Scale, label: 'Сверка' },
+    { to: '/admin/market-prices', icon: Activity, label: 'Рыночные цены' },
     { to: '/admin/users', icon: Users, label: t('admin.users') },
     { to: '/admin/taskers', icon: Wrench, label: t('admin.taskers') },
     { to: '/admin/reviews', icon: Star, label: t('admin.reviews') },

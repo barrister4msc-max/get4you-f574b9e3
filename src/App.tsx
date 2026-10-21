@@ -62,6 +62,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import SeoPage from "./pages/SeoPage";
 import AdminReconciliation from "./pages/admin/AdminReconciliation";
 import AdminPayouts from "./pages/admin/AdminPayouts";
+import AdminMarketPrices from "./pages/admin/AdminMarketPrices";
 import ContractorPayments from "./pages/ContractorPayments";
 import TaskerOnboarding from "./pages/TaskerOnboarding";
 import TaskerAgreement from "./pages/TaskerAgreement";
@@ -222,6 +223,7 @@ const App = () => (
                     <Route path="payments" element={<AdminPayments />} />
                     <Route path="reconciliation" element={<AdminReconciliation />} />
                     <Route path="payouts" element={<AdminPayouts />} />
+                    <Route path="market-prices" element={<AdminMarketPrices />} />
                   </Route>
                   {/* Public SEO landing pages (must be last inside Layout) */}
                   <Route path="/israel" element={<SeoPage />} />

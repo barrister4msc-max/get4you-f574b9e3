@@ -947,6 +947,195 @@ export type Database = {
         }
         Relationships: []
       }
+      market_price_observations: {
+        Row: {
+          area_max: number | null
+          area_min: number | null
+          base_price: number | null
+          city: string
+          confidence: number
+          content_hash: string
+          country: string
+          created_at: string
+          currency: string
+          district: string | null
+          excluded_options: Json
+          extras: Json
+          first_seen_at: string
+          id: string
+          included_options: Json
+          is_active: boolean
+          minimum_price: number | null
+          price_per_hour: number | null
+          price_per_m2: number | null
+          price_per_window: number | null
+          price_raw: string
+          price_value: number | null
+          pricing_unit: string
+          provider_domain: string
+          provider_name: string | null
+          service_id: string | null
+          service_subtype: string | null
+          service_type: string
+          source_checked_at: string
+          source_language: string | null
+          source_published_at: string | null
+          source_title: string | null
+          source_url: string
+        }
+        Insert: {
+          area_max?: number | null
+          area_min?: number | null
+          base_price?: number | null
+          city: string
+          confidence?: number
+          content_hash: string
+          country?: string
+          created_at?: string
+          currency?: string
+          district?: string | null
+          excluded_options?: Json
+          extras?: Json
+          first_seen_at?: string
+          id?: string
+          included_options?: Json
+          is_active?: boolean
+          minimum_price?: number | null
+          price_per_hour?: number | null
+          price_per_m2?: number | null
+          price_per_window?: number | null
+          price_raw: string
+          price_value?: number | null
+          pricing_unit: string
+          provider_domain: string
+          provider_name?: string | null
+          service_id?: string | null
+          service_subtype?: string | null
+          service_type: string
+          source_checked_at?: string
+          source_language?: string | null
+          source_published_at?: string | null
+          source_title?: string | null
+          source_url: string
+        }
+        Update: {
+          area_max?: number | null
+          area_min?: number | null
+          base_price?: number | null
+          city?: string
+          confidence?: number
+          content_hash?: string
+          country?: string
+          created_at?: string
+          currency?: string
+          district?: string | null
+          excluded_options?: Json
+          extras?: Json
+          first_seen_at?: string
+          id?: string
+          included_options?: Json
+          is_active?: boolean
+          minimum_price?: number | null
+          price_per_hour?: number | null
+          price_per_m2?: number | null
+          price_per_window?: number | null
+          price_raw?: string
+          price_value?: number | null
+          pricing_unit?: string
+          provider_domain?: string
+          provider_name?: string | null
+          service_id?: string | null
+          service_subtype?: string | null
+          service_type?: string
+          source_checked_at?: string
+          source_language?: string | null
+          source_published_at?: string | null
+          source_title?: string | null
+          source_url?: string
+        }
+        Relationships: []
+      }
+      market_price_snapshots: {
+        Row: {
+          calculated_at: string
+          city: string
+          confidence: number
+          country: string
+          created_at: string
+          currency: string
+          district: string | null
+          fresh_until: string
+          geography: string
+          id: string
+          market_average: number
+          market_max: number
+          market_median: number
+          market_min: number
+          number_of_price_observations: number
+          number_of_sources: number
+          recommended_price: number
+          request_key: string
+          request_parameters: Json
+          result: Json
+          service_id: string | null
+          service_subtype: string | null
+          service_type: string
+          source_observation_ids: string[]
+        }
+        Insert: {
+          calculated_at?: string
+          city: string
+          confidence: number
+          country?: string
+          created_at?: string
+          currency?: string
+          district?: string | null
+          fresh_until: string
+          geography: string
+          id?: string
+          market_average: number
+          market_max: number
+          market_median: number
+          market_min: number
+          number_of_price_observations: number
+          number_of_sources: number
+          recommended_price: number
+          request_key: string
+          request_parameters?: Json
+          result: Json
+          service_id?: string | null
+          service_subtype?: string | null
+          service_type: string
+          source_observation_ids?: string[]
+        }
+        Update: {
+          calculated_at?: string
+          city?: string
+          confidence?: number
+          country?: string
+          created_at?: string
+          currency?: string
+          district?: string | null
+          fresh_until?: string
+          geography?: string
+          id?: string
+          market_average?: number
+          market_max?: number
+          market_median?: number
+          market_min?: number
+          number_of_price_observations?: number
+          number_of_sources?: number
+          recommended_price?: number
+          request_key?: string
+          request_parameters?: Json
+          result?: Json
+          service_id?: string | null
+          service_subtype?: string | null
+          service_type?: string
+          source_observation_ids?: string[]
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

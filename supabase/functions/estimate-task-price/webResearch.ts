@@ -4,6 +4,7 @@ import { estimateWithGeographyFallback, pageMatchesPriceGeography, CLEANING_QUER
 import { searchEvidence, publicSourceUrl, openAIStreamFailure, type SearchEvidence } from "../_shared/searchEvidence.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { parseHTML } from "npm:linkedom";
+import { saveObservations } from "../_shared/marketIntel.ts";
 export class ResearchError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
@@ -144,6 +145,10 @@ async function offersFor(place: string, spec: OrderSpec, geography: PriceGeograp
         applicability: { cleaningType: spec.cleaningType, composition: "source-specific", search: found.evidence, normalization: "per_m2_or_explicit_area_range" },
         checked_at: checkedAt, expires_at: new Date(Date.now() + PRICE_SUMMARY_TTL_MS).toISOString() });
       if (saveError) throw new ResearchError(503, "summary_save_failed");
+      try {
+        const saved = await saveObservations(db, groups, { service: "cleaning", subtype: spec.cleaningType, city: place }, new Map(found.evidence.sources.map((s) => [s.url, s.title])));
+        console.info("[market] observations", JSON.stringify({ place, ...saved }));
+      } catch (e) { console.warn("[market] observation save failed", e instanceof Error ? e.message : String(e)); }
     }
     console.info("[prices]", JSON.stringify({ provider: "lovable", place, sources: found.evidence.sources.length, verifiedGroups: groups.length, cacheHit: false }));
     return { offers: apply(groups), checkedAt, evidence: found.evidence, cacheHit: false };
