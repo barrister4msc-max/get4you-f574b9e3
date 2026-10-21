@@ -88,6 +88,6 @@
 - [ ] Move-out cleaning prices: real offers saved but quoted per number of rooms; form asks m² — waiting on owner choice (add rooms field?)
 - [x] Answer: overview of AI features for the app
 - [ ] Draft thread: finish Google OAuth (no competing redirects, keep language+form, resume action, open already-published task, no English home) + E2E incl. repeated callback/reload
-- [ ] Draft thread: fix price-history gap (comparable orders only; 100/200 m²; ILS/USD; min/max/mid); order history+saved → Lovable AI → Gemini; no credits never blocks login/publish/manual price
-- [ ] Diagnose 'failed to sign in with vendor' (Google): stage, code, status; embedded vs tab vs 4you.ai; keep lang/draft/intent
+- [x] Price history checked before web search; midpoint recommended; 100/200 m² + ILS/USD verified (only 1 completed cleaning order, no area — history not yet usable). Gemini fallback for web search not built (same credits pool)
+- [x] Diagnose Google 'failed to sign in with vendor': backend DB unreachable; recovered; redirect race + language overwrite fixed in code
 - [ ] Real Google+Apple sign-up/sign-in checks (draft restore, no dupes, cancel, logout) — after backend recovers
