@@ -23,7 +23,10 @@ describe("web price rules", () => {
     const calls: string[] = [];
     const result = await estimateWithGeographyFallback("חיפה", async (place, geography) => {
       calls.push(`${geography}:${place}`);
-      return { offers: geography === "country" ? normalizeCleaning(o({ price: 18, priceMax: 25 }), { ...spec, areaM2: 100 }, null) : [], checkedAt: "2026-10-20" };
+      return { offers: geography === "country" ? [
+        ...normalizeCleaning(o({ price: 18, priceMax: 25 }), { ...spec, areaM2: 100 }, null),
+        ...normalizeCleaning(o({ url: "https://b.example", price: 20, priceMax: 24 }), { ...spec, areaM2: 100 }, null),
+      ] : [], checkedAt: "2026-10-20" };
     });
     expect(calls).toEqual(["city:חיפה", "region:חיפה והקריות", "country:ישראל"]);
     expect(result).toMatchObject({ status: "available", min: 1800, max: 2500, recommended: 2150, provenance: { geography: "country", area: "ישראל" } });
@@ -39,7 +42,7 @@ describe("web price rules", () => {
   it("keeps local prices instead of replacing them with country samples", async () => {
     const calls: string[] = [];
     const result = await estimateWithGeographyFallback("חיפה", async (place) => {
-      calls.push(place); return { offers: normalizeCleaning(o({ price: 10 }), spec, null), checkedAt: "2026-10-20" };
+      calls.push(place); return { offers: [...normalizeCleaning(o({ price: 10 }), spec, null), ...normalizeCleaning(o({ url: "https://b.example", price: 10 }), spec, null)], checkedAt: "2026-10-20" };
     });
     expect(calls).toEqual(["חיפה"]);
     expect(result).toMatchObject({ min: 800, max: 800, recommended: 800, provenance: { geography: "city" } });
@@ -56,9 +59,12 @@ describe("web price rules", () => {
     expect(regionFor("unknown")).toBeNull();
   });
   it("recomputes 100 and 200 m² from the same documented range without new prices", () => {
-    const offer = o({ price: 18, priceMax: 25 });
-    expect(aggregate(normalizeCleaning(offer, { ...spec, areaM2: 100 }, null), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 1800, max: 2500, recommended: 2150 });
-    expect(aggregate(normalizeCleaning(offer, { ...spec, areaM2: 200 }, null), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 3600, max: 5000, recommended: 4300 });
+    const mk = (areaM2: number) => [
+      ...normalizeCleaning(o({ price: 18, priceMax: 25 }), { ...spec, areaM2 }, null),
+      ...normalizeCleaning(o({ url: "https://b.example", price: 18, priceMax: 25 }), { ...spec, areaM2 }, null),
+    ];
+    expect(aggregate(mk(100), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 1800, max: 2500, recommended: 2150 });
+    expect(aggregate(mk(200), "city", "חיפה", "2026-10-20")).toMatchObject({ min: 3600, max: 5000, recommended: 4300 });
   });
   it("expired summaries are not applicable and freshness is never extended by reading", () => {
     const checked = Date.parse("2026-10-20T16:00:00Z");
@@ -71,12 +77,12 @@ describe("web price rules", () => {
     expect(normalizeCleaning(o({ price: 10 }), { ...spec, additionalWork: true }, null)).toEqual([]);
   });
   it("recommended is the midpoint of the lowest and highest applicable price", () => {
-    const a = [o({ price: 10, quote: "שיפוץ 10" }), o({ price: 15, quote: "שיפוץ 15" }), o({ price: 25, quote: "שיפוץ 25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
+    const a = [o({ price: 10, quote: "שיפוץ 10" }), o({ url: "https://b.example", price: 15, quote: "שיפוץ 15" }), o({ url: "https://c.example", price: 25, quote: "שיפוץ 25" })].map((x) => normalizeCleaning(x, spec, null)[0]);
     const r = aggregate(a, "city", "חיפה", "2026-10-20");
     expect(r).toMatchObject({ status: "available", min: 800, max: 2000, recommended: 1400 });
   });
   it("rounds the midpoint to a whole shekel", () => {
-    const r = aggregate([{ normalized: 801 }, { normalized: 1000 }].map((x) => ({ url: "", quote: "", unit: "per_m2" as const, unitPrice: 0, calc: "", isFromPrice: false, ...x })), "city", "x", "d");
+    const r = aggregate([{ normalized: 801, url: "https://a.example" }, { normalized: 1000, url: "https://b.example" }].map((x) => ({ url: "", quote: "", unit: "per_m2" as const, unitPrice: 0, calc: "", isFromPrice: false, ...x })), "city", "x", "d");
     expect(r).toMatchObject({ recommended: 901 });
   });
   it("hourly and per-room prices are not converted", () => {
@@ -91,8 +97,13 @@ describe("web price rules", () => {
     expect(aggregate([a], "city", "x", "d").status).toBe("unavailable");
   });
   it("equal prices give one price, no artificial spread", () => {
-    const a = [o({ price: 10 }), o({ price: 10 })].map((x) => normalizeCleaning(x, spec, null)[0]);
+    const a = [o({ price: 10 }), o({ url: "https://b.example", price: 10 })].map((x) => normalizeCleaning(x, spec, null)[0]);
     expect(aggregate(a, "city", "x", "d")).toMatchObject({ min: 800, max: 800, recommended: 800 });
+  });
+  it("a single site is never a market estimate, even with several quotes", () => {
+    const a = [o({ price: 18, priceMax: 25 }), o({ price: 30 })].flatMap((x) => normalizeCleaning(x, spec, null));
+    expect(a.length).toBeGreaterThan(1);
+    expect(aggregate(a, "city", "חיפה", "d")).toEqual({ status: "unavailable", reason: "insufficient_independent_sources" });
   });
   it("a quote not found on the page is not a source", () => {
     expect(isVerified(o({ price: 450, quote: "מ-450 ₪" }), "ניקיון בחיפה מ-450 ₪ לדירה")).toBe(true);
@@ -132,7 +143,7 @@ describe("pre-loaded prices answer without waiting", () => {
     const calls: string[] = [];
     const result = await estimateWithGeographyFallback("חיפה", async (place, geography, mode) => {
       calls.push(`${mode}:${place}`);
-      return { offers: mode === "saved" && geography === "region" ? normalizeCleaning(o({ price: 20 }), spec, null) : [], checkedAt: "2026-10-20" };
+      return { offers: mode === "saved" && geography === "region" ? [...normalizeCleaning(o({ price: 20 }), spec, null), ...normalizeCleaning(o({ url: "https://b.example", price: 20 }), spec, null)] : [], checkedAt: "2026-10-20" };
     }, { savedFirst: true });
     expect(calls).toEqual(["saved:חיפה", "saved:חיפה והקריות"]);
     expect(result).toMatchObject({ status: "available", min: 1600, provenance: { geography: "region" } });
