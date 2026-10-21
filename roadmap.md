@@ -87,3 +87,5 @@
 - [x] Pre-load renovation cleaning prices (saved 30 days, answers instantly from saved city/region/country)
 - [ ] Move-out cleaning prices: real offers saved but quoted per number of rooms; form asks m² — waiting on owner choice (add rooms field?)
 - [x] Answer: overview of AI features for the app
+- [ ] Draft thread: finish Google OAuth (no competing redirects, keep language+form, resume action, open already-published task, no English home) + E2E incl. repeated callback/reload
+- [ ] Draft thread: fix price-history gap (comparable orders only; 100/200 m²; ILS/USD; min/max/mid); order history+saved → Lovable AI → Gemini; no credits never blocks login/publish/manual price
