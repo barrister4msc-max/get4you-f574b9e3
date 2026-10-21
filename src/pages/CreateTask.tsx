@@ -27,6 +27,8 @@ import {
   writeTaskDraft,
   hasPendingTaskDraft,
 } from "@/lib/pendingTaskDraft";
+import { saveDraftAttachments, loadDraftAttachments, clearDraftAttachments } from "@/lib/draftAttachments";
+const STEP_KEY = "task_draft_step";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -98,6 +100,13 @@ const CreateTaskPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const publishLockRef = useRef(false);
   const publishIdRef = useRef<string | null>(null);
+  // Captured before any effect clears the flag: the guest pressed "Publish"
+  // and the post-auth handler sent us back with publish=1.
+  const pendingPublishRef = useRef(
+    new URLSearchParams(window.location.search).get("publish") === "1" &&
+      (() => { try { return localStorage.getItem("task_draft_pending_submit") === "1"; } catch { return false; } })(),
+  );
+  const [restoredVoice, setRestoredVoice] = useState<Blob | null>(null);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [priceEstimate, setPriceEstimate] = useState<EstimateSummary | null>(null);
@@ -206,6 +215,7 @@ const CreateTaskPage = () => {
     if (authLoading || draftHydratedRef.current) return;
     draftHydratedRef.current = true;
     const draft = readTaskDraft(user?.id ?? null);
+    const resuming = searchParams.get("continueDraft") === "1";
     if (draft) {
       setForm((f) => {
         const merged = { ...f, ...draft } as typeof f;
@@ -213,11 +223,27 @@ const CreateTaskPage = () => {
           ? { ...applyServiceChange(merged, urlServiceKey, SERVICE_PRICE_DEFAULTS), serviceDetails: {} }
           : merged;
       });
-      if (searchParams.get("continueDraft") === "1") {
-        toast.message(t("task.photos.readd") || "Please re-attach photos and voice notes before publishing");
-      }
+      if (draft.category) setServicePickerOpen(false);
     }
-    setDraftHydrated(true);
+    void (async () => {
+      if (draft && resuming) {
+        const savedStep = Number(localStorage.getItem(STEP_KEY));
+        if (savedStep >= 1 && savedStep <= 3) setStep(savedStep);
+        const att = await loadDraftAttachments();
+        if (att) {
+          if (att.photos.length) {
+            setPhotos(att.photos);
+            Promise.all(att.photos.map((f) => new Promise<string>((res) => {
+              const r = new FileReader();
+              r.onload = (ev) => res(ev.target?.result as string);
+              r.readAsDataURL(f);
+            }))).then(setPhotoPreviews);
+          }
+          if (att.voice) setRestoredVoice(att.voice);
+        }
+      }
+      setDraftHydrated(true);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.id]);
 
@@ -227,6 +253,10 @@ const CreateTaskPage = () => {
     if (!draftHydrated) return;
     writeTaskDraft(form, user?.id ?? null);
   }, [form, user?.id, draftHydrated]);
+  useEffect(() => {
+    if (!draftHydrated) return;
+    try { localStorage.setItem(STEP_KEY, String(step)); } catch { /* ignore */ }
+  }, [step, draftHydrated]);
 
   const aiContext = `Title: ${form.title}, Description: ${form.description}, Category: ${form.category}, Type: ${form.taskType}`;
 
@@ -474,13 +504,15 @@ const CreateTaskPage = () => {
     if (hasError) return;
 
     if (!user) {
-      // Persist a flag so that after the user signs in / signs up we can
-      // resume the publish action automatically.
+      // The guest confirmed "Publish": persist the draft, the step and the
+      // attachments so the publish resumes once after sign-in / confirmation.
       try {
         savePendingTaskDraft(form);
+        localStorage.setItem(STEP_KEY, String(step));
       } catch {
         /* ignore */
       }
+      await saveDraftAttachments(photos, audioRecorder.audioBlob ?? restoredVoice);
       setShowMotivation(true);
       return;
     }
@@ -499,6 +531,21 @@ const CreateTaskPage = () => {
     }
     const taskId = publishIdRef.current;
     setSubmitting(true);
+    // Already published by an earlier attempt (lost response, repeated
+    // callback, reload): open it instead of uploading or inserting again.
+    try {
+      const { data: existing } = await supabase.from("tasks").select("id").eq("id", taskId).maybeSingle();
+      if (existing?.id) {
+        publishIdRef.current = null;
+        try { localStorage.removeItem("task_publish_id"); localStorage.removeItem(STEP_KEY); } catch { /* ignore */ }
+        clearPendingTaskDraft();
+        void clearDraftAttachments();
+        publishLockRef.current = false;
+        setSubmitting(false);
+        navigate(`/tasks/${existing.id}`, { replace: true });
+        return;
+      }
+    } catch { /* fall through: the primary key still blocks duplicates */ }
     try {
       // Make sure coordinates match the address typed in by the user.
       // If the user typed an address but never triggered geocoding, do it now.
@@ -538,11 +585,12 @@ const CreateTaskPage = () => {
 
       // Upload voice note
       let voiceNoteUrl: string | null = null;
-      if (audioRecorder.audioBlob) {
+      const voiceBlob = audioRecorder.audioBlob ?? restoredVoice;
+      if (voiceBlob) {
         const voicePath = `${user.id}/${crypto.randomUUID()}.webm`;
         const { error: voiceError } = await supabase.storage
           .from("voice-notes")
-          .upload(voicePath, audioRecorder.audioBlob, { contentType: "audio/webm" });
+          .upload(voicePath, voiceBlob, { contentType: "audio/webm" });
         if (voiceError) throw voiceError;
         const { data: voiceUrlData } = supabase.storage.from("voice-notes").getPublicUrl(voicePath);
         voiceNoteUrl = voiceUrlData.publicUrl;
@@ -592,8 +640,9 @@ const CreateTaskPage = () => {
       }
 
       publishIdRef.current = null;
-      try { localStorage.removeItem("task_publish_id"); } catch { /* ignore */ }
+      try { localStorage.removeItem("task_publish_id"); localStorage.removeItem(STEP_KEY); } catch { /* ignore */ }
       clearPendingTaskDraft();
+      void clearDraftAttachments();
       toast.success(t("task.published") || "Task published!");
 
       if (createdId) {
@@ -627,12 +676,30 @@ const CreateTaskPage = () => {
     }
   };
 
-  // Login/Signup already resolve the pending draft.
-// Do not redirect authenticated users back to auth/callback.
-useEffect(() => {
-  if (!user) return;
-  autoSubmitTriedRef.current = true;
-}, [user]);
+  // Resume a publish the guest confirmed before signing in — exactly once, and
+  // only after the session, draft and attachments are restored. handleSubmit
+  // re-validates and reuses the persisted publish id, so a repeated callback or
+  // reload opens the already created task instead of inserting a copy.
+  useEffect(() => {
+    if (!draftHydrated || !user || autoSubmitTriedRef.current) return;
+    autoSubmitTriedRef.current = true;
+    if (!pendingPublishRef.current) return;
+    pendingPublishRef.current = false;
+    const sp = new URLSearchParams(searchParams);
+    sp.delete("publish");
+    setSearchParams(sp, { replace: true });
+    setStep(3);
+    void handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftHydrated, user]);
+
+  if (!draftHydrated) {
+    return (
+      <div className="order-form min-h-[80vh] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="order-form min-h-[80vh] py-6 sm:py-10">
@@ -1239,7 +1306,7 @@ useEffect(() => {
                 <Button variant="ghost"
                   onClick={() => {
                     setShowMotivation(false);
-                    navigate(`/login?tab=signup&returnTo=${encodeURIComponent("/dashboard")}`);
+                    navigate(`/login?tab=signup&returnTo=${encodeURIComponent("/create-task?continueDraft=1")}`);
                   }}
                   className="w-full py-3 rounded-xl font-bold text-base bg-accent text-accent-foreground shadow-trust hover:opacity-90 transition-opacity"
                 >
