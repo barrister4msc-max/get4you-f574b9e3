@@ -11,6 +11,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { useTaskTranslations } from "@/hooks/useTaskTranslations";
+import GeoPriceIntelligence from "@/components/GeoPriceIntelligence";
 import NotFound from "./NotFound";
 import {
   slugFromPath,
@@ -116,7 +117,6 @@ export default function SeoPage() {
     setNotFound(false);
     const cached = getCachedSeo(slug);
     if (cached !== undefined) {
-      // Cached either as row or explicit null (= not published / missing)
       setRow((cached as unknown as SeoRow) || null);
       setNotFound(cached === null);
       setLoading(false);
@@ -152,7 +152,6 @@ export default function SeoPage() {
           : await q;
         if (!cancelled) setRelated((rel as unknown as SeoRow[]) || []);
 
-        // Related cities: same category, different city (city+category pages only)
         if (r.city_slug && r.category_slug) {
           const { data: rc } = await supabase
             .from("seo_pages")
@@ -167,7 +166,6 @@ export default function SeoPage() {
           setRelatedCities([]);
         }
 
-        // Fetch live public tasks for this city/category combo
         const { data: pt } = await supabase.rpc("get_seo_public_tasks" as never, {
           _city_slug: r.city_slug,
           _category_slug: r.category_slug,
@@ -191,8 +189,6 @@ export default function SeoPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  // Hook must be called unconditionally on every render — keep it BEFORE any
-  // early return below to satisfy the Rules of Hooks (fixes React error #310).
   const { getDisplayCopy: getTaskDisplayCopy } = useTaskTranslations(uiLocale, publicTasks);
 
   if (loading) {
@@ -217,7 +213,6 @@ export default function SeoPage() {
       : ""
   }`;
 
-  // City-only pages get a "Popular services in <City>" internal-link block.
   const POPULAR_SERVICES = ["cleaning", "repair", "delivery", "moving", "handyman"] as const;
   const isCityOnlyPage = !!row.city_slug && !row.category_slug;
   const cityName = row.city_slug ? t(`seo.city.${row.city_slug}`) || row.city_slug : "";
@@ -231,8 +226,6 @@ export default function SeoPage() {
           : `Popular services in ${cityName}`
     : "";
 
-  // Default FAQ fallback — guarantees every SEO page has a FAQ block + JSON-LD,
-  // even if the seo_pages.faq column is empty. Existing FAQs are preserved.
   const catName = row.category_slug ? t(`seo.cat.${row.category_slug}`) || row.category_slug : "";
   const catLower = row.category_slug
     ? (t(`seo.catLower.${row.category_slug}`) || catName).toString().toLowerCase()
@@ -258,30 +251,30 @@ export default function SeoPage() {
   const defaultFaq: Array<Record<string, string>> =
     uiLocale === "ru"
       ? [
-          { question_ru: `Как работают ${subject} в ${place}?`, answer_ru: `Опубликуйте задачу с описанием и адресом — исполнители из ${place} пришлют предложения, а вы выберете подходящего по цене и рейтингу.` },
-          { question_ru: `Как быстро можно найти исполнителя?`, answer_ru: `Большинство клиентов получают первые отклики в течение 15–60 минут после публикации задачи.` },
-          { question_ru: `Проверены ли исполнители?`, answer_ru: `Каждый исполнитель проходит верификацию профиля, а отзывы и рейтинг помогают выбрать надёжного.` },
-          { question_ru: `Поддерживается ли оплата через escrow?`, answer_ru: `Да. Деньги удерживаются на escrow и переводятся исполнителю только после завершения задачи.` },
+          { question_ru: `Как работают ${subject} в ${place}?`, answer_ru: `Опубликуйте задачу с описанием и адресом — доступные исполнители из ${place} смогут прислать предложения, а вы сравните условия и информацию в профилях.` },
+          { question_ru: `Как быстро можно найти исполнителя?`, answer_ru: `Скорость откликов зависит от услуги, города, времени публикации и деталей задачи. Flow4You не обещает фиксированное время отклика без подтверждения актуальными данными маркетплейса.` },
+          { question_ru: `Как выбрать исполнителя?`, answer_ru: `Сравните предложение, доступную информацию профиля, рейтинг и отзывы, а перед выбором подтвердите объём и условия задачи.` },
+          { question_ru: `Поддерживается ли оплата через escrow?`, answer_ru: `Если escrow доступен для выбранного сценария задачи, средства удерживаются до выполнения применимых условий завершения и выплаты.` },
         ]
       : uiLocale === "he"
         ? [
-            { question_he: `איך עובדים ${subject} ב${place}?`, answer_he: `פרסמו משימה עם תיאור וכתובת — נותני שירות מ${place} ישלחו הצעות, ותוכלו לבחור לפי מחיר ודירוג.` },
-            { question_he: `כמה מהר אפשר למצוא בעל מקצוע?`, answer_he: `רוב הלקוחות מקבלים את ההצעות הראשונות תוך 15–60 דקות מרגע פרסום המשימה.` },
-            { question_he: `האם בעלי המקצוע מאומתים?`, answer_he: `כל בעל מקצוע עובר אימות פרופיל, ודירוג וביקורות עוזרים לבחור את המתאים ביותר.` },
-            { question_he: `האם נתמך תשלום בנאמנות (escrow)?`, answer_he: `כן. הכסף מוחזק בנאמנות ומועבר לבעל המקצוע רק לאחר סיום העבודה.` },
+            { question_he: `איך עובדים ${subject} ב${place}?`, answer_he: `פרסמו משימה עם תיאור ומיקום — נותני שירות זמינים יוכלו לשלוח הצעות, ותוכלו להשוות את התנאים והמידע המוצג בפרופילים.` },
+            { question_he: `כמה מהר אפשר למצוא בעל מקצוע?`, answer_he: `זמן התגובה משתנה לפי סוג השירות, המיקום, מועד הפרסום ופרטי המשימה. Flow4You אינה מבטיחה זמן תגובה קבוע ללא נתוני שוק עדכניים שתומכים בכך.` },
+            { question_he: `איך בוחרים בעל מקצוע?`, answer_he: `השוו את ההצעה, מידע הפרופיל הזמין, דירוגים וביקורות, ואשרו את היקף ותנאי המשימה לפני הבחירה.` },
+            { question_he: `האם נתמך תשלום בנאמנות (escrow)?`, answer_he: `כאשר escrow זמין בתהליך המשימה, הכסף מוחזק עד להתקיימות תנאי ההשלמה והשחרור הרלוונטיים.` },
           ]
         : uiLocale === "ar"
           ? [
-              { question_ar: `كيف تعمل ${subject} في ${place}؟`, answer_ar: `انشر مهمة مع الوصف والعنوان — سيرسل مقدمو الخدمة من ${place} عروضهم، وتختار الأنسب بالسعر والتقييم.` },
-              { question_ar: `ما السرعة التي يمكن بها إيجاد مختص؟`, answer_ar: `يحصل معظم العملاء على أول العروض خلال 15–60 دقيقة من نشر المهمة.` },
-              { question_ar: `هل مقدمو الخدمة موثقون؟`, answer_ar: `يجتاز كل مقدم خدمة التحقق من الملف، وتساعد التقييمات والمراجعات على اختيار الموثوق.` },
-              { question_ar: `هل الدفع عبر الضمان (escrow) مدعوم؟`, answer_ar: `نعم. تُحتجز الأموال في الضمان وتُحوَّل لمقدم الخدمة فقط بعد إنهاء المهمة.` },
+              { question_ar: `كيف تعمل ${subject} في ${place}؟`, answer_ar: `انشر مهمة مع الوصف والموقع — يمكن لمقدمي الخدمة المتاحين إرسال عروض، ويمكنك مقارنة الشروط والمعلومات الظاهرة في الملفات الشخصية.` },
+              { question_ar: `ما السرعة التي يمكن بها إيجاد مختص؟`, answer_ar: `يختلف وقت الاستجابة حسب نوع الخدمة والموقع ووقت النشر وتفاصيل المهمة. لا تعد Flow4You بزمن استجابة ثابت ما لم تدعمه بيانات سوق حديثة.` },
+              { question_ar: `كيف أختار مقدم الخدمة؟`, answer_ar: `قارن العرض ومعلومات الملف الشخصي المتاحة والتقييمات والمراجعات، وأكد نطاق المهمة وشروطها قبل الاختيار.` },
+              { question_ar: `هل الدفع عبر الضمان (escrow) مدعوم؟`, answer_ar: `عندما يكون escrow متاحًا لمسار المهمة، تُحتجز الأموال إلى أن تتحقق شروط الإكمال والتحرير المطبقة.` },
             ]
           : [
-              { question_en: `How do ${subject} work in ${place}?`, answer_en: `Post a task with the details and address — taskers in ${place} will send offers and you pick the best one by price and rating.` },
-              { question_en: `How fast can I find a tasker?`, answer_en: `Most clients receive their first offers within 15–60 minutes after posting a task.` },
-              { question_en: `Are taskers verified?`, answer_en: `Every tasker passes profile verification, and ratings and reviews help you pick a trusted one.` },
-              { question_en: `Is escrow payment supported?`, answer_en: `Yes. Funds are held in escrow and released to the tasker only after the task is completed.` },
+              { question_en: `How do ${subject} work in ${place}?`, answer_en: `Post a task with the details and location — available taskers can send offers, and you can compare the terms and profile information shown on Flow4You.` },
+              { question_en: `How fast can I find a tasker?`, answer_en: `Response time varies by service, location, timing and task details. Flow4You does not publish a fixed response-time promise unless it is supported by current marketplace data.` },
+              { question_en: `How should I choose a tasker?`, answer_en: `Compare the offer, available profile information, ratings and reviews, and confirm the task scope and terms before selecting a tasker.` },
+              { question_en: `Is escrow payment supported?`, answer_en: `Where escrow is available for the task flow, funds are held until the applicable completion and release conditions are met.` },
             ];
   const effectiveFaq: Array<Record<string, string>> =
     row.faq && row.faq.length > 0 ? row.faq : defaultFaq;
@@ -332,6 +325,16 @@ export default function SeoPage() {
         >
           {content}
         </div>
+
+        {row.city_slug && row.category_slug && (
+          <GeoPriceIntelligence
+            citySlug={row.city_slug}
+            categorySlug={row.category_slug}
+            cityName={cityName}
+            categoryName={catName}
+            locale={uiLocale}
+          />
+        )}
 
         <div className="flex flex-wrap gap-3 mb-10">
           <Button asChild size="lg">
@@ -470,7 +473,7 @@ export default function SeoPage() {
                   return (
                     <li key={rc.id}>
                       <Link
-                        to={`/${rc.slug}`}
+                        to={`/${rc.slug}`
                         className="text-primary hover:underline"
                       >
                         {label}
