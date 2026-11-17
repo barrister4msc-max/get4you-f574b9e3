@@ -107,6 +107,45 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    let limit = 20;
+    try {
+      if (req.method === "POST") {
+        const body = await req.json().catch(() => ({}));
+        if (typeof body?.limit === "number" && body.limit > 0 && body.limit <= 100) {
+          limit = body.limit;
+        }
+      }
+    } catch (_) { /* ignore */ }
+
+    const { data: claimed, error: claimErr } = await admin.rpc(
+      "claim_pending_whatsapp_messages",
+      { p_limit: limit },
+    );
+    if (claimErr) {
+      console.error("claim error:", claimErr);
+      return new Response(JSON.stringify({ error: claimErr.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const rows = (claimed ?? []) as Array<{
+      id: string;
+      phone: string | null;
+      target_user_id: string | null;
+      event_type: string;
+      task_id: string | null;
+      retry_count: number;
+      metadata: Record<string, unknown>;
+    }>;
+
+    // Nothing to send: skip settings and profile reads entirely (this runs every minute).
+    if (rows.length === 0) {
+      return new Response(JSON.stringify({ processed: 0 }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Load webhook URLs from app_settings (priority) with ENV fallback.
     let SETTING_NEW_PROPOSAL_URL: string | null = null;
     let SETTING_ACCEPTED_URL: string | null = null;
@@ -182,37 +221,6 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const STATUS_CALLBACK_URL = `${SUPABASE_URL}/functions/v1/twilio-status-webhook`;
 
-    let limit = 20;
-    try {
-      if (req.method === "POST") {
-        const body = await req.json().catch(() => ({}));
-        if (typeof body?.limit === "number" && body.limit > 0 && body.limit <= 100) {
-          limit = body.limit;
-        }
-      }
-    } catch (_) { /* ignore */ }
-
-    const { data: claimed, error: claimErr } = await admin.rpc(
-      "claim_pending_whatsapp_messages",
-      { p_limit: limit },
-    );
-    if (claimErr) {
-      console.error("claim error:", claimErr);
-      return new Response(JSON.stringify({ error: claimErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const rows = (claimed ?? []) as Array<{
-      id: string;
-      phone: string | null;
-      target_user_id: string | null;
-      event_type: string;
-      task_id: string | null;
-      retry_count: number;
-      metadata: Record<string, unknown>;
-    }>;
 
     const audit = async (kind: "sent" | "failed" | "retry", row: typeof rows[number], extra: Record<string, unknown>) => {
       try {

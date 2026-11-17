@@ -122,11 +122,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session?.user ?? null);
           if (session?.user) {
             fetchProfile(session.user.id).finally(finishLoading);
-            supabase
-              .from('profiles')
-              .update({ last_seen_at: new Date().toISOString() })
-              .eq('user_id', session.user.id)
-              .then(() => {});
+            // Save "last seen" at most once per 10 minutes per browser to spare the database.
+            const seenKey = `last_seen_saved:${session.user.id}`;
+            const lastSaved = Number(localStorage.getItem(seenKey) || 0);
+            if (Date.now() - lastSaved > 10 * 60 * 1000) {
+              localStorage.setItem(seenKey, String(Date.now()));
+              supabase
+                .from('profiles')
+                .update({ last_seen_at: new Date().toISOString() })
+                .eq('user_id', session.user.id)
+                .then(() => {});
+            }
           } else {
             finishLoading();
           }
