@@ -92,3 +92,5 @@
 - [x] Diagnose Google 'failed to sign in with vendor': backend DB unreachable; recovered; redirect race + language overwrite fixed in code
 - [ ] Real Google+Apple sign-up/sign-in checks (draft restore, no dupes, cancel, logout) — after backend recovers
 - [x] Market price intelligence: observations + snapshots, dedupe/versioning, 7-day snapshot reuse, admin view; Haifa 50/100/200 + Tel Aviv checked
+- [ ] Database pressure: backend unreachable (17.11 16:48 UTC); DiskIO alert 16.11. Reduce frequent background checks (WhatsApp queue reading settings, payment reconciliation polling orders) before any instance resize — awaiting user decision.
+- [ ] Google/Apple sign-in on 4you.ai: re-test after backend recovers (fails because sign-in service is unreachable).
