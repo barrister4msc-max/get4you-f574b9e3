@@ -82,7 +82,7 @@ describe("web price rules", () => {
     expect(r).toMatchObject({ status: "available", min: 800, max: 2000, recommended: 1400 });
   });
   it("rounds the midpoint to a whole shekel", () => {
-    const r = aggregate([{ normalized: 801, url: "https://a.example" }, { normalized: 1000, url: "https://b.example" }].map((x) => ({ url: "", quote: "", unit: "per_m2" as const, unitPrice: 0, calc: "", isFromPrice: false, ...x })), "city", "x", "d");
+    const r = aggregate([{ normalized: 801, url: "https://a.example" }, { normalized: 1000, url: "https://b.example" }].map((x) => ({ quote: "", unit: "per_m2" as const, unitPrice: 0, calc: "", isFromPrice: false, ...x })), "city", "x", "d");
     expect(r).toMatchObject({ recommended: 901 });
   });
   it("hourly and per-room prices are not converted", () => {
