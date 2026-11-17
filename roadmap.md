@@ -94,3 +94,5 @@
 - [x] Market price intelligence: observations + snapshots, dedupe/versioning, 7-day snapshot reuse, admin view; Haifa 50/100/200 + Tel Aviv checked
 - [ ] Database pressure: backend unreachable (17.11 16:48 UTC); DiskIO alert 16.11. Reduce frequent background checks (WhatsApp queue reading settings, payment reconciliation polling orders) before any instance resize — awaiting user decision.
 - [ ] Google/Apple sign-in on 4you.ai: re-test after backend recovers (fails because sign-in service is unreachable).
+- [ ] Clear old background-job run history (≈5.4 GB, since Apr 2026) safely — a single large delete froze the database; needs small batches or Lovable support. Then add a weekly history cleanup.
+- [ ] Re-test Google/Apple sign-in on 4you.ai with the owner choosing the account.
